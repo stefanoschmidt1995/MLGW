@@ -2,6 +2,8 @@
 #	Some tries of fitting GW generation model using PCA + MoE
 ###################
 
+#probably a better approach would be that of many 1D fits with GP on top...
+
 import sys
 #sys.path.insert(1, '/home/stefano/Desktop/Stefano/scuola/uni/tesi_magistrale/code/routines')
 sys.path.insert(1, '../routines')
@@ -14,14 +16,14 @@ import os
 os.environ['TF_CPP_MIN_LOG_LEVEL'] = '3'
 
 	#loading datasets...
-train_theta = np.loadtxt("../datasets/PCA_train_theta_s0.dat")[:3000,:]
-test_theta = np.loadtxt("../datasets/PCA_test_theta_s0.dat")
-if np.all(train_theta[:,1] == 0):
-	train_theta = np.reshape(train_theta[:,0], (train_theta.shape[0],1))
-	test_theta = np.reshape(test_theta[:,0], (test_theta.shape[0],1))
+train_theta = np.loadtxt("../datasets/PCA_train_theta_s2_0.dat")[:,:]
+test_theta = np.loadtxt("../datasets/PCA_test_theta_s2_0.dat")
+if np.all(train_theta[:,2] == 0):
+	train_theta = np.reshape(train_theta[:,0:2], (train_theta.shape[0],2))
+	test_theta = np.reshape(test_theta[:,0:2], (test_theta.shape[0],2))
 #train_theta = np.log(train_theta)
-PCA_train_ph = np.loadtxt("../datasets/PCA_train_s0.dat")[:3000,:]
-PCA_test_ph = np.loadtxt("../datasets/PCA_test_s0.dat")
+PCA_train_ph = np.loadtxt("../datasets/PCA_train_s2_0.dat")[:,:]
+PCA_test_ph = np.loadtxt("../datasets/PCA_test_s2_0.dat")
 
 print("Loaded "+ str(train_theta.shape[0]+test_theta.shape[0])+" data with ",PCA_test_ph.shape[1]," features")
 
@@ -32,28 +34,75 @@ PCA_train_ph = np.divide(PCA_train_ph,max_ph)
 PCA_test_ph = np.divide(PCA_test_ph,max_ph)
 PCA_fit_ph = np.zeros(PCA_test_ph.shape)
 
+
+	#plotting with curves
+N_step = 30
+q_step = 1.6/float(N_step)
+q_start = -0.8
+plt.figure()
+for k in range(N_step):
+	q_min = k*q_step + q_start
+	q_max = (k+1)*q_step + q_start
+	indices = np.where(np.logical_and(train_theta[: ,1]>q_min, train_theta[: ,1]<q_max))[0]
+	plt.plot(train_theta[indices,0], PCA_train_ph[indices,0] , 'o', ms =2,label = str(q_min))
+q_step = 4./float(N_step)
+q_start = 1.
+plt.legend()
+plt.figure()
+for k in range(N_step):
+	q_min = k*q_step + q_start
+	q_max = (k+1)*q_step + q_start
+	indices = np.where(np.logical_and(train_theta[: ,0]>q_min, train_theta[: ,0]<q_max))[0]
+	plt.plot(train_theta[indices,1], PCA_train_ph[indices,0] , 'o', ms =2,label = str(q_min))
+
+plt.show()
+#train_theta = train_theta[:,1].reshape((train_theta.shape[0],1))
+
 ##############################
 #	Model with K means + linear fit...
 # This is a good idea but doesn't work well in practise: too difficoult to find good clustering divisions...
 N_experts = 300
 
-for comp in range(5):
+for comp in range(1):
 	print(train_theta.shape)
 	model = K_means_linfit(train_theta.shape[1], sigma = 1e-3)
 	D = 1
 	#K = N_experts
-	model.fit(train_theta[:,0], PCA_train_ph[:,comp], K_0 = N_experts ,N_iter=4)
+	model.fit(train_theta, PCA_train_ph[:,comp], K_0 = N_experts ,N_iter=5)
 	mu=model.get_params()[2]
 	#print(mu)
 
 		#uncomment for test	
-	train_theta = test_theta
-	PCA_train_ph = PCA_test_ph
+	#train_theta = test_theta
+	#PCA_train_ph = PCA_test_ph
 
-	train_labels = model.predict(train_theta[:,0], PCA_train_ph[:,comp],  hard_clustering = True)
-	y = model.predict_y(train_theta[:,0])
-	#plt.plot(train_theta[:,0], y , 'o', ms =2,label = "pred")
-	#plt.plot(train_theta[:,0],  PCA_train_ph[:,comp] , 'o', ms =2,label = "true")
+	train_labels = model.predict(train_theta, PCA_train_ph[:,comp],  hard_clustering = True)
+	y = model.predict_y(train_theta, get_labels = False)
+
+		#plotting predictions
+	plt.figure(0)
+	plt.title("q vs PC")
+	plt.plot(train_theta[:,0], y , 'o', ms =2,label = "pred")
+	plt.plot(train_theta[:,0],  PCA_train_ph[:,comp] , 'o', ms =2,label = "true")
+	plt.legend()
+	plt.figure(1)
+	plt.title("s1 vs PC")
+	#plt.plot(train_theta[:,1], y , 'o', ms =2,label = "pred")
+	#plt.plot(train_theta[:,1],  PCA_train_ph[:,comp] , 'o', ms =2,label = "true")
+	plt.legend()
+
+		#3D plot
+	#from mpl_toolkits import mplot3d
+	#fig = plt.figure(figsize=(15,10))
+	#ax = plt.axes(projection='3d')
+	#ax.scatter(train_theta[:,0],train_theta[:,1], PCA_train_ph[:,0],'o', label = "true")
+	#ax.scatter(train_theta[:,0],train_theta[:,1], y,'o', label = "pred")
+	#ax.view_init(60, 35)
+	#plt.show()
+
+
+
+	print("Reconstruction error: ",np.mean(np.square(y-PCA_train_ph[:,comp])))
 
 	#plt.figure(comp, figsize = (15,10))
 	plt.title("Data component #"+str(comp)+" vs q ")
@@ -61,11 +110,11 @@ for comp in range(5):
 		train_theta_k = train_theta[np.where(train_labels == k_cl)[0]]
 		PCA_train_ph_k = PCA_train_ph[np.where(train_labels == k_cl)[0]]
 		#print(k, type(train_theta_k))
-		if len(train_theta_k) !=0 and k_cl%1 ==0:
-			plt.plot(train_theta_k[:,0], PCA_train_ph_k[:,comp], 'o', label = str(k_cl), ms = 2)
+		if len(train_theta_k) !=0:
+			plt.plot(train_theta_k[:,1], PCA_train_ph_k[:,comp], 'o', label = str(k_cl), ms = 2)
 			#y = model.predict_y(train_theta_k[:,0])
 			#plt.plot(train_theta_k[:,0],y , 'o', c = 'b', ms = 2, label = "pred")
-			plt.plot(mu[1,k_cl],mu[0,k_cl],'o', c = 'b', ms = 3)
+			plt.plot(mu[2,k_cl],mu[0,k_cl],'o', c = 'b', ms = 3)
 	#plt.legend()
 	plt.xlabel("q")
 	plt.ylabel("PC projection")

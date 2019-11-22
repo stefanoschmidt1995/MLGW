@@ -336,6 +336,15 @@ class predictor_lin_fit_cluster(object):
 		"""
 		return self.w
 
+	def get_params(self,):
+		"""
+		Return parameters D and K.
+		Output:
+			D	dimensionality of input space
+			K	number of clusters
+		"""
+		return [self.D,self.K]
+
 ###########
 #	K means linear fit
 ###########
@@ -436,7 +445,7 @@ class K_means_linfit(object):
 			probs = np.exp(-0.5*dist) #(N,K)
 			return probs
 
-	def predict_y(self,X, get_labels = True):
+	def predict_y(self,X, get_labels = False):
 		"""
 		Makes the best prediction according to the model:
 			p(y|x) = N(y| (w_z*)*(x-x_0)+y_0, sigma**2)
@@ -494,9 +503,9 @@ class K_means_linfit(object):
 		self.mu = np.zeros((self.D+1,self.K))
 		self.w = np.zeros((self.D,self.K))
 
-		if X_train.shape[0] > 500:
-			X = X_train[:500,:]
-			y = y_train[:500]
+		if X_train.shape[0] > 4*K_0:
+			X = X_train[:4*K_0,:]
+			y = y_train[:4*K_0]
 		else:
 			X = X_train
 			y = y_train
@@ -628,7 +637,8 @@ class K_means_linfit(object):
 				#do batch update!!!
 			old_LL = LL
 			self.EM_step(X_train, y_train)
-			self.__merge_clusters__(X_train, y_train)
+			if self.K > 2:
+				self.__merge_clusters__(X_train, y_train)
 			LL=self.LL(X_train,y_train)
 			history.append(LL)
 			i += 1
@@ -636,7 +646,7 @@ class K_means_linfit(object):
 			if N_iter is not None:
 				if i>= N_iter:
 					break
-			#assert LL - old_LL >=0 #LL must always increase in EM algorithm. Useful check
+			#assert LL - old_LL >=0 #LL must always increase in EM algorithm. Useful check but wrong
 
 
 		return history
@@ -662,23 +672,15 @@ class K_means_linfit(object):
 		for k in range(self.K):
 			X_k = X[np.where(r==k)[0],:] #(N_k, D)
 			y_k = y[np.where(r==k)[0]]
-			if len(X_k) <= 2:
+
+			res_M_step = self.__M_step__(X_k,y_k,k)
+			if res_M_step == False: #checking whether M step was successful
 				print("\tCluster "+str(k)+" empty!")
 				continue
 			else:
 				to_save.append(k)
-
-			self.__M_step__(X_k,y_k,k)
-			LL[k] = self.LL(X_k,y_k)
+				LL[k] = self.LL(X_k,y_k)
 			#print("\tLL cluster "+str(k)+" with center ", self.mu[1,k],": ", self.LL(X_k,y_k))
-
-		#worst_cl = np.argmin(LL)
-		#print(np.abs(LL[worst_cl] - np.mean(LL)), np.mean(-LL))
-		#if np.abs(LL[worst_cl] - np.mean(LL)) /np.mean(-LL) > .5:
-			#pass
-			#to_save.remove(worst_cl)
-			#self.__split_cluster__(worst_cl,X,y)
-			#self.EM_step(X,y)
 		
 		self.mu = self.mu[:,to_save]
 		self.w = self.w[:,to_save]
@@ -696,7 +698,12 @@ class K_means_linfit(object):
 			X_k (N,D)	data within k-th cluster
 			y_k (N,D)	targets within k-th cluster
 			k			number of cluster to consider
+		Output:
+			res (bool)	whether M step was successful
 		"""
+		if X_k.shape[0] <= 2: #too few data in the cluster to perform M step
+			return False
+
 		#updating centroid k
 		data = np.vstack((y_k,X_k.T)).T
 		mu_index = np.argmin(np.linalg.norm(data - np.mean(data, axis =0)))
@@ -709,10 +716,13 @@ class K_means_linfit(object):
 		if X_k.shape[1] == 1:
 			cov_mat = np.var(X_k).reshape((1,1)) * X_k.shape[0]
 		else:
-			cov_mat = np.cov(X_k) * X_k.shape[0] #(D,D)
+			cov_mat = np.cov(X_k, rowvar = False) * X_k.shape[0] #(D,D)
 		s_0 = np.diag(np.var(X_k, axis =0)) / np.power(self.K,1./self.D) #(D,D) #prior on variance to prevent overfitting
 		cov_mat = (s_0 + cov_mat)/(X_k.shape[0] + 2*(self.D+2))
 		#print(X_k, cov_mat)
+		if np.linalg.matrix_rank(cov_mat) < self.D:
+			return False #matrix not invertible: M step cannot be performed
+
 		self.lambda_k[k] = np.linalg.inv(cov_mat)
 
 				#doing linear fit for w (fitting differences between cluster centers)
@@ -726,7 +736,7 @@ class K_means_linfit(object):
 		res = scipy.optimize.fmin_bfgs(L1_loss, x0 = init, disp = False) 
 		self.w[:,k] = res
 
-		return
+		return True
 
 	def __split_cluster__(self, k, X, y):
 		"""

@@ -7,7 +7,10 @@ from GW_helper import *
 import matplotlib.pyplot as plt
 from ML_routines import *
 
-create_dataset(5000, N_grid = 2048, filename = "../datasets/GW_std_dataset_s0.dat", q_max = 5, spin_mag_max = 0., f_high = 1000, f_step = 5e-2, f_max = None, f_min =None, lal_approximant = "IMRPhenomPv2")
+create_dataset(5000, N_grid = 2048, filename = "../datasets/GW_std_dataset_s_const.dat",
+                q_range = (1.,5.), s1_range = 0.58, s2_range = -0.83,
+				log_space = True,
+                f_high = 1000, f_step = 5e-2, f_max = None, f_min =None, lal_approximant = "IMRPhenomPv2")
 quit()
 theta_vector, amp_dataset, ph_dataset, frequencies = load_dataset("../datasets/GW_std_temp.dat", shuffle=False, N_data = None) #loading
 

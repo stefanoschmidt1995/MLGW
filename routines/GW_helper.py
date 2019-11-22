@@ -284,7 +284,7 @@ def transform_dataset(theta_vector, amp_dataset, ph_dataset, w_vector, f_vector,
 
 	return new_amp_dataset, new_ph_dataset
 
-def create_dataset(N_data, N_grid = None, filename = None, q_max = 18, spin_mag_max = 0.9, f_high = 2000, f_step = 1e-2, f_max = None, f_min =None, lal_approximant = "IMRPhenomPv2"):
+def create_dataset(N_data, N_grid = None, filename = None, q_range = (1.,5.), s1_range = (-0.8,0.8), s2_range = (-0.8,0.8), log_space = True, f_high = 2000, f_step = 1e-2, f_max = None, f_min =None, lal_approximant = "IMRPhenomPv2"):
 	"""
 	Create a dataset for training a ML model to fit GW waveforms.
 	The dataset consists in 3 parameters theta=(q, spin1z, spin2z) associated to the waveform computed in frequency domain for a grid of N_grid points in the range given by the user.
@@ -300,8 +300,10 @@ def create_dataset(N_data, N_grid = None, filename = None, q_max = 18, spin_mag_
 		N_data			size of dataset
 		N_grid			number of points to be sampled in the grid (if None every point generated is saved)
 		filename		name of the file to save dataset in (If is None, nothing is saved on a file)
-		q_max			maximum mass ratio q to be considered (>1)
-		spin_mag_max	maximum spin magnitude to be considered (>0) (dangerous: for high q actual spin_mag_max is lower)
+		q_range			tuple with range for random q values. if single value, q is kept fixed at that value
+		spin_mag_max_1	tuple with range for random spin #1 values. if single value, s1 is kept fixed at that value
+		spin_mag_max_2	tuple with range for random spin #1 values. if single value, s2 is kept fixed at that value
+		log_space		whether grid should be computed in logspace
 		f_high			highest frequency to compute
 		f_step			step considered for computation of waveforms
 		f_max			maximum frequency returned to the user (if None is the same as f_max)
@@ -316,16 +318,15 @@ def create_dataset(N_data, N_grid = None, filename = None, q_max = 18, spin_mag_
 			ph_dataset (N_data,N_grid)	dataset with phases
 			frequencies (N_grid,)		vector holding frequencies at which waves are evaluated
 	"""
-	f_low = 20
+	f_low = 20.
 	if f_max is None:
 		f_max = f_high
 	if f_min is None:
 		f_min = f_low
-	spin_mag_max = np.abs(spin_mag_max)
 	K = int((f_max-f_min)/f_step) #number of data points to be taken from the returned vector
 	if N_grid is None:
 		N_grid = K
-	frequencies = np.arange(f_low, f_max, f_step)
+	full_freq = np.arange(f_low, f_max, f_step) #full frequency vector as returned by lal
 	m2 = 10.
 	d=1.
 	LALpars = lal.CreateDict()
@@ -336,9 +337,13 @@ def create_dataset(N_data, N_grid = None, filename = None, q_max = 18, spin_mag_
 	temp_ph = np.zeros((N_grid,))
 	temp_theta = np.zeros((3,))
 
-		#setting frequencies in the vector
-	freq_to_choose = np.arange(0, K, K/N_grid).astype(int) #choosing proper indices s.t. dataset holds N_grid points
-	frequencies = frequencies[freq_to_choose] #setting only frequencies to be chosen
+		#setting frequencies to be returned to user
+	if log_space:
+		frequencies = np.logspace(np.log10(f_min), np.log10(f_max), N_grid)
+	else:
+		frequencies = np.linspace(f_min, f_max, N_grid)
+		#freq_to_choose = np.arange(0, K, K/N_grid).astype(int) #choosing proper indices s.t. dataset holds N_grid points
+		#frequencies = full_freq[freq_to_choose] #setting only frequencies to be chosen
 
 	if filename is not None: #doing header if file is empty - nothing otherwise
 		if not os.path.isfile(filename): #file doesn't exist: must be created with proper header
@@ -346,7 +351,7 @@ def create_dataset(N_data, N_grid = None, filename = None, q_max = 18, spin_mag_
 			print("New file ", filename, " created")
 			freq_header = np.concatenate((np.zeros((3,)), frequencies, frequencies) )
 			freq_header = np.reshape(freq_header, (1,len(freq_header)))
-			np.savetxt(filebuff, freq_header, header = "row: theta 3 | amp "+str(freq_to_choose.shape[0])+"| ph "+str(freq_to_choose.shape[0])+"\nN_grid = "+str(N_grid)+" | f_step ="+str(f_step)+" | q_max = "+str(q_max)+" | spin_mag_max = "+str(spin_mag_max), newline = '\n')
+			np.savetxt(filebuff, freq_header, header = "row: theta 3 | amp "+str(frequencies.shape[0])+"| ph "+str(frequencies.shape[0])+"\nN_grid = "+str(N_grid)+" | f_step ="+str(f_step)+" | q_range = "+str(q_range)+" | s1_range = "+str(s1_range)+" | s2_range = "+str(s2_range), newline = '\n')
 		else:
 			filebuff = open(filename,'a')
 
@@ -358,9 +363,21 @@ def create_dataset(N_data, N_grid = None, filename = None, q_max = 18, spin_mag_
 	for i in range(N_data): #loop on data to be created
 		if i%50 == 0 and i != 0:
 			print("Generated WF ", i)
-		m1 = 	np.random.uniform(1,q_max) * m2
-		spin1z = np.random.uniform(-spin_mag_max,spin_mag_max)
-		spin2z = np.random.uniform(-spin_mag_max,spin_mag_max)
+
+			#setting value for data
+		if isinstance(q_range, tuple):
+			m1 = np.random.uniform(q_range[0],q_range[1]) * m2
+		else:
+			m1 = q_range
+		if isinstance(s1_range, tuple):
+			spin1z = np.random.uniform(s1_range[0],s1_range[1])
+		else:
+			spin1z = s1_range
+		if isinstance(s2_range, tuple):
+			spin2z = np.random.uniform(s2_range[0],s2_range[1])
+		else:
+			spin2z = s2_range
+
 
 			#getting the wave
 		hptilde, hctilde = lalsim.SimInspiralChooseFDWaveform( #where is its definition and documentation????
@@ -370,7 +387,7 @@ def create_dataset(N_data, N_grid = None, filename = None, q_max = 18, spin_mag_
 			0, 0, spin2z, #spin vector 2
 			d*1e6*lalsim.lal.PC_SI, #distance to source
 			0, #inclination
-			0, #something I don't know
+			0, #phi ref
 			0, #longAscNodes
 			0, #eccentricity
 			0, #meanPerAno
@@ -383,17 +400,20 @@ def create_dataset(N_data, N_grid = None, filename = None, q_max = 18, spin_mag_
 			)
 		h = np.array(hptilde.data.data)+1j*np.array(hctilde.data.data) #complex waveform
 		temp_theta = [m1/m2, spin1z, spin2z]
-		temp_amp = (np.abs(h)[int(f_min/f_step):int(f_max/f_step)].real)[freq_to_choose]
-		temp_ph = (np.unwrap(np.angle(h))[int(f_min/f_step):int(f_max/f_step)].real)[freq_to_choose]  #why unwrap?????
-		#temp_ph = (np.unwrap(np.arctan2(np.array(hctilde.data.data[int(f_min/f_step):int(f_max/f_step)], dtype = np.float64),np.array(hptilde.data.data[int(f_min/f_step):int(f_max/f_step)], dtype = np.float64))))[freq_to_choose]  #why unwrap?????
+		temp_amp = (np.abs(h)[int(f_min/f_step):int(f_max/f_step)].real)
+		temp_ph = (np.unwrap(np.angle(h))[int(f_min/f_step):int(f_max/f_step)].real)
+
+			#bringing waves on the chosen grid
+		temp_amp = np.interp(frequencies, full_freq, temp_amp)
+		temp_ph = np.interp(frequencies, full_freq, temp_ph)
+		#temp_ph = temp_ph[freq_to_choose]; temp_amp = temp_amp[freq_to_choose] #old version of code
+
+		temp_ph = temp_ph - temp_ph[0] #all frequencies are shifted by a constant to make the wave start at zero phase!!!! IMPORTANT
 
 			#removing spourious gaps (if present)
-		ph_diff = np.concatenate((temp_ph[1:],np.array([temp_ph[-1]]))) - temp_ph
-		#temp_amp = ph_diff #debug (remove it!!!)
-			#looking for big discontinuities in the second half of the grid
-		index_max = np.argmax(np.abs(ph_diff[int(N_grid/2):]))+int(N_grid/2) 
-		if np.abs(ph_diff[index_max-1]) * np.abs(ph_diff[index_max+1]) < 1e-3:
-			temp_ph[index_max:] = temp_ph[index_max-1]
+		(index,) = np.where(temp_amp/temp_amp[0] < 5e-3) #there should be a way to choose right threshold...
+		if len(index) >0:
+			temp_ph[index] = temp_ph[index[0]-1]
 
 		if filename is None:
 			amp_dataset[i,:] = temp_amp  #putting waveform in the dataset to return

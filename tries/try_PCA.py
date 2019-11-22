@@ -9,7 +9,7 @@ from GW_helper import *
 import matplotlib.pyplot as plt
 from ML_routines import *
 
-theta_vector, amp_dataset, ph_dataset, frequencies = load_dataset("../datasets/GW_std_dataset_s0.dat", shuffle=False, N_grid = None) #loading dataset
+theta_vector, amp_dataset, ph_dataset, frequencies = load_dataset("../datasets/GW_std_dataset_s_const.dat", shuffle=False, N_grid = None) #loading dataset
 
 print("Loaded data with shape: "+ str(ph_dataset.shape))
 
@@ -22,48 +22,45 @@ train_theta, test_theta, train_ph, test_ph   = make_set_split(theta_vector, ph_d
 
 		#DOING PCA
 print("#####PCA#####")
-K_ph = 10 #30 apparently works well for PCA...
+K_ph = 6 #30 apparently works well for PCA...
 noise = 0.0
 print("   K = ",K_ph, " | N_grid = ", test_ph.shape[1]," | noise ", str(noise))
+
 	#phase
 ph_PCA = PCA_model()
 E = ph_PCA.fit_model(train_ph, K_ph, scale_data=False)
 print("PCA eigenvalues: ", E)
-ph_PCA.save_model("../datasets/PCA_std_model_s0.dat")
-#ph_PCA.load_model("PCA_model.dat")
+ph_PCA.save_model("../datasets/PCA_model_s_const.dat")
+ph_PCA.load_model("../datasets/PCA_model_s_const.dat")
 red_train_ph = ph_PCA.reduce_data(train_ph)
 red_PCA_ph = ph_PCA.reduce_data(test_ph)
 
-np.savetxt("../datasets/PCA_train_theta.dat", train_theta)
-np.savetxt("../datasets/PCA_test_theta.dat", test_theta)
-np.savetxt("../datasets/PCA_train_s0.dat", red_train_ph)
-np.savetxt("../datasets/PCA_test_s0.dat", red_PCA_ph)
+np.savetxt("../datasets/PCA_train_theta_s_const.dat", train_theta)
+np.savetxt("../datasets/PCA_test_theta_s_const.dat", test_theta)
+np.savetxt("../datasets/PCA_train_s_const.dat", red_train_ph)
+np.savetxt("../datasets/PCA_test_s_const.dat", red_PCA_ph)
 
 	#plotting PC projection vs. q
 for k in range(K_ph):
 	plt.figure(k, figsize=(15,10))
-	plt.title("Component # "+str(k))
+	plt.title("Component # "+str(k)+"| s = "+str(train_theta[0,1:]))
 	plt.plot(train_theta[:,0], red_train_ph[:,k], 'o', ms = 1)
 	plt.xlabel("q")
 	plt.ylabel("PC value")
 #	plt.legend()
-	plt.savefig("../pictures/PCA_comp_s0/comp_"+str(k)+".jpeg")
+	plt.savefig("../pictures/PCA_comp_s_const/comp_"+str(k)+".jpeg")
 	plt.close(k)
 plt.show()
 
 quit()
-
-	#preprocessing data doesn't affect the performance
-logreg_ph = logreg_model(test_theta.shape[1],red_train_ph.shape[1], False)
-red_PCA_ph = logreg_ph.preprocess_data(red_PCA_ph)[0]
-red_PCA_ph = logreg_ph.un_preprocess_data(red_PCA_ph)
 
 	#adding some noise to PCA values
 red_PCA_ph_old = red_PCA_ph
 red_PCA_ph = np.multiply(red_PCA_ph, np.random.normal(1, noise,red_PCA_ph.shape))
 error_ph = np.linalg.norm(red_PCA_ph - red_PCA_ph_old, ord= 'fro')/(test_ph.shape[0]*np.std(red_PCA_ph))
 noise_est = np.divide(red_PCA_ph - red_PCA_ph_old, red_PCA_ph_old)
-print("Fit reconstruction error for reduced coefficients: ", error_ph, np.mean(noise_est), np.std(noise_est))
+#print("Fit reconstruction error for reduced coefficients: ", error_ph, np.mean(noise_est), np.std(noise_est))
+
 rec_PCA_ph = ph_PCA.reconstruct_data(red_PCA_ph) #reconstructed data for phase
 
 error_ph = np.linalg.norm(test_ph - rec_PCA_ph, ord= 'fro')/(test_ph.shape[0])#*np.std(test_ph))

@@ -118,6 +118,11 @@ class MoE_model(object):
 			X = np.reshape(X, (1,X.shape[0]))
 		
 		pi = self.gating.predict(X) #p(z_i = k|x_i) (N,K)
+
+		#indices = np.argmax(pi, axis =1)
+		#for i in range(pi.shape[0]):
+		#	pi[i,indices[i]] = 1.
+
 		pi = np.divide(pi.T, np.sum(pi, axis = 1)).T
 		res = np.multiply(pi, self.experts_predictions(X))
 		return np.sum(res, axis = 1)
@@ -132,8 +137,8 @@ class MoE_model(object):
 			pi_k (N,K)	N(y_i| <w_k,x_i>)
 		"""
 		gaussians_mean = self.experts_predictions(X) #(N,K) X*W + b
-		y = np.repeat( np.reshape(y, (len(y),1)), self.K, axis = 1)
-		#print('y-mean: ', y - gaussians_mean)
+		y = np.repeat( np.reshape(y, (len(y),1)), self.K, axis = 1) #(N,K)
+
 		#print('sigma: ', self.sigma)
 		res = scipy.stats.norm.pdf( np.divide((y - gaussians_mean), self.sigma) ) #(N,K)
 		return np.divide(res, self.sigma) #normalizing result
@@ -156,9 +161,31 @@ class MoE_model(object):
 		#res[np.where(res==0)] = 1e-5
 		res = np.log(np.sum(res,axis=1)) #(N,)
 		return np.sum(res) / X.shape[0]
-		
 
-	def fit(self, X_train, y_train, N_iter=None, threshold = 1e-2, args= []):
+	def __initialise__(self, X, args):
+		"""
+		Having seen the data makes a smart first guess for responsibilities and fit gating function model with those responbility.
+		Input:
+			X (N,D)		train data
+			args		arguments to be given to fit method of gating function
+		"""
+			#getting centroids
+		indices = np.random.choice(range(X.shape[0]), size = self.K, replace = False)
+		centroids = X[indices,:] #(K,D) #K centroids are chosen
+			#getting variances
+		var = np.var(X, axis = 0) #(D,)
+
+			#computing initial responsibilities
+		r_0 = np.zeros((X.shape[0],self.K))
+		for k in range(self.K):
+			r_0[:,k] = np.divide(np.square(X - centroids[k,:]), var)[:,0]
+		r_0 = np.divide(r_0.T, np.sum(r_0,axis=1)).T
+
+		self.gating.fit(X,r_0, *args)
+
+		return r_0
+
+	def fit(self, X_train, y_train, N_iter=None, threshold = 1e-2, args= [], verbose = False):
 		"""
 		Fit the model using EM algorithm.
 		Input:
@@ -166,7 +193,8 @@ class MoE_model(object):
 			y_train (N,)	train targets for regression
 			N_iter			Maximum number of iteration (if None only threshold is applied)
 			threshold		Minimum change in LL below which algorithm is terminated
-			args			some arguments to pass to fit method of gating function
+			args			arguments to be given to fit method of gating function
+			verbose 		whether to print values during fit
 		Output:
 			history		list of value for the LL of the model at every epoch
 		"""
@@ -178,6 +206,10 @@ class MoE_model(object):
 		if threshold is None:
 			threshold = 0
 
+			#initialization
+		r_0 = self.__initialise__(X_train,args)
+		self.EM_step(X_train,y_train, r_0, args)
+
 		i = 0
 		old_LL = -1e5
 		LL = -1e4
@@ -185,30 +217,38 @@ class MoE_model(object):
 		while(LL - old_LL > threshold ):
 				#do batch update!!!
 			old_LL = LL
-			self.EM_step(X_train,y_train, args)
+			gat_history = self.EM_step(X_train,y_train, args = args)
 			LL=self.log_likelihood(X_train, y_train)
 			history.append(LL)
 			i += 1
-			print("LL at iter "+str(i)+"= ",LL)
+			if verbose:
+				print("LL at iter "+str(i)+"= ",LL)
+				print("   Gating loss: ", gat_history[0], gat_history[-1])
 			if N_iter is not None:
 				if i>= N_iter:
 					break
 			assert LL - old_LL >=0 #LL must always increase in EM algorithm. Useful check
 		return history
 
-	def EM_step(self, X, y, args = []):
+	def EM_step(self, X, y, r = None, args = []):
 		"""
 		Does one EM update.
 		Input:
 			X (N,D)	train data
 			y (N,)	train targets for regression
+			r (N,K)	responsibilities for the E step (if None they are computed with method get_responsibilities)
 			args	some arguments to pass to fit method of gating function
+		Output:
+			gat_history		history for the gating function fit
 		"""
 			#E step
-		r= self.get_responsibilities(X,y) #(N,K)
+		if r is None:
+			r= self.get_responsibilities(X,y) #(N,K)
 	
 		#print("r: ",r)#,"\npi: ", self.expert_likelihood(X, y))
-		#plt.plot(X[:,1],r, 'o', lw = .1)
+		#plt.plot(X[:,0],r, 'o', ms = 1, label = "true")
+		#plt.plot(X[:,0], self.get_gating_probs(X), 'o', ms = 1, label = "pred")
+		#plt.legend()
 		#plt.show()
 
 			#M step
@@ -220,7 +260,6 @@ class MoE_model(object):
 			X_temp = X
 		for k in range(self.K):
 			R = np.diag(r[:,k]) #(N,N)
-			#print(np.matmul(X_temp.T,np.matmul(R,X_temp)), np.matmul(X_temp.T,np.matmul(R,X_temp)).shape) #debug
 			temp = np.linalg.inv(np.matmul(X_temp.T,np.matmul(R,X_temp))) #(D,D)/(D+1,D+1)
 			temp = np.matmul(np.matmul(temp, X_temp.T),R) #(D,N)/(D+1,N)
 			temp = np.matmul(temp, y) #(D,)/(D+1,)
@@ -233,8 +272,8 @@ class MoE_model(object):
 			self.sigma[k] = np.sqrt(sigma_square)
 
 			#M step for gating functions
-		self.gating.fit(X,r, *args)
-		return
+		gat_history = self.gating.fit(X,r, *args)
+		return gat_history
 
 	def get_responsibilities(self,X,y):
 		"""
@@ -392,7 +431,8 @@ class softmax_regression(object):
 		reg_constant = data[2]
 
 		mu = self.predict(X, V) #(N,K)
-		LL = -(np.sum(np.multiply(y, np.log(mu))) / X.shape[0]) + reg_constant * np.sum(np.square(V))
+			#mu must be regularized in logarithm. Otherwise it might give Nan if a label prob is 0
+		LL = -(np.sum(np.multiply(y, np.log(mu+1e-40))) / X.shape[0]) + reg_constant * np.sum(np.square(V))
 		return LL
 
 	def grad(self, V, data):
@@ -413,9 +453,10 @@ class softmax_regression(object):
 		reg_constant = data[2] #regularizer
 		
 		mu = self.predict(X, V) #(N,K)
-		grad = np.matmul(X.T,(mu-y)) / X.shape[0] + reg_constant*V #(N,D).T (N,K) = (D,K)
+		delta = (mu - y) + 1e-40
+		grad = np.matmul(X.T,delta) / X.shape[0] + reg_constant*V #(N,D).T (N,K) = (D,K)
 		if to_reshape:
-			return np.reshape(grad, (self.D*self.K,))
+			return np.reshape(grad, ((self.D+1)*self.K,))
 		else:
 			return grad
 	
@@ -428,17 +469,20 @@ class softmax_regression(object):
 		"""
 		return self.V
 
-	def fit(self, X_train, y_train, N_iter = 30, learning_rate = 1e-3, reg_constant = 1e-2, verbose = False):
+	def fit(self, X_train, y_train, opt = "adam", reg_constant = 1e-4, verbose = False, N_iter = 30, learning_rate = 1e-3):
 		"""
-		Fit the model using gradient descent with adaptive gradient provided by adam.
-		See for adam: https://arxiv.org/abs/1412.6980v8
+		Fit the model using gradient descent.
+		Can use adam for adaptive step: https://arxiv.org/abs/1412.6980v8
+		Can use bfgs method provided by scipy: https://docs.scipy.org/doc/scipy/reference/generated/scipy.optimize.fmin_bfgs.html
+		Using a small regularizer can help convergence (especially for bfgs).
 		Input:
 			X_train (N,D)	train data
 			y_train (N,)	train targets for regression
-			N_iter			number of iteration to be performed
-			learning_rate	learning rate used for gradient update
+			opt				which optimizer to use ("adam" or "bsfg")
 			reg_constant	regularization constants
 			verbose			whether to print values of loss function at every train step
+			N_iter			number of iteration to be performed (doesn't apply to bfgs)
+			learning_rate	learning rate used for gradient update (doesn't apply to bfgs)
 		Output:
 			history		list of value for the loss function
 		"""
@@ -447,10 +491,45 @@ class softmax_regression(object):
 		if X_train.shape[1] == self.D:
 			X_train = np.concatenate((np.ones((X_train.shape[0],1)), X_train), axis = 1) #not necessary but might be useful to speed up the code
 
-		###### you can try to use here scipy.optimize.fmin_bfgs() to make things better
-
-		args = [X_train, y_train, reg_constant] #arguments for loss and gradients
+		args = (X_train, y_train, reg_constant) #arguments for loss and gradients
 		
+		if opt == "adam":
+			return self.__optimize_adam__(args, N_iter, learning_rate, verbose)
+		if opt == "bfgs":
+			return self.__optimise_bfgs__(args, verbose)
+
+	def __optimise_bfgs__(self, args, verbose):
+		"""
+		Wrapper to scipy.optimize.fmin_bfgs (https://docs.scipy.org/doc/scipy/reference/generated/scipy.optimize.fmin_bfgs.html) to minimise loss function.
+		Input:
+			args		tuple of arguments to be passed to loss and gradient [X_train (N,D), y_train (N,K), lambda ()]
+			verbose		whether to print scipy convergence message
+		Output:
+			history		initial and final value of loss function
+		"""
+		loss_0 = self.loss(self.V, args)
+
+			#wrapper to self.loss and self.grad to make them suitable for scipy
+		loss = lambda V, a,b,c: self.loss(V,(a,b,c))
+		grad = lambda V, a,b,c: self.grad(V,(a,b,c))
+
+		res = scipy.optimize.fmin_bfgs(loss, self.V.reshape(((self.D+1)*self.K,)), grad, args , disp = verbose)
+		self.V = res.reshape((self.D+1,self.K))
+		return [loss_0, self.loss(self.V, args)]
+
+
+	def __optimize_adam__(self, args, N_iter, learning_rate, verbose):
+		"""
+		Implements optimizer with to perform adaptive step gradient descent.
+		The implementation follows: https://arxiv.org/abs/1412.6980v8
+		Input:
+			args			tuple of arguments to be passed to loss and gradient [X_train (N,D), y_train (N,K), lambda ()]
+			N_iter			number of iteration to be performed
+			learning_rate	learning rate to be set for adam
+			verbose			whether to print loss at each step
+		Output:
+			history		list of loss function value at each iteration step
+		"""
 			#setting parameters for learning rate
 		beta1 = .9		#forgetting factor for first moment
 		beta2 = .999	#forgetting factor for second moment
@@ -470,7 +549,7 @@ class softmax_regression(object):
 
 			history.append(self.loss(self.V, args))
 			if verbose:
-				print(history[i])
+				print("Loss at iter= ",i, history[i])
 		return history
 
 class GDA(object):
