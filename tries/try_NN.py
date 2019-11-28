@@ -1,147 +1,95 @@
 ###################
-#	Some tries of fitting GW generation model using PCA+ logistic regression
+#	Some tries of fitting GW generation model using a NN
 #	Apparently it works quite well
 ###################
-
+import matplotlib.pyplot as plt 
+import numpy as np
 import sys
-sys.path.insert(1, '/home/stefano/Desktop/Stefano/scuola/uni/tesi_magistrale/code/routines')
-from GW_helper import *
-import matplotlib.pyplot as plt
-from ML_routines import *
+sys.path.insert(1, '../routines') #folder in which every relevant routine is saved
+
+from GW_helper import * 	#routines for dealing with datasets
+from ML_routines import *	#PCA model
+from EM_MoE import *		#MoE model
 import keras
 
-theta_vector, amp_dataset, ph_dataset, frequencies = load_dataset("../datasets/GW_std_dataset.dat", shuffle = False) #loading dataset
-PCA_train_ph = np.loadtxt("../datasets/PCA_train.dat")
-PCA_test_ph = np.loadtxt("../datasets/PCA_test.dat")
+    #loading PCA datasets
+N_train = 70000
+train_theta = np.loadtxt("../datasets/PCA_train_theta_full.dat")[:N_train,:]
+test_theta = np.loadtxt("../datasets/PCA_test_theta_full.dat")
+PCA_train_ph = np.loadtxt("../datasets/PCA_train_full_ph.dat")[:N_train,:]
+PCA_test_ph = np.loadtxt("../datasets/PCA_test_full_ph.dat")
+K_PCA_to_fit = 11
 
-	#adding extra features for non linear regression
-#extra_features = np.stack((np.multiply(theta_vector[:,0], theta_vector[:,0]), np.multiply(theta_vector[:,0], theta_vector[:,1]),  np.multiply(theta_vector[:,1], theta_vector[:,2])))
-extra_features = np.reshape(np.power(theta_vector[:,0], -1), (theta_vector.shape[0],1))
-theta_vector = np.concatenate((theta_vector, extra_features), axis = 1)
-
-train_frac = .8
-
-train_theta, test_theta, train_amp, test_amp = make_set_split(theta_vector, amp_dataset, train_frac, 1e-21)
-train_theta, test_theta, train_ph, test_ph   = make_set_split(theta_vector, ph_dataset, train_frac, 1.)
-
-del amp_dataset, ph_dataset, theta_vector
-
-print("Loaded "+ str(train_theta.shape[0]+test_theta.shape[0])+" data with ",PCA_test_ph.shape[1]," features")
-
-		#DOING PCA
-print("#####PCA#####")
-K_ph = PCA_train_ph.shape[1]
-ph_PCA = PCA_model()
-ph_PCA.load_model("../datasets/PCA_std_model.dat")
-
-rec_PCA_test_ph = ph_PCA.reconstruct_data(PCA_test_ph) #reconstructed data for phase
-error_ph = np.linalg.norm(test_ph - rec_PCA_test_ph, ord= 'fro')/(test_ph.shape[0]*np.std(test_ph))
-print("Reconstruction error for phase with PCA: ",error_ph)
-
-F_PCA = compute_mismatch(test_amp, test_ph, test_amp, rec_PCA_test_ph)
-print("Mismatch PCA avg: ",np.mean(F_PCA))
-
-	#preprocessing data
-max_ph = np.max(np.abs(PCA_train_ph), axis = 0)
-PCA_train_ph = np.divide(PCA_train_ph,max_ph)
-PCA_test_ph = np.divide(PCA_test_ph,max_ph)
+	#adding extra features for basis function regression
+new_features = ["00", "11","22", "01", "02", "12"]
+#,"000", "001", "002", "011", "012", "022", "111", "112", "122", "222"]
+#,"000","111","222", "001"
+#,"0000", "0001","0002", "0011", "0022","0012","0111","0112", "0122", "0222","1111", "1112", "1122", "1222", "2222"]
+outfile = open("./saved_models_full_ph/ph_feat", "w+")
+outfile.write("\n".join(new_features))
+outfile.close()
 
 
+train_theta = add_extra_features(train_theta, new_features)
+test_theta = add_extra_features(test_theta, new_features)
 
-		#FITTING WITH NN
-print("#####NN#####")
-N_epochs = 80
+print(train_theta.shape, test_theta.shape)
 
-	#phase
+print("Loaded "+ str(train_theta.shape[0]+test_theta.shape[0])+
+      " data with ", PCA_train_ph.shape[1]," PCA components")
+print("Spins are allowed to vary within domain [-0.8,0.8]x[-0.8,0.8]")
 
-	#doing a keras model to make things better...
-model = keras.models.Sequential()
-model.add(keras.layers.Dense(8, input_shape=(train_theta.shape[1],), activation= "linear"))
-model.add(keras.layers.Dense(32,activation = 'relu'))
-model.add(keras.layers.Dense(64,activation = 'relu'))
-#model.add(keras.layers.Dense(64,activation = 'relu'))
-model.add(keras.layers.Dense(32,activation = 'relu'))
-model.add(keras.layers.Dense(1, activation = "linear"))
-model.summary()
 
-	# compile the model choosing optimizer, loss and metrics objects & fitting
+   #setting up an EM model for each component
+NN_models = 	[]
+load_list =	[]#	[0   ,1   ,2   ,3   ,4   ,5   ,6   ,7   ,8   ,9   ,10  ,11  ,12  ,13  ,14  ]  #indices of models to be loaded from file
+
+#for 4-th only
+N_epochs = 		[150  ,200  ,300  ,200  ,200  ,300  ,200  ,200 ,200  ,200  ,205  ,150  ,150  ,250  ,250  ]  #number of experts for each model
+
+
+D = train_theta.shape[1] #number of independent variables
+
+for k in range(6,K_PCA_to_fit):
+	print("### Comp ", k)
+		#useless variables for sake of clariness
+	y_train = PCA_train_ph[:,k]
+	y_test = PCA_test_ph[:,k]
+
+	NN_models.append(keras.models.Sequential())
+	NN_models[-1].add(keras.layers.Dense(8, input_shape=(train_theta.shape[1],), activation= "linear"))
+	NN_models[-1].add(keras.layers.Dense(32,activation = 'sigmoid'))
+#	NN_models[-1].add(keras.layers.Dense(64,activation = 'relu'))
+	#NN_models[-1].add(keras.layers.Dense(64,activation = 'relu'))
+	NN_models[-1].add(keras.layers.Dense(32,activation = 'sigmoid'))
+	NN_models[-1].add(keras.layers.Dense(1, activation = "linear"))
+	NN_models[-1].summary()
+
+		# compile the model choosing optimizer, loss and metrics objects & fitting
 #	opt = keras.optimizers.SGD(lr=0.01, momentum=0.01, decay=0.1, nesterov=False)
-opt = 'rmsprop'
-	#pre-fitting with mse
-model.compile(optimizer=opt, loss= 'mse')
-history = model.fit(x=train_theta, y=PCA_train_ph[:,0], batch_size=64, epochs=50, shuffle=True, verbose=1)
+	opt = 'rmsprop'
 
-mse_train = (np.mean(np.square(model.predict(train_theta) - PCA_train_ph[:,0])))#/train_theta.shape[0]
+	if k in load_list:
+		NN_models[-1] = keras.models.load_model("./saved_models_full_ph_NN/NN_"+str(k))
+		print("Loaded model for comp: ", k)
+	else:
+		NN_models[-1].compile(optimizer=opt, loss= 'mse')
+		history = NN_models[-1].fit(x=train_theta, y=y_train, batch_size=64, epochs=N_epochs[k], shuffle=True, verbose=1,  validation_data = (test_theta, y_test))
+		NN_models[-1].save("./saved_models_full_ph_NN/NN_"+str(k))
 
-print("train model loss ", model.evaluate(train_theta, PCA_train_ph[:,0], verbose=0), mse_train)
-print("test model loss ", model.evaluate(test_theta, PCA_test_ph[:,0], verbose =0))
+		#doing some test
+	y_pred = NN_models[-1].predict(test_theta)
+	print("Test square loss for comp "+str(k)+": ",np.sum(np.square(y_pred-y_test))/(y_pred.shape[0]))
 
-for i in range(3):
-	plt.figure(i+3)
-	comp = 0
-	plt.title("Data lowest components #"+str(comp)+" vs param "+str(i))
-	plt.plot(test_theta[:,i], PCA_test_ph[:,comp], 'o',label = 'fitted', ms = 4)
-	plt.plot(test_theta[:,i], model.predict(test_theta), 'o',label = 'true', ms = 4)
-	#plt.plot(test_theta[:,i], red_fit_ph[:,1]-red_test_ph[:,1], 'o',label = 'difference')
-	plt.legend()
-
-plt.show()
-
-
-quit()
-
-print("Doing test")
-		#un_preprocessing data
-PCA_fit_ph = np.multiply(model.predict(),max_ph[0])
-PCA_test_ph = np.multiply(PCA_test_ph,max_ph)
-
-
-red_fit_ph = logreg_ph.un_preprocess_data(model.predict(test_theta)) #for single model
-red_test_ph = logreg_ph.un_preprocess_data(red_test_ph) #un-preprocessing test labels
-
-#plt.quit()
-error_ph = np.linalg.norm(red_test_ph - red_fit_ph, ord= 'fro')/(test_ph.shape[0]*np.std(red_test_ph))
-print("Fit reconstruction error for reduced coefficients: ", error_ph)
-
-rec_fit_ph = ph_PCA.reconstruct_data(red_fit_ph)
-error_ph = np.linalg.norm(test_ph - rec_fit_ph, ord= 'fro')/(test_ph.shape[0]*np.std(test_ph))
-print("Fit reconstruction error for phase: ", error_ph)
-
-plt.figure(2)
-plt.title("Phase with FIT")
-for i in range(2):
-	plt.plot(frequencies, test_ph[i,:], label = 'true |' + str(np.round(test_theta[i,0],2))+","+ str(np.round(test_theta[i,1],2))+","+ str(np.round(test_theta[i,2],2)))
-	plt.plot(frequencies, rec_fit_ph[i,:], label = 'fit')
-plt.legend()
-
-F = compute_mismatch(train_amp[0,:], test_ph, train_amp[0,:], rec_fit_ph) #ty if it's the same F as test!!!
-#F = compute_mismatch(test_amp, test_ph, test_amp, rec_fit_ph)
-#F = compute_mismatch(np.ones(test_ph.shape), test_ph, np.ones(test_ph.shape), rec_fit_ph)
-print("Mismatch fit avg: ",np.mean(F))
-
-plt.show()
-quit()
-
-	#plotting principal components
-plt.figure(5)
-plt.title("Amplitude principal components")
-for i in range(amp_PCA.get_V_matrix().shape[1]):
-	plt.plot(frequencies, amp_PCA.get_V_matrix()[:,i], label=str(i))
-plt.legend()
-
-plt.figure(6)
-plt.title("Phase principal components")
-for i in range(ph_PCA.get_V_matrix().shape[1]):
-	plt.plot(frequencies, ph_PCA.get_V_matrix()[:,i], label=str(i))
-plt.legend()
-
-plt.show()
-
-
-
-
-
-
-
-
+	for i in range(3):
+		plt.figure(i+3*k, figsize=(20,10))
+		plt.title("Component #"+str(k)+" vs q/s1/s2 | index "+str(i))
+		plt.plot(test_theta[:,i], y_test, 'o', ms = 3,label = 'true')
+		plt.plot(test_theta[:,i], y_pred, 'o', ms = 3, label = 'pred')
+		plt.legend()
+		if i ==0 or i==1 or i ==2:
+			#pass
+			plt.savefig("../pictures/PCA_comp_full_ph_NN/fit_"+str(k)+"_vs"+str(i)+".jpeg")
+		plt.close(i*3+k)
+	#plt.show()
 

@@ -6,8 +6,6 @@
 import numpy as np
 from scipy.optimize import minimize
 from scipy.special import expit, logit
-import tensorflow as tf
-import keras.backend as K
 
 ################# LOGREG class
 class logreg_model:
@@ -287,10 +285,10 @@ class PCA_model:
 			print("Model is not fitted yet! There is nothing to save")
 			return None
 		V = self.PCA_params[0] #(D,K)
-		mu = np.reshape(self.PCA_params[1], (len(self.PCA_params[1]),1)) #(D,1)
-		scale_factor = np.zeros(mu.shape)
-		scale_factor.fill(self.PCA_params[2])
-		to_save = np.concatenate((V,mu,scale_factor), axis = 1)
+		mu = (self.PCA_params[1])[:,np.newaxis]#(D,1)
+		max_PC = np.zeros(mu.shape) #(D,1)
+		max_PC[:V.shape[1],0] = self.PCA_params[2] #(K,)
+		to_save = np.concatenate((V,mu,max_PC), axis = 1) #(D, K+2)
 		np.savetxt(filename, to_save)
 		return None 
 
@@ -304,8 +302,8 @@ class PCA_model:
 		data = np.loadtxt(filename)
 		V = data[:,:data.shape[1]-2]
 		mu = data[:,data.shape[1]-2]
-		scale_factor = data[0,data.shape[1]-1]
-		self.PCA_params= [V,mu,scale_factor]
+		max_PC = data[:V.shape[1],data.shape[1]-1]
+		self.PCA_params= [V,mu,max_PC]
 		return None
 
 	def reconstruct_data(self, red_data):
@@ -317,8 +315,9 @@ class PCA_model:
 		Output:
 			data (N,D)		high dimensional reconstruction of data (after inversion of preprocessing)
 		"""
+		red_data = np.multiply(red_data, self.PCA_params[2])
 		data = np.matmul(red_data, self.PCA_params[0].T)
-		data = (data+self.PCA_params[1] )*self.PCA_params[2]
+		data = data+self.PCA_params[1]
 		return data.real
 
 
@@ -330,27 +329,23 @@ class PCA_model:
 		Output:
 			red_data (N,K)	dimensional reduction of preprocessed data
 		"""
-		data = data/self.PCA_params[2] - self.PCA_params[1]
+		data = data - self.PCA_params[1]
 		red_data = np.matmul(data, self.PCA_params[0])
+		red_data = np.divide(red_data, self.PCA_params[2]) #scaling PC to make them o(1)
 		return red_data.real
 
-	def fit_model(self, X, K = None, scale_data=True):
+	def fit_model(self, X, K = None, scale_PC=True):
 		"""
 		Fit the PCA model for the given dataset. Data are done zero mean for each feature and rescaled s.t. are O(1) if scale_data is True.
 		A parameter set is returned holding fitted PCA parameters (projection matrix, data mean and scale factor)
 		Input:
 			X (N,D)		training set
 			K ()		number of principal components
-			scale_data	to state whether data shall be scaled to make them O(1)
+			scale_PC	whether PC should be scaled by their maximum value to make them all O(1)
 		Output:
 			E (K,)	eigenvalues of the first K principal components
 		"""
-		if scale_data:
-			scale_factor = np.sqrt(np.var(X)) #variance gives an estimate for the scale factor
-		else:
-			scale_factor = 1.
-
-		X = X.real/scale_factor
+		X = X.real
 		mu = np.mean(X,0) #(D,)
 		X = X - mu
 
@@ -359,8 +354,13 @@ class PCA_model:
 			K = X.shape[1]
 		E, V = np.linalg.eig(np.dot(X.T, X))
 		idx = np.argsort(E)[::-1]
-		V = V[:, idx[:K]] # D,K
-		self.PCA_params = [V.real, mu, scale_factor]
+		V = V[:, idx[:K]] # (D,K)
+		self.PCA_params = [V.real, mu, np.ones((K,))]
+
+		if scale_PC:
+			red_data = np.matmul(X, self.PCA_params[0]) #(N,K)
+			self.PCA_params[2] = np.max(np.abs(red_data), axis = 0) #(K,)
+
 		return E[:K].real
 
 	def get_V_matrix(self):
@@ -377,7 +377,7 @@ class PCA_model:
 		Returns the parameters of the model
 		Input:
 		Output:
-			PCA_params [V (D,K), mu (D,), scale_factor]	paramters for preprocessing and PCA
+			PCA_params [V (D,K), mu (D,), max_PC (K,)]	paramters for preprocessing and PCA
 		"""
 		return self.PCA_params
 
@@ -424,6 +424,39 @@ def try_fit_logreg(N_data = 1000):
 	quit()
 	return None
 
+################# Extra feature routine
+def add_extra_features(data, feature_list):
+	"""
+	Given a dataset, it enlarge its feature number to make a basis function regression.
+	Features to add must be specified with feature list. Each element in the list is a string in form "ijk" where ijk are feature indices as in numpy array data (repetitions allowed); this represents the new feauture x_new = x_i*x_j*x_k
+	Input:
+		data (N,D)/(N,)			data to augment
+		feature_list (len L)	list of features to add
+	Output:
+		new_data (N,D+L)	data with new feature
+	"""
+	if data.ndim == 1: data = data[:,np.newaxis]
+	if len(feature_list)==0:
+		return data
+
+	new_features = np.zeros((data.shape[0],len(feature_list)))
+	for i in range(len(feature_list)):
+		feat_str = feature_list[i]
+		temp = np.ones((data.shape[0],)) #(N,)
+		if len(feat_str) ==1: continue #single feature is already in the data
+		for k in feat_str:
+			try:
+				temp = np.multiply(temp, data[:,int(k)]) #(N,)
+			except:
+				raise RuntimeWarning("Unproper feature code for feature \""+k+"\": unable to add any the feature. Constant feature is placed instead")
+				temp = np.ones((data.shape[0],))
+				break
+		new_features[:,i] = temp #assign new feature
+
+	new_data = np.concatenate((data, new_features), axis = 1)
+	return new_data
+
+
 ################# tf loss function
 def mismatch_function(logreg_weights, PCA_weights, test_amp):
 	"""
@@ -435,6 +468,9 @@ def mismatch_function(logreg_weights, PCA_weights, test_amp):
 	Output:
 		loss(y_true, y_pred)	function of two tf tensors returning a tensor with mismatches
 	"""
+	import tensorflow as tf
+	import keras.backend as K
+
 	def loss(y_true, y_pred):
 		if not K.is_tensor(y_pred):
 			y_pred = K.constant(y_pred)

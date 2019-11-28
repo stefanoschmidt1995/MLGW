@@ -18,10 +18,10 @@ img_rows =26
 img_cols = 26
 num_classes = 10 #10 digits
 
-X_train = np.load("./MNIST_data/X_train.npy")[:,1:27,1:27]
-Y_train = keras.utils.to_categorical(np.load("./MNIST_data/Y_train.npy"),num_classes)
-X_test = np.load("./MNIST_data/X_test.npy")[:,1:27,1:27]
-Y_test = keras.utils.to_categorical(np.load("./MNIST_data/Y_test.npy"),num_classes)
+X_train = np.load("../datasets/MNIST_data/X_train.npy")[:,1:27,1:27]
+Y_train = keras.utils.to_categorical(np.load("../datasets/MNIST_data/Y_train.npy"),num_classes)
+X_test = np.load("../datasets/MNIST_data/X_test.npy")[:,1:27,1:27]
+Y_test = keras.utils.to_categorical(np.load("../datasets/MNIST_data/Y_test.npy"),num_classes)
 
 X_train = np.reshape(X_train,(X_train.shape[0],img_rows*img_cols))
 X_test = np.reshape(X_test, (X_test.shape[0],img_rows*img_cols))
@@ -29,7 +29,7 @@ X_test = np.reshape(X_test, (X_test.shape[0],img_rows*img_cols))
 print(X_train.shape)
 
 softmax = softmax_regression(img_rows*img_cols, num_classes)
-softmax.fit(X_train[0:10000,:], Y_train[0:10000,:], N_iter = 100 ,verbose = True)
+softmax.fit(X_train[:,:], Y_train[:,:], threshold = 1e-2, N_iter = 100 ,verbose = True, val_set = (X_test, Y_test))
 #softmax.fit_single_loop(X_train[0:10000,:], Y_train[0:10000,:])
 
 Y_pred= softmax.predict(X_test)
