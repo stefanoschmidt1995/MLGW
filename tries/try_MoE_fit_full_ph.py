@@ -6,14 +6,14 @@ sys.path.insert(1, '../routines') #folder in which every relevant routine is sav
 from GW_helper import * 	#routines for dealing with datasets
 from ML_routines import *	#PCA model
 from EM_MoE import *		#MoE model
-import keras
 
+folder = "GW_std_dataset/"
     #loading PCA datasets
 N_train = 7000
-train_theta = np.loadtxt("../datasets/PCA_train_theta_full.dat")[:N_train,:]
-test_theta = np.loadtxt("../datasets/PCA_test_theta_full.dat")
-PCA_train_ph = np.loadtxt("../datasets/PCA_train_full_ph.dat")[:N_train,:]
-PCA_test_ph = np.loadtxt("../datasets/PCA_test_full_ph.dat")
+train_theta = np.loadtxt("../datasets/"+folder+"PCA_train_theta_full.dat")[:N_train,:]
+test_theta = np.loadtxt("../datasets/"+folder+"PCA_test_theta_full.dat")
+PCA_train_ph = np.loadtxt("../datasets/"+folder+"PCA_train_full_ph.dat")[:N_train,:]
+PCA_test_ph = np.loadtxt("../datasets/"+folder+"PCA_test_full_ph.dat")
 K_PCA_to_fit = 11
 
 	#adding extra features for basis function regression
@@ -54,7 +54,7 @@ for k in range(0,K_PCA_to_fit):
 
 	MoE_models.append(MoE_model(D,K[k]))
 			#opt	val_set reg verbose threshold	N_it     step
-	args = ["adam", None,   0e-4, False,  1e-4,		150,    1e-2]
+	args = ["adam", None,   0e-4, False,  1e-4,		150,    2e-3]
 	#args = [None,5,0]
 
 	if k in load_list:
@@ -100,7 +100,7 @@ theta_vector_test, amp_dataset_test, ph_dataset_test, frequencies_test = create_
 theta_vector_test = add_extra_features(theta_vector_test, new_features)
 
 ph_PCA = PCA_model()
-ph_PCA.load_model("../datasets/PCA_model_full_ph.dat")
+ph_PCA.load_model("../datasets/"+folder+"PCA_model_full_ph.dat")
 
 red_ph_dataset_test = ph_PCA.reduce_data(ph_dataset_test)
 if K_PCA_to_fit < PCA_train_ph.shape[1]:

@@ -9,7 +9,7 @@ from GW_helper import *
 import matplotlib.pyplot as plt
 from ML_routines import *
 
-to_fit = "ph"
+to_fit = "amp"
 
 theta_vector, amp_dataset, ph_dataset, frequencies = load_dataset("../datasets/GW_std_dataset_full.dat", shuffle=False, N_grid = None) #loading dataset
 

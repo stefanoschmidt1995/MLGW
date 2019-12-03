@@ -36,7 +36,7 @@ class MLGW_generator(object):
 		Everything useful for the model must be put within the folder with the standard names:
 			{amp(ph)_exp_# ; amp(ph)_gat_#	; amp(ph)_feat ; amp(ph)_PCA_model}
 		There can be an arbitrary number of exp and gating functions as long as they match with each other and they are less than PCA components.
-		Tries to load frequencies.
+		It loads frequencies.
 		Input:
 			address to folder in which everything is kept
 		"""
@@ -91,6 +91,8 @@ class MLGW_generator(object):
 		if "frequencies" in file_list:
 			self.frequencies = np.loadtxt(folder+"frequencies")
 			print("Loaded frequency vector")
+		else:
+			raise RuntimeError("Unable to load model: no frequency vector given!")
 
 		return
 
@@ -133,16 +135,140 @@ class MLGW_generator(object):
 		"""
 		return self.frequencies
 
+	def __call__(self, frequencies, m1, m2, spin1_x, spin1_y, spin1_z, spin2_x, spin2_y, spin2_z, D_L, i, phi_0, long_asc_nodes, eccentricity, mean_per_ano , plus_cross = True):
+		"""
+		Generates a WF according to the MLGW model. It makes all the required preprocessing to include wave dependance on the full 15 parameters space of the GW forms.
+		Input:
+			frequencies	(N_grid,)	Grid of frequency points to evaluate the wave at
+			m1	()/(N,)				Mass of BH 1
+			m2	()/(N,)				Mass of BH 1
+			spin1_x/y/z	()/(N,)		Each variable represents a spin component of BH 1
+			spin2_x/y/z				Each variable represents a spin component of BH 1
+			D_L	()/(N,)				Luminosity distance
+			i ()/(N,)				Inclination
+			phi_0 ()/(N,)			Reference phase for the wave
+			long_asc_nodes ()/(N,)	Logitudinal ascentional nodes (currently not implemented)
+			eccentricity ()/(N,)	Eccentricity of the orbit (currently not implemented)
+			mean_per_ano ()/(N,)	Mean per ano (currently not implemented)
+			plus_cross				Whether to return h_+ and h_x components (if false amp and phase are returned)
+		Ouput:
+			h_plus, h_cross (1,D)/(N,D)	desidered polarizations (if it applies)
+			
+		"""
+		theta = np.column_stack((m1, m2, spin1_x, spin1_y, spin1_z, spin2_x, spin2_y, spin2_z, D_L, i, phi_0, long_asc_nodes, eccentricity, mean_per_ano)) #(N,D)
+		return self.get_WF(theta, plus_cross = plus_cross, freq_grid= frequencies)
+
 	def get_WF(self, theta, plus_cross = True, freq_grid = None):
 		"""
-		Generates a WF according to the MLGW model
+		Generates a WF according to the MLGW model. It makes all the required preprocessing to include wave dependance on the full 15 parameters space of the GW forms.
+		Wherever not specified, all waves are evaluated at a luminosity distance of 1 Mpc.
+		It accepts data in one of the following layout of D features:
+			D = 3	[q, spin1_z, spin2_z]
+			D = 4	[m1, m2, spin1_z, spin2_z]
+			D = 5	[m1, m2, spin1_z , spin2_z, D_L]
+			D = 6	[m1, m2, spin1_z , spin2_z, D_L, inclination]
+			D = 14	[m1, m2, spin1 (3,), spin2 (3,), D_L, inclination, phi_0, long_asc_nodes, eccentricity, mean_per_ano]
+		Unit of measures:
+			[mass] = M_sun
+			[D_L] = Mpc
+		Input:
+			theta (N,D)		source parameters to make prediction at
+			plus_cross		whether to return h_+ and h_x components (if false amp and phase are returned)
+			freq_grid (D',)	a grid in frequency to evaluate the wave at (uses np.inter)
+		Ouput:
+			h_plus, h_cross (N,D)	desidered polarizations (if it applies)
+			amp,ph (N,D)			desidered amplitude and phase (if it applies)
+		"""
+		if freq_grid is None:
+			freq_grid = self.frequencies
+
+			#some (useless) physical constants
+		LAL_MRSUN_SI = 1.476625061404649406193430731479084713e3 	# M_sun in meters (2GM_sun/c**2)
+		LAL_MTSUN_SI = 4.925491025543575903411922162094833998e-6	# M_sun in seconds (2GM_sun/c**3)
+		LAL_PC_SI = 3.085677581491367278913937957796471611e16		# 1 pc in meters
+		LAL_MSUN_SI = 1.988546954961461467461011951140572744e30		# M_sun in kilograms
+
+		if theta.ndim == 1:
+			theta = theta[np.newaxis,:] #(1,D)
+		
+		D= theta.shape[1] #number of features given
+		if D <3:
+			raise RuntimeError("Unable to generata WF. Too few parameters given!!")
+			return
+
+		if D == 3:
+			return self.__get_WF__(theta, plus_cross, freq_grid)
+
+			#here starts the complicated part of scaling things
+		q = np.divide(np.max(theta[:,0:2]),np.min(theta[:,0:2])) #mass ratio (N,)
+		if D == 14:
+			theta_std = np.column_stack((q,theta[:,4], theta[:,7])) #(N,3)
+			if np.any(np.column_stack((theta[:,2:4], theta[:,5:7])) != 0):
+				print("Given nonzero spin_x/spin_y components. Model currently supports only spin_z component. Other spin components are ignored")
+		else:
+			theta_std = np.column_stack((q,theta[:,2:])) #(N,3)
+
+		h_p, h_c =  self.__get_WF__(theta_std, True, freq_grid) #(N, N_grid)
+
+		mass_scale_factor = np.divide( (1+q)*10, (theta[:,0]+theta[:,1]) ) #prefactor for mass corrections (M_std/M_us) (N,)
+		#mass_pref = np.divide( np.sqrt(theta[:,0]*theta[:,1])/np.power(theta[:,0]+theta[:,1],1./6.),
+		#					10*np.sqrt(q)/np.power(10*(q+1),1./6.) ) #prefactor for mass corrections (N,)
+
+		#chirp_mass_user_5 = np.divide( np.power(theta[:,0]*theta[:,1], 3.), theta[:,0]+theta[:,1]) #(M_c)**5
+		#chirp_mass_std_5 = 1e5*np.divide( np.power(q, 3.), (1+q))
+
+		dist_pref = np.ones((h_c.shape[0],)) #scaling factor for distance (N,)
+		cos_i = np.ones((h_c.shape[0],)) # cos(inclination) (N,)
+
+		if D>=5 and D != 14: #distance corrections are done
+			dist_pref = theta[:,4] #std_dist = 1 Mpc
+		if D == 14:
+			dist_pref = theta[:,8] #std_dist = 1 Mpc
+
+		if D>=6 and D != 14: #inclinations corrections are done
+			cos_i = np.cos(theta[:,5]) #std_dist = 1 Mpc
+		if D == 14:
+			cos_i = np.cos(theta[:,9]) #std_dist = 1 Mpc
+
+		#print(theta)
+		#print(theta_std)
+		#print(mass_scale_factor,dist_pref, cos_i)
+
+			#scaling for mass correction
+		print(freq_grid,  np.multiply(freq_grid, mass_scale_factor[0]))
+		for j in range(h_p.shape[0]):
+			pass
+			#h_p[j,:] = np.interp(freq_grid, np.divide(freq_grid, mass_scale_factor[j]), h_p[j,:] )
+			#h_c[j,:] = np.interp(freq_grid, np.divide(freq_grid, mass_scale_factor[j]), h_c[j,:] )
+
+			#scaling to required distance
+		h_p = np.divide(h_p.T, dist_pref).T
+		h_c = np.divide(h_c.T, dist_pref).T
+			#scaling for setting inclination
+		#????
+
+
+		print("ciao")
+		if plus_cross:
+			return h_p, h_c
+		else:
+			h = h_p +1j*h_c
+			amp = np.abs(h)
+			ph = np.unwrap(np.angle(h))
+			return amp, ph
+
+
+	def __get_WF__(self, theta, plus_cross = True, freq_grid = None):
+		"""
+		Generates a WF according to the MLGW model with a parameters vector in MLGW model style (params=  [q,s1z,s2z]).
+		All waves are evaluated at a luminosity distance of 1 Mpc and are generated at masses m1 = q * m2 and m2 = 10 M_sun.
 		Input:
 			theta (N,3)		source parameters to make prediction at
 			plus_cross		whether to return h_+ and h_x components (if false amp and phase are returned)
 			freq_grid (D',)	a grid in frequency to evaluate the wave at (uses np.inter)
 		Ouput:
-			h_plus, h_cross (N,D)	desidered polarizations
-			amp,ph (N,D)			desidered amplitude and phase
+			h_plus, h_cross (N,D)	desidered polarizations (if it applies)
+			amp,ph (N,D)			desidered amplitude and phase (if it applies)
 		"""
 		assert theta.shape[1] == 3
 
@@ -169,7 +295,7 @@ class MLGW_generator(object):
 			for i in range(rec_amp_dataset.shape[0]):
 				new_rec_amp_dataset[i,:] = np.interp(freq_grid, self.frequencies, rec_amp_dataset[i,:])
 				new_rec_ph_dataset[i,:] = np.interp(freq_grid, self.frequencies, rec_ph_dataset[i,:])
-			rec_amp_dataset = new_rec_amp_dataset
+			rec_amp_dataset = 1e-21*new_rec_amp_dataset
 			rec_ph_dataset = new_rec_ph_dataset
 
 		if not plus_cross:

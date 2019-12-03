@@ -7,6 +7,7 @@ import scipy.optimize
 import numpy as np
 import matplotlib.pyplot as plt
 import sys
+import os
 
 class MoE_model(object):
 	"""
@@ -240,7 +241,7 @@ class MoE_model(object):
 
 		return r_0
 
-	def fit(self, X_train, y_train, N_iter=None, threshold = 1e-2, args= [], verbose = False, val_set = None):
+	def fit(self, X_train, y_train, N_iter=None, threshold = 1e-2, args= [], verbose = False, val_set = None, pick_best = True):
 		"""
 		Fit the model using EM algorithm.
 		Input:
@@ -251,6 +252,7 @@ class MoE_model(object):
 			args			arguments to be given to fit method of gating function
 			verbose 		whether to print values during fit
 			val_set			tuple (X_val, y_val) with a validation set to test performances
+			pick_best		if True the model with best validation mse is chosen as best model (doesn't apply if val_set is None)
 		Output:
 			history		list of value for the LL of the model at every epoch
 		"""
@@ -270,6 +272,7 @@ class MoE_model(object):
 		i = 0
 		old_LL = (-1e5,)
 		LL = (-1e4,)
+		if pick_best: best_mse = 1e6 #best mse so far (only if val_set is not None)
 		history=[]
 		while(LL[0] - old_LL[0] > threshold ): #exit condition is decided by train LL (even if val_set is not None): don't know why...
 				#do batch update!!!
@@ -283,8 +286,15 @@ class MoE_model(object):
 			if verbose:
 				print("LL at iter "+str(i)+"= ",LL)
 				print("   Gating loss: ", gat_history[0], gat_history[-1])
-				if isinstance(val_set,tuple) : #debug
-					print("   Val loss: ", np.sum(np.square( self.predict(val_set[0])-val_set[1]))/val_set[0].shape[0])
+				if isinstance(val_set,tuple) :
+					mse = np.sum(np.square( self.predict(val_set[0])-val_set[1]))/val_set[0].shape[0]
+					print("   Val loss: ", mse)
+					if mse < best_mse and pick_best:
+						best_mse = mse
+						try: #saving best model so far
+							self.save("temp_exp", "temp_gat") 
+						except:
+							os.system("rm -f temp_exp temp_gat")
 			if N_iter is not None:
 				if i>= N_iter:
 					break
@@ -294,6 +304,13 @@ class MoE_model(object):
 				break #if LL increase (and it shouldn't) EM should terminate
 
 		self.initialized =  True
+
+		if isinstance(val_set,tuple) and pick_best: #loading best model so far
+			files = os.listdir(".")
+			if "temp_exp" in files and  "temp_gat" in files:
+				self.load = ("temp_exp", "temp_gat")
+				os.system("rm -f temp_exp temp_gat")
+
 		return history
 
 	def EM_step(self, X, y, r = None, args = []):

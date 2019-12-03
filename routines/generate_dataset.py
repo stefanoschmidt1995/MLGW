@@ -7,8 +7,8 @@ from GW_helper import *
 import matplotlib.pyplot as plt
 from ML_routines import *
 
-create_dataset(10000, N_grid = 2048, filename = "../datasets/GW_std_dataset_full.dat",
-                q_range = (1.,5.), s1_range = (-0.8,0.8), s2_range = (-0.8,0.8),
+create_dataset(10000, N_grid = 2048, filename = "../datasets/GW_std_dataset_enlarged.dat",
+                q_range = (.8,5.2), s1_range = (-0.85,0.85), s2_range = (-0.85,0.85),
 				log_space = True,
                 f_high = 1000, f_step = 5e-2, f_max = None, f_min =None, lal_approximant = "IMRPhenomPv2")
 quit()

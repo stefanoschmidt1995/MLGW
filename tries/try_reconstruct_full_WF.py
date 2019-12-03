@@ -11,8 +11,9 @@ from EM_MoE import *		#MoE model
 	#adding extra features for basis function regression
 new_features = ["00", "11","22", "01", "02", "12", "0000", "0001","0002", "0011", "0022","0012","0111","0112", "0122", "0222","1111", "1112", "1122", "1222", "2222"]
 
-PCA_train_amp = np.loadtxt("../datasets/PCA_train_full_amp.dat")
-PCA_train_ph = np.loadtxt("../datasets/PCA_train_full_ph.dat")
+folder = "GW_std_dataset/"
+PCA_train_amp = np.loadtxt("../datasets/"+folder+"PCA_train_full_amp.dat")
+PCA_train_ph = np.loadtxt("../datasets/"+folder+"PCA_train_full_ph.dat")
 
    #setting up an EM model for each component
 MoE_models_amp = 	[]
@@ -43,7 +44,7 @@ for k in range(np.maximum(K_PCA_amp,K_PCA_ph)):
 
 
 ############Comparing mismatch for test waves
-N_waves = 2000
+N_waves = 200
 
 theta_vector_test, amp_dataset_test, ph_dataset_test, frequencies_test = create_dataset(N_waves, N_grid = 2048, filename = None,
                 q_range = (1.,5.), s1_range = (-0.8,0.8), s2_range = (-0.8,0.8),
@@ -56,9 +57,9 @@ amp_dataset_test = 1e21*amp_dataset_test
 theta_vector_test = add_extra_features(theta_vector_test, new_features)
 
 amp_PCA = PCA_model()
-amp_PCA.load_model("../datasets/PCA_model_full_amp.dat")
+amp_PCA.load_model("../datasets/"+folder+"PCA_model_full_amp.dat")
 ph_PCA = PCA_model()
-ph_PCA.load_model("../datasets/PCA_model_full_ph.dat")
+ph_PCA.load_model("../datasets/"+folder+"PCA_model_full_ph.dat")
 
 red_amp_dataset_test = amp_PCA.reduce_data(amp_dataset_test)
 if K_PCA_amp < PCA_train_amp.shape[1]:
@@ -94,7 +95,8 @@ print("Avg fit mismatch: ", np.mean(F), np.max(F),np.min(F))
 
 
 	#looking at bad points...
-bad_points = np.where(F>5e-4)[0]
+bad_points = np.where(F>1e-3)[0]
+print("P(F>1e-3): ", len(bad_points)/float(N_waves))
 print("bad points q: ", np.concatenate((theta_vector_test[bad_points,:3], F[bad_points, np.newaxis]), axis =1))
 
 print("low q mismatchs: ", F[np.where(theta_vector_test[:,0]<1.5)[0]])

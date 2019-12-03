@@ -8,12 +8,14 @@ from ML_routines import *	#PCA model
 from EM_MoE import *		#MoE model
 #import keras
 
+folder = "GW_std_dataset/"
+
     #loading PCA datasets
-N_train = 3000
-train_theta = np.loadtxt("../datasets/PCA_train_theta_full.dat")[:N_train,:]
-test_theta = np.loadtxt("../datasets/PCA_test_theta_full.dat")
-PCA_train_amp = np.loadtxt("../datasets/PCA_train_full_amp.dat")[:N_train,:]
-PCA_test_amp = np.loadtxt("../datasets/PCA_test_full_amp.dat")
+N_train = 4000
+train_theta = np.loadtxt("../datasets/"+folder+"PCA_train_theta_full.dat")[:N_train,:]
+test_theta = np.loadtxt("../datasets/"+folder+"PCA_test_theta_full.dat")
+PCA_train_amp = np.loadtxt("../datasets/"+folder+"PCA_train_full_amp.dat")[:N_train,:]
+PCA_test_amp = np.loadtxt("../datasets/"+folder+"PCA_test_full_amp.dat")
 K_PCA_to_fit = 10
 
 	#adding extra features for basis function regression
@@ -34,9 +36,9 @@ print("Spins are allowed to vary within domain [-0.8,0.8]x[-0.8,0.8]")
    #setting up an EM model for each component
 MoE_models = 	[]
 load_list = 	[0   ,1   ,2   ,3   ,4   ,5   ,6   ,7   ,8   ,9   ]#,10  ,11  ,12  ,13  ,14  ]  #indices of models to be loaded from file
-K = 			[15  ,15  ,30  ,20  ,15  ,20  ,25  ,20  ,15  ,15  ,15  ,25  ,25  ,25  ,25  ] #number of experts for each model
-epochs_list  = 	[150 ,200 ,200 ,300 ,400 ,400 ,400 ,300 ,300 ,300 ,400 ,400 ,400 ,400 ,400 ] #number of epochs for gating function fit
-step_list =		[1e-2,5e-3,5e-3,5e-3,2e-3,2e-3,1e-3,2e-3,2e-3,2e-3,1e-3,1e-3,1e-3,1e-3,1e-3] #number of steps for gating function fit
+K = 			[15  ,10  ,30  ,20  ,15  ,20  ,25  ,20  ,15  ,15  ,15  ,25  ,25  ,25  ,25  ] #number of experts for each model
+#epochs_list  = 	[150 ,200 ,200 ,300 ,400 ,400 ,400 ,300 ,300 ,300 ,400 ,400 ,400 ,400 ,400 ] #number of epochs for gating function fit
+#step_list =		[1e-2,5e-3,5e-3,5e-3,2e-3,2e-3,1e-3,2e-3,2e-3,2e-3,1e-3,1e-3,1e-3,1e-3,1e-3] #number of steps for gating function fit
 
 D = train_theta.shape[1] #number of independent variables
 
@@ -47,8 +49,8 @@ for k in range(0,K_PCA_to_fit):
 	y_test = PCA_test_amp[:,k]
 
 	MoE_models.append(MoE_model(D,K[k]))
-			#opt	val_set reg verbose threshold
-	args = ["adam", None,   0., False,  1e-4]#, epochs_list[k], step_list[k]] #for softmax
+			#opt	val_set reg verbose threshold N_it	step_size
+	args = ["adam", None,   0., False,  1e-4,     None, 2e-3]#, epochs_list[k], step_list[k]] #for softmax
 	#args = [None,5,0]
 
 	if k in load_list:
@@ -56,7 +58,7 @@ for k in range(0,K_PCA_to_fit):
 		print("Loaded model for comp: ", k)
 	else:	
 		MoE_models[-1].fit(train_theta, y_train, threshold = 1e-2, args = args, verbose = True, val_set = (test_theta, y_test))
-		MoE_models[-1].save("./saved_models_full_amp/amp_exp_"+str(k),"./saved_models_full_amp/gat_"+str(k))
+		MoE_models[-1].save("./saved_models_full_amp/amp_exp_"+str(k),"./saved_models_full_amp/amp_gat_"+str(k))
 
 		#doing some test
 	y_pred = MoE_models[-1].predict(test_theta)
@@ -93,7 +95,7 @@ amp_dataset_test = 1e21*amp_dataset_test
 theta_vector_test = add_extra_features(theta_vector_test, new_features)
 
 amp_PCA = PCA_model()
-amp_PCA.load_model("../datasets/PCA_model_full_amp.dat")
+amp_PCA.load_model("../datasets/"+folder+"PCA_model_full_amp.dat")
 
 red_amp_dataset_test = amp_PCA.reduce_data(amp_dataset_test)
 if K_PCA_to_fit < PCA_train_amp.shape[1]:

@@ -240,7 +240,7 @@ def create_dataset(N_data, N_grid = None, filename = None, q_range = (1.,5.), s1
 		if isinstance(q_range, tuple):
 			m1 = np.random.uniform(q_range[0],q_range[1]) * m2
 		else:
-			m1 = q_range
+			m1 = q_range * m2
 		if isinstance(s1_range, tuple):
 			spin1z = np.random.uniform(s1_range[0],s1_range[1])
 		else:
@@ -249,6 +249,10 @@ def create_dataset(N_data, N_grid = None, filename = None, q_range = (1.,5.), s1
 			spin2z = np.random.uniform(s2_range[0],s2_range[1])
 		else:
 			spin2z = s2_range
+
+			#debug!!!
+		if m1/m2 >4.6 and (np.abs(spin1z) >0.8 or np.abs(spin2z) > 0.8):
+			continue
 
 
 			#getting the wave
@@ -260,9 +264,9 @@ def create_dataset(N_data, N_grid = None, filename = None, q_range = (1.,5.), s1
 			d*1e6*lalsim.lal.PC_SI, #distance to source
 			0., #inclination
 			0., #phi ref
-			0., #longAscNodes
+			0., #longAscNodes (for precession)
 			0., #eccentricity
-			0., #meanPerAno
+			0., #meanPerAno (for precession)
 			f_step, # frequency incremental step
 			f_low, # lowest value of frequency
 			f_high, # highest value of frequency
