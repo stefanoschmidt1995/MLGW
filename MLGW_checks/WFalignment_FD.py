@@ -2,6 +2,12 @@ import numpy as np
 import lal
 import lalsimulation as lalsim
 
+def align_ph(wf):
+	amp = np.abs(wf)
+	ph = np.unwrap(np.angle(wf))
+	ph = ph - ph[0]
+	return amp*np.exp(1j*ph)
+
 def generate_waveform(m1,m2):
     mtot = (m1+m2)*lal.MTSUN_SI
 
@@ -25,7 +31,7 @@ def generate_waveform(m1,m2):
         0., #longAscNodes
         0., #eccentricity
         0., #meanPerAno
-        df, # frequency incremental step
+        1e-3, # frequency incremental step
         f_min, # lowest value of frequency
         f_max, # highest value of frequency
         f_min, #some reference value of frequency (??)
@@ -35,6 +41,7 @@ def generate_waveform(m1,m2):
 
     frequency = np.linspace(0.0, f_max, hptilde.data.length)
     rescaled_frequency = frequency*mtot
+    print(mtot)
     return  frequency, rescaled_frequency, hptilde.data.data+1j*hctilde.data.data
 
 m1 = 3.0
@@ -44,16 +51,39 @@ m2c = (m2*m2)**(3./5.)/(m2+m2)**(1./5.)
 f1,fr1,wf1 = generate_waveform(m1,m1)
 f2,fr2,wf2 = generate_waveform(m2,m2)
 
-wf3 = (m1c/m2c)**(-2./6.)*np.interp(f1*m2/m1,f1,wf1)*m2/m1
+wf2 = np.interp(fr1,fr2,wf1)
+
+wf1 = align_ph(wf1)
+wf2 = align_ph(wf2)
+
+amp1= np.abs(wf1)
+amp2= np.abs(wf2)
+ph1 = np.unwrap(np.angle(wf1))
+ph2 = np.unwrap(np.angle(wf2))
+
+#wf3 = (m1c/m2c)**(-2./6.)*np.interp(f1,f1*m1/m2,wf1)*m2/m1
+
+#wf3 = m2/m1*np.interp(fr2, fr1, wf1)
+#phi = np.interp(f1/m2, f1/m1, phi)
+#wf3 = np.interp(f2, f1/m2, wf3)
+
+t1 = 455.3939997782627
+t2 = 18.
+t2_ =  1j*np.divide(np.log((m2/m1)**2*amp1/amp2 * np.exp(1j*(ph1-ph2)) ), 2*np.pi*fr2)
+print(t2_.real)
 
 import matplotlib.pyplot as plt
 
 fig = plt.figure()
 plt.title('rescaled freqs')
 ax = fig.add_subplot(111)
-ax.plot(fr1, wf1, color='b')
-ax.plot(fr2, wf2, color='k')
-ax.plot(fr2, wf3, color='r')
+ax.plot(fr1, m1**(-2)*(wf1*np.exp(-1j*2*np.pi*fr1*t1)).real, color='b')
+ax.plot(fr2, m2**(-2)*(wf2*np.exp(-1j*2*np.pi*fr2*t2)).real, color='k')
+#ax.plot(fr2, wf3, color='r')
+
+plt.show()
+quit()
+
 
 fig = plt.figure()
 plt.title('interpolated prediction')

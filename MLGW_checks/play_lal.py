@@ -10,7 +10,7 @@ from GW_helper import * 	#routines for dealing with datasets
 
 generator = MLGW_generator("../definitive_code/models")
 
-N_waves = 50
+N_waves = 10
 
 frequencies = np.linspace(20,1000, 3500)
 theta = np.zeros((N_waves,14))
@@ -67,8 +67,8 @@ for i in range(N_waves):
 		temp_ph[index] = temp_ph[index[0]-1]
 	true_h = np.multiply(temp_amp, np.exp(1j*temp_ph))
 
-	true_amp[i,:] = temp_amp
-	true_ph[i,:] = temp_ph
+	true_amp[i,:] = true_h.real #temp_amp
+	true_ph[i,:] = true_h.imag #temp_ph
 	
 		#generating surrogate wave
 	lambd = 1.2
@@ -92,8 +92,8 @@ for i in range(N_waves):
 	)
 	true_h = np.array(new_hptilde.data.data)+1j*np.array(new_hctilde.data.data) #complex waveform
 	true_h = true_h[int(20/5e-2):int(1000/5e-2)]
-	temp_amp = (np.abs(true_h).real)
-	temp_ph = (np.unwrap(np.angle(true_h)).real)
+	temp_amp = true_h.real #(np.abs(true_h).real)
+	temp_ph = true_h.imag #(np.unwrap(np.angle(true_h)).real)
 
 			#bringing waves on the chosen grid
 	temp_amp = np.interp(frequencies, full_freq, temp_amp)
@@ -123,13 +123,13 @@ for i in range(N_plots):
 	h_true = true_amp[indices[i]] * np.exp(1j*true_ph[indices[i]])
 
 
-	plt.title("(q,s1,s2) = "+str(theta[indices[i],0]/theta[indices[i],1]))
+	plt.title("(q,s1,s2) = "+str(theta[indices[i],:]))
 
 	#plt.plot(frequencies, (rec_ph[indices[i]] - true_ph[indices[i]]))
 	#plt.plot(np.divide(h_rec.real, lambd*frequencies))
 
-	plt.plot(frequencies*lambd*((1+theta[i,0])), (rec_amp * np.exp(1j*rec_ph))[indices[i]].real, label = "Rec")
-	plt.plot(frequencies*(1+theta[i,0]), (true_amp * np.exp(1j*(true_ph)))[indices[i]].real, label = "True")
+	plt.plot(frequencies*lambd*((1+theta[indices[i],0]))*10, 	rec_amp[indices[i]], label = "Rec")
+	plt.plot(frequencies*(1+theta[indices[i],0])*10, 			true_amp[indices[i]], label = "True")
 	#plt.plot((1+theta[indices[i],0])*frequencies, true_ph[indices[i]].real, label = "True")
 	#plt.plot(lambd*(1+theta[indices[i],0])*frequencies, 98./68.*rec_ph[indices[i]].real, label = "rec")
 	#plt.xscale("log")

@@ -121,51 +121,158 @@ def compute_mismatch(amp_1, ph_1, amp_2, ph_2, S = None):
 	np.divide(F, div_factor, out = F)
 	return 1-F
 
-def transform_dataset(theta_vector, amp_dataset, ph_dataset, w_vector, f_vector, set_w_grid):
+def create_dataset_TD(N_data, N_grid, filename = None,  t_coal = 0.5, q_range = (1.,5.), m2_range = 20., s1_range = (-0.8,0.8), s2_range = (-0.8,0.8), t_step = 5e-5, lal_approximant = "SEOBNRv2_opt"):
 	"""
-	Given a dataset (amplitudes vector and phase vector) in some grid, it returns the same WFs evaluated on another grid. The two grids must be of different kinds (there must be a w_grid and a f_grid). It performs as well the suitable scaling in the phase magnitude.
-	Input:
-		theta_vector (N_data,3)	vector holding ordered set of parameters used to generate amp_dataset and ph_dataset
-		amp_dataset (N_data,K)	dataset with amplitudes and wave parameters K = (f_high-30)/(f_step*N_grid)
-		ph_dataset (N_data,K)	dataset with phases and wave parameters K = (f_high-30)/(f_step*N_grid)
-		w_vector (K,)			vector holding frequencies at which waves are evaluated in w_grid
-		f_vector (K',)			vector holding frequencies at which waves are evaluated in f_grid
-		set_w_grid (bool)		if true data are brought from f_grid to w_grid; viceversa if false
-	Output:
-		new_amp_dataset (N_data,K')	new dataset with amplitudes
-		new_ph_dataset (N_data,K')	new dataset with phases
-	"""
-	if set_w_grid:
-		N_grid_new = w_vector.shape[0]
-	else:
-		N_grid_new = f_vector.shape[0]
-
-	new_amp_dataset = np.zeros((amp_dataset.shape[0], N_grid_new))
-	new_ph_dataset = np.zeros((ph_dataset.shape[0], N_grid_new))
-
-	for i in range(amp_dataset.shape[0]):
-		scale = (theta_vector[i,0]+1)*10*lal.MTSUN_SI*2.0*np.pi #frequency scale factor [1/Hz]
-		wtmp = w_vector / scale
-		if set_w_grid:
-			new_amp_dataset[i,:] = np.interp(wtmp, f_vector, amp_dataset[i,:])
-			new_ph_dataset[i,:] = np.interp(wtmp, f_vector, ph_dataset[i,:]) /scale**(-5./3.)
-		else:
-			new_amp_dataset[i,:] = np.interp(f_vector, wtmp, amp_dataset[i,:])
-			#print(f_vector, wtmp)
-			new_ph_dataset[i,:] = np.interp(f_vector, wtmp, ph_dataset[i,:])*scale**(-5./3.)
-
-	return new_amp_dataset, new_ph_dataset
-
-def create_dataset(N_data, N_grid = None, filename = None, q_range = (1.,5.), s1_range = (-0.8,0.8), s2_range = (-0.8,0.8), log_space = True, f_high = 2000, f_step = 1e-2, f_max = None, f_min =None, lal_approximant = "IMRPhenomPv2"):
-	"""
-	Create a dataset for training a ML model to fit GW waveforms.
+	Create a dataset for training a ML model to fit GW waveforms in time domain.
 	The dataset consists in 3 parameters theta=(q, spin1z, spin2z) associated to the waveform computed in frequency domain for a grid of N_grid points in the range given by the user.
 	More specifically, data are stored in 3 vectors:
 		theta_vector	vector holding source parameters q, spin1, spin2
 		amp_vector		vector holding amplitudes for each source evaluated at some N_grid equally spaced points
 		ph_vector		vector holding phase for each source evaluated at some N_grid equally spaced points
 	This routine add N_data data to filename if one is specified (if file is not empty it must contain data with the same N_grid); otherwise the datasets are returned as np vectors. 
-	All the waves are evaluated at a constant distance of 1Mpc and with m2 = 10 M_sun and m1 = q M_sun.
+	All the waves are evaluated at a constant distance of 1Mpc. Values of q and m2 as well as spins are drawn randomly in the range given by the user: it holds m1 = q *m2 M_sun.
+	The waveforms are computed with a time step t_step; starting from a frequency f_min (set by the routine according to t_coal and m_tot). Waves are given in a rescaled time grid (i.e. t/m_tot) with N_grid points: t=0 occurs when at time of maximum amplitude. A higher density of grid points is placed in the post merger phase.
+	Dataset can be loaded with load_dataset.
+	Input:
+		N_data				size of dataset
+		N_grid				number of grid points to evaluate
+		filename			name of the file to save dataset in (If is None, nothing is saved on a file)
+		q_range				tuple with range for random q values. if single value, q is kept fixed at that value
+		m2_range			tuple with range for random m2 values. if single value, m2 is kept fixed at that value
+		spin_mag_max_1		tuple with range for random spin #1 values. if single value, s1 is kept fixed at that value
+		spin_mag_max_2		tuple with range for random spin #1 values. if single value, s2 is kept fixed at that value
+		t_step				time step to generate the wave with
+		t_coal				time to coalescence to start computation from (measured in reduced grid)
+		lal_approximant		string for the approximant model to be used (in lal convention)
+	Output:
+		if filename is given
+			None
+		if filename is not given
+			theta_vector (N_data,3)		vector holding ordered set of parameters used to generate amp_dataset and ph_dataset
+			amp_dataset (N_data,N_grid)	dataset with amplitudes
+			ph_dataset (N_data,N_grid)	dataset with phases
+			times (N_grid,)				vector holding times at which waves are evaluated (t=0 is the time of maximum amplitude)
+	"""
+	d=1.
+	LALpars = lal.CreateDict()
+	approx = lalsim.SimInspiralGetApproximantFromString(lal_approximant)
+
+		#allocating storage for temp vectors to save a single WF
+	N_grid = time_grid.shape[0]
+	temp_amp = np.zeros((N_grid,))
+	temp_ph = np.zeros((N_grid,))
+	temp_theta = np.zeros((3,))
+
+		#creating time_grid
+	split_point = -0.01 #point to start the fine sampling from (in red space)
+	time_grid = np.hstack( (np.linspace(time_full[0], split_point, (N_grid*2)/3),np.linspace(split_point, time_full[-1], N_grid/3))  )
+
+	if filename is not None: #doing header if file is empty - nothing otherwise
+		if not os.path.isfile(filename): #file doesn't exist: must be created with proper header
+			filebuff = open(filename,'w')
+			print("New file ", filename, " created")
+			freq_header = np.concatenate((np.zeros((3,)), time_grid, time_grid) )
+			freq_header = np.reshape(freq_header, (1,len(freq_header)))
+			np.savetxt(filebuff, freq_header, header = "row: theta 3 | amp (1,"+str(N_grid)+")| ph (1,"+str(N_grid)+")\nN_grid = "+str(N_grid)+" | f_step ="+str(f_step)+" | q_range = "+str(q_range)+" | m2_range = "+str(m2_range)+" | s1_range = "+str(s1_range)+" | s2_range = "+str(s2_range), newline = '\n')
+		else:
+			filebuff = open(filename,'a')
+
+	if filename is None:
+		amp_dataset = np.zeros((N_data,N_grid)) #allocating storage for returning data
+		ph_dataset = np.zeros((N_data,N_grid))
+		theta_vector = np.zeros((N_data,3))
+
+	for i in range(N_data): #loop on data to be created
+		if i%50 == 0 and i != 0:
+			print("Generated WF ", i)
+
+			#setting value for data
+		if isinstance(m2_range, tuple):
+			m2 = np.random.uniform(m2_range[0],m2_range[1])
+		else:
+			m2 = m2_range
+		if isinstance(q_range, tuple):
+			m1 = np.random.uniform(q_range[0],q_range[1]) * m2
+		else:
+			m1 = q_range * m2
+		if isinstance(s1_range, tuple):
+			spin1z = np.random.uniform(s1_range[0],s1_range[1])
+		else:
+			spin1z = s1_range
+		if isinstance(s2_range, tuple):
+			spin2z = np.random.uniform(s2_range[0],s2_range[1])
+		else:
+			spin2z = s2_range
+
+			#computing f_min
+		f_min = 1e0 * np.power(t_coal * (q/(1+q)**2), -3./8.) /(m1+m1) #put here a smart formula...
+
+			#getting the wave
+		hptilde, hctilde = lalsim.SimInspiralChooseTDWaveform( #where is its definition and documentation????
+			m1*lalsim.lal.MSUN_SI, #m1
+			m2*lalsim.lal.MSUN_SI, #m2
+			0., 0., spin1z, #spin vector 1
+			0., 0., spin2z, #spin vector 2
+			d*1e6*lalsim.lal.PC_SI, #distance to source
+			0., #inclination
+			0., #phi ref
+			0., #longAscNodes
+			0., #eccentricity
+			0., #meanPerAno
+			t_step, # time incremental step
+			f_min, # lowest value of time
+			f_min, #some reference value of time (??)
+			lal.CreateDict(), #some lal dictionary
+			lalsim.GetApproximantFromString('SEOBNRv2_opt') #approx method for the model
+		)
+
+		h = np.array(hptilde.data.data)+1j*np.array(hctilde.data.data) #complex waveform
+		temp_theta = [m1/m2, spin1z, spin2z]
+		temp_amp = np.abs(h)
+		temp_ph = np.unwrap(np.angle(h))
+
+			#bringing waves on the chosen grid
+		time_full = np.linspace(0.0, hptilde.data.length*1e-3, hptilde.data.length) #time actually
+		temp_amp = np.interp(frequencies, full_freq, temp_amp)
+		temp_ph = np.interp(frequencies, full_freq, temp_ph)
+		#temp_ph = temp_ph[freq_to_choose]; temp_amp = temp_amp[freq_to_choose] #old version of code
+
+		temp_ph = temp_ph - temp_ph[0] #all frequencies are shifted by a constant to make the wave start at zero phase!!!! IMPORTANT
+
+			#removing spourious gaps (if present)
+		(index,) = np.where(temp_amp/temp_amp[0] < 5e-3) #there should be a way to choose right threshold...
+		if len(index) >0:
+			temp_ph[index] = temp_ph[index[0]-1]
+
+		if filename is None:
+			amp_dataset[i,:] = temp_amp  #putting waveform in the dataset to return
+			ph_dataset[i,:] =  temp_ph  #phase
+			theta_vector[i,:] = temp_theta
+
+		if filename is not None: #saving to file
+			to_save = np.concatenate((temp_theta,temp_amp, temp_ph))
+			to_save = np.reshape(to_save, (1,len(to_save)))
+			np.savetxt(filebuff, to_save)
+
+	if filename is None:
+		return theta_vector, amp_dataset.real, ph_dataset.real, frequencies
+	else:
+		filebuff.close()
+		return None
+
+
+
+
+def create_dataset_FD(N_data, N_grid = None, filename = None, q_range = (1.,5.), m2_range = 20., s1_range = (-0.8,0.8), s2_range = (-0.8,0.8), log_space = True, f_high = 2000, f_step = 1e-2, f_max = None, f_min =None, lal_approximant = "IMRPhenomPv2"):
+	"""
+	Create a dataset for training a ML model to fit GW waveforms in frequency domain.
+	The dataset consists in 3 parameters theta=(q, spin1z, spin2z) associated to the waveform computed in frequency domain for a grid of N_grid points in the range given by the user.
+	More specifically, data are stored in 3 vectors:
+		theta_vector	vector holding source parameters q, spin1, spin2
+		amp_vector		vector holding amplitudes for each source evaluated at some N_grid equally spaced points
+		ph_vector		vector holding phase for each source evaluated at some N_grid equally spaced points
+	This routine add N_data data to filename if one is specified (if file is not empty it must contain data with the same N_grid); otherwise the datasets are returned as np vectors. 
+	All the waves are evaluated at a constant distance of 1Mpc. Values of q and m2 are drawn randomly in the range given by the user: it holds m1 = q *m2 M_sun.
 	The waveforms are computed from f_low = 15 to f_high with a step f_step and then evaluated at some N_grid grid points equally spaced in range [f_min, f_max]
 	Dataset can be loaded with load_dataset
 	Input:
@@ -173,6 +280,7 @@ def create_dataset(N_data, N_grid = None, filename = None, q_range = (1.,5.), s1
 		N_grid			number of points to be sampled in the grid (if None every point generated is saved)
 		filename		name of the file to save dataset in (If is None, nothing is saved on a file)
 		q_range			tuple with range for random q values. if single value, q is kept fixed at that value
+		m2_range		tuple with range for random m2 values. if single value, m2 is kept fixed at that value
 		spin_mag_max_1	tuple with range for random spin #1 values. if single value, s1 is kept fixed at that value
 		spin_mag_max_2	tuple with range for random spin #1 values. if single value, s2 is kept fixed at that value
 		log_space		whether grid should be computed in logspace
@@ -190,16 +298,15 @@ def create_dataset(N_data, N_grid = None, filename = None, q_range = (1.,5.), s1
 			ph_dataset (N_data,N_grid)	dataset with phases
 			frequencies (N_grid,)		vector holding frequencies at which waves are evaluated
 	"""
-	f_low = 20.
 	if f_max is None:
 		f_max = f_high
 	if f_min is None:
-		f_min = f_low
+		f_min = 1.
+	f_low = f_min
 	K = int((f_max-f_min)/f_step) #number of data points to be taken from the returned vector
 	if N_grid is None:
 		N_grid = K
 	full_freq = np.arange(f_low, f_max, f_step) #full frequency vector as returned by lal
-	m2 = 10.
 	d=1.
 	LALpars = lal.CreateDict()
 	approx = lalsim.SimInspiralGetApproximantFromString(lal_approximant)
@@ -237,6 +344,10 @@ def create_dataset(N_data, N_grid = None, filename = None, q_range = (1.,5.), s1
 			print("Generated WF ", i)
 
 			#setting value for data
+		if isinstance(m2_range, tuple):
+			m2 = np.random.uniform(m2_range[0],m2_range[1])
+		else:
+			m2 = m2_range
 		if isinstance(q_range, tuple):
 			m1 = np.random.uniform(q_range[0],q_range[1]) * m2
 		else:
@@ -307,7 +418,7 @@ def create_dataset(N_data, N_grid = None, filename = None, q_range = (1.,5.), s1
 		filebuff.close()
 		return None
 
-def save_dataset(filename, theta_vector, dataset1, dataset, frequencies):
+def save_dataset(filename, theta_vector, dataset1, dataset, x_grid):
 	"""
 	Save a dataset in a way that it's readable by load_dataset.
 	Input:
@@ -315,17 +426,17 @@ def save_dataset(filename, theta_vector, dataset1, dataset, frequencies):
 		theta_vector (N_data,3)		vector holding ordered set of parameters used to generate amp_dataset and ph_dataset
 		amp_dataset (N_data,N_grid)	dataset with amplitudes
 		ph_dataset (N_data,N_grid)	dataset with phases
-		frequencies (N_grid,)		vector holding frequencies at which waves are evaluated
+		x_grid (N_grid,)			vector holding x_grid at which waves are evaluated
 	"""
 	to_save = np.concatenate((theta_vector, amp_dataset, ph_dataset), axis = 1)
-	temp_freq = np.zeros((1,to_save.shape[1]))
+	temp_x_grid = np.zeros((1,to_save.shape[1]))
 	K = int((to_save.shape[1]-3)/2)
-	temp_freq[0,3:3+k] = frequencies
-	to_save = np.concatenate((temp_freq,to_save), axis = 0)
+	temp_x_grid[0,3:3+k] = x_grid
+	to_save = np.concatenate((temp_x_grid,to_save), axis = 0)
 	q_max = np.max(theta_vector[:,0])
 	spin_mag_max = np.max(np.abs(theta_vector[:,1:2]))
-	f_step = frequencies[1]-frequencies[0]
-	np.savetxt(filename, to_save, header = "row: theta 3 | amp "+str(amp_dataset.shape[1])+"| ph "+str(ph_dataset.shape[1])+"\nN_grid = "+str(frequencies.shape[0])+" | f_step ="+str(f_step)+" | q_max = "+str(q_max)+" | spin_mag_max = "+str(spin_mag_max), newline = '\n')
+	x_step = x_grid[1]-x_grid[0]
+	np.savetxt(filename, to_save, header = "row: theta 3 | amp "+str(amp_dataset.shape[1])+"| ph "+str(ph_dataset.shape[1])+"\nN_grid = "+str(x_grid.shape[0])+" | f_step ="+str(x_step)+" | q_max = "+str(q_max)+" | spin_mag_max = "+str(spin_mag_max), newline = '\n')
 	return
 
 
@@ -344,16 +455,16 @@ def load_dataset(filename, N_data=None, N_grid = None, shuffle = False):
 		theta_vector (N_data,3)	vector holding ordered set of parameters used to generate amp_dataset and ph_dataset
 		amp_dataset (N_data,K)	dataset with amplitudes and wave parameters K = (f_high-30)/(f_step*N_grid)
 		ph_dataset (N_data,K)	dataset with phases and wave parameters K = (f_high-30)/(f_step*N_grid)
-		frequencies (K,)		vector holding frequencies at which waves are evaluated
+		x_grid (K,)				vector holding x_grid at which waves are evaluated (can be frequency or time grid)
 	"""
 	if N_data is not None:
 		N_data += 1
 	data = np.loadtxt(filename, max_rows = N_data)
 	N = data.shape[0]
 	K = int((data.shape[1]-3)/2)
-	frequencies = data[0,3:3+K] #saving frequencies
+	x_grid = data[0,3:3+K] #saving x_grid
 
-	data = data[1:,:] #removing frequencies
+	data = data[1:,:] #removing x_grid from full data
 	if shuffle: 	#shuffling if required
 		np.random.shuffle(data)
 
@@ -366,11 +477,11 @@ def load_dataset(filename, N_data=None, N_grid = None, shuffle = False):
 			print("Not enough grid points ("+str(ph_dataset.shape[1])+") for the required N_grid value ("+str(N_grid)+").\nMaximum number of grid point is taken (but less than N_grid)")
 			N_grid = ph_dataset.shape[1]
 		indices = np.arange(0, ph_dataset.shape[1], int(ph_dataset.shape[1]/N_grid)).astype(int)
-		frequencies = frequencies[indices]
+		x_grid = x_grid[indices]
 		ph_dataset = ph_dataset[:,indices]
 		amp_dataset = amp_dataset[:,indices]
 
-	return theta_vector, amp_dataset, ph_dataset, frequencies
+	return theta_vector, amp_dataset, ph_dataset, x_grid
 
 def make_set_split(data, labels, train_fraction = .85, scale_factor = None):
 	"""
@@ -593,3 +704,38 @@ def create_dataset_red_f(N_data, N_grid = 3000, filename = None, q_max = 18, spi
 	else:
 		filebuff.close()
 		return None	
+
+def transform_dataset(theta_vector, amp_dataset, ph_dataset, w_vector, f_vector, set_w_grid):
+	"""
+	Given a dataset (amplitudes vector and phase vector) in some grid, it returns the same WFs evaluated on another grid. The two grids must be of different kinds (there must be a w_grid and a f_grid). It performs as well the suitable scaling in the phase magnitude.
+	Input:
+		theta_vector (N_data,3)	vector holding ordered set of parameters used to generate amp_dataset and ph_dataset
+		amp_dataset (N_data,K)	dataset with amplitudes and wave parameters K = (f_high-30)/(f_step*N_grid)
+		ph_dataset (N_data,K)	dataset with phases and wave parameters K = (f_high-30)/(f_step*N_grid)
+		w_vector (K,)			vector holding frequencies at which waves are evaluated in w_grid
+		f_vector (K',)			vector holding frequencies at which waves are evaluated in f_grid
+		set_w_grid (bool)		if true data are brought from f_grid to w_grid; viceversa if false
+	Output:
+		new_amp_dataset (N_data,K')	new dataset with amplitudes
+		new_ph_dataset (N_data,K')	new dataset with phases
+	"""
+	if set_w_grid:
+		N_grid_new = w_vector.shape[0]
+	else:
+		N_grid_new = f_vector.shape[0]
+
+	new_amp_dataset = np.zeros((amp_dataset.shape[0], N_grid_new))
+	new_ph_dataset = np.zeros((ph_dataset.shape[0], N_grid_new))
+
+	for i in range(amp_dataset.shape[0]):
+		scale = (theta_vector[i,0]+1)*10*lal.MTSUN_SI*2.0*np.pi #frequency scale factor [1/Hz]
+		wtmp = w_vector / scale
+		if set_w_grid:
+			new_amp_dataset[i,:] = np.interp(wtmp, f_vector, amp_dataset[i,:])
+			new_ph_dataset[i,:] = np.interp(wtmp, f_vector, ph_dataset[i,:]) /scale**(-5./3.)
+		else:
+			new_amp_dataset[i,:] = np.interp(f_vector, wtmp, amp_dataset[i,:])
+			#print(f_vector, wtmp)
+			new_ph_dataset[i,:] = np.interp(f_vector, wtmp, ph_dataset[i,:])*scale**(-5./3.)
+
+	return new_amp_dataset, new_ph_dataset
