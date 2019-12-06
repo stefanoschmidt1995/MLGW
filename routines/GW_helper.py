@@ -137,12 +137,12 @@ def create_dataset_TD(N_data, N_grid, filename = None,  t_coal = 0.5, q_range = 
 		N_data				size of dataset
 		N_grid				number of grid points to evaluate
 		filename			name of the file to save dataset in (If is None, nothing is saved on a file)
+		t_coal				time to coalescence to start computation from (measured in reduced grid)
 		q_range				tuple with range for random q values. if single value, q is kept fixed at that value
 		m2_range			tuple with range for random m2 values. if single value, m2 is kept fixed at that value
 		spin_mag_max_1		tuple with range for random spin #1 values. if single value, s1 is kept fixed at that value
 		spin_mag_max_2		tuple with range for random spin #1 values. if single value, s2 is kept fixed at that value
 		t_step				time step to generate the wave with
-		t_coal				time to coalescence to start computation from (measured in reduced grid)
 		lal_approximant		string for the approximant model to be used (in lal convention)
 	Output:
 		if filename is given
@@ -158,14 +158,17 @@ def create_dataset_TD(N_data, N_grid, filename = None,  t_coal = 0.5, q_range = 
 	approx = lalsim.SimInspiralGetApproximantFromString(lal_approximant)
 
 		#allocating storage for temp vectors to save a single WF
-	N_grid = time_grid.shape[0]
-	temp_amp = np.zeros((N_grid,))
-	temp_ph = np.zeros((N_grid,))
-	temp_theta = np.zeros((3,))
+	if isinstance(N_grid, int):
+		temp_amp = np.zeros((N_grid,))
+		temp_ph = np.zeros((N_grid,))
+		temp_theta = np.zeros((3,))
+	else:
+		raise TypeError("N_grid is "+str(type(N_grid))+"! Expected to be a int.")
 
 		#creating time_grid
-	split_point = -0.01 #point to start the fine sampling from (in red space)
-	time_grid = np.hstack( (np.linspace(time_full[0], split_point, (N_grid*2)/3),np.linspace(split_point, time_full[-1], N_grid/3))  )
+	split_point = -0.0025 #point to start the fine sampling from (in red space)
+	end_point = 7e-4 #estimated maximum time for ringdown: WF will be killed after that time
+	time_grid = np.hstack( (np.linspace(-np.abs(t_coal), split_point, (N_grid*2)/3),np.linspace(split_point, end_point, N_grid/3))  )
 
 	if filename is not None: #doing header if file is empty - nothing otherwise
 		if not os.path.isfile(filename): #file doesn't exist: must be created with proper header
@@ -173,7 +176,7 @@ def create_dataset_TD(N_data, N_grid, filename = None,  t_coal = 0.5, q_range = 
 			print("New file ", filename, " created")
 			freq_header = np.concatenate((np.zeros((3,)), time_grid, time_grid) )
 			freq_header = np.reshape(freq_header, (1,len(freq_header)))
-			np.savetxt(filebuff, freq_header, header = "row: theta 3 | amp (1,"+str(N_grid)+")| ph (1,"+str(N_grid)+")\nN_grid = "+str(N_grid)+" | f_step ="+str(f_step)+" | q_range = "+str(q_range)+" | m2_range = "+str(m2_range)+" | s1_range = "+str(s1_range)+" | s2_range = "+str(s2_range), newline = '\n')
+			np.savetxt(filebuff, freq_header, header = "row: theta 3 | amp (1,"+str(N_grid)+")| ph (1,"+str(N_grid)+")\nN_grid = "+str(N_grid)+" | t_coal ="+str(t_coal)+" | t_step ="+str(t_step)+" | q_range = "+str(q_range)+" | m2_range = "+str(m2_range)+" | s1_range = "+str(s1_range)+" | s2_range = "+str(s2_range), newline = '\n')
 		else:
 			filebuff = open(filename,'a')
 
@@ -205,7 +208,10 @@ def create_dataset_TD(N_data, N_grid, filename = None,  t_coal = 0.5, q_range = 
 			spin2z = s2_range
 
 			#computing f_min
-		f_min = 1e0 * np.power(t_coal * (q/(1+q)**2), -3./8.) /(m1+m1) #put here a smart formula...
+		q = m1/m2 #for scaling f_min properly
+		f_min = .95* ((151*(t_coal)**(-3./8.) * (((1+q)**2)/q)**(3./8.))/(m1+m2))
+		 #in () there is the right scaling formula for frequency in order to get always the right reduced time
+		 #this should be multiplied by a prefactor (~1) for dealing with some small variation due to spins
 
 			#getting the wave
 		hptilde, hctilde = lalsim.SimInspiralChooseTDWaveform( #where is its definition and documentation????
@@ -232,16 +238,19 @@ def create_dataset_TD(N_data, N_grid, filename = None,  t_coal = 0.5, q_range = 
 		temp_ph = np.unwrap(np.angle(h))
 
 			#bringing waves on the chosen grid
-		time_full = np.linspace(0.0, hptilde.data.length*1e-3, hptilde.data.length) #time actually
-		temp_amp = np.interp(frequencies, full_freq, temp_amp)
-		temp_ph = np.interp(frequencies, full_freq, temp_ph)
-		#temp_ph = temp_ph[freq_to_choose]; temp_amp = temp_amp[freq_to_choose] #old version of code
+		time_full = np.linspace(0.0, hptilde.data.length*t_step, hptilde.data.length) #time grid at which wave is computed
+		time_full = (time_full - time_full[np.argmax(temp_amp)])/(m1+m2) #grid is scaled to standard grid
+			#setting waves to the chosen std grid
+		temp_amp = np.interp(time_grid, time_full, temp_amp)
+		temp_ph = np.interp(time_grid, time_full, temp_ph)
 
-		temp_ph = temp_ph - temp_ph[0] #all frequencies are shifted by a constant to make the wave start at zero phase!!!! IMPORTANT
+		temp_ph = temp_ph - temp_ph[0] #all frequencies are shifted by a constant to make every wave start with 0 phase
+			#the wave start with 0 phase at t=0 (i.e. maximum amplitude)
 
 			#removing spourious gaps (if present)
-		(index,) = np.where(temp_amp/temp_amp[0] < 5e-3) #there should be a way to choose right threshold...
+		(index,) = np.where(temp_amp/np.max(temp_amp) < 1e-4) #there should be a way to choose right threshold...
 		if len(index) >0:
+			temp_amp[index] = temp_amp[index[0]-1]
 			temp_ph[index] = temp_ph[index[0]-1]
 
 		if filename is None:
@@ -250,12 +259,12 @@ def create_dataset_TD(N_data, N_grid, filename = None,  t_coal = 0.5, q_range = 
 			theta_vector[i,:] = temp_theta
 
 		if filename is not None: #saving to file
-			to_save = np.concatenate((temp_theta,temp_amp, temp_ph))
+			to_save = np.concatenate((temp_theta, temp_amp, temp_ph))
 			to_save = np.reshape(to_save, (1,len(to_save)))
 			np.savetxt(filebuff, to_save)
 
 	if filename is None:
-		return theta_vector, amp_dataset.real, ph_dataset.real, frequencies
+		return theta_vector, amp_dataset.real, ph_dataset.real, time_grid
 	else:
 		filebuff.close()
 		return None

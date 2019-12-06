@@ -9,18 +9,21 @@ from GW_helper import *
 import matplotlib.pyplot as plt
 from ML_routines import *
 
-to_fit = "amp"
+to_fit = "ph"
 
-theta_vector, amp_dataset, ph_dataset, frequencies = load_dataset("../datasets/GW_std_dataset_full.dat", shuffle=False, N_grid = None) #loading dataset
+theta_vector, amp_dataset, ph_dataset, frequencies = load_dataset("../datasets/GW_TD_dataset.dat", shuffle=False, N_grid = None) #loading dataset
 
 print("Loaded data with shape: "+ str(ph_dataset.shape))
 
 	#splitting into train and test set
 	#to make data easier to deal with
-train_frac = .8
+train_frac = .85
 
 train_theta, test_theta, train_amp, test_amp = make_set_split(theta_vector, amp_dataset, train_frac, 1e-21)
 train_theta, test_theta, train_ph, test_ph   = make_set_split(theta_vector, ph_dataset, train_frac, 1.)
+
+#	train_indices = train_theta[np.where(
+
 
 if to_fit == "amp":
 	train_data = train_amp
@@ -30,8 +33,8 @@ if to_fit == "ph":
 	test_data = test_ph
 
 		#DOING PCA
-print("#####PCA of "+to_fit+"#####")
-K_ph = 15 #choose here number of PC
+print("#####PCA of "+to_fit+" #####")
+K_ph = 18 #choose here number of PC
 noise = 0.0
 print("   K = ",K_ph, " | N_grid = ", test_data.shape[1]," | noise ", str(noise))
 

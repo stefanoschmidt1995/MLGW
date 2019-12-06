@@ -291,6 +291,7 @@ class MoE_model(object):
 					print("   Val loss: ", mse)
 					if mse < best_mse and pick_best:
 						best_mse = mse
+						#print("Chosen the best!")
 						try: #saving best model so far
 							self.save("temp_exp", "temp_gat") 
 						except:
@@ -308,6 +309,7 @@ class MoE_model(object):
 		if isinstance(val_set,tuple) and pick_best: #loading best model so far
 			files = os.listdir(".")
 			if "temp_exp" in files and  "temp_gat" in files:
+				#print("loaded the best")
 				self.load = ("temp_exp", "temp_gat")
 				os.system("rm -f temp_exp temp_gat")
 

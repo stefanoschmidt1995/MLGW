@@ -7,21 +7,21 @@ from GW_helper import * 	#routines for dealing with datasets
 from ML_routines import *	#PCA model
 from EM_MoE import *		#MoE model
 
-folder = "GW_std_dataset/"
+folder = "GW_TD_dataset/"
     #loading PCA datasets
 N_train = 7000
 train_theta = np.loadtxt("../datasets/"+folder+"PCA_train_theta_full.dat")[:N_train,:]
 test_theta = np.loadtxt("../datasets/"+folder+"PCA_test_theta_full.dat")
 PCA_train_ph = np.loadtxt("../datasets/"+folder+"PCA_train_full_ph.dat")[:N_train,:]
 PCA_test_ph = np.loadtxt("../datasets/"+folder+"PCA_test_full_ph.dat")
-K_PCA_to_fit = 11
+K_PCA_to_fit = 13
 
 	#adding extra features for basis function regression
-new_features = ["00", "11","22", "01", "02", "12"
+new_features = ["00", "11","22", "01", "02", "12", "111", "110", "112","1111", "1122", "1100", "1120"]
 #,"000", "001", "002", "011", "012", "022", "111", "112", "122", "222"]
 #,"000","111","222", "001"
-,"0000", "0001","0002", "0011", "0022","0012","0111","0112", "0122", "0222","1111", "1112", "1122", "1222", "2222"]
-outfile = open("./saved_models_full_ph/ph_feat", "w+")
+#,"0000", "0001","0002", "0011", "0022","0012","0111","0112", "0122", "0222","1111", "1112", "1122", "1222", "2222"]
+outfile = open("./saved_models_full_ph_TD/ph_feat", "w+")
 outfile.write("\n".join(new_features))
 outfile.close()
 
@@ -33,7 +33,7 @@ print(train_theta.shape, test_theta.shape)
 
 print("Loaded "+ str(train_theta.shape[0]+test_theta.shape[0])+
       " data with ", PCA_train_ph.shape[1]," PCA components")
-print("Spins are allowed to vary within domain [-0.8,0.8]x[-0.8,0.8]")
+print("Spins are allowed to vary within domain [-0.85,0.85]x[-0.85,0.85]")
 
 
    #setting up an EM model for each component
@@ -41,7 +41,7 @@ MoE_models = 	[]
 load_list =		[0   ,1   ,2   ,3   ,4   ,5   ,6   ,7   ,8   ,9   ,10  ,11  ,12  ,13  ,14  ]  #indices of models to be loaded from file
 
 #for 4-th only
-K = 			[15  ,20  ,30  ,20  ,20  ,30  ,20  ,20  ,20  ,20  ,25  ,25  ,25  ,25  ,25  ]  #number of experts for each model
+K = 			[15  ,10  ,10  ,20  ,10  ,30  ,20  ,10  ,15  ,15  ,15  ,15  ,15  ,20  ,20  ]  #number of experts for each model
 
 
 D = train_theta.shape[1] #number of independent variables
@@ -58,11 +58,11 @@ for k in range(0,K_PCA_to_fit):
 	#args = [None,5,0]
 
 	if k in load_list:
-		MoE_models[-1].load("./saved_models_full_ph/ph_exp_"+str(k),"./saved_models_full_ph/ph_gat_"+str(k))
+		MoE_models[-1].load("./saved_models_full_ph_TD/ph_exp_"+str(k),"./saved_models_full_ph_TD/ph_gat_"+str(k))
 		print("Loaded model for comp: ", k)
 	else:
 		MoE_models[-1].fit(train_theta, y_train, threshold = 1e-2, args = args, verbose = True, val_set = (test_theta, y_test))
-		MoE_models[-1].save("./saved_models_full_ph/ph_exp_"+str(k),"./saved_models_full_ph/ph_gat_"+str(k))
+		MoE_models[-1].save("./saved_models_full_ph_TD/ph_exp_"+str(k),"./saved_models_full_ph_TD/ph_gat_"+str(k))
 
 		#doing some test
 	y_pred = MoE_models[-1].predict(test_theta)
@@ -87,14 +87,11 @@ for k in range(0,K_PCA_to_fit):
 
 
 ############Comparing mismatch for test waves
-N_waves = 200
+N_waves = 50
 
-theta_vector_test, amp_dataset_test, ph_dataset_test, frequencies_test = create_dataset(N_waves, N_grid = 2048, filename = None,
-                q_range = (1.,5.), s1_range = (-0.8,0.8), s2_range = (-0.8,0.8),
-				log_space = True,
-                f_high = 1000, f_step = 5e-2, f_max = None, f_min =None, lal_approximant = "IMRPhenomPv2")
-
-
+theta_vector_test, amp_dataset_test, ph_dataset_test, frequencies_test = create_dataset_TD(N_waves, N_grid = 3000, filename = None,
+                t_coal = .25, q_range = (1.,5.), m2_range = 10., s1_range = (-0.82,0.82), s2_range = (-0.82,0.82),
+                t_step = 5e-5, lal_approximant = "SEOBNRv2_opt")
 
 	#preprocessing theta
 theta_vector_test = add_extra_features(theta_vector_test, new_features)
@@ -123,6 +120,10 @@ plt.figure(100)
 plt.plot(frequencies_test, rec_ph_dataset[0,:], label = "Rec")
 plt.plot(frequencies_test, ph_dataset_test[0,:], label = "True")
 plt.legend()
+
+plt.figure(20)
+for i in range(rec_ph_dataset.shape[0]):
+	plt.plot(frequencies_test, rec_ph_dataset[i,:]-ph_dataset_test[i,:])
 plt.show()
 
 

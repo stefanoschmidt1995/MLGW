@@ -8,10 +8,10 @@ from ML_routines import *	#PCA model
 from EM_MoE import *		#MoE model
 #import keras
 
-folder = "GW_std_dataset/"
+folder = "GW_TD_dataset/"
 
     #loading PCA datasets
-N_train = 4000
+N_train = -1
 train_theta = np.loadtxt("../datasets/"+folder+"PCA_train_theta_full.dat")[:N_train,:]
 test_theta = np.loadtxt("../datasets/"+folder+"PCA_test_theta_full.dat")
 PCA_train_amp = np.loadtxt("../datasets/"+folder+"PCA_train_full_amp.dat")[:N_train,:]
@@ -20,7 +20,7 @@ K_PCA_to_fit = 10
 
 	#adding extra features for basis function regression
 new_features = ["00", "11","22", "01", "02", "12", "0000", "0001","0002", "0011", "0022","0012","0111","0112", "0122", "0222","1111", "1112", "1122", "1222", "2222"]
-outfile = open("./saved_models_full_amp/amp_feat", "w+")
+outfile = open("./saved_models_full_amp_TD/amp_feat", "w+")
 outfile.write("\n".join(new_features))
 outfile.close()
 
@@ -35,7 +35,7 @@ print("Spins are allowed to vary within domain [-0.8,0.8]x[-0.8,0.8]")
 
    #setting up an EM model for each component
 MoE_models = 	[]
-load_list = 	[0   ,1   ,2   ,3   ,4   ,5   ,6   ,7   ,8   ,9   ]#,10  ,11  ,12  ,13  ,14  ]  #indices of models to be loaded from file
+load_list = 	[]#[0   ,1   ,2   ,3   ,4   ,5   ,6   ,7   ,8   ,9   ]#,10  ,11  ,12  ,13  ,14  ]  #indices of models to be loaded from file
 K = 			[15  ,10  ,30  ,20  ,15  ,20  ,25  ,20  ,15  ,15  ,15  ,25  ,25  ,25  ,25  ] #number of experts for each model
 #epochs_list  = 	[150 ,200 ,200 ,300 ,400 ,400 ,400 ,300 ,300 ,300 ,400 ,400 ,400 ,400 ,400 ] #number of epochs for gating function fit
 #step_list =		[1e-2,5e-3,5e-3,5e-3,2e-3,2e-3,1e-3,2e-3,2e-3,2e-3,1e-3,1e-3,1e-3,1e-3,1e-3] #number of steps for gating function fit
@@ -54,11 +54,11 @@ for k in range(0,K_PCA_to_fit):
 	#args = [None,5,0]
 
 	if k in load_list:
-		MoE_models[-1].load("./saved_models_full_amp/amp_exp_"+str(k),"./saved_models_full_amp/amp_gat_"+str(k))
+		MoE_models[-1].load("./saved_models_full_amp_TD/amp_exp_"+str(k),"./saved_models_full_amp_TD/amp_gat_"+str(k))
 		print("Loaded model for comp: ", k)
 	else:	
 		MoE_models[-1].fit(train_theta, y_train, threshold = 1e-2, args = args, verbose = True, val_set = (test_theta, y_test))
-		MoE_models[-1].save("./saved_models_full_amp/amp_exp_"+str(k),"./saved_models_full_amp/amp_gat_"+str(k))
+		MoE_models[-1].save("./saved_models_full_amp_TD/amp_exp_"+str(k),"./saved_models_full_amp_TD/amp_gat_"+str(k))
 
 		#doing some test
 	y_pred = MoE_models[-1].predict(test_theta)
@@ -84,10 +84,9 @@ for k in range(0,K_PCA_to_fit):
 ############Comparing mismatch for test waves
 N_waves = 100
 
-theta_vector_test, amp_dataset_test, ph_dataset_test, frequencies_test = create_dataset(N_waves, N_grid = 2048, filename = None,
-                q_range = (1.,5.), s1_range = (-0.8,0.8), s2_range = (-0.8,0.8),
-				log_space = True,
-                f_high = 1000, f_step = 5e-2, f_max = None, f_min =None, lal_approximant = "IMRphenomPv2")
+theta_vector_test, amp_dataset_test, ph_dataset_test, frequencies_test = create_dataset_TD(N_waves, N_grid = 3000, filename = None,
+                t_coal = .25, q_range = (1.,5.), m2_range = 10., s1_range = (-0.82,0.82), s2_range = (-0.82,0.82),
+                t_step = 5e-5, lal_approximant = "SEOBNRv2_opt")
 amp_dataset_test = 1e21*amp_dataset_test
 
 

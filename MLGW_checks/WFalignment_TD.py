@@ -32,18 +32,25 @@ def reg_phase(wf, threshold = 1e-4):
 #It might be a good idea to generate WFs by scaling start frequency: in this way every signal has almost the same number of cycles (sounds like a good property...)
 
 def generate_waveform(m1,m2):
+	q = m1/m2
 	mtot = (m1+m2)#*lal.MTSUN_SI
-	
-#	f_min = 30.0
-	q = 10.
-	f_min = (550*(2.)**(-3./8.) * (((1+q)**2)/q)**(-3./8.))/mtot #sounds like a good choice... and also it is able to reduce erorrs in phase reconstruction
+	mc = (m1*m2)**(3./5.)/(m1+m2)**(1./5.)
+	mc /= 1.21 #M_c / 1.21 M_sun
+	print(m1,m2,mc,mtot)
+	print( mc **(-5./8.) * mtot**(-3./8.), (((1+q)**2)/q)**(3./8.)/mtot)
+
+#	f_min = 134 * mc **(-5./8.)*(1.2)**(-3./8.) * mtot**(-3.8)
+	f_min = .9* ((151*(.25)**(-3./8.) * (((1+q)**2)/q)**(3./8.))/mtot)
+		#in () there is the right scaling formula for frequency in order to get always the right reduced time
+		#it should be multiplied by a prefactor for dealing with some small variation in spin
+		#sounds like a good choice... and also it is able to reduce erorrs in phase reconstruction
 	print(f_min)
 
 	hptilde, hctilde = lalsim.SimInspiralChooseTDWaveform( #where is its definition and documentation????
-		q*m1*lalsim.lal.MSUN_SI, #m1
+		m1*lalsim.lal.MSUN_SI, #m1
 		m2*lalsim.lal.MSUN_SI, #m2
 		0., 0., -0., #spin vector 1
-		0., 0., -0., #spin vector 2
+		0., 0., -0.8, #spin vector 2
 		1.*1e6*lalsim.lal.PC_SI, #distance to source
 		0., #inclination
 		0., #phi ref
@@ -91,12 +98,15 @@ def generate_waveform(m1,m2):
 #	return  time, rescaled_time, h
 	return time, rescaled_time, amp, ph
 
+q = 10.
 m1 = 5.0
-m1c = (m1*m1)**(3./5.)/(m1+m1)**(1./5.)
+m1c = (m1*q*m1)**(3./5.)/(m1+m1*q)**(1./5.)
 m2 = 10.0
-m2c = (m2*m2)**(3./5.)/(m2+m2)**(1./5.)
-t1,tr1,amp1, ph1 = generate_waveform(m1,m1)
-t2,tr2,amp2, ph2 = generate_waveform(m2,m2)
+m2c = (m2*q*m2)**(3./5.)/(m2+m2*q)**(1./5.)
+t1,tr1,amp1, ph1 = generate_waveform(q*m1,m1)
+t2,tr2,amp2, ph2 = generate_waveform(q*m2,m2)
+m1tot = (1+q)*m1
+m2tot = (1+q)*m2
 
 amp1,ph1 = align_ph(amp1,ph1, True)
 amp2,ph2 = align_ph(amp2, ph2, True)
@@ -104,10 +114,12 @@ amp2,ph2 = align_ph(amp2, ph2, True)
 t1_merger = np.argmax(amp1)
 t2_merger = np.argmax(amp2)
 
+print("end: ",(t1-t1[t1_merger])[-1]/m1tot)
+
 	#better to do interpolation in amp /ph space rather than in h space
 		#Interpolation is more able to track amplitude behaviour than in the case of a wiggly function
-amp3 = m2/m1*np.interp((t2-t2[t2_merger])/m2, (t1-t1[t1_merger])/m1, amp1 )
-ph3 = np.interp((t2-t2[t2_merger])/m2, (t1-t1[t1_merger])/m1, ph1 )
+amp3 = m2/m1*np.interp((t2-t2[t2_merger])/m2tot, (t1-t1[t1_merger])/m1tot, amp1 )
+ph3 = np.interp((t2-t2[t2_merger])/m2tot, (t1-t1[t1_merger])/m1tot, ph1 )
 
 #wf3 = m2/m1*np.interp((t2-t2[t2_merger])/m2, (t1-t1[t1_merger])/m1, wf1) #don't do this: much more unstable!!
 
@@ -147,8 +159,8 @@ import matplotlib.pyplot as plt
 fig = plt.figure()
 plt.title('true times')
 ax = fig.add_subplot(111)
-ax.plot((t1-t1[t1_merger])/m1, wf1/m1, color='b')
-ax.plot((t2-t2[t2_merger])/m2, wf2/m2, color='k')
+ax.plot((t1-t1[t1_merger])/m1tot, wf1/m1tot, color='b')
+ax.plot((t2-t2[t2_merger])/m2tot, wf2/m2tot, color='k')
 #ax.plot(tr2, wf3, color='r')
 
 fig = plt.figure()
@@ -165,8 +177,8 @@ print(compute_mismatch(np.abs(wf2), np.unwrap(np.angle(wf2)), np.abs(wf3), np.un
 fig = plt.figure()
 plt.title('amplitudes')
 ax = fig.add_subplot(111)
-ax.plot((t2-t2[t2_merger])/m2, np.abs(amp2)/np.max(amp2), color='k')
-ax.plot((t2-t2[t2_merger])/m2, np.abs(amp3)/np.max(amp3), color='r')
+ax.plot((t2-t2[t2_merger])/m2tot, np.abs(amp2)/np.max(amp2), color='k')
+ax.plot((t2-t2[t2_merger])/m2tot, np.abs(amp3)/np.max(amp3), color='r')
 
 
 fig = plt.figure()
