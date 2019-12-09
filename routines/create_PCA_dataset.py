@@ -9,9 +9,9 @@ from GW_helper import *
 import matplotlib.pyplot as plt
 from ML_routines import *
 
-to_fit = "ph"
+to_fit = "amp"
 
-theta_vector, amp_dataset, ph_dataset, frequencies = load_dataset("../datasets/GW_TD_dataset.dat", shuffle=False, N_grid = None) #loading dataset
+theta_vector, amp_dataset, ph_dataset, frequencies = load_dataset("../datasets/GW_TD_dataset_short/GW_TD_dataset_short.dat", shuffle=False, N_grid = None) #loading dataset
 
 print("Loaded data with shape: "+ str(ph_dataset.shape))
 
@@ -22,7 +22,18 @@ train_frac = .85
 train_theta, test_theta, train_amp, test_amp = make_set_split(theta_vector, amp_dataset, train_frac, 1e-21)
 train_theta, test_theta, train_ph, test_ph   = make_set_split(theta_vector, ph_dataset, train_frac, 1.)
 
-#	train_indices = train_theta[np.where(
+	#removing from dataset bad points...
+"""train_indices = np.where(np.abs(train_theta[:,1])<0.7)[0]
+test_indices = np.where(np.abs(test_theta[:,1])<0.7)[0]
+
+train_theta = train_theta[train_indices,:]
+test_theta = test_theta[test_indices,:]
+train_amp = train_amp[train_indices,:]
+test_amp = test_amp[test_indices,:]
+train_ph = train_ph[train_indices,:]
+test_ph = test_ph[test_indices,:]#"""
+
+print(np.max(train_theta[:,1]), np.min(train_theta[:,1]))
 
 
 if to_fit == "amp":
@@ -52,6 +63,7 @@ np.savetxt("../datasets/PCA_train_theta_full.dat", train_theta)
 np.savetxt("../datasets/PCA_test_theta_full.dat", test_theta)
 np.savetxt("../datasets/PCA_train_full_"+to_fit+".dat", red_train_data)
 np.savetxt("../datasets/PCA_test_full_"+to_fit+".dat", red_test_data)
+np.savetxt("../datasets/times", frequencies)
 
 	#plotting PC projection vs. q
 for k in range(K_ph):

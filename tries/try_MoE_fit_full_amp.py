@@ -8,7 +8,7 @@ from ML_routines import *	#PCA model
 from EM_MoE import *		#MoE model
 #import keras
 
-folder = "GW_TD_dataset/"
+folder = "GW_TD_dataset_short/"
 
     #loading PCA datasets
 N_train = -1
@@ -35,8 +35,8 @@ print("Spins are allowed to vary within domain [-0.8,0.8]x[-0.8,0.8]")
 
    #setting up an EM model for each component
 MoE_models = 	[]
-load_list = 	[]#[0   ,1   ,2   ,3   ,4   ,5   ,6   ,7   ,8   ,9   ]#,10  ,11  ,12  ,13  ,14  ]  #indices of models to be loaded from file
-K = 			[15  ,10  ,30  ,20  ,15  ,20  ,25  ,20  ,15  ,15  ,15  ,25  ,25  ,25  ,25  ] #number of experts for each model
+load_list = 	[0   ,1   ,2   ,3   ,4   ,5   ,6   ,7   ,8   ,9   ]#,10  ,11  ,12  ,13  ,14  ]  #indices of models to be loaded from file
+K = 			[15  ,15  ,30  ,20  ,15  ,20  ,25  ,20  ,15  ,15  ,15  ,25  ,25  ,25  ,25  ] #number of experts for each model
 #epochs_list  = 	[150 ,200 ,200 ,300 ,400 ,400 ,400 ,300 ,300 ,300 ,400 ,400 ,400 ,400 ,400 ] #number of epochs for gating function fit
 #step_list =		[1e-2,5e-3,5e-3,5e-3,2e-3,2e-3,1e-3,2e-3,2e-3,2e-3,1e-3,1e-3,1e-3,1e-3,1e-3] #number of steps for gating function fit
 
@@ -85,7 +85,7 @@ for k in range(0,K_PCA_to_fit):
 N_waves = 100
 
 theta_vector_test, amp_dataset_test, ph_dataset_test, frequencies_test = create_dataset_TD(N_waves, N_grid = 3000, filename = None,
-                t_coal = .25, q_range = (1.,5.), m2_range = 10., s1_range = (-0.82,0.82), s2_range = (-0.82,0.82),
+                t_coal = .015, q_range = (1.,5.), m2_range = 10., s1_range = (-0.8,0.8), s2_range = (-0.8,0.8),
                 t_step = 5e-5, lal_approximant = "SEOBNRv2_opt")
 amp_dataset_test = 1e21*amp_dataset_test
 

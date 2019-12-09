@@ -165,10 +165,26 @@ def create_dataset_TD(N_data, N_grid, filename = None,  t_coal = 0.5, q_range = 
 	else:
 		raise TypeError("N_grid is "+str(type(N_grid))+"! Expected to be a int.")
 
+	if isinstance(m2_range, tuple):
+		D_theta = 4 #m2 must be included as a feature
+	else:
+		D_theta = 3
+
 		#creating time_grid
 	split_point = -0.0025 #point to start the fine sampling from (in red space)
 	end_point = 7e-4 #estimated maximum time for ringdown: WF will be killed after that time
-	time_grid = np.hstack( (np.linspace(-np.abs(t_coal), split_point, (N_grid*2)/3),np.linspace(split_point, end_point, N_grid/3))  )
+	if np.abs(t_coal) > 5.*np.abs(split_point):
+		time_grid = np.hstack( (np.linspace(-np.abs(t_coal), split_point, (N_grid*2)/3),np.linspace(split_point, end_point, N_grid/3))  )
+	else:
+		print("      weird time grid")
+		time_grid = np.linspace(-np.abs(t_coal), end_point, N_grid)
+
+		#setting t_coal_freq for generating a waves
+	if np.abs(t_coal) < 0.1:
+		t_coal_freq = 0.1
+	else:
+		t_coal_freq = np.abs(t_coal)
+
 
 	if filename is not None: #doing header if file is empty - nothing otherwise
 		if not os.path.isfile(filename): #file doesn't exist: must be created with proper header
@@ -176,14 +192,14 @@ def create_dataset_TD(N_data, N_grid, filename = None,  t_coal = 0.5, q_range = 
 			print("New file ", filename, " created")
 			freq_header = np.concatenate((np.zeros((3,)), time_grid, time_grid) )
 			freq_header = np.reshape(freq_header, (1,len(freq_header)))
-			np.savetxt(filebuff, freq_header, header = "row: theta 3 | amp (1,"+str(N_grid)+")| ph (1,"+str(N_grid)+")\nN_grid = "+str(N_grid)+" | t_coal ="+str(t_coal)+" | t_step ="+str(t_step)+" | q_range = "+str(q_range)+" | m2_range = "+str(m2_range)+" | s1_range = "+str(s1_range)+" | s2_range = "+str(s2_range), newline = '\n')
+			np.savetxt(filebuff, freq_header, header = "row: theta "+str(D_theta)+" | amp (1,"+str(N_grid)+")| ph (1,"+str(N_grid)+")\nN_grid = "+str(N_grid)+" | t_coal ="+str(t_coal)+" | t_step ="+str(t_step)+" | q_range = "+str(q_range)+" | m2_range = "+str(m2_range)+" | s1_range = "+str(s1_range)+" | s2_range = "+str(s2_range), newline = '\n')
 		else:
 			filebuff = open(filename,'a')
 
 	if filename is None:
 		amp_dataset = np.zeros((N_data,N_grid)) #allocating storage for returning data
 		ph_dataset = np.zeros((N_data,N_grid))
-		theta_vector = np.zeros((N_data,3))
+		theta_vector = np.zeros((N_data,D_theta))
 
 	for i in range(N_data): #loop on data to be created
 		if i%50 == 0 and i != 0:
@@ -209,7 +225,7 @@ def create_dataset_TD(N_data, N_grid, filename = None,  t_coal = 0.5, q_range = 
 
 			#computing f_min
 		q = m1/m2 #for scaling f_min properly
-		f_min = .95* ((151*(t_coal)**(-3./8.) * (((1+q)**2)/q)**(3./8.))/(m1+m2))
+		f_min = .95* ((151*(t_coal_freq)**(-3./8.) * (((1+q)**2)/q)**(3./8.))/(m1+m2))
 		 #in () there is the right scaling formula for frequency in order to get always the right reduced time
 		 #this should be multiplied by a prefactor (~1) for dealing with some small variation due to spins
 
@@ -233,7 +249,10 @@ def create_dataset_TD(N_data, N_grid, filename = None,  t_coal = 0.5, q_range = 
 		)
 
 		h = np.array(hptilde.data.data)+1j*np.array(hctilde.data.data) #complex waveform
-		temp_theta = [m1/m2, spin1z, spin2z]
+		if isinstance(m2_range, tuple):
+			temp_theta = [m1, m2, spin1z, spin2z]		
+		else:
+			temp_theta = [m1/m2, spin1z, spin2z]
 		temp_amp = np.abs(h)
 		temp_ph = np.unwrap(np.angle(h))
 

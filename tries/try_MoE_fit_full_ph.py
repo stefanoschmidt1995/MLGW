@@ -7,7 +7,7 @@ from GW_helper import * 	#routines for dealing with datasets
 from ML_routines import *	#PCA model
 from EM_MoE import *		#MoE model
 
-folder = "GW_TD_dataset/"
+folder = "GW_TD_dataset_short/"
     #loading PCA datasets
 N_train = 7000
 train_theta = np.loadtxt("../datasets/"+folder+"PCA_train_theta_full.dat")[:N_train,:]
@@ -33,15 +33,15 @@ print(train_theta.shape, test_theta.shape)
 
 print("Loaded "+ str(train_theta.shape[0]+test_theta.shape[0])+
       " data with ", PCA_train_ph.shape[1]," PCA components")
-print("Spins are allowed to vary within domain [-0.85,0.85]x[-0.85,0.85]")
+print("Spins are allowed to vary within domain [-0.8,0.8]x[-0.8,0.8]")
 
 
    #setting up an EM model for each component
 MoE_models = 	[]
-load_list =		[0   ,1   ,2   ,3   ,4   ,5   ,6   ,7   ,8   ,9   ,10  ,11  ,12  ,13  ,14  ]  #indices of models to be loaded from file
+load_list =		[0   ,1   ,0   ,3   ,4   ,5   ,6   ,7   ,8   ,9   ,10  ,11  ,12  ,13  ,14  ]  #indices of models to be loaded from file
 
 #for 4-th only
-K = 			[15  ,10  ,10  ,20  ,10  ,30  ,20  ,10  ,15  ,15  ,15  ,15  ,15  ,20  ,20  ]  #number of experts for each model
+K = 			[10  ,10  ,15  ,30  ,10  ,30  ,20  ,10  ,15  ,15  ,15  ,15  ,15  ,20  ,20  ]  #number of experts for each model
 
 
 D = train_theta.shape[1] #number of independent variables
@@ -54,7 +54,7 @@ for k in range(0,K_PCA_to_fit):
 
 	MoE_models.append(MoE_model(D,K[k]))
 			#opt	val_set reg verbose threshold	N_it     step
-	args = ["adam", None,   0e-4, False,  1e-4,		150,    2e-3]
+	args = ["adam", None,   0e-4, False,  1e-4,		150,    1e-3]
 	#args = [None,5,0]
 
 	if k in load_list:
@@ -68,6 +68,7 @@ for k in range(0,K_PCA_to_fit):
 	y_pred = MoE_models[-1].predict(test_theta)
 	y_exp = MoE_models[-1].experts_predictions(test_theta)
 	y_gat = MoE_models[-1].get_gating_probs(test_theta)
+	resp = MoE_models[-1].get_responsibilities(test_theta, y_test)
 	print("Test square loss for comp "+str(k)+": ",np.sum(np.square(y_pred-y_test))/(y_pred.shape[0]))
 	print("LL for comp "+str(k)+" (train,val): ", (MoE_models[-1].log_likelihood(train_theta,y_train),MoE_models[-1].log_likelihood(test_theta,y_test)))
 
@@ -85,12 +86,17 @@ for k in range(0,K_PCA_to_fit):
 		plt.close(i*K[k]+k)
 	#plt.show()
 
+	#plt.figure(1000)
+	#plt.plot(test_theta[:,1], y_gat[:,0], 'o', ms = 1, label = "gating")
+	#plt.plot(test_theta[:,1], resp[:,0], 'o', ms = 1, label = "resp") 	
+	#plt.legend()
+	#plt.show()
 
 ############Comparing mismatch for test waves
 N_waves = 50
 
 theta_vector_test, amp_dataset_test, ph_dataset_test, frequencies_test = create_dataset_TD(N_waves, N_grid = 3000, filename = None,
-                t_coal = .25, q_range = (1.,5.), m2_range = 10., s1_range = (-0.82,0.82), s2_range = (-0.82,0.82),
+                t_coal = .015, q_range = (1.,5.), m2_range = 10., s1_range = (-0.8,0.8), s2_range = (-0.8,0.8),
                 t_step = 5e-5, lal_approximant = "SEOBNRv2_opt")
 
 	#preprocessing theta
@@ -115,6 +121,16 @@ rec_ph_dataset = ph_PCA.reconstruct_data(rec_PCA_dataset)
 
 F = compute_mismatch(amp_dataset_test, rec_ph_dataset, amp_dataset_test, ph_dataset_test)
 print("Avg fit mismatch: ", np.mean(F))
+
+mse = np.sum(np.square( rec_ph_dataset[:,2900]-ph_dataset_test[:,2900]))/(ph_dataset_test.shape[0])#*ph_dataset_test.shape[1])
+print("Reconstruction mse: ", mse)
+
+feat = 0 #1,2 index of feature to plot everything against
+plt.figure(0)
+plt.plot(theta_vector_test[:,feat], ph_dataset_test[:,2900], 'o', label="true")
+plt.plot(theta_vector_test[:,feat], rec_ph_dataset[:,2900] , 'o', label="pred")
+plt.legend()
+
 
 plt.figure(100)
 plt.plot(frequencies_test, rec_ph_dataset[0,:], label = "Rec")

@@ -10,9 +10,9 @@ from EM_MoE import *		#MoE model
 
 	#adding extra features for basis function regression
 new_features_amp = ["00", "11","22", "01", "02", "12", "0000", "0001","0002", "0011", "0022","0012","0111","0112", "0122", "0222","1111", "1112", "1122", "1222", "2222"]
-new_features_ph = ["00", "11","22", "01", "02", "12"]
+new_features_ph = ["00", "11","22", "01", "02", "12", "111", "110", "112","1111", "1122", "1100", "1120"]
 
-folder = "GW_TD_dataset/"
+folder = "GW_TD_dataset_short/"
 PCA_train_amp = np.loadtxt("../datasets/"+folder+"PCA_train_full_amp.dat")
 PCA_train_ph = np.loadtxt("../datasets/"+folder+"PCA_train_full_ph.dat")
 
@@ -29,7 +29,7 @@ D_amp = 3+len(new_features_amp) #number of independent variables
 D_ph = 3+len(new_features_ph) #number of independent variables
 
 K_PCA_amp = 10
-K_PCA_ph = 11
+K_PCA_ph = 13
 
 	#loading models
 for k in range(np.maximum(K_PCA_amp,K_PCA_ph)):
@@ -47,6 +47,7 @@ for k in range(np.maximum(K_PCA_amp,K_PCA_ph)):
 
 ############Comparing mismatch for test waves
 N_waves = 50
+print("Generating "+str(N_waves)+" waves")
 
 #theta_vector_test, amp_dataset_test, ph_dataset_test, frequencies_test = create_dataset(N_waves, N_grid = 2048, filename = None,
 #                q_range = (1.,5.), s1_range = (-0.8,0.8), s2_range = (-0.8,0.8),
@@ -54,7 +55,7 @@ N_waves = 50
 #                f_high = 1000, f_step = 5e-2, f_max = None, f_min =None, lal_approximant = "IMRphenomPv2")
 
 theta_vector_test, amp_dataset_test, ph_dataset_test, test_times = create_dataset_TD(N_waves, N_grid = 3000, filename = None,
-                t_coal = .25, q_range = (1.,5.), m2_range = 10., s1_range = (-0.82,0.82), s2_range = (-0.82,0.82),
+                t_coal = .015, q_range = (1.,5.), m2_range = 10., s1_range = (-0.8,0.8), s2_range = (-0.8,0.8),
                 t_step = 5e-5, lal_approximant = "SEOBNRv2_opt")
 amp_dataset_test = 1e21*amp_dataset_test
 
@@ -116,7 +117,7 @@ N_plots = 2
 indices = np.random.choice(range(N_plots), size=N_plots ,replace = False)
 for i in range(N_plots):
 	plt.figure(i, figsize=(15,10))
-	plt.title("(q,s1,s2) = "+str(theta_vector_test[indices[i],0:3]))
+	plt.title("(q,s1,s2) = "+str(theta_vector_test[indices[i],0:3])+" | F = "+str(F[i]) )
 	plt.plot(test_times, rec_h[indices[i]].real, label = "Rec")
 	plt.plot(test_times, true_h[indices[i]].real, label = "True")
 	#plt.xscale("log")

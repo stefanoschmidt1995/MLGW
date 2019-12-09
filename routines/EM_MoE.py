@@ -285,13 +285,16 @@ class MoE_model(object):
 			i += 1
 			if verbose:
 				print("LL at iter "+str(i)+"= ",LL)
-				print("   Gating loss: ", gat_history[0], gat_history[-1])
+				try:
+					print("   Gating loss: ", gat_history[0], gat_history[-1])
+				except TypeError:
+					pass
 				if isinstance(val_set,tuple) :
 					mse = np.sum(np.square( self.predict(val_set[0])-val_set[1]))/val_set[0].shape[0]
 					print("   Val loss: ", mse)
 					if mse < best_mse and pick_best:
 						best_mse = mse
-						#print("Chosen the best!")
+						print("Chosen the best!")
 						try: #saving best model so far
 							self.save("temp_exp", "temp_gat") 
 						except:
@@ -309,7 +312,7 @@ class MoE_model(object):
 		if isinstance(val_set,tuple) and pick_best: #loading best model so far
 			files = os.listdir(".")
 			if "temp_exp" in files and  "temp_gat" in files:
-				#print("loaded the best")
+				print("loaded the best")
 				self.load = ("temp_exp", "temp_gat")
 				os.system("rm -f temp_exp temp_gat")
 
