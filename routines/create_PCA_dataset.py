@@ -9,9 +9,9 @@ from GW_helper import *
 import matplotlib.pyplot as plt
 from ML_routines import *
 
-to_fit = "amp"
+to_fit = "ph"
 
-theta_vector, amp_dataset, ph_dataset, frequencies = load_dataset("../datasets/GW_TD_dataset_short/GW_TD_dataset_short.dat", shuffle=False, N_grid = None) #loading dataset
+theta_vector, amp_dataset, ph_dataset, frequencies = load_dataset("../datasets/GW_TD_dataset_short_al_merger/GW_TD_dataset_short_al_merger.dat", shuffle=False, N_grid = None) #loading dataset
 
 print("Loaded data with shape: "+ str(ph_dataset.shape))
 
@@ -45,7 +45,7 @@ if to_fit == "ph":
 
 		#DOING PCA
 print("#####PCA of "+to_fit+" #####")
-K_ph = 18 #choose here number of PC
+K_ph = 15 #choose here number of PC
 noise = 0.0
 print("   K = ",K_ph, " | N_grid = ", test_data.shape[1]," | noise ", str(noise))
 

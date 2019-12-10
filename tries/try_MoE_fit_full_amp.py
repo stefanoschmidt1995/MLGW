@@ -8,7 +8,7 @@ from ML_routines import *	#PCA model
 from EM_MoE import *		#MoE model
 #import keras
 
-folder = "GW_TD_dataset_short/"
+folder = "GW_TD_dataset_short_al_merger/"
 
     #loading PCA datasets
 N_train = -1
@@ -16,7 +16,7 @@ train_theta = np.loadtxt("../datasets/"+folder+"PCA_train_theta_full.dat")[:N_tr
 test_theta = np.loadtxt("../datasets/"+folder+"PCA_test_theta_full.dat")
 PCA_train_amp = np.loadtxt("../datasets/"+folder+"PCA_train_full_amp.dat")[:N_train,:]
 PCA_test_amp = np.loadtxt("../datasets/"+folder+"PCA_test_full_amp.dat")
-K_PCA_to_fit = 10
+K_PCA_to_fit = 8
 
 	#adding extra features for basis function regression
 new_features = ["00", "11","22", "01", "02", "12", "0000", "0001","0002", "0011", "0022","0012","0111","0112", "0122", "0222","1111", "1112", "1122", "1222", "2222"]
@@ -35,7 +35,7 @@ print("Spins are allowed to vary within domain [-0.8,0.8]x[-0.8,0.8]")
 
    #setting up an EM model for each component
 MoE_models = 	[]
-load_list = 	[0   ,1   ,2   ,3   ,4   ,5   ,6   ,7   ,8   ,9   ]#,10  ,11  ,12  ,13  ,14  ]  #indices of models to be loaded from file
+load_list =[]# 	[0   ,1   ,2   ,3   ,4   ,5   ,6   ,7   ,8   ,9   ]#,10  ,11  ,12  ,13  ,14  ]  #indices of models to be loaded from file
 K = 			[15  ,15  ,30  ,20  ,15  ,20  ,25  ,20  ,15  ,15  ,15  ,25  ,25  ,25  ,25  ] #number of experts for each model
 #epochs_list  = 	[150 ,200 ,200 ,300 ,400 ,400 ,400 ,300 ,300 ,300 ,400 ,400 ,400 ,400 ,400 ] #number of epochs for gating function fit
 #step_list =		[1e-2,5e-3,5e-3,5e-3,2e-3,2e-3,1e-3,2e-3,2e-3,2e-3,1e-3,1e-3,1e-3,1e-3,1e-3] #number of steps for gating function fit

@@ -1,6 +1,7 @@
 #Class for dealing with all the components of a MLGW model made of PCA+MoE
 
 import os
+import warnings
 from EM_MoE import *		#MoE model
 from ML_routines import *	#PCA model
 
@@ -50,7 +51,7 @@ class MLGW_generator(object):
 		"""
 		if not folder.endswith('/'):
 			folder = folder + "/"
-		print(folder)
+		print("Loading model from: ", folder)
 		file_list = os.listdir(folder)
 
 			#loading PCA
@@ -59,8 +60,8 @@ class MLGW_generator(object):
 		self.ph_PCA = PCA_model()
 		self.ph_PCA.load_model(folder+"ph_PCA_model")
 
-		print("Loaded PCA model for amplitude with ", self.amp_PCA.get_V_matrix().shape[1], " PC")
-		print("Loaded PCA model for phase with ", self.ph_PCA.get_V_matrix().shape[1], " PC")
+		print("  Loaded PCA model for amplitude with ", self.amp_PCA.get_V_matrix().shape[1], " PC")
+		print("  Loaded PCA model for phase with ", self.ph_PCA.get_V_matrix().shape[1], " PC")
 
 			#loading features
 		f = open(folder+"amp_feat", "r")
@@ -73,18 +74,18 @@ class MLGW_generator(object):
 		for i in range(len(self.ph_features)):
 			self.ph_features[i] = self.ph_features[i].rstrip()
 		
-		print("Loaded features for amplitude: ", self.amp_features)
-		print("Loaded features for phase: ", self.ph_features)
+		print("  Loaded features for amplitude: ", self.amp_features)
+		print("  Loaded features for phase: ", self.ph_features)
 	
 			#loading MoE models
-		print("Loading MoE models")
+		print("  Loading MoE models")
 			#amplitude
 		self.MoE_models_amp = []
 		k = 0
 		while "amp_exp_"+str(k) in file_list and  "amp_gat_"+str(k) in file_list:
 			self.MoE_models_amp.append(MoE_model(3+len(self.amp_features),1))
 			self.MoE_models_amp[-1].load(folder+"amp_exp_"+str(k),folder+"amp_gat_"+str(k))
-			print("   Loaded amplitude model for comp: ", k)
+			print("    Loaded amplitude model for comp: ", k)
 			k += 1
 		
 			#phase
@@ -93,14 +94,15 @@ class MLGW_generator(object):
 		while "ph_exp_"+str(k) in file_list and  "ph_gat_"+str(k) in file_list:
 			self.MoE_models_ph.append(MoE_model(3+len(self.ph_features),1))
 			self.MoE_models_ph[-1].load(folder+"ph_exp_"+str(k),folder+"ph_gat_"+str(k))
-			print("   Loaded phase model for comp: ", k)
+			print("    Loaded phase model for comp: ", k)
 			k += 1
 
 
 		if "frequencies" in file_list and self.domain == "FD":
 			self.frequencies = np.loadtxt(folder+"frequencies")
-			print("Loaded frequency vector")
+			print("  Loaded frequency vector")
 		elif "times" in file_list and self.domain == "TD":
+			print("  Loaded time vector")
 			self.times = np.loadtxt(folder+"times")
 		else:
 			raise RuntimeError("Unable to load model: no times/frequency vector given!")
@@ -267,11 +269,16 @@ class MLGW_generator(object):
 				interp_grid = time_grid/m_tot_us[i]
 			else:
 				interp_grid = time_grid
-			if np.abs(interp_grid[0]) > np.abs(self.times)[0]:
-				raise RuntimeWarning("Warning: time grid given is too long for the dataset. Results might be subject to errors.")
+			if np.abs(interp_grid[0]) > np.abs(self.times[0]):
+				warnings.warn("Warning: time grid given is too long for the dataset. Results might be subject to errors.")
 			new_amp[i,:] = np.interp(interp_grid, self.times, amp[i,:]) * m_tot_us[i]/m_tot_std[i]
 			new_ph[i,:]  = np.interp(interp_grid, self.times, ph[i,:])
-			new_ph[i,:]  = new_ph[i,:] - new_ph[i,np.argmax(amp[i,:])]
+				#there is a serious issue with the alignment of the wave: depending on when phase is set to zero, mismatch can strongly change... how to fix it??
+			#new_ph[i,:]  = new_ph[i,:] - new_ph[i,np.argmax(new_amp[i,:])] #pay attention to this!!! Maximum should be found in the new wave!!!
+
+					#wave is aligned with phase 0 at merger time
+			new_amp[i,:], new_ph[i,:] = self.align_wave_TD(new_amp[i,:], new_ph[i,:], interp_grid)
+
 		amp = 1e-21*new_amp
 		ph = new_ph
 
@@ -383,7 +390,43 @@ class MLGW_generator(object):
 
 		return rec_amp_dataset, rec_ph_dataset
 
-		
+	def align_wave_TD(self, amp, ph, x_grid):
+		"""
+		Given a set of waves in time domain, it set time scale s.t. amplitude is max at t=0 and ph = 0 at t=0.
+		Input:
+			amp	(N, N_grid)	amplitude of waves
+			ph (N,N_grid)	phases of waves
+			x_grid (N_grid)	grid at which wave is evaluated
+		Output:
+			amp, ph (N,N_grid)	amplitude and phases rescaled appropriately
+		"""
+		#return amp, ph
+		assert amp.shape == ph.shape
+		if amp.ndim == 1:
+			amp = amp[None,:]
+			ph = ph[None,:]
+
+		return amp, np.subtract(ph.T,ph[:,0]).T #this works a lot but is very unelegant!!!
+
+
+		argmax_amp = np.argmax(amp, axis = 1) #(N,)
+		#huge_grid = np.linspace(x_grid[0], x_grid[-1], int(1e5))
+		for i in range(amp.shape[0]):
+			amp[i,:] = np.interp( x_grid, x_grid- x_grid[argmax_amp[i]], amp[i,:])
+			ph[i,:]  = np.interp( x_grid, x_grid- x_grid[argmax_amp[i]], ph[i,:])
+			ph_0 = np.interp(np.array([0]), x_grid,ph[i,:])
+			ph[i,:] = ph[i,:] - ph_0 #-ph[i,argmax_amp[i]]
+		return amp, ph
+
+
+
+
+
+
+
+
+
+
 
 
 

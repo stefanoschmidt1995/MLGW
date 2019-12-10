@@ -1,5 +1,11 @@
 ######Wave generator!!!
 
+###Alignment here is the major issue!! Aligning a wave at the beginning of time grid is the thing that seems t work better.
+### However, this is not the cleanest thing one could do: the best would be aligning a wave at merger time...
+### I think the least we fit the better it is!! So... we must use PN expansion up to the maximum we can reach. This is a guarantee that the fit will work at its best
+
+###Of course we could as well try to improve our fitting method... But this is an uncertain path and for sure the previous things to try would help a lot despite the fitting method
+
 import matplotlib.pyplot as plt 
 import numpy as np
 import scipy.stats
@@ -10,10 +16,10 @@ sys.path.insert(1, '../routines') #folder in which every relevant routine is sav
 from MLGW_generator import *
 from GW_helper import * 	#routines for dealing with datasets
 
-generator = MLGW_generator("TD", "./models_TD_short")
+generator = MLGW_generator("TD", "./models_TD_short_al_merger")
 
 #testing performances
-N_waves = 150
+N_waves = 100
 
 start_time = time.process_time_ns()/1e6 #ms
 
@@ -21,13 +27,32 @@ start_time = time.process_time_ns()/1e6 #ms
 #                q_range = (1.,5.), m2_range = 10, s1_range = (-0.8,0.8), s2_range = (-0.8,0.8),
 #				log_space = True,
 #                f_high = 1000, f_step = 5e-2, f_max = None, f_min =20., lal_approximant = "IMRphenomPv2")
-theta_vector_test, amp_dataset_test, ph_dataset_test, red_test_times = create_dataset_TD(N_waves, N_grid = 3000, filename = None,
-                t_coal = .015, q_range = (1.,5.), m2_range = (10.,20), s1_range = (-0.8,0.8), s2_range = (-0.8,0.8),
+theta_vector_test, amp_dataset_test, ph_dataset_test, red_test_times = create_dataset_TD(N_waves, N_grid = int(1e5), filename = None,
+                t_coal = .005, q_range = (1.,5.), m2_range = (10.,20), s1_range = (-0.8,0.8), s2_range = (-0.8,0.8),
                 t_step = 5e-5, lal_approximant = "SEOBNRv2_opt")
 
 	#waves are s.t ph(t=0) = 0
+#setting a bigger grid...
+"""
+long_time_grid = red_test_times#np.linspace(red_test_times[0],red_test_times[-1], int(1e5))
+new_amp_dataset_test = np.zeros((amp_dataset_test.shape[0], len(long_time_grid)))
+new_ph_dataset_test = np.zeros((amp_dataset_test.shape[0], len(long_time_grid)))
+
 for i in range(amp_dataset_test.shape[0]):
-	ph_dataset_test[i,:] = ph_dataset_test[i,:] - ph_dataset_test[i,np.argmax(amp_dataset_test[i,:])]
+	new_amp_dataset_test[i,:] = np.interp(long_time_grid, red_test_times, amp_dataset_test[i,:])
+	new_ph_dataset_test[i,:] = np.interp(long_time_grid, red_test_times, ph_dataset_test[i,:])
+	#print(new_ph_dataset_test[i,0], ph_dataset_test[i,0])
+	#print(np.argmax(amp_dataset_test[i,:]), np.argmax(new_amp_dataset_test[i,:])) #?????
+	#print(new_ph_dataset_test[i,np.argmax(new_amp_dataset_test[i,:])], new_ph_dataset_test[i,np.argmax(amp_dataset_test[i,:])])
+
+	#new_ph_dataset_test[i,:] = new_ph_dataset_test[i,:] - new_ph_dataset_test[i,np.argmax(new_amp_dataset_test[i,:])] #CORRECT (MAYBE)
+
+
+amp_dataset_test = new_amp_dataset_test
+ph_dataset_test = new_ph_dataset_test #"""
+
+amp_dataset_test, ph_dataset_test = generator.align_wave_TD(amp_dataset_test, ph_dataset_test, red_test_times)
+
 true_h = np.multiply(amp_dataset_test, np.exp(1j*ph_dataset_test))
 
 middle_time = time.process_time_ns()/1e6
@@ -48,15 +73,15 @@ print("Time for lal (per WF): ", (middle_time-start_time)/float(N_waves), "ms\nT
 
 #############PLOT TIME
 	#plotting true and reconstructed waves	
-N_plots = 3
+N_plots = 4
 indices = np.random.choice(range(N_plots), size=N_plots ,replace = False)
 for i in range(N_plots):
 	plt.figure(i+1, figsize=(15,10))
 #	m_tot = (theta_vector_test[indices[i],0]+1)*10.
 	m_tot = (theta_vector_test[indices[i],0]+theta_vector_test[indices[i],1])
 	plt.title("(q,s1,s2) = "+str(theta_vector_test[indices[i],:]))
-	plt.plot(red_test_times*m_tot, (rec_h[indices[i]]).real, label = "Rec")
-	plt.plot(red_test_times*m_tot, (true_h[indices[i]]).real, label = "True")
+	plt.plot(red_test_times*m_tot, (rec_h[indices[i]]).real, '-', label = "Rec")
+	plt.plot(red_test_times*m_tot, (true_h[indices[i]]).real, '-', label = "True")
 	#plt.xscale("log")
 	plt.legend()
 	plt.savefig("../pictures/rec_WFs/WF_"+str(i)+".jpeg")
@@ -65,7 +90,7 @@ for i in range(N_plots):
 	#plotting histogram for mismatch
 plt.figure(0)
 plt.title("Mismatch distributions:\n N_data = "+str(N_waves), fontsize = 15)
-plt.hist(F*1e2, bins = 200)
+plt.hist(F*1e3, bins = 200)
 plt.annotate("$\mu$ = "+'{:.2e}'.format(np.mean(F))+
 			"\n$\sigma$ = "+ '{:.2e}'.format(np.std(F))+
 			"\n$median$ = "+ '{:.2e}'.format(np.median(F)),
@@ -78,7 +103,7 @@ plt.annotate("$P(F<10^{-5})$ = "+'{:.2}'.format(len(np.where(F<1e-5)[0])/N_waves
         xy=(.8, 0.5), xycoords='axes fraction', fontsize = 10,  horizontalalignment='left')
 #plt.xscale("log")
 #plt.yscale("log")
-plt.xlabel("F (1e-2)")
+plt.xlabel("F (1e-3)")
 
 
 

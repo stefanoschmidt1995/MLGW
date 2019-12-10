@@ -8,7 +8,7 @@ import matplotlib.pyplot as plt
 from ML_routines import *
 
 if True:
-	create_dataset_TD(3000, N_grid = 3000, filename = "../datasets/GW_TD_dataset_short.dat",
+	create_dataset_TD(7000, N_grid = 3000, filename = "../datasets/GW_TD_dataset_short_al_merger.dat",
                 t_coal = .015, q_range = (1.,5.), m2_range = 10., s1_range = (-0.8,0.8), s2_range = (-0.8,0.8),
                 t_step = 5e-5, lal_approximant = "SEOBNRv2_opt")
 
@@ -19,9 +19,9 @@ if True:
 
 
 
-#quit()
+quit()
 
-theta_vector, amp_dataset, ph_dataset, x_grid = load_dataset("../datasets/GW_TD_dataset_short.dat", shuffle=False, N_data = None) #loading
+theta_vector, amp_dataset, ph_dataset, x_grid = load_dataset("../datasets/GW_TD_dataset_short_al_merger.dat", shuffle=False, N_data = None) #loading
 
 	#putting everything on a huge grid
 x_grid_huge = np.linspace(x_grid[0],x_grid[-1], 100000)

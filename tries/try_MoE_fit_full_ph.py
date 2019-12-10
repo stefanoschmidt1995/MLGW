@@ -7,7 +7,7 @@ from GW_helper import * 	#routines for dealing with datasets
 from ML_routines import *	#PCA model
 from EM_MoE import *		#MoE model
 
-folder = "GW_TD_dataset_short/"
+folder = "GW_TD_dataset_short_al_merger/"
     #loading PCA datasets
 N_train = 7000
 train_theta = np.loadtxt("../datasets/"+folder+"PCA_train_theta_full.dat")[:N_train,:]
@@ -38,7 +38,7 @@ print("Spins are allowed to vary within domain [-0.8,0.8]x[-0.8,0.8]")
 
    #setting up an EM model for each component
 MoE_models = 	[]
-load_list =		[0   ,1   ,0   ,3   ,4   ,5   ,6   ,7   ,8   ,9   ,10  ,11  ,12  ,13  ,14  ]  #indices of models to be loaded from file
+load_list =	[]#	[0   ,1   ,0   ,3   ,4   ,5   ,6   ,7   ,8   ,9   ,10  ,11  ,12  ,13  ,14  ]  #indices of models to be loaded from file
 
 #for 4-th only
 K = 			[10  ,10  ,15  ,30  ,10  ,30  ,20  ,10  ,15  ,15  ,15  ,15  ,15  ,20  ,20  ]  #number of experts for each model
@@ -54,7 +54,7 @@ for k in range(0,K_PCA_to_fit):
 
 	MoE_models.append(MoE_model(D,K[k]))
 			#opt	val_set reg verbose threshold	N_it     step
-	args = ["adam", None,   0e-4, False,  1e-4,		150,    1e-3]
+	args = ["adam", None,   0e-4, False,  1e-4,		150,    2e-3]
 	#args = [None,5,0]
 
 	if k in load_list:

@@ -176,8 +176,11 @@ def create_dataset_TD(N_data, N_grid, filename = None,  t_coal = 0.5, q_range = 
 	if np.abs(t_coal) > 5.*np.abs(split_point):
 		time_grid = np.hstack( (np.linspace(-np.abs(t_coal), split_point, (N_grid*2)/3),np.linspace(split_point, end_point, N_grid/3))  )
 	else:
-		print("      weird time grid")
-		time_grid = np.linspace(-np.abs(t_coal), end_point, N_grid)
+		time_grid = np.linspace(-np.abs(t_coal), end_point, N_grid) #split point is not considered here...
+
+		#adding 0 to time grid
+	index_0 = np.argmin(np.abs(time_grid))
+	time_grid[index_0] = 0. #0 is alway set in the grid
 
 		#setting t_coal_freq for generating a waves
 	if np.abs(t_coal) < 0.1:
@@ -263,8 +266,10 @@ def create_dataset_TD(N_data, N_grid, filename = None,  t_coal = 0.5, q_range = 
 		temp_amp = np.interp(time_grid, time_full, temp_amp)
 		temp_ph = np.interp(time_grid, time_full, temp_ph)
 
-		temp_ph = temp_ph - temp_ph[0] #all frequencies are shifted by a constant to make every wave start with 0 phase
-			#the wave start with 0 phase at t=0 (i.e. maximum amplitude)
+			#here you need to decide what is better
+		#temp_ph = temp_ph - temp_ph[0] #all phases are shifted by a constant to make every wave start with 0 phase
+		id0 = np.where(time_grid == 0)[0]
+		temp_ph = temp_ph - temp_ph[id0] #all phases are shifted by a constant to make every wave start with 0 phase at t=0 (i.e. at maximum amplitude)
 
 			#removing spourious gaps (if present)
 		(index,) = np.where(temp_amp/np.max(temp_amp) < 1e-4) #there should be a way to choose right threshold...
