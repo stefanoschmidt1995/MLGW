@@ -7,9 +7,9 @@ from GW_helper import *
 import matplotlib.pyplot as plt
 from ML_routines import *
 
-if True:
-	create_dataset_TD(7000, N_grid = 3000, filename = "../datasets/GW_TD_dataset_short_al_merger.dat",
-                t_coal = .015, q_range = (1.,5.), m2_range = 10., s1_range = (-0.8,0.8), s2_range = (-0.8,0.8),
+if False:
+	create_dataset_TD(100, N_grid = 5000, filename = "../datasets/GW_TD_dataset_long.dat",
+                t_coal = .25, q_range = (1.,5.), m2_range = 10., s1_range = (-0.8,0.8), s2_range = (-0.8,0.8),
                 t_step = 5e-5, lal_approximant = "SEOBNRv2_opt")
 
 #create_dataset_FD(5000, N_grid = 2048, filename = "../datasets/GW_std_dataset.dat",
@@ -19,9 +19,15 @@ if True:
 
 
 
-quit()
+#quit()
 
-theta_vector, amp_dataset, ph_dataset, x_grid = load_dataset("../datasets/GW_TD_dataset_short_al_merger.dat", shuffle=False, N_data = None) #loading
+theta_vector, amp_dataset, ph_dataset, x_grid = load_dataset("../datasets/GW_TD_dataset_long.dat", shuffle=False, N_data = None) #loading
+
+cut_off = 2500
+theta_vector= theta_vector[:, :cut_off]
+amp_dataset = amp_dataset[:, :cut_off]
+ph_dataset= ph_dataset[:, :cut_off]
+x_grid=x_grid[:cut_off]
 
 	#putting everything on a huge grid
 x_grid_huge = np.linspace(x_grid[0],x_grid[-1], 100000)
@@ -35,7 +41,7 @@ for i in range(N_huge):
 plt.figure(0)
 plt.title("Phase of dataset")
 for i in range(10):
-	plt.plot(x_grid, ph_dataset[i,:], label = str(i)+' '+str(theta_vector[i,0]))
+	plt.plot(x_grid, (ph_dataset[i,:]), label = str(i)+' '+str(theta_vector[i,0]))
 
 
 plt.figure(1)

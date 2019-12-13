@@ -154,6 +154,10 @@ def create_dataset_TD(N_data, N_grid, filename = None,  t_coal = 0.5, q_range = 
 			times (N_grid,)				vector holding times at which waves are evaluated (t=0 is the time of maximum amplitude)
 	"""
 	d=1.
+	inclination = 1.
+	if d != 1. or inclination != 0.: #debug
+		print("d is not standard!!! ",d) #debug
+		print("i is not standard!!! ",inclination) #debug
 	LALpars = lal.CreateDict()
 	approx = lalsim.SimInspiralGetApproximantFromString(lal_approximant)
 
@@ -212,19 +216,19 @@ def create_dataset_TD(N_data, N_grid, filename = None,  t_coal = 0.5, q_range = 
 		if isinstance(m2_range, tuple):
 			m2 = np.random.uniform(m2_range[0],m2_range[1])
 		else:
-			m2 = m2_range
+			m2 = float(m2_range)
 		if isinstance(q_range, tuple):
 			m1 = np.random.uniform(q_range[0],q_range[1]) * m2
 		else:
-			m1 = q_range * m2
+			m1 = float(q_range) * m2
 		if isinstance(s1_range, tuple):
 			spin1z = np.random.uniform(s1_range[0],s1_range[1])
 		else:
-			spin1z = s1_range
+			spin1z = float(s1_range)
 		if isinstance(s2_range, tuple):
 			spin2z = np.random.uniform(s2_range[0],s2_range[1])
 		else:
-			spin2z = s2_range
+			spin2z = float(s2_range)
 
 			#computing f_min
 		q = m1/m2 #for scaling f_min properly
@@ -239,7 +243,7 @@ def create_dataset_TD(N_data, N_grid, filename = None,  t_coal = 0.5, q_range = 
 			0., 0., spin1z, #spin vector 1
 			0., 0., spin2z, #spin vector 2
 			d*1e6*lalsim.lal.PC_SI, #distance to source
-			0., #inclination
+			inclination, #inclination
 			0., #phi ref
 			0., #longAscNodes
 			0., #eccentricity
@@ -267,9 +271,9 @@ def create_dataset_TD(N_data, N_grid, filename = None,  t_coal = 0.5, q_range = 
 		temp_ph = np.interp(time_grid, time_full, temp_ph)
 
 			#here you need to decide what is better
-		#temp_ph = temp_ph - temp_ph[0] #all phases are shifted by a constant to make every wave start with 0 phase
-		id0 = np.where(time_grid == 0)[0]
-		temp_ph = temp_ph - temp_ph[id0] #all phases are shifted by a constant to make every wave start with 0 phase at t=0 (i.e. at maximum amplitude)
+		temp_ph = temp_ph - temp_ph[0] #all phases are shifted by a constant to make every wave start with 0 phase
+		#id0 = np.where(time_grid == 0)[0]
+		#temp_ph = temp_ph - temp_ph[id0] #all phases are shifted by a constant to make every wave start with 0 phase at t=0 (i.e. at maximum amplitude)
 
 			#removing spourious gaps (if present)
 		(index,) = np.where(temp_amp/np.max(temp_amp) < 1e-4) #there should be a way to choose right threshold...

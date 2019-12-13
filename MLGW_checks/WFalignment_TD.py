@@ -31,7 +31,7 @@ def reg_phase(wf, threshold = 1e-4):
 
 #It might be a good idea to generate WFs by scaling start frequency: in this way every signal has almost the same number of cycles (sounds like a good property...)
 
-def generate_waveform(m1,m2):
+def generate_waveform(m1,m2, s1=0.):
 	q = m1/m2
 	mtot = (m1+m2)#*lal.MTSUN_SI
 	mc = (m1*m2)**(3./5.)/(m1+m2)**(1./5.)
@@ -49,8 +49,8 @@ def generate_waveform(m1,m2):
 	hptilde, hctilde = lalsim.SimInspiralChooseTDWaveform( #where is its definition and documentation????
 		m1*lalsim.lal.MSUN_SI, #m1
 		m2*lalsim.lal.MSUN_SI, #m2
-		0., 0., -0., #spin vector 1
-		0., 0., -0.8, #spin vector 2
+		0., 0., s1, #spin vector 1
+		0., 0., 0., #spin vector 2
 		1.*1e6*lalsim.lal.PC_SI, #distance to source
 		0., #inclination
 		0., #phi ref
@@ -98,13 +98,13 @@ def generate_waveform(m1,m2):
 #	return  time, rescaled_time, h
 	return time, rescaled_time, amp, ph
 
-q = 10.
-m1 = 5.0
+q = 1.
+m1 = 10.0
 m1c = (m1*q*m1)**(3./5.)/(m1+m1*q)**(1./5.)
 m2 = 10.0
 m2c = (m2*q*m2)**(3./5.)/(m2+m2*q)**(1./5.)
 t1,tr1,amp1, ph1 = generate_waveform(q*m1,m1)
-t2,tr2,amp2, ph2 = generate_waveform(q*m2,m2)
+t2,tr2,amp2, ph2 = generate_waveform(q*m2,m2, .5)
 m1tot = (1+q)*m1
 m2tot = (1+q)*m2
 
@@ -157,7 +157,7 @@ print("Merger times: ", t1[t1_merger], t2[t2_merger])
 import matplotlib.pyplot as plt
 
 fig = plt.figure()
-plt.title('true times')
+plt.title('rescaled times')
 ax = fig.add_subplot(111)
 ax.plot((t1-t1[t1_merger])/m1tot, wf1/m1tot, color='b')
 ax.plot((t2-t2[t2_merger])/m2tot, wf2/m2tot, color='k')
@@ -184,8 +184,9 @@ ax.plot((t2-t2[t2_merger])/m2tot, np.abs(amp3)/np.max(amp3), color='r')
 fig = plt.figure()
 plt.title('phases')
 ax = fig.add_subplot(111)
-ax.plot((t2-t2[t2_merger]), np.unwrap(np.angle(wf2)), color='k')
-ax.plot((t2-t2[t2_merger]), np.unwrap(np.angle(wf3)), color='r')
+ax.plot((t2-t2[t2_merger]), np.unwrap(np.angle(wf2))/ np.unwrap(np.angle(wf1)), color='k')
+#ax.plot((t1-t1[t1_merger])/m1tot, np.unwrap(np.angle(wf1)), color='b')
+#ax.plot((t2-t2[t2_merger]), np.unwrap(np.angle(wf3)), color='r')
 
 fig = plt.figure()
 plt.title('phase difference')

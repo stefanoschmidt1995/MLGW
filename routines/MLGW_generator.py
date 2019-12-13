@@ -255,7 +255,6 @@ class MLGW_generator(object):
 				if np.any(np.column_stack((theta[:,2:4], theta[:,5:7])) != 0):
 					print("Given nonzero spin_x/spin_y components. Model currently supports only spin_z component. Other spin components are ignored")
 			else:
-				print(q.shape, theta.shape)
 				theta_std = np.column_stack((q,theta[:,2],theta[:,3])) #(N,3)
 
 		amp, ph =  self.__get_WF__(theta_std) #raw WF (N, N_grid)
@@ -276,8 +275,8 @@ class MLGW_generator(object):
 				#there is a serious issue with the alignment of the wave: depending on when phase is set to zero, mismatch can strongly change... how to fix it??
 			#new_ph[i,:]  = new_ph[i,:] - new_ph[i,np.argmax(new_amp[i,:])] #pay attention to this!!! Maximum should be found in the new wave!!!
 
-					#wave is aligned with phase 0 at merger time
-			new_amp[i,:], new_ph[i,:] = self.align_wave_TD(new_amp[i,:], new_ph[i,:], interp_grid)
+					#wave is aligned with phase 0 at begininning of grid
+			new_amp[i,:], new_ph[i,:] = self.align_wave_TD(new_amp[i,:], new_ph[i,:], interp_grid, al_merger = False)
 
 		amp = 1e-21*new_amp
 		ph = new_ph
@@ -292,14 +291,52 @@ class MLGW_generator(object):
 			dist_pref = theta[:,8] #std_dist = 1 Mpc
 
 		if D>=6 and D != 14: #inclinations corrections are done
-			cos_i = np.cos(theta[:,5]) #std_dist = 1 Mpc
+			cos_i_sq = np.square(np.cos(theta[:,5])) #std_dist = 1 Mpc
+			cos_i = (np.cos(theta[:,5])) #std_dist = 1 Mpc
 		if D == 14:
-			cos_i = np.cos(theta[:,9]) #std_dist = 1 Mpc
+			cos_i_sq = np.square(np.cos(theta[:,9])) #std_dist = 1 Mpc
+			cos_i = (np.cos(theta[:,9])) #std_dist = 1 Mpc
 
 			#scaling to required distance
 		amp = np.divide(amp.T, dist_pref).T
+
 			#scaling for setting inclination
-		#????
+		if not np.all(cos_i == np.ones((amp.shape[0],))): #dealing with inclination is required (computationally expensive)
+#		if True: #debug
+			print("dealing with inclination")
+			"""
+					#this piece of code can be useful to do everything on a bigger grid thus minimizing numerical errors
+				huge_grid = np.linspace(time_grid[0],time_grid[-1], np.maximum(len(time_grid),int(1e4)))
+				new_amp = np.zeros((amp.shape[0], huge_grid.shape[0]))
+				new_ph = np.zeros((amp.shape[0], huge_grid.shape[0]))
+				for i in range(amp.shape[0]):
+					new_amp[i,:] = np.interp(huge_grid, time_grid, amp[i,:])
+					new_ph[i,:]  = np.interp(huge_grid, time_grid, ph[i,:])
+				new_h = new_amp*np.exp(1j*new_ph)
+				h_p, h_c = new_h.real, new_h.imag
+				h_p = np.multiply(h_p.T, (1+np.square(cos_i))/2.).T
+				h_c = np.multiply(h_c.T, cos_i).T
+				new_amp = np.abs(h_p+1j*h_c)
+				new_ph = np.unwrap(np.angle(h_p+1j*h_c))
+				for i in range(amp.shape[0]):
+					amp[i,:] = np.interp(time_grid, huge_grid, new_amp[i,:])
+					ph[i,:]  = np.interp(time_grid, huge_grid, new_ph[i,:])
+			amp, ph = self.align_wave_TD(amp, ph, time_grid, al_merger = False)"""
+			h = amp*np.exp(1j*ph)
+			h_p, h_c = h.real, h.imag
+			h_p = np.multiply(h_p.T, (1+np.square(cos_i))/2.).T
+			h_c = np.multiply(h_c.T, cos_i).T
+			amp = np.abs(h_p+1j*h_c)
+			ph = np.unwrap(np.angle(h_p+1j*h_c))
+			#amp, ph = self.align_wave_TD(amp, ph, time_grid, al_merger = True)
+			
+			"""#attempt to work directly with amplitude and phase...
+			amp_factor = (np.multiply(np.square(np.cos(ph)).T, np.square( (1-cos_i_sq)/2.)) + cos_i_sq).T
+			amp = np.sqrt(amp_factor)*amp
+			ph = np.arctan2(np.sin(ph), np.cos(ph)) #wrapping phase
+			ph = np.multiply(ph.T, (1+cos_i_sq)/(2.*cos_i)).T
+			ph = np.unwrap(ph)
+			#amp, ph = self.align_wave_TD(amp, ph, time_grid, al_merger = True)#"""
 
 		return amp, ph
 
@@ -390,9 +427,10 @@ class MLGW_generator(object):
 
 		return rec_amp_dataset, rec_ph_dataset
 
-	def align_wave_TD(self, amp, ph, x_grid):
+	def align_wave_TD(self, amp, ph, x_grid, al_merger = True):
 		"""
-		Given a set of waves in time domain, it set time scale s.t. amplitude is max at t=0 and ph = 0 at t=0.
+		Given a set of waves in time domain, it sets time scale s.t. amplitude is max at t=0
+		It sets ph = 0 at t=0 if al_merger is true; ph=0 at beginning of time grid if al_merger is False.
 		Input:
 			amp	(N, N_grid)	amplitude of waves
 			ph (N,N_grid)	phases of waves
@@ -400,22 +438,25 @@ class MLGW_generator(object):
 		Output:
 			amp, ph (N,N_grid)	amplitude and phases rescaled appropriately
 		"""
-		#return amp, ph
 		assert amp.shape == ph.shape
 		if amp.ndim == 1:
 			amp = amp[None,:]
 			ph = ph[None,:]
-
-		return amp, np.subtract(ph.T,ph[:,0]).T #this works a lot but is very unelegant!!!
-
 
 		argmax_amp = np.argmax(amp, axis = 1) #(N,)
 		#huge_grid = np.linspace(x_grid[0], x_grid[-1], int(1e5))
 		for i in range(amp.shape[0]):
 			amp[i,:] = np.interp( x_grid, x_grid- x_grid[argmax_amp[i]], amp[i,:])
 			ph[i,:]  = np.interp( x_grid, x_grid- x_grid[argmax_amp[i]], ph[i,:])
-			ph_0 = np.interp(np.array([0]), x_grid,ph[i,:])
-			ph[i,:] = ph[i,:] - ph_0 #-ph[i,argmax_amp[i]]
+		
+			#aligning phase
+		if not al_merger:
+			return amp, np.subtract(ph.T,ph[:,0]).T #this works a lot but is very unelegant!!!
+
+		if al_merger:
+			for i in range(amp.shape[0]):
+				ph_0 = np.interp(np.array([0]), x_grid,ph[i,:])
+				ph[i,:] = ph[i,:] - ph_0 #-ph[i,argmax_amp[i]]
 		return amp, ph
 
 

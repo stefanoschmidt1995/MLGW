@@ -23,7 +23,7 @@ def generate_waveform(m1,m2):
     hptilde, hctilde = lalsim.SimInspiralChooseFDWaveform( #where is its definition and documentation????
         m1*lalsim.lal.MSUN_SI, #m1
         m2*lalsim.lal.MSUN_SI, #m2
-        0., 0., 0.5, #spin vector 1
+        0., 0., .5, #spin vector 1
         0., 0., 0., #spin vector 2
         1.*1e6*lalsim.lal.PC_SI, #distance to source
         0., #inclination
@@ -47,7 +47,7 @@ def generate_waveform(m1,m2):
 q = 15.
 m1 = 5.0
 m1c = (m1*q*m1)**(3./5.)/(m1+m1*q)**(1./5.)
-m2 = 10.0
+m2 = 5.0
 m2c = (m2*q*m2)**(3./5.)/(m2+m2*q)**(1./5.)
 m1tot = (1+q)*m1
 m2tot = (1+q)*m2
@@ -83,8 +83,8 @@ import matplotlib.pyplot as plt
 fig = plt.figure()
 plt.title('rescaled freqs')
 ax = fig.add_subplot(111)
-ax.plot(fr1, m1tot**(-2)*(wf1*np.exp(-1j*2*np.pi*f1*t1)).real, color='b')
-ax.plot(fr2, m2tot**(-2)*(wf2*np.exp(-1j*2*np.pi*f2*t2)).real, color='k')
+ax.plot(f1*m1tot, np.unwrap(np.angle(wf1*np.exp(-1j*2*np.pi*f1*t1))).real, color='b')
+ax.plot(f2*m2tot, np.unwrap(np.angle(wf2*np.exp(-1j*2*np.pi*f2*t2))).real, color='k')
 #ax.plot(fr2, wf3, color='r')
 
 plt.show()
