@@ -53,19 +53,26 @@ for i in range(amp_dataset_test.shape[0]):
 amp_dataset_test = new_amp_dataset_test
 ph_dataset_test = new_ph_dataset_test #"""
 
-#amp_dataset_test, ph_dataset_test = generator.align_wave_TD(amp_dataset_test, ph_dataset_test, red_test_times, al_merger = False)
+amp_dataset_test, ph_dataset_test = generator.align_wave_TD(amp_dataset_test, ph_dataset_test, red_test_times, al_merger = True)
 
 true_h = np.multiply(amp_dataset_test, np.exp(1j*ph_dataset_test))
 
 middle_time = time.process_time_ns()/1e6
 
-theta_vector_test = np.column_stack((theta_vector_test, np.full((N_waves,),1.), np.full((N_waves,),1.)))
-rec_amp_dataset, rec_ph_dataset = generator.get_WF(theta_vector_test, plus_cross = False, x_grid = red_test_times, red_grid = True)
+#"""
+theta_vector_test = np.column_stack((theta_vector_test, np.full((N_waves,),1.), np.full((N_waves,),0.*np.pi)))
+rec_amp_dataset, rec_ph_dataset = generator.get_WF(theta_vector_test, plus_cross = False, x_grid = red_test_times*20, red_grid = False)
+rec_h = np.multiply(rec_amp_dataset, np.exp(1j*rec_ph_dataset))#"""
 
-#rec_amp_dataset, rec_ph_dataset = generator.get_raw_WF(theta_vector_test)
-
-rec_h = np.multiply(rec_amp_dataset, np.exp(1j*rec_ph_dataset))
-#h_plus, h_cross =  generator.get_WF(theta_vector_test, freq_grid = frequencies_test)
+"""
+h_plus, h_cross = generator(red_test_times*20., theta_vector_test[:,0], theta_vector_test[:,1],
+            np.zeros((N_waves,)),np.zeros((N_waves,)), theta_vector_test[:,2],
+            np.zeros((N_waves,)),np.zeros((N_waves,)), theta_vector_test[:,3],
+            np.ones((N_waves,)), np.zeros((N_waves,)), np.full((N_waves,), 0.),
+            np.zeros((N_waves,)),np.zeros((N_waves,)), np.zeros((N_waves,)), plus_cross = True )
+rec_h = h_plus+1j*h_cross
+rec_amp_dataset = np.abs(rec_h)
+rec_ph_dataset = np.unwrap(np.angle(rec_h))#"""
 
 end_time = time.process_time_ns()/1e6
 
@@ -85,18 +92,19 @@ for i in range(N_plots):
 	plt.figure(i+1, figsize=(15,10))
 #	m_tot = (theta_vector_test[indices[i],0]+1)*10.
 	m_tot = (theta_vector_test[indices[i],0]+theta_vector_test[indices[i],1])
+	#m_tot = 20. #if computation is not done on reduced grid
 	plt.title("(q,s1,s2) = "+str(theta_vector_test[indices[i],:]))
 	if to_plot == "h":
-		plt.plot(red_test_times*20., rec_h[indices[i]].real, '-', label = "Rec")
-		plt.plot(red_test_times*20., true_h[indices[i]].real, '-', label = "True")
+		plt.plot(red_test_times*m_tot, rec_h[indices[i]].real, '-', label = "Rec")
+		plt.plot(red_test_times*m_tot, true_h[indices[i]].real, '-', label = "True")
 
 	if to_plot == "ph":
 		plt.plot(red_test_times*20., rec_ph_dataset[indices[i]], '-', label = "Rec")
-		plt.plot(red_test_times*20., ph_dataset_test[indices[i]], '-', label = "True")
+		plt.plot(red_test_times*m_tot, ph_dataset_test[indices[i]], '-', label = "True")
 
 	if to_plot == "amp":
-		plt.plot(red_test_times*20., rec_amp_dataset[indices[i]], '-', label = "Rec")
-		plt.plot(red_test_times*20., amp_dataset_test[indices[i]], '-', label = "True")
+		plt.plot(red_test_times*20, rec_amp_dataset[indices[i]], '-', label = "Rec")
+		plt.plot(red_test_times*m_tot, amp_dataset_test[indices[i]], '-', label = "True")
 	
 	plt.legend()
 	plt.savefig("../pictures/rec_WFs/WF_"+str(i)+".jpeg")

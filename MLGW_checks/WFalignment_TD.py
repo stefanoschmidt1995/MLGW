@@ -99,7 +99,7 @@ def generate_waveform(m1,m2, s1=0.):
 	return time, rescaled_time, amp, ph
 
 q = 1.
-m1 = 10.0
+m1 = 5.0
 m1c = (m1*q*m1)**(3./5.)/(m1+m1*q)**(1./5.)
 m2 = 10.0
 m2c = (m2*q*m2)**(3./5.)/(m2+m2*q)**(1./5.)

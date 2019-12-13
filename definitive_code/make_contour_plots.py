@@ -11,10 +11,11 @@ from GW_helper import * 	#routines for dealing with datasets
 
 generator = MLGW_generator("TD", "./models_TD_short_al_merger")
 
-n_points = 3
+load = True
+n_points = 15
 
-q = np.linspace(1.,2.,n_points)
-m2 = np.linspace(10.,25.,n_points)
+q = np.linspace(1.,5.5,n_points)
+m2 = np.linspace(5.,25.,n_points)
 s1 = np.linspace(-0.8,0.6,n_points)
 s2 = np.linspace(-0.8,0.6,n_points)
 
@@ -22,24 +23,29 @@ full_grid = np.meshgrid(q,m2,s1,s2) #q,m2,s1,s2
 
 F = np.zeros((len(q),len(m2),len(s1),len(s2)))
 
-for q_, m2_, s1_, s2_ in np.nditer(full_grid):
-	theta_vector_test, amp_dataset_test, ph_dataset_test, red_test_times = create_dataset_TD(1, N_grid = int(9.9e4),
-				filename = None,
-                t_coal = .015, q_range = q_, m2_range = m2_, s1_range = s1_, s2_range = s2_,
-                t_step = 5e-5, lal_approximant = "SEOBNRv2_opt")
+if not load:
+	for q_, m2_, s1_, s2_ in np.nditer(full_grid):
+		theta_vector_test, amp_dataset_test, ph_dataset_test, red_test_times = create_dataset_TD(1, N_grid = int(9.9e4),
+					filename = None,
+		            t_coal = .015, q_range = q_, m2_range = m2_, s1_range = s1_, s2_range = s2_,
+		            t_step = 5e-5, lal_approximant = "SEOBNRv2_opt")
 
-	rec_amp_dataset, rec_ph_dataset = generator.get_WF(theta_vector_test, plus_cross = False, x_grid = red_test_times, red_grid = True)
+		rec_amp_dataset, rec_ph_dataset = generator.get_WF(theta_vector_test, plus_cross = False, x_grid = red_test_times, red_grid = True)
 
-	id_q = np.where(q == q_)[0]
-	id_m2 = np.where(m2 == m2_)[0]
-	id_s1 = np.where(s1 == s1_)[0]
-	id_s2 = np.where(s2 == s2_)[0]
+		id_q = np.where(q == q_)[0]
+		id_m2 = np.where(m2 == m2_)[0]
+		id_s1 = np.where(s1 == s1_)[0]
+		id_s2 = np.where(s2 == s2_)[0]
 
-	F[id_q,id_m2,id_s1,id_s2] = compute_mismatch(amp_dataset_test, ph_dataset_test, rec_amp_dataset, rec_ph_dataset)
-	print(q_, m2_, s1_, s2_, F[id_q,id_m2,id_s1,id_s2])
+		F[id_q,id_m2,id_s1,id_s2] = compute_mismatch(amp_dataset_test, ph_dataset_test, rec_amp_dataset, rec_ph_dataset)
+		print(q_, m2_, s1_, s2_, F[id_q,id_m2,id_s1,id_s2])
 
-	#saving F to file
-np.save("mismatch_grid.dat", F)
+		#saving F to file
+	np.save("mismatch_grid.npy", F)
+else:
+	F =np.load("mismatch_grid.npy")
+
+print(F.shape)
 print("Mean mismatch: ",np.mean(F))
 
 	#contours plot for masses
@@ -47,7 +53,7 @@ print("Computing mass plot")
 F_m = np.ones((len(q)+1,len(m2)+1))
 for i_q, i_m2 in np.nditer(np.meshgrid(range(len(q)), range(len(m2)))):
 	F_m[i_q,i_m2] = np.mean(F[i_q,i_m2,:,:])
-	print(i_q,i_m2, F_m[i_q,i_m2])
+	#print(i_q,i_m2, F_m[i_q,i_m2])
 
 set_grid = lambda grid: np.append(grid,grid[-1]+(grid[1]-grid[0])) - (grid[1]-grid[0])/2.
 
@@ -69,7 +75,7 @@ print("Computing spins plot")
 F_s = np.ones((len(s1)+1,len(s2)+1))
 for i_s1, i_s2 in np.nditer(np.meshgrid(range(len(s1)), range(len(s2)))):
 	F_s[i_s1,i_s2] = np.mean(F[:,:,i_s1,i_s2])
-	print(i_s1,i_s2, F_s[i_s1,i_s2])
+	#print(i_s1,i_s2, F_s[i_s1,i_s2])
 
 	#setting proper grids to heal plt lacks
 s1_grid = set_grid(s1)

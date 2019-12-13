@@ -154,7 +154,7 @@ def create_dataset_TD(N_data, N_grid, filename = None,  t_coal = 0.5, q_range = 
 			times (N_grid,)				vector holding times at which waves are evaluated (t=0 is the time of maximum amplitude)
 	"""
 	d=1.
-	inclination = 1.
+	inclination = 0.#np.pi/2.
 	if d != 1. or inclination != 0.: #debug
 		print("d is not standard!!! ",d) #debug
 		print("i is not standard!!! ",inclination) #debug
