@@ -19,6 +19,12 @@ print("Loaded data with shape: "+ str(ph_dataset.shape))
 	#to make data easier to deal with
 train_frac = .85
 
+indices = np.where(theta_vector[:,1]<0)[0]
+theta_vector = theta_vector[indices,:]
+amp_dataset = amp_dataset[indices,:]
+ph_dataset = ph_dataset[indices,:]
+
+
 train_theta, test_theta, train_amp, test_amp = make_set_split(theta_vector, amp_dataset, train_frac, 1e-21)
 train_theta, test_theta, train_ph, test_ph   = make_set_split(theta_vector, ph_dataset, train_frac, 1.)
 

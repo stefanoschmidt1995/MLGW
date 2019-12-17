@@ -209,7 +209,7 @@ class MoE_model(object):
 			#computing initial responsibilities
 		r_0 = np.zeros((X.shape[0],self.K))
 		for k in range(self.K):
-			r_0[:,k] = np.divide(np.square(X - centroids[k,:]), var)[:,0]
+			r_0[:,k] = np.sum(np.divide(np.square(X - centroids[k,:]), var), axis = 1) + 1e-5
 		r_0 = np.divide(r_0.T, np.sum(r_0,axis=1)).T
 
 		self.gating.fit(X,r_0, *args)

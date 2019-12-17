@@ -14,13 +14,17 @@ train_theta = np.loadtxt("../datasets/"+folder+"PCA_train_theta_full.dat")[:N_tr
 test_theta = np.loadtxt("../datasets/"+folder+"PCA_test_theta_full.dat")
 PCA_train_ph = np.loadtxt("../datasets/"+folder+"PCA_train_full_ph.dat")[:N_train,:]
 PCA_test_ph = np.loadtxt("../datasets/"+folder+"PCA_test_full_ph.dat")
-K_PCA_to_fit = 13
+K_PCA_to_fit = 15
+
 
 	#adding extra features for basis function regression
-new_features = ["00", "11","22", "01", "02", "12", "111", "110", "112","1111", "1122", "1100", "1120"]
-#,"000", "001", "002", "011", "012", "022", "111", "112", "122", "222"]
+new_features = ["00", "11","22", "01", "02", "12"#, "111", "110", "112","1111", "1122", "1100", "1120"
+,"000", "001", "002", "011", "012", "022", "111", "112", "122", "222"
 #,"000","111","222", "001"
-#,"0000", "0001","0002", "0011", "0022","0012","0111","0112", "0122", "0222","1111", "1112", "1122", "1222", "2222"]
+,"0000", "0001","0002", "0011", "0022","0012","0111","0112", "0122", "0222","1111", "1112", "1122", "1222", "2222"]
+#   ,"00000", "00010","00020", "00110", "00220","00120","01110","01120", "01220", "02220","11110", "11120", "11220", "12220", "22220" 
+#   ,"00001", "00011","00021", "00111", "00221","00121","01111","01121", "01221", "02221","11111", "11121", "11221", "12221", "22221" 
+#   ,"00002", "00012","00022", "00112", "00222","00122","01112","01122", "01222", "02222","11112", "11122", "11222", "12222", "22222" ]
 outfile = open("./saved_models_full_ph_TD/ph_feat", "w+")
 outfile.write("\n".join(new_features))
 outfile.close()
@@ -38,10 +42,10 @@ print("Spins are allowed to vary within domain [-0.8,0.8]x[-0.8,0.8]")
 
    #setting up an EM model for each component
 MoE_models = 	[]
-load_list =	[]#	[0   ,1   ,0   ,3   ,4   ,5   ,6   ,7   ,8   ,9   ,10  ,11  ,12  ,13  ,14  ]  #indices of models to be loaded from file
-
+load_list =		[]#[0   ,1   ,2   ,3   ,4   ,5   ,6   ,7   ,8   ,9   ,10  ,11  ,12  ,13  ,14  ]  #indices of models to be loaded from file
+K = [2 for i in range(K_PCA_to_fit)] 
 #for 4-th only
-K = 			[10  ,10  ,15  ,30  ,10  ,30  ,20  ,10  ,15  ,15  ,15  ,15  ,15  ,20  ,20  ]  #number of experts for each model
+#K = 			[1  ,10  ,15  ,30  ,10  ,30  ,20  ,10  ,15  ,15  ,15  ,15  ,15  ,20  ,20  ]  #number of experts for each model
 
 
 D = train_theta.shape[1] #number of independent variables

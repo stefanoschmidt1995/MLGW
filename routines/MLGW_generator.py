@@ -295,10 +295,6 @@ class MLGW_generator(object):
 			cos_i_sq = np.square(np.cos(theta[:,9])) 
 			cos_i = (np.cos(theta[:,9])) #std_inclination = 0.
 
-		if D == 14:
-			phi_0 = theta[:,10]
-			amp, ph = self.align_wave_TD(amp, ph, time_grid, al_merger = False, phi_0 = phi_0)
-
 			#scaling to required distance
 		amp = np.divide(amp.T, dist_pref).T
 
@@ -339,6 +335,12 @@ class MLGW_generator(object):
 			ph = np.multiply(ph.T, (1+cos_i_sq)/(2.*cos_i)).T
 			ph = np.unwrap(ph)
 			#amp, ph = self.align_wave_TD(amp, ph, time_grid, al_merger = True)#"""
+
+		if D == 14:
+			phi_0 = theta[:,10]
+			print(phi_0)
+			amp, ph = self.align_wave_TD(amp, ph, time_grid, al_merger = True, phi_0 = phi_0)
+
 
 		return amp, ph
 
