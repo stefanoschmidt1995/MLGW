@@ -222,7 +222,7 @@ class MLGW_generator(object):
 
 			#returning to user
 		if plus_cross:
-			h = np.multiply(amp,np.exp(1j*ph))
+			h = np.multiply(amp,np.exp(-1j*ph))
 			return h.real, h.imag
 		else:
 			return amp, ph
@@ -300,8 +300,6 @@ class MLGW_generator(object):
 
 			#scaling for setting inclination
 		if not np.all(cos_i == np.ones((amp.shape[0],))): #dealing with inclination is required (computationally expensive)
-#		if True: #debug
-			print("dealing with inclination")
 			"""
 					#this piece of code can be useful to do everything on a bigger grid thus minimizing numerical errors
 				huge_grid = np.linspace(time_grid[0],time_grid[-1], np.maximum(len(time_grid),int(1e4)))
@@ -320,7 +318,7 @@ class MLGW_generator(object):
 					amp[i,:] = np.interp(time_grid, huge_grid, new_amp[i,:])
 					ph[i,:]  = np.interp(time_grid, huge_grid, new_ph[i,:])
 			amp, ph = self.align_wave_TD(amp, ph, time_grid, al_merger = False)"""
-			h = amp*np.exp(1j*ph)
+			h = amp*np.exp(-1j*ph)
 			h_p, h_c = h.real, h.imag
 			h_p = np.multiply(h_p.T, (1+np.square(cos_i))/2.).T
 			h_c = np.multiply(h_c.T, cos_i).T
