@@ -7,9 +7,9 @@ from GW_helper import *
 import matplotlib.pyplot as plt
 from ML_routines import *
 
-if False:
-	create_dataset_TD(100, N_grid = 5000, filename = "../datasets/GW_TD_dataset_long.dat",
-                t_coal = .25, q_range = (1.,5.), m2_range = 10., s1_range = (-0.8,0.8), s2_range = (-0.8,0.8),
+if True:
+	create_dataset_TD(5000, N_grid = 2000, filename = "../datasets/GW_TD_dataset_long.dat",
+                t_coal = .4, q_range = (1.,5.), m2_range = 10., s1_range = (-0.8,0.8), s2_range = (-0.8,0.8),
                 t_step = 5e-5, lal_approximant = "SEOBNRv2_opt")
 
 #create_dataset_FD(5000, N_grid = 2048, filename = "../datasets/GW_std_dataset.dat",
@@ -19,7 +19,7 @@ if False:
 
 
 
-#quit()
+quit()
 
 theta_vector, amp_dataset, ph_dataset, x_grid = load_dataset("../datasets/GW_TD_dataset_long.dat", shuffle=False, N_data = None) #loading
 

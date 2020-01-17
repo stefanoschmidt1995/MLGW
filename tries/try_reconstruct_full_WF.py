@@ -10,9 +10,10 @@ from EM_MoE import *		#MoE model
 
 	#adding extra features for basis function regression
 new_features_amp = ["00", "11","22", "01", "02", "12", "0000", "0001","0002", "0011", "0022","0012","0111","0112", "0122", "0222","1111", "1112", "1122", "1222", "2222"]
-new_features_ph = ["00", "11","22", "01", "02", "12", "111", "110", "112","1111", "1122", "1100", "1120"]
+new_features_ph = ["00", "11","22", "01", "02", "12","000", "001", "002", "011", "012", "022", "111", "112", "122", "222"
+,"0000", "0001","0002", "0011", "0022","0012","0111","0112", "0122", "0222","1111", "1112", "1122", "1222", "2222"]
 
-folder = "GW_TD_dataset_short/"
+folder = "GW_TD_dataset_long/"
 PCA_train_amp = np.loadtxt("../datasets/"+folder+"PCA_train_full_amp.dat")
 PCA_train_ph = np.loadtxt("../datasets/"+folder+"PCA_train_full_ph.dat")
 
@@ -28,8 +29,8 @@ ph_files = os.listdir(ph_folder)
 D_amp = 3+len(new_features_amp) #number of independent variables
 D_ph = 3+len(new_features_ph) #number of independent variables
 
-K_PCA_amp = 10
-K_PCA_ph = 13
+K_PCA_amp = 7
+K_PCA_ph = 15
 
 	#loading models
 for k in range(np.maximum(K_PCA_amp,K_PCA_ph)):
@@ -46,16 +47,16 @@ for k in range(np.maximum(K_PCA_amp,K_PCA_ph)):
 
 
 ############Comparing mismatch for test waves
-N_waves = 50
+N_waves = 30
 print("Generating "+str(N_waves)+" waves")
 
-#theta_vector_test, amp_dataset_test, ph_dataset_test, frequencies_test = create_dataset(N_waves, N_grid = 2048, filename = None,
-#                q_range = (1.,5.), s1_range = (-0.8,0.8), s2_range = (-0.8,0.8),
-#				log_space = True,
-#                f_high = 1000, f_step = 5e-2, f_max = None, f_min =None, lal_approximant = "IMRphenomPv2")
+amp_PCA = PCA_model()
+amp_PCA.load_model("../datasets/"+folder+"PCA_model_full_amp.dat")
+ph_PCA = PCA_model()
+ph_PCA.load_model("../datasets/"+folder+"PCA_model_full_ph.dat")
 
-theta_vector_test, amp_dataset_test, ph_dataset_test, test_times = create_dataset_TD(N_waves, N_grid = 3000, filename = None,
-                t_coal = .015, q_range = (1.,5.), m2_range = 10., s1_range = (-0.8,0.8), s2_range = (-0.8,0.8),
+theta_vector_test, amp_dataset_test, ph_dataset_test, test_times = create_dataset_TD(N_waves, N_grid = ph_PCA.get_V_matrix().shape[0], filename = None,
+                t_coal = .4, q_range = (1.,5.), m2_range = 10., s1_range = (-0.8,0.8), s2_range = (-0.8,0.8),
                 t_step = 5e-5, lal_approximant = "SEOBNRv2_opt")
 amp_dataset_test = 1e21*amp_dataset_test
 
@@ -63,11 +64,6 @@ amp_dataset_test = 1e21*amp_dataset_test
 	#preprocessing theta
 theta_vector_test_amp = add_extra_features(theta_vector_test, new_features_amp)
 theta_vector_test_ph = add_extra_features(theta_vector_test, new_features_ph)
-
-amp_PCA = PCA_model()
-amp_PCA.load_model("../datasets/"+folder+"PCA_model_full_amp.dat")
-ph_PCA = PCA_model()
-ph_PCA.load_model("../datasets/"+folder+"PCA_model_full_ph.dat")
 
 red_amp_dataset_test = amp_PCA.reduce_data(amp_dataset_test)
 if K_PCA_amp < PCA_train_amp.shape[1]:
@@ -86,6 +82,8 @@ rec_PCA_dataset_amp = np.zeros((N_waves, PCA_train_amp.shape[1]))
 rec_PCA_dataset_ph = np.zeros((N_waves, PCA_train_ph.shape[1]))
 
 	#making predictions for amplitude
+print(len(MoE_models_amp))
+
 for k in range(len(MoE_models_amp)):
 	rec_PCA_dataset_amp[:,k] = MoE_models_amp[k].predict(theta_vector_test_amp)
 
@@ -126,7 +124,7 @@ for i in range(N_plots):
 
 		#plotting phases
 plt.figure(N_plots+1)
-for i in range(10):
+for i in range(5):
 	plt.plot(test_times, ph_dataset_test[i,:], label = "Rec")
 	plt.plot(test_times, rec_ph_dataset[i,:], label = "True")
 	plt.legend()

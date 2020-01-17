@@ -29,7 +29,7 @@ X_test = np.reshape(X_test, (X_test.shape[0],img_rows*img_cols))
 print(X_train.shape)
 
 softmax = softmax_regression(img_rows*img_cols, num_classes)
-softmax.fit(X_train[:,:], Y_train[:,:], threshold = 1e-2, N_iter = 100 ,verbose = True, val_set = (X_test, Y_test))
+softmax.fit(X_train[:,:], Y_train[:,:], threshold = 1e-3, N_iter = None ,verbose = True, val_set = (X_test, Y_test))
 #softmax.fit_single_loop(X_train[0:10000,:], Y_train[0:10000,:])
 
 Y_pred= softmax.predict(X_test)
@@ -45,14 +45,17 @@ print(softmax.accuracy(X_test, Y_test))
 
 X_test = X_test.reshape(X_test.shape[0], img_rows, img_cols)
 
-plt.figure(figsize=(15, 4)) 
+plt.figure(figsize=(20, 5)) 
 for i in range(20):    
 	ax = plt.subplot(2, 10, i + 1)    
 	#plt.imshow(np.reshape(ww[i][0], (img_rows, img_cols)))
 	plt.imshow(X_test[i, :, :], cmap='gray')
 	#print(Y_pred[i,:])
-	plt.title("Digit: {}\nPredicted:    {}".format(np.argmax(Y_test[i,:]), np.argmax(Y_pred[i,:])))    
-	plt.axis('off') 
+	plt.title("Digit: {}\nPred:    {}".format(np.argmax(Y_test[i,:]), np.argmax(Y_pred[i,:])), fontsize = 18)    
+	plt.axis('off')
+	#matplotlib.use('pgf')
+	plt.savefig('/home/stefano/Desktop/Stefano/scuola/uni/tesi_magistrale/tesi_latex/img/softmax_MNIST.eps', format='eps')
+
 plt.show()
 
 

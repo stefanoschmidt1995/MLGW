@@ -7,7 +7,7 @@ from GW_helper import * 	#routines for dealing with datasets
 from ML_routines import *	#PCA model
 from EM_MoE import *		#MoE model
 
-folder = "GW_TD_dataset_short_al_merger/"
+folder = "GW_TD_dataset_long/"
     #loading PCA datasets
 N_train = 7000
 train_theta = np.loadtxt("../datasets/"+folder+"PCA_train_theta_full.dat")[:N_train,:]
@@ -42,8 +42,8 @@ print("Spins are allowed to vary within domain [-0.8,0.8]x[-0.8,0.8]")
 
    #setting up an EM model for each component
 MoE_models = 	[]
-load_list =		[]#[0   ,1   ,2   ,3   ,4   ,5   ,6   ,7   ,8   ,9   ,10  ,11  ,12  ,13  ,14  ]  #indices of models to be loaded from file
-K = [2 for i in range(K_PCA_to_fit)] 
+load_list =		[0   ,1   ,2   ,3   ,4   ,5   ,6   ,7   ,8   ,9   ,10  ,11  ,12  ,13  ,14  ]  #indices of models to be loaded from file
+K = [3 for i in range(K_PCA_to_fit)] 
 #for 4-th only
 #K = 			[1  ,10  ,15  ,30  ,10  ,30  ,20  ,10  ,15  ,15  ,15  ,15  ,15  ,20  ,20  ]  #number of experts for each model
 
@@ -99,15 +99,15 @@ for k in range(0,K_PCA_to_fit):
 ############Comparing mismatch for test waves
 N_waves = 50
 
-theta_vector_test, amp_dataset_test, ph_dataset_test, frequencies_test = create_dataset_TD(N_waves, N_grid = 3000, filename = None,
-                t_coal = .015, q_range = (1.,5.), m2_range = 10., s1_range = (-0.8,0.8), s2_range = (-0.8,0.8),
+ph_PCA = PCA_model()
+ph_PCA.load_model("../datasets/"+folder+"PCA_model_full_ph.dat")
+
+theta_vector_test, amp_dataset_test, ph_dataset_test, frequencies_test = create_dataset_TD(N_waves, N_grid = ph_PCA.get_V_matrix().shape[0], filename = None,
+                t_coal = .4, q_range = (1.,5.), m2_range = 10., s1_range = (-0.8,0.8), s2_range = (-0.8,0.8),
                 t_step = 5e-5, lal_approximant = "SEOBNRv2_opt")
 
 	#preprocessing theta
 theta_vector_test = add_extra_features(theta_vector_test, new_features)
-
-ph_PCA = PCA_model()
-ph_PCA.load_model("../datasets/"+folder+"PCA_model_full_ph.dat")
 
 red_ph_dataset_test = ph_PCA.reduce_data(ph_dataset_test)
 if K_PCA_to_fit < PCA_train_ph.shape[1]:
@@ -126,13 +126,13 @@ rec_ph_dataset = ph_PCA.reconstruct_data(rec_PCA_dataset)
 F = compute_mismatch(amp_dataset_test, rec_ph_dataset, amp_dataset_test, ph_dataset_test)
 print("Avg fit mismatch: ", np.mean(F))
 
-mse = np.sum(np.square( rec_ph_dataset[:,2900]-ph_dataset_test[:,2900]))/(ph_dataset_test.shape[0])#*ph_dataset_test.shape[1])
+mse = np.sum(np.square( rec_ph_dataset[:,290]-ph_dataset_test[:,290]))/(ph_dataset_test.shape[0])#*ph_dataset_test.shape[1])
 print("Reconstruction mse: ", mse)
 
 feat = 0 #1,2 index of feature to plot everything against
 plt.figure(0)
-plt.plot(theta_vector_test[:,feat], ph_dataset_test[:,2900], 'o', label="true")
-plt.plot(theta_vector_test[:,feat], rec_ph_dataset[:,2900] , 'o', label="pred")
+plt.plot(theta_vector_test[:,feat], ph_dataset_test[:,20], 'o', label="true")
+plt.plot(theta_vector_test[:,feat], rec_ph_dataset[:,20] , 'o', label="pred")
 plt.legend()
 
 
@@ -145,30 +145,4 @@ plt.figure(20)
 for i in range(rec_ph_dataset.shape[0]):
 	plt.plot(frequencies_test, rec_ph_dataset[i,:]-ph_dataset_test[i,:])
 plt.show()
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 

@@ -9,15 +9,15 @@ sys.path.insert(1, '../routines') #folder in which every relevant routine is sav
 from MLGW_generator import *
 from GW_helper import * 	#routines for dealing with datasets
 
-generator = MLGW_generator("TD", "./models_TD_short_al_merger")
+generator = MLGW_generator("TD", "./models_TD_long")
 
 load = True
 n_points = 15
 
 q = np.linspace(1.,5.5,n_points)
 m2 = np.linspace(5.,25.,n_points)
-s1 = np.linspace(-0.8,0.6,n_points)
-s2 = np.linspace(-0.8,0.6,n_points)
+s1 = np.linspace(-0.8,0.8,n_points)
+s2 = np.linspace(-0.8,0.8,n_points)
 
 full_grid = np.meshgrid(q,m2,s1,s2) #q,m2,s1,s2
 
@@ -43,7 +43,7 @@ if not load:
 		#saving F to file
 	np.save("mismatch_grid.npy", F)
 else:
-	F =np.load("mismatch_grid.npy")
+	F =np.load("mismatch_grid_long.npy")
 
 print(F.shape)
 print("Mean mismatch: ",np.mean(F))
@@ -52,7 +52,7 @@ print("Mean mismatch: ",np.mean(F))
 print("Computing mass plot")
 F_m = np.ones((len(q)+1,len(m2)+1))
 for i_q, i_m2 in np.nditer(np.meshgrid(range(len(q)), range(len(m2)))):
-	F_m[i_q,i_m2] = np.mean(F[i_q,i_m2,:,:])
+	F_m[i_q,i_m2] = np.mean(F[i_q,i_m2,:13,:]) #removing high spins from the average
 	#print(i_q,i_m2, F_m[i_q,i_m2])
 
 set_grid = lambda grid: np.append(grid,grid[-1]+(grid[1]-grid[0])) - (grid[1]-grid[0])/2.
@@ -68,7 +68,7 @@ plt.pcolormesh(*np.meshgrid(q_grid,m2_grid), F_m.T, norm=colors.LogNorm(vmin=F_m
 plt.colorbar()
 plt.xlabel("$q $")
 plt.ylabel("$m_2 (M_{sun})$")
-plt.savefig("../pictures/color_mesh_plot/masses.jpeg")
+plt.savefig("../pictures/color_mesh_plot/masses_long.jpeg")
 
 	#contours plot for spins
 print("Computing spins plot")
@@ -88,7 +88,7 @@ plt.pcolormesh(*np.meshgrid(s1_grid,s2_grid), F_s.T, norm=colors.LogNorm(vmin=F_
 plt.colorbar()
 plt.xlabel("$s_1$")
 plt.ylabel("$s_2$")
-plt.savefig("../pictures/color_mesh_plot/spins.jpeg")
+plt.savefig("../pictures/color_mesh_plot/spins_long.jpeg")
 plt.show()
 
 

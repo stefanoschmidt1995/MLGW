@@ -1,13 +1,23 @@
-#Class for dealing with all the components of a MLGW model made of PCA+MoE
+"""
+Module MLGW_generator.py
+========================
+	Definition of class MLGW_generator. The class generates a GW signal of a BBH coalescence when given orbital parameters of the BBH. Some optional parameters can be given to specify the observer position.
+It makes use of modules EM_MoE.py and ML_routines.py for an implementation of a PCA model and a MoE fitted by EM algorithm.
+"""
+#################
 
 import os
 import warnings
+import numpy as np
 from EM_MoE import *		#MoE model
-from ML_routines import *	#PCA model
+from ML_routines import *		#PCA model
 
+################# MLGW_generator class
 class MLGW_generator(object):
 	"""
-	This class holds all the parts of MLGW model. Model is composed by a PCA model to reduce dimensionality of a WF datasets and by several MoE models to fit PCA in terms of source parameters. WFs can be generated both in time domain and frequency domain.
+MLGW_generator
+==============
+	This class holds all the parts of MLGW generator model. Model is composed by a PCA model to reduce dimensionality of a WF datasets and by several MoE models to fit PCA in terms of source parameters. WFs can be generated both in time domain and frequency domain.
 	Everything is hold in a PCA model (class PCA_model defined in ML_routines) and in two lists of MoE models (class MoE_model defined in EM_MoE). All models are loaded from files in a folder given by user. Files must be named exactly as follows:
 		amp(ph)_exp_#		for amplitude (phase) of expert model for PCA component #
 		amp(ph)_gat_#		for amplitude (phase) of gating function for PCA component #
@@ -17,13 +27,15 @@ class MLGW_generator(object):
 	No suffixes shall be given to files.
 	The class doesn't implement methods for fitting: it only provides a useful tool to gather them.
 	"""
-	def __init__(self, domain, folder = None):
+	def __init__(self, domain, folder = "default"):
 		"""
+	__init__
+	========
 		Initialise class by loading models from file and by specifying whether the model works in time domanin (TD) or frequency domain (FD).
 		Everything useful for the model must be put within the folder with the standard names:
-			{amp(ph)_exp_# ; amp(ph)_gat_#	; amp(ph)_feat ; amp(ph)_PCA_model}
+			{amp(ph)_exp_# ; amp(ph)_gat_#	; amp(ph)_feat ; amp(ph)_PCA_model; times/frequencies}
 		There can be an arbitrary number of exp and gating functions as long as they match with each other and they are less than PCA components.
-		An optional frequency vector can be given in file "frequencies". This is not required by model but makes things easier for the user who wants to know at which frequencies waves are generated.
+		A compulsory file times/frequencies must hold a list of grid points at which the generated ML wave is evaluated.
 		Input:
 			domain ("TD"/"FD")	in which domain waves are generated
 			folder				address to folder in which everything is kept (if None, models must be loaded manually with load())
@@ -34,13 +46,17 @@ class MLGW_generator(object):
 
 		self.frequencies = None #doesn't apply if "TD"
 		self.times = None #doesn't apply if "FD"
-			
+		
 		if folder is not None:
+			if folder == "default":
+				folder = os.path.dirname(__file__)+"/TD_model"
 			self.load(folder)
 		return
 
 	def load(self, folder):
 		"""
+	load
+	====
 		Builds up all the models from given folder.
 		Everything useful for the model must be put within the folder with the standard names:
 			{amp(ph)_exp_# ; amp(ph)_gat_#	; amp(ph)_feat ; amp(ph)_PCA_model}
@@ -111,6 +127,8 @@ class MLGW_generator(object):
 
 	def MoE_models(self, model_type, k_list=None):
 		"""
+	MoE_models
+	==========
 		Returns the MoE model(s).
 		Input:
 			model_type		"amp" or "ph" to state which MoE models shall be returned
@@ -128,6 +146,8 @@ class MLGW_generator(object):
 
 	def PCA_models(self, model_type):
 		"""
+	PCA_models
+	==========
 		Returns the MoE model(s).
 		Input:
 			model_type		"amp" or "ph" to state which MoE models shall be returned
@@ -142,9 +162,11 @@ class MLGW_generator(object):
 
 	def get_x_grid(self):
 		"""
-		Returns the frequencies at which model is evaluated if domain is "FD"; times otherwise.
+	get_x_grid
+	==========
+		Returns the grid at which the outputs of the models are evaluated. All grids are in reduced units.
 		Output:
-			frequencies (D,)	points in frequency grid at which all waves are evaluated
+			x_grid (D,)	points in frequency grid at which all waves are evaluated
 		"""
 		if self.domain == "FD":
 			return self.frequencies
@@ -155,6 +177,8 @@ class MLGW_generator(object):
 
 	def __call__(self, x_grid, m1, m2, spin1_x, spin1_y, spin1_z, spin2_x, spin2_y, spin2_z, D_L, i, phi_0, long_asc_nodes, eccentricity, mean_per_ano , plus_cross = True):
 		"""
+	__call__
+	========
 		Generates a WF according to the MLGW model. It makes all the required preprocessing to include wave dependance on the full 15 parameters space of the GW forms.
 		Input:
 			x_grid	(N_grid,)		Grid of (physical) time/frequency points to evaluate the wave at
@@ -179,6 +203,8 @@ class MLGW_generator(object):
 
 	def get_WF(self, theta, plus_cross = True, x_grid = None, red_grid = False):
 		"""
+	get_WF
+	======
 		Generates a WF according to the MLGW model. It makes all the required preprocessing to include wave dependance on the full 15 parameters space of the GW forms.
 		Wherever not specified, all waves are evaluated at a luminosity distance of 1 Mpc.
 		It accepts data in one of the following layout of D features:
@@ -205,6 +231,9 @@ class MLGW_generator(object):
 				x_grid = self.frequencies
 			if self.domain == "TD":
 				x_grid = self.times
+				if red_grid == False:
+					red_grid = True
+					warnings.warn("As no grid is the given, the default reduced grid is used to evaluate the output. red_grid variable is set to True.")
 
 		if theta.ndim == 1:
 			theta = theta[np.newaxis,:] #(1,D)
@@ -230,6 +259,8 @@ class MLGW_generator(object):
 
 	def __get_WF_TD__(self, theta, time_grid, red_grid):
 		"""
+	__get_WF_TD__
+	=============
 		Generates the waves in time domain. Called by get_WF.
 		Input:
 			theta (N,D)		source parameters to make prediction at
@@ -272,9 +303,6 @@ class MLGW_generator(object):
 				warnings.warn("Warning: time grid given is too long for the dataset. Results might be subject to errors.")
 			new_amp[i,:] = np.interp(interp_grid, self.times, amp[i,:]) * m_tot_us[i]/m_tot_std[i]
 			new_ph[i,:]  = np.interp(interp_grid, self.times, ph[i,:])
-
-					#wave is aligned with phase 0 at begininning of grid
-			new_amp[i,:], new_ph[i,:] = self.align_wave_TD(new_amp[i,:], new_ph[i,:], interp_grid, al_merger = True)
 
 		amp = 1e-21*new_amp
 		ph = new_ph
@@ -339,11 +367,16 @@ class MLGW_generator(object):
 			print(phi_0)
 			amp, ph = self.align_wave_TD(amp, ph, time_grid, al_merger = True, phi_0 = phi_0)
 
+		for i in range(amp.shape[0]):
+					#wave is aligned with phase 0 at begininning of grid
+			new_amp[i,:], new_ph[i,:] = self.align_wave_TD(new_amp[i,:], new_ph[i,:], interp_grid, al_merger = True)
 
 		return amp, ph
 
 	def __get_WF_FD__(self, theta, freq_grid, red_grid):
 		"""
+	__get_WF_FD__
+	=============
 		####Currently doesn't work properly...####
 		Generates the waves in time domain. Called by get_WF.
 		Input:
@@ -389,6 +422,8 @@ class MLGW_generator(object):
 	
 	def get_raw_WF(self,theta):
 		"""
+	get_raw_WF
+	==========
 		Returns the wave as generated by the ML model (standard grid and standard m2).
 		Input:
 			theta (N,3)		source parameters to make prediction at
@@ -400,6 +435,8 @@ class MLGW_generator(object):
 
 	def __get_WF__(self, theta):
 		"""
+	__get_WF__
+	==========
 		Generates a WF according to the MLGW model with a parameters vector in MLGW model style (params=  [q,s1z,s2z]).
 		All waves are evaluated at a luminosity distance of 1 Mpc and are generated at masses m1 = q * m2 and m2 = 10 M_sun.
 		Grid is the standard one.
@@ -431,6 +468,8 @@ class MLGW_generator(object):
 
 	def align_wave_TD(self, amp, ph, x_grid = None, al_merger = True, phi_0=0):
 		"""
+	align_wave_TD
+	=============
 		Given a set of waves in time domain, it sets time scale s.t. amplitude is max at t=0 (if a grid is given)
 		It sets ph = ph_0 at t=0 if al_merger is true; ph=ph_0 at beginning of time grid if al_merger is False.
 		Input:
@@ -464,19 +503,3 @@ class MLGW_generator(object):
 			ph = (ph.T + phi_0).T
 		return amp, ph
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-		

@@ -16,7 +16,7 @@ sys.path.insert(1, '../routines') #folder in which every relevant routine is sav
 from MLGW_generator import *
 from GW_helper import * 	#routines for dealing with datasets
 
-generator = MLGW_generator("TD", "./models_TD_short_al_merger")
+generator = MLGW_generator("TD", "./models_TD_long")
 
 #testing performances
 N_waves = 4
@@ -27,50 +27,30 @@ start_time = time.process_time_ns()/1e6 #ms
 #                q_range = (1.,5.), m2_range = 10, s1_range = (-0.8,0.8), s2_range = (-0.8,0.8),
 #				log_space = True,
 #                f_high = 1000, f_step = 5e-2, f_max = None, f_min =20., lal_approximant = "IMRphenomPv2")
-theta_vector_test, amp_dataset_test, ph_dataset_test, red_test_times = create_dataset_TD(N_waves, N_grid = int(9.9e4), filename = None,
-                t_coal = .015, q_range = (1.,5.), m2_range = (10.,20.), s1_range = (-0.8,0.6), s2_range = (-0.8,0.6),
+theta_vector_test, amp_dataset_test, ph_dataset_test, red_test_times = create_dataset_TD(N_waves, N_grid = int(200000), filename = None,
+                t_coal = .4, q_range = (1.,5.), m2_range = (10.,10.), s1_range = (-0.8,0.6), s2_range = (-0.8,0.6),
 				#t_coal = .015, q_range = 1., m2_range = (25.,25.0000001), s1_range = 0.8, s2_range = 0.6,
                 t_step = 5e-5, lal_approximant = "SEOBNRv2_opt")
 
-print(theta_vector_test)
-	#waves are s.t ph(t=0) = 0
-#setting a bigger grid...
-"""
-long_time_grid = red_test_times#np.linspace(red_test_times[0],red_test_times[-1], int(1e5))
-new_amp_dataset_test = np.zeros((amp_dataset_test.shape[0], len(long_time_grid)))
-new_ph_dataset_test = np.zeros((amp_dataset_test.shape[0], len(long_time_grid)))
 
-for i in range(amp_dataset_test.shape[0]):
-	new_amp_dataset_test[i,:] = np.interp(long_time_grid, red_test_times, amp_dataset_test[i,:])
-	new_ph_dataset_test[i,:] = np.interp(long_time_grid, red_test_times, ph_dataset_test[i,:])
-	#print(new_ph_dataset_test[i,0], ph_dataset_test[i,0])
-	#print(np.argmax(amp_dataset_test[i,:]), np.argmax(new_amp_dataset_test[i,:])) #?????
-	#print(new_ph_dataset_test[i,np.argmax(new_amp_dataset_test[i,:])], new_ph_dataset_test[i,np.argmax(amp_dataset_test[i,:])])
-
-	#new_ph_dataset_test[i,:] = new_ph_dataset_test[i,:] - new_ph_dataset_test[i,np.argmax(new_amp_dataset_test[i,:])] #CORRECT (MAYBE)
-
-
-amp_dataset_test = new_amp_dataset_test
-ph_dataset_test = new_ph_dataset_test #"""
-
-amp_dataset_test, ph_dataset_test = generator.align_wave_TD(amp_dataset_test, ph_dataset_test, red_test_times, al_merger = True)
+#amp_dataset_test, ph_dataset_test = generator.align_wave_TD(amp_dataset_test, ph_dataset_test, red_test_times, al_merger = True)
 
 true_h = np.multiply(amp_dataset_test, np.exp(1j*ph_dataset_test))
 
 middle_time = time.process_time_ns()/1e6
 
-"""
+#"""
 theta_vector_test = np.column_stack((theta_vector_test, np.full((N_waves,),1.), np.full((N_waves,),0.*np.pi)))
 rec_amp_dataset, rec_ph_dataset = generator.get_WF(theta_vector_test, plus_cross = False, x_grid = red_test_times*20, red_grid = False)
 rec_h = np.multiply(rec_amp_dataset, np.exp(1j*rec_ph_dataset))#"""
 
-#"""
+"""
 rec_amp_dataset, rec_ph_dataset = generator(red_test_times*20., theta_vector_test[:,0], theta_vector_test[:,1],
             np.zeros((N_waves,)),np.zeros((N_waves,)), theta_vector_test[:,2],
             np.zeros((N_waves,)),np.zeros((N_waves,)), theta_vector_test[:,3],
             np.ones((N_waves,)), np.zeros((N_waves,)), np.full((N_waves,), 0.),
             np.zeros((N_waves,)),np.zeros((N_waves,)), np.zeros((N_waves,)), plus_cross = False )
-rec_h = np.multiply(rec_amp_dataset, np.exp(1j*rec_ph_dataset))#"""
+rec_h = np.multiply(rec_amp_dataset, np.exp(1j*rec_ph_dataset))
 #rec_h = h_plus+1j*h_cross
 rec_amp_dataset = np.abs(rec_h)
 rec_ph_dataset = np.unwrap(np.angle(rec_h))#"""
@@ -100,7 +80,7 @@ for i in range(N_plots):
 		plt.plot(red_test_times*m_tot, true_h[indices[i]].real, '-', label = "True")
 
 	if to_plot == "ph":
-		plt.plot(red_test_times*20., rec_ph_dataset[indices[i]], '-', label = "Rec")
+		plt.plot(red_test_times*20, rec_ph_dataset[indices[i]], '-', label = "Rec")
 		plt.plot(red_test_times*m_tot, ph_dataset_test[indices[i]], '-', label = "True")
 
 	if to_plot == "amp":
