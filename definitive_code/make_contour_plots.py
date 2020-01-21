@@ -6,13 +6,13 @@ import sys
 import time
 sys.path.insert(1, '../routines') #folder in which every relevant routine is saved
 
-from MLGW_generator import *
+from GW_generator import *
 from GW_helper import * 	#routines for dealing with datasets
 
-generator = MLGW_generator("TD", "./models_TD_long")
+generator = GW_generator("TD", "./models_TD_long")
 
 load = True
-n_points = 15
+n_points = 8
 
 q = np.linspace(1.,5.5,n_points)
 m2 = np.linspace(5.,25.,n_points)
@@ -42,6 +42,7 @@ if not load:
 
 		#saving F to file
 	np.save("mismatch_grid.npy", F)
+	quit()
 else:
 	F =np.load("mismatch_grid_long.npy")
 
@@ -52,7 +53,7 @@ print("Mean mismatch: ",np.mean(F))
 print("Computing mass plot")
 F_m = np.ones((len(q)+1,len(m2)+1))
 for i_q, i_m2 in np.nditer(np.meshgrid(range(len(q)), range(len(m2)))):
-	F_m[i_q,i_m2] = np.mean(F[i_q,i_m2,:13,:]) #removing high spins from the average
+	F_m[i_q,i_m2] = np.mean(F[i_q,i_m2,:7,:]) #removing high spins from the average
 	#print(i_q,i_m2, F_m[i_q,i_m2])
 
 set_grid = lambda grid: np.append(grid,grid[-1]+(grid[1]-grid[0])) - (grid[1]-grid[0])/2.

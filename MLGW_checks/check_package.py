@@ -1,5 +1,5 @@
 import mlgw
-import mlgw.MLGW_generator as generator
+import mlgw.GW_generator as generator
 import mlgw.EM_MoE as MoE
 import numpy as np
 import os
@@ -7,7 +7,7 @@ import matplotlib.pyplot as plt
 
 
 
-generator = generator.MLGW_generator("TD")
+generator = generator.GW_generator("TD")
 #help(generator)
 
 theta = np.array([20,10,0.5,-0.3])

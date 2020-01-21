@@ -1,5 +1,5 @@
 """
-Module MLGW_generator.py
+Module GW_generator.py
 ========================
 	Definition of class MLGW_generator. The class generates a GW signal of a BBH coalescence when given orbital parameters of the BBH. Some optional parameters can be given to specify the observer position.
 It makes use of modules EM_MoE.py and ML_routines.py for an implementation of a PCA model and a MoE fitted by EM algorithm.
@@ -9,15 +9,15 @@ It makes use of modules EM_MoE.py and ML_routines.py for an implementation of a 
 import os
 import warnings
 import numpy as np
-from EM_MoE import *		#MoE model
+from EM_MoE import *			#MoE model
 from ML_routines import *		#PCA model
 
-################# MLGW_generator class
-class MLGW_generator(object):
+################# GW_generator class
+class GW_generator(object):
 	"""
-MLGW_generator
-==============
-	This class holds all the parts of MLGW generator model. Model is composed by a PCA model to reduce dimensionality of a WF datasets and by several MoE models to fit PCA in terms of source parameters. WFs can be generated both in time domain and frequency domain.
+GW_generator
+============
+	This class holds all the parts of ML models and acts as GW generator. Model is composed by a PCA model to reduce dimensionality of a WF datasets and by several MoE models to fit PCA in terms of source parameters. WFs can be generated both in time domain and frequency domain.
 	Everything is hold in a PCA model (class PCA_model defined in ML_routines) and in two lists of MoE models (class MoE_model defined in EM_MoE). All models are loaded from files in a folder given by user. Files must be named exactly as follows:
 		amp(ph)_exp_#		for amplitude (phase) of expert model for PCA component #
 		amp(ph)_gat_#		for amplitude (phase) of gating function for PCA component #
@@ -299,10 +299,13 @@ MLGW_generator
 				interp_grid = time_grid/m_tot_us[i]
 			else:
 				interp_grid = time_grid
-			if np.abs(interp_grid[0]) > np.abs(self.times[0]):
-				warnings.warn("Warning: time grid given is too long for the dataset. Results might be subject to errors.")
 			new_amp[i,:] = np.interp(interp_grid, self.times, amp[i,:]) * m_tot_us[i]/m_tot_std[i]
 			new_ph[i,:]  = np.interp(interp_grid, self.times, ph[i,:])
+				#setting amplitude to zero if the model extrapolates outiside the grid
+			if np.abs(interp_grid[0]) > np.abs(self.times[0]):
+				warnings.warn("Warning: time grid given is too long for the dataset. Results might be subject to errors.")
+				indices = np.where(np.abs(interp_grid) > np.abs(self.times[0]))[0]
+				new_amp[i,indices] = 0
 
 		amp = 1e-21*new_amp
 		ph = new_ph
@@ -364,7 +367,6 @@ MLGW_generator
 
 		if D == 14:
 			phi_0 = theta[:,10]
-			print(phi_0)
 			amp, ph = self.align_wave_TD(amp, ph, time_grid, al_merger = True, phi_0 = phi_0)
 
 		for i in range(amp.shape[0]):

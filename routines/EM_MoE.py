@@ -120,7 +120,7 @@ MoE_model
 			y_test (N,K)	experts predictions
 		"""
 		if X.ndim ==1:
-			X = np.reshape(X, (1,X.shape[0]))
+			X = X[:,np.newaxis]
 		return np.matmul(X,self.W) + self.b
 
 	def get_gating_probs(self,X):
@@ -148,7 +148,7 @@ MoE_model
 			y (N,)	model value at test points
 		"""
 		if X.ndim ==1:
-			X = np.reshape(X, (1,X.shape[0]))
+			X = X[:,np.newaxis]
 		
 		pi = self.gating.predict(X) #p(z_i = k|x_i) (N,K)
 
@@ -261,7 +261,7 @@ MoE_model
 			#computing initial responsibilities
 		r_0 = np.zeros((X.shape[0],self.K))
 		for k in range(self.K):
-			r_0[:,k] = np.divide(np.square(X - centroids[k,:]), var)[:,0]
+			r_0[:,k] = np.divide(np.square(X - centroids[k,:]), var)[:,0] + 1e-10
 		r_0 = np.divide(r_0.T, np.sum(r_0,axis=1)).T
 
 		self.gating.fit(X,r_0, *args)
@@ -289,6 +289,8 @@ MoE_model
 			X_train = np.reshape(X_train, (X_train.shape[0],1))
 		if X_train.shape[1] != self.D:
 			raise TypeError("Wrong shape for X_train matrix "+str(X_train.shape)+". Second dimension should have lenght "+str(self.D))
+		if y_train.ndim > 1:
+			y_train = y_train[:,0]
 
 		if threshold is None:
 			threshold = 0
@@ -402,8 +404,7 @@ MoE_model
 		pi = np.divide(pi.T, np.sum(pi, axis = 1)).T
 		exp_term = self.expert_likelihood(X, y)
 
-		r =  np.multiply(pi,  exp_term) # (N,K) responsibilities matrix
-		#r = np.square(r) #debug
+		r =  np.multiply(pi,  exp_term) + 1e-10 # (N,K) responsibilities matrix
 		r = np.divide(r.T, np.sum(r, axis =1)).T
 		assert np.all(r>=0) 								#checking that all r_{ik} are more than zero
 		assert np.all(np.abs(np.sum(r,axis=1) - 1)<1e-5) 	#checking proper normalization
@@ -476,13 +477,13 @@ softmax_regression
 			y_test (N,K)	model prediction
 		"""
 		if X_test.ndim == 1:
-			X_test = np.reshape(X_test, (X_test.shape[0],1))
+			X_test = X_test[:,np.newaxis]
 		if X_test.shape[1] == self.D:
 			X_test = np.concatenate((np.ones((X_test.shape[0],1)), X_test), axis = 1) #adding dummy variable for the bias
 		if V is None:
 			V = self.V
 		res = np.matmul(X_test,V) #(N,K)
-		res = np.exp(res) #(N,K)
+		res = np.exp(res) + 1e-10 #(N,K)
 		return np.divide(res.T, np.sum(res, axis = 1)).T
 
 	def fit_single_loop(self, X_train, y_train):

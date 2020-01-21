@@ -3,7 +3,7 @@ mlgw
 ====
 Package for a ML model to generate a GW signal by a BBH coalescence. The model makes use of a PCA model for reducing wave dimensionality. A Mixture of Expert model makes a regression from orbital parameters to the reduced representation of a wave.
 The packacke has 4 modules:
-	MLGW_generator.py
+	GW_generator.py
 		It holds an implementation of the full ML model used to reconstruct a WF. It is a lal style method for creating a waveform. It is ready to use. Loads authomatically EM_MoE and ML_routines modules.
 	EM_MoE.py
 		It holds a Mixture of Experts model as well as a softmax regression model required for it.
