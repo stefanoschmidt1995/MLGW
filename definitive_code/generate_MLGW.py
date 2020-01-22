@@ -16,7 +16,7 @@ sys.path.insert(1, '../routines') #folder in which every relevant routine is sav
 from GW_generator import *
 from GW_helper import * 	#routines for dealing with datasets
 
-generator = GW_generator("TD", "./models_TD_long")
+generator = GW_generator("TD", "./model_TD")
 
 #testing performances
 N_waves = 4
@@ -28,7 +28,7 @@ start_time = time.process_time_ns()/1e6 #ms
 #				log_space = True,
 #                f_high = 1000, f_step = 5e-2, f_max = None, f_min =20., lal_approximant = "IMRphenomPv2")
 theta_vector_test, amp_dataset_test, ph_dataset_test, red_test_times = create_dataset_TD(N_waves, N_grid = int(200000), filename = None,
-                t_coal = .94, q_range = (1.,5.), m2_range = (10.,10.), s1_range = (-0.8,0.6), s2_range = (-0.8,0.6),
+                t_coal = .94, q_range = (1.,7.), m2_range = (10.,20.), s1_range = (-0.8,0.6), s2_range = (-0.8,0.6),
 				#t_coal = .015, q_range = 1., m2_range = (25.,25.0000001), s1_range = 0.8, s2_range = 0.6,
                 t_step = 5e-5, lal_approximant = "SEOBNRv2_opt")
 
@@ -65,7 +65,7 @@ print("Time for lal (per WF): ", (middle_time-start_time)/float(N_waves), "ms\nT
 
 #############PLOT TIME
 	#plotting true and reconstructed waves	
-to_plot = "ph"
+to_plot = "amp"
 
 N_plots = 4
 indices = np.random.choice(range(N_plots), size=N_plots ,replace = False)

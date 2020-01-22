@@ -21,12 +21,12 @@ Description: ====
                 #generate the wave
             generator = generator.GW_generator("TD") #creating an istance of the generator
             theta = np.array([20,10,0.5,-0.3]) #list of parameters to be given to generator [m1,m2,s1,s2]
-            amp, ph = generator.get_WF(theta, plus_cross = False) #returns amplitude and phase of the wave
+        	times = np.linspace(-15,0.017, 100000) #time grid at which waves shall be evaluated
+            amp, ph = generator.get_WF(theta, plus_cross = False, x_grid = times, red_grid = False) #returns amplitude and phase of the wave
         
                 #plotting the wave
             import matplotlib.pyplot as plt
-            times = generator.get_x_grid()
-            plt.plot(times, amp[0,:]*np.exp(1j*ph[0,:]))
+            plt.plot(times, amp[0,:]*np.exp(1j*ph[0,:]).real) #plot the plus polarization
             plt.show()
         
         The ML model

@@ -116,7 +116,9 @@ PCA_model
 			#doing actual PCA
 		if K is None:
 			K = X.shape[1]
-		E, V = np.linalg.eig(np.dot(X.T, X))
+		#E, V = np.linalg.eig(np.dot(X.T, X))
+		E, V = np.linalg.eig(np.cov(X.T))
+		#E, V = np.linalg.eig(np.corrcoef(X.T+1e-100*np.random.rand())) #trying with correlation matrix (doesn't work)
 		idx = np.argsort(E)[::-1]
 		V = V[:, idx[:K]] # (D,K)
 		self.PCA_params = [V.real, mu, np.ones((K,))]

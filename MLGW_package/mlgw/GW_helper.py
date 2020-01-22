@@ -167,7 +167,7 @@ create_dataset_TD
 		D_theta = 3
 
 		#creating time_grid
-	t_end = 7e-4 #estimated maximum time for ringdown: WF will be killed after that time
+	t_end = 5.6e-4 #estimated maximum time for ringdown: WF will be killed after that time
 	alpha = 0.35 #exponent for "time distorsion"
 	time_grid = np.linspace(-np.power(np.abs(t_coal), alpha), np.power(t_end, alpha), N_grid)
 	time_grid = np.multiply( np.sign(time_grid) , np.power(np.abs(time_grid), 1./alpha))

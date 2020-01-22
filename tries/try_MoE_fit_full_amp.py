@@ -8,7 +8,7 @@ from ML_routines import *	#PCA model
 from EM_MoE import *		#MoE model
 #import keras
 
-folder = "GW_TD_dataset_long/"
+folder = "GW_TD_dataset/"
 
     #loading PCA datasets
 N_train = -1
@@ -16,7 +16,7 @@ train_theta = np.loadtxt("../datasets/"+folder+"PCA_train_theta_full.dat")[:N_tr
 test_theta = np.loadtxt("../datasets/"+folder+"PCA_test_theta_full.dat")
 PCA_train_amp = np.loadtxt("../datasets/"+folder+"PCA_train_full_amp.dat")[:N_train,:]
 PCA_test_amp = np.loadtxt("../datasets/"+folder+"PCA_test_full_amp.dat")
-K_PCA_to_fit = 7
+K_PCA_to_fit = 4
 
 	#adding extra features for basis function regression
 new_features = ["00", "11","22", "01", "02", "12", "0000", "0001","0002", "0011", "0022","0012","0111","0112", "0122", "0222","1111", "1112", "1122", "1222", "2222"]
@@ -84,13 +84,13 @@ for k in range(0,K_PCA_to_fit):
 
 
 ############Comparing mismatch for test waves
-N_waves = 100
+N_waves = 50
 
 amp_PCA = PCA_model()
 amp_PCA.load_model("../datasets/"+folder+"PCA_model_full_amp.dat")
 
 theta_vector_test, amp_dataset_test, ph_dataset_test, frequencies_test = create_dataset_TD(N_waves, N_grid = amp_PCA.get_V_matrix().shape[0], filename = None,
-                t_coal = .4, q_range = (1.,5.), m2_range = 10., s1_range = (-0.8,0.8), s2_range = (-0.8,0.8),
+                t_coal = .5, q_range = (1.,5.), m2_range = 10., s1_range = (-0.8,0.8), s2_range = (-0.8,0.8),
                 t_step = 5e-5, lal_approximant = "SEOBNRv2_opt")
 amp_dataset_test = 1e21*amp_dataset_test
 
