@@ -483,7 +483,7 @@ softmax_regression
 		if V is None:
 			V = self.V
 		res = np.matmul(X_test,V) #(N,K)
-		res = np.exp(res) + 1e-10 #(N,K)
+		res = np.exp(res) + 1e-5 #(N,K)
 		return np.divide(res.T, np.sum(res, axis = 1)).T
 
 	def fit_single_loop(self, X_train, y_train):

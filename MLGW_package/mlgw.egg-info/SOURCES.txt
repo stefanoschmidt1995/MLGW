@@ -30,7 +30,6 @@ mlgw/TD_model/ph_exp_3
 mlgw/TD_model/ph_exp_4
 mlgw/TD_model/ph_exp_5
 mlgw/TD_model/ph_exp_6
-mlgw/TD_model/ph_exp_7
 mlgw/TD_model/ph_feat
 mlgw/TD_model/ph_gat_0
 mlgw/TD_model/ph_gat_1
@@ -39,5 +38,4 @@ mlgw/TD_model/ph_gat_3
 mlgw/TD_model/ph_gat_4
 mlgw/TD_model/ph_gat_5
 mlgw/TD_model/ph_gat_6
-mlgw/TD_model/ph_gat_7
 mlgw/TD_model/times

@@ -135,7 +135,7 @@ create_dataset_TD
 		filename			name of the file to save dataset in (If is None, nothing is saved on a file)
 		t_coal				time to coalescence to start computation from (measured in reduced grid)
 		q_range				tuple with range for random q values. if single value, q is kept fixed at that value
-		m2_range			tuple with range for random m2 values. if single value, m2 is kept fixed at that value
+		m2_range			tuple with range for random m2 values. if single value, m2 is kept fixed at that value. If None, m2 will be chosen s.t. m_tot = m1+m2 = 20. M_sun
 		spin_mag_max_1		tuple with range for random spin #1 values. if single value, s1 is kept fixed at that value
 		spin_mag_max_2		tuple with range for random spin #1 values. if single value, s2 is kept fixed at that value
 		t_step				time step to generate the wave with
@@ -167,7 +167,7 @@ create_dataset_TD
 		D_theta = 3
 
 		#creating time_grid
-	t_end = 5.6e-4 #estimated maximum time for ringdown: WF will be killed after that time
+	t_end = 5.2e-4 #estimated maximum time for ringdown: WF will be killed after that time
 	alpha = 0.35 #exponent for "time distorsion"
 	time_grid = np.linspace(-np.power(np.abs(t_coal), alpha), np.power(t_end, alpha), N_grid)
 	time_grid = np.multiply( np.sign(time_grid) , np.power(np.abs(time_grid), 1./alpha))
@@ -205,12 +205,12 @@ create_dataset_TD
 			#setting value for data
 		if isinstance(m2_range, tuple):
 			m2 = np.random.uniform(m2_range[0],m2_range[1])
-		else:
+		elif m2_range is not None:
 			m2 = float(m2_range)
 		if isinstance(q_range, tuple):
-			m1 = np.random.uniform(q_range[0],q_range[1]) * m2
+			q = np.random.uniform(q_range[0],q_range[1])
 		else:
-			m1 = float(q_range) * m2
+			q = float(q_range)
 		if isinstance(s1_range, tuple):
 			spin1z = np.random.uniform(s1_range[0],s1_range[1])
 		else:
@@ -220,9 +220,14 @@ create_dataset_TD
 		else:
 			spin2z = float(s2_range)
 
+		if m2_range is None:
+			m2 = 20. / (1+q)
+			m1 = q * m2
+		else:
+			m1 = q* m2
+
 			#computing f_min
-		q = m1/m2 #for scaling f_min properly
-		f_min = .95* ((151*(t_coal_freq)**(-3./8.) * (((1+q)**2)/q)**(3./8.))/(m1+m2))
+		f_min = .9* ((151*(t_coal_freq)**(-3./8.) * (((1+q)**2)/q)**(3./8.))/(m1+m2))
 		 #in () there is the right scaling formula for frequency in order to get always the right reduced time
 		 #this should be multiplied by a prefactor (~1) for dealing with some small variation due to spins
 
@@ -255,7 +260,7 @@ create_dataset_TD
 
 			#bringing waves on the chosen grid
 		time_full = np.linspace(0.0, hptilde.data.length*t_step, hptilde.data.length) #time grid at which wave is computed
-		time_full = (time_full - time_full[np.argmax(temp_amp)])/(m1+m2) #grid is scaled to standard grid
+		time_full = (time_full - time_full[np.argmax(temp_amp)])/(m1+m2) #grid is scaled to standard grid #debug (put /(m1+m2) )
 			#setting waves to the chosen std grid
 		temp_amp = np.interp(time_grid, time_full, temp_amp)
 		temp_ph = np.interp(time_grid, time_full, temp_ph)
@@ -268,6 +273,7 @@ create_dataset_TD
 			#removing spourious gaps (if present)
 		(index,) = np.where(temp_amp/np.max(temp_amp) < 1e-4) #there should be a way to choose right threshold...
 		if len(index) >0:
+			print("Wave killed")
 			temp_amp[index] = temp_amp[index[0]-1]
 			temp_ph[index] = temp_ph[index[0]-1]
 
@@ -286,9 +292,6 @@ create_dataset_TD
 	else:
 		filebuff.close()
 		return None
-
-
-
 
 def create_dataset_FD(N_data, N_grid = None, filename = None, q_range = (1.,5.), m2_range = 20., s1_range = (-0.8,0.8), s2_range = (-0.8,0.8), log_space = True, f_high = 2000, f_step = 1e-2, f_max = None, f_min =None, lal_approximant = "IMRPhenomPv2"):
 	"""

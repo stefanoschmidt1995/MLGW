@@ -9,12 +9,19 @@ from GW_helper import *
 import matplotlib.pyplot as plt
 from ML_routines import *
 
-to_fit = "ph"
+to_fit = "amp"
 
 #theta_vector, amp_dataset, ph_dataset, frequencies = load_dataset("../datasets/GW_TD_dataset_long/GW_TD_dataset_long.dat", shuffle=False, N_grid = None) #loading dataset
-theta_vector, amp_dataset, ph_dataset, frequencies = load_dataset("/home/stefano/Desktop/Stefano/scuola/uni/tesi_magistrale/code/datasets/try_dataset.dat",
+theta_vector, amp_dataset, ph_dataset, frequencies = load_dataset("/home/stefano/Desktop/Stefano/scuola/uni/tesi_magistrale/code/datasets/GW_TD_dataset_mtotconst.dat",
 shuffle=False, N_grid = None) #loading dataset
 print("Loaded data with shape: "+ str(ph_dataset.shape))
+
+	#aligning to merger
+cut_off = np.where(frequencies ==0)[0][0]
+amp_dataset = amp_dataset
+ph_dataset= (ph_dataset.T - ph_dataset[:, cut_off]).T
+frequencies=frequencies
+
 
 	#splitting into train and test set
 	#to make data easier to deal with
@@ -40,7 +47,7 @@ if to_fit == "ph":
 
 		#DOING PCA
 print("##### PCA of "+to_fit+" #####")
-K_ph = 8 #choose here number of PC
+K_ph = 4 #choose here number of PC
 print("   K = ",K_ph, " | N_grid = ", test_data.shape[1])
 
 	#phase
@@ -68,7 +75,7 @@ for k in range(K_ph):
 	plt.ylabel("PC value")
 #	plt.legend()
 	plt.savefig("../pictures/PCA_comp_full_"+to_fit+"/comp_"+str(k)+".jpeg")
-	plt.close(k)
+	#plt.close(k)
 
 	#computing mismatch
 if to_fit == "amp":
@@ -78,13 +85,13 @@ if to_fit == "ph":
 print("Mismatch PCA avg: ",np.mean(F_PCA))
 
 
-quit()
+#quit()
 
 ####checking behaviour with noise
 
 plt.figure(200)
 plt.title("Features value")
-for i in range(5):
+for i in range(4):
 	plt.plot(frequencies[indices], test_data[i,:], label = 'true')
 	#plt.plot(frequencies, rec_PCA_ph[i,:], label = 'reconstructed')
 	#plt.plot(frequencies, rec_PCA_ph[i,:]-test_data[i,:], label = str(test_theta[i,0]))
@@ -94,7 +101,7 @@ plt.legend()
 
 plt.figure(600)
 plt.title("Phase principal components")
-for i in range(3):#PCA.get_V_matrix().shape[1]):
+for i in range(7):#PCA.get_V_matrix().shape[1]):
 	plt.plot(frequencies[indices], PCA.get_V_matrix()[:,i], label=str(i))
 plt.legend()
 

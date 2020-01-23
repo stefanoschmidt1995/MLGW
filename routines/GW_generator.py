@@ -291,7 +291,10 @@ GW_generator
 		amp, ph =  self.__get_WF__(theta_std) #raw WF (N, N_grid)
 
 			#doing interpolations
-		m_tot_std = m2_train*(1+theta_std[:,0])
+			#ATTENTIOOOOON!!!!!
+			##################remember to choose one alternative#######################
+		#m_tot_std = m2_train*(1+theta_std[:,0])
+		m_tot_std = 20. * np.ones((theta.shape[0],))
 		new_amp = np.zeros((amp.shape[0], time_grid.shape[0]))
 		new_ph = np.zeros((amp.shape[0], time_grid.shape[0]))
 		for i in range(amp.shape[0]):
