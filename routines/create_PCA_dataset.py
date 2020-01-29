@@ -25,7 +25,7 @@ frequencies=frequencies
 
 	#splitting into train and test set
 	#to make data easier to deal with
-train_frac = .9
+train_frac = .98
 
 
 train_theta, test_theta, train_amp, test_amp = make_set_split(theta_vector, amp_dataset, train_frac, 1e-21)
@@ -47,7 +47,7 @@ if to_fit == "ph":
 
 		#DOING PCA
 print("##### PCA of "+to_fit+" #####")
-K_ph = 4 #choose here number of PC
+K_ph = 10 #choose here number of PC
 print("   K = ",K_ph, " | N_grid = ", test_data.shape[1])
 
 	#phase
@@ -55,10 +55,13 @@ PCA = PCA_model()
 E = PCA.fit_model(train_data, K_ph, scale_PC=True)
 print("PCA eigenvalues: ", E)
 PCA.save_model("../datasets/PCA_model_full_"+to_fit+".dat")
-#PCA.load_model("../datasets/PCA_model_s2_const.dat")
+PCA.load_model("../datasets/PCA_model_full_"+to_fit+".dat")
 red_train_data = PCA.reduce_data(train_data)
 red_test_data = PCA.reduce_data(test_data)
 rec_test_data = PCA.reconstruct_data(red_test_data)
+
+print(PCA.get_PCA_params())
+print(PCA.get_PCA_params()[3])
 
 np.savetxt("../datasets/PCA_train_theta_full.dat", train_theta)
 np.savetxt("../datasets/PCA_test_theta_full.dat", test_theta)
