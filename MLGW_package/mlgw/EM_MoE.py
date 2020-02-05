@@ -268,7 +268,7 @@ MoE_model
 
 		return r_0
 
-	def fit(self, X_train, y_train, N_iter=None, threshold = 1e-2, args= [], verbose = False, val_set = None, pick_best = True):
+	def fit(self, X_train, y_train, N_iter=None, threshold = 1e-2, args= [], verbose = False, val_set = None, pick_best = False):
 		"""
 	fit
 	===
@@ -323,13 +323,14 @@ MoE_model
 				if isinstance(val_set,tuple) :
 					mse = np.sum(np.square( self.predict(val_set[0])-val_set[1]))/val_set[0].shape[0]
 					print("   Val loss: ", mse)
-					if mse < best_mse and pick_best:
-						best_mse = mse
-						print("Chosen the best!")
-						try: #saving best model so far
-							self.save("temp_exp", "temp_gat") 
-						except:
-							os.system("rm -f temp_exp temp_gat")
+					if pick_best:
+						if mse < best_mse:
+							best_mse = mse
+							print("Chosen the best!")
+							try: #saving best model so far
+								self.save("temp_exp", "temp_gat") 
+							except:
+								os.system("rm -f temp_exp temp_gat")
 			if N_iter is not None:
 				if i>= N_iter:
 					break
@@ -484,12 +485,15 @@ softmax_regression
 			V = self.V
 		res = np.matmul(X_test,V) #(N,K)
 		res = np.exp(res) + 1e-5 #(N,K)
-		return np.divide(res.T, np.sum(res, axis = 1)).T
+		res = np.divide(res.T, np.sum(res, axis = 1)).T #(N,K) normalizing
+
+		return res
 
 	def fit_single_loop(self, X_train, y_train):
 		"""
 	fit_single_loop
 	===============
+		######## DOES NOT WORK YET!! WE ARE SORRY FOR THE INCONVENIENT ######
 		Fit the model using the closed form of LL of the problem.
 		See: https://link.springer.com/content/pdf/10.1007%2F978-3-642-01510-6_109.pdf 
 		Input:
@@ -567,7 +571,7 @@ softmax_regression
 
 		mu = self.predict(X, V) #(N,K)
 			#mu must be regularized in logarithm. Otherwise it might give Nan if a label prob is 0
-		LL = -(np.sum(np.multiply(y, np.log(mu+1e-40))) / X.shape[0]) + reg_constant * np.sum(np.square(V))
+		LL = -(np.sum(np.multiply(y, np.log(mu+1e-40))) / X.shape[0]) + 0.5* reg_constant * np.sum(np.square(V))
 		return LL
 
 	def grad(self, V, data):
@@ -590,7 +594,7 @@ softmax_regression
 		reg_constant = data[2] #regularizer
 		
 		mu = self.predict(X, V) #(N,K)
-		delta = (mu - y) + 1e-40
+		delta = (mu - y) + 1e-4
 		grad = np.matmul(X.T,delta) / X.shape[0] + reg_constant*V #(N,D).T (N,K) = (D,K)
 		if to_reshape:
 			return np.reshape(grad, ((self.D+1)*self.K,))
@@ -705,7 +709,10 @@ softmax_regression
 			m_corr = m / (1-beta1)
 			v_corr = v / (1-beta2)
 
-			self.V = self.V - learning_rate * np.divide(m_corr, np.sqrt(v_corr)+epsilon)
+			update = np.divide(m_corr, np.sqrt(v_corr)+epsilon)
+			if np.any(np.isnan(update)): #debug
+				quit()
+			self.V = self.V - learning_rate * update
 			self.V[:,-1] = np.zeros((self.D+1,))
 
 			if isinstance(val_set,tuple):

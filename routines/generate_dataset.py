@@ -8,10 +8,10 @@ import matplotlib.pyplot as plt
 from ML_routines import *
 
 if True:
-	create_dataset_TD(3000, N_grid = 4000, filename = "../datasets/GW_TD_dataset_mtotconst.dat",
+	create_dataset_TD(3500, N_grid = 3500, filename = "../datasets/GW_TD_dataset_mtotconst/GW_TD_dataset_mtotconst.dat",
                 t_coal = .4, q_range = (1.,10.), m2_range = None, s1_range = (-0.8,0.8), s2_range = (-0.8,0.8), #for full dataset
+                t_step = 5e-6, lal_approximant = "SEOBNRv2_opt", alpha = 0.5)
 #                t_coal = .05, q_range = (1.,5.), m2_range = None, s1_range = -0.3, s2_range = 0.2, #for s_const
-                t_step = 1e-6, lal_approximant = "SEOBNRv2_opt")
 
 #create_dataset_FD(5000, N_grid = 2048, filename = "../datasets/GW_std_dataset.dat",
 #                q_range = (1.,5.), m2_range = 20., s1_range = (-0.85,0.85), s2_range = (-0.85,0.85),

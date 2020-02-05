@@ -115,7 +115,7 @@ compute_mismatch
 
 ################# Dataset related stuff
 
-def create_dataset_TD(N_data, N_grid, filename = None,  t_coal = 0.5, q_range = (1.,5.), m2_range = 20., s1_range = (-0.8,0.8), s2_range = (-0.8,0.8), t_step = 5e-5, lal_approximant = "SEOBNRv2_opt"):
+def create_dataset_TD(N_data, N_grid, filename = None,  t_coal = 0.5, q_range = (1.,5.), m2_range = None, s1_range = (-0.8,0.8), s2_range = (-0.8,0.8), t_step = 1e-5, lal_approximant = "SEOBNRv2_opt", alpha = 0.35):
 	"""
 create_dataset_TD
 =================
@@ -140,6 +140,7 @@ create_dataset_TD
 		spin_mag_max_2		tuple with range for random spin #1 values. if single value, s2 is kept fixed at that value
 		t_step				time step to generate the wave with
 		lal_approximant		string for the approximant model to be used (in lal convention)
+		alpha				distorsion factor for time grid. (In range (0,1], when it's close to 0, more grid points are around merger)
 	Output:
 		if filename is given
 			None
@@ -168,7 +169,7 @@ create_dataset_TD
 
 		#creating time_grid
 	t_end = 5.2e-4 #estimated maximum time for ringdown: WF will be killed after that time
-	alpha = 0.35 #exponent for "time distorsion"
+	#alpha = 0.35 #exponent for "time distorsion"
 	time_grid = np.linspace(-np.power(np.abs(t_coal), alpha), np.power(t_end, alpha), N_grid)
 	time_grid = np.multiply( np.sign(time_grid) , np.power(np.abs(time_grid), 1./alpha))
 
@@ -177,8 +178,8 @@ create_dataset_TD
 	time_grid[index_0] = 0. #0 is alway set in the grid
 
 		#setting t_coal_freq for generating a waves
-	if np.abs(t_coal) < 0.1:
-		t_coal_freq = 0.1
+	if np.abs(t_coal) < 0.05:
+		t_coal_freq = 0.05
 	else:
 		t_coal_freq = np.abs(t_coal)
 
@@ -249,6 +250,7 @@ create_dataset_TD
 			lal.CreateDict(), #some lal dictionary
 			lalsim.GetApproximantFromString('SEOBNRv2_opt') #approx method for the model
 		)
+		#print(m1,m2, spin1z,spin2z) #debug
 
 		h = np.array(hptilde.data.data)+1j*np.array(hctilde.data.data) #complex waveform
 		if isinstance(m2_range, tuple):
@@ -266,9 +268,9 @@ create_dataset_TD
 		temp_ph = np.interp(time_grid, time_full, temp_ph)
 
 			#here you need to decide what is better
-		temp_ph = temp_ph - temp_ph[0] #all phases are shifted by a constant to make every wave start with 0 phase
-		#id0 = np.where(time_grid == 0)[0]
-		#temp_ph = temp_ph - temp_ph[id0] #all phases are shifted by a constant to make every wave start with 0 phase at t=0 (i.e. at maximum amplitude)
+		#temp_ph = temp_ph - temp_ph[0] #all phases are shifted by a constant to make every wave start with 0 phase
+		id0 = np.where(time_grid == 0)[0]
+		temp_ph = temp_ph - temp_ph[id0] #all phases are shifted by a constant to make every wave start with 0 phase at t=0 (i.e. at maximum amplitude)
 
 			#removing spourious gaps (if present)
 		(index,) = np.where(temp_amp/np.max(temp_amp) < 1e-4) #there should be a way to choose right threshold...

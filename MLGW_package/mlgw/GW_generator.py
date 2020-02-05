@@ -1,16 +1,21 @@
 """
 Module GW_generator.py
-========================
-	Definition of class MLGW_generator. The class generates a GW signal of a BBH coalescence when given orbital parameters of the BBH. Some optional parameters can be given to specify the observer position.
-It makes use of modules EM_MoE.py and ML_routines.py for an implementation of a PCA model and a MoE fitted by EM algorithm.
+======================
+	Definition of class MLGW_generator. The class generates a GW signal of a BBH coalescence when given orbital parameters of the BBH.
+	Model performs the regression:
+		theta = (q,s1,s2) ---> g ---> A, ph = W g
+	First regression is done by a MoE model; the second regression is a PCA model. Some optional parameters can be given to specify the observer position.
+	It makes use of modules EM_MoE.py and ML_routines.py for an implementation of a PCA model and a MoE fitted by EM algorithm.
 """
 #################
 
 import os
+import sys
 import warnings
 import numpy as np
-from mlgw.EM_MoE import *			#MoE model
-from mlgw.ML_routines import *		#PCA model
+sys.path.insert(1, os.path.dirname(__file__)) 	#adding to path folder where mlgw package is installed (ugly?)
+from EM_MoE import *			#MoE model
+from ML_routines import *		#PCA model
 
 ################# GW_generator class
 class GW_generator(object):
@@ -160,6 +165,47 @@ GW_generator
 			return self.ph_PCA
 		return None
 
+	def model_summary(self, filename = None):
+		"""
+	PCA_models
+	==========
+		Prints to screen a summary of the model currently used.
+		If filename is given, output is redirected to file.
+		Input:
+		Output:
+			filename	if not None, redirects the output to file
+		"""
+		amp_exp_list = [str(model.get_iperparams()[1]) for model in self.MoE_models_amp]
+		ph_exp_list = [str(model.get_iperparams()[1]) for model in self.MoE_models_ph]
+
+		output = "###### Summary for MLGW model ######\n"
+		output += "   Grid size:     "+str(self.amp_PCA.get_PCA_params()[0].shape[0]) +" \n"
+		output += "   Minimum time:  "+str(np.abs(self.times[0]))+" s/M_sun\n"
+			#amplitude summary
+		output += "   ## Model for Amplitude \n"
+		output += "      - #PCs:          "+str(self.amp_PCA.get_PCA_params()[0].shape[1])+"\n"
+		output += "      - #Experts:      "+(" ".join(amp_exp_list))+"\n"
+		output += "      - #Features:     "+str(self.MoE_models_amp[0].get_iperparams()[0])+"\n"
+		output += "      - Features:      "+(" ".join(self.amp_features))+"\n"
+			#phase summary
+		output += "   ## Model for Phase \n"
+		output += "      - #PCs:          "+str(self.ph_PCA.get_PCA_params()[0].shape[1])+"\n"
+		output += "      - #Experts:      "+(" ".join(ph_exp_list))+"\n"
+		output += "      - #Features:     "+str(self.MoE_models_ph[0].get_iperparams()[0])+"\n"
+		output += "      - Features:      "+(" ".join(self.ph_features))+"\n"
+		output += "####################################"
+	
+		if filename is None:
+			print(output)
+		elif type(filename) is str:
+			text_file = open(filename, "a")
+			text_file.write(output)
+			text_file.close()
+		else:
+			raise RuntimeError("Filename must be a string! "+str(type(filename))+" given" )
+		return
+		
+
 	def get_x_grid(self):
 		"""
 	get_x_grid
@@ -276,7 +322,8 @@ GW_generator
 		D= theta.shape[1] #number of features given
 		if D == 3:
 			theta_std = theta
-			m_tot_us = m2_train*(1+theta_std[:,0]) #total mass in solar masses for the user
+			#m_tot_us = m2_train*(1+theta_std[:,0]) #total mass in solar masses for the user
+			m_tot_us = 20. * np.ones((theta.shape[0],)) #depending on the convention (ATTENTIOOOOON!!!!!)
 		else:
 			q = np.divide(np.max(theta[:,0:2], axis = 1),np.min(theta[:,0:2], axis = 1)) #mass ratio (N,)
 
@@ -291,10 +338,10 @@ GW_generator
 		amp, ph =  self.__get_WF__(theta_std) #raw WF (N, N_grid)
 
 			#doing interpolations
-			#ATTENTIOOOOON!!!!!
-			##################remember to choose one alternative#######################
+			#ATTENTIOOOOON!!!!! Choose one alternative
 		#m_tot_std = m2_train*(1+theta_std[:,0])
 		m_tot_std = 20. * np.ones((theta.shape[0],))
+			############
 		new_amp = np.zeros((amp.shape[0], time_grid.shape[0]))
 		new_ph = np.zeros((amp.shape[0], time_grid.shape[0]))
 		for i in range(amp.shape[0]):
@@ -334,24 +381,6 @@ GW_generator
 
 			#scaling for setting inclination
 		if not np.all(cos_i == np.ones((amp.shape[0],))): #dealing with inclination is required (computationally expensive)
-			"""
-					#this piece of code can be useful to do everything on a bigger grid thus minimizing numerical errors
-				huge_grid = np.linspace(time_grid[0],time_grid[-1], np.maximum(len(time_grid),int(1e4)))
-				new_amp = np.zeros((amp.shape[0], huge_grid.shape[0]))
-				new_ph = np.zeros((amp.shape[0], huge_grid.shape[0]))
-				for i in range(amp.shape[0]):
-					new_amp[i,:] = np.interp(huge_grid, time_grid, amp[i,:])
-					new_ph[i,:]  = np.interp(huge_grid, time_grid, ph[i,:])
-				new_h = new_amp*np.exp(1j*new_ph)
-				h_p, h_c = new_h.real, new_h.imag
-				h_p = np.multiply(h_p.T, (1+np.square(cos_i))/2.).T
-				h_c = np.multiply(h_c.T, cos_i).T
-				new_amp = np.abs(h_p+1j*h_c)
-				new_ph = np.unwrap(np.angle(h_p+1j*h_c))
-				for i in range(amp.shape[0]):
-					amp[i,:] = np.interp(time_grid, huge_grid, new_amp[i,:])
-					ph[i,:]  = np.interp(time_grid, huge_grid, new_ph[i,:])
-			amp, ph = self.align_wave_TD(amp, ph, time_grid, al_merger = False)"""
 			h = amp*np.exp(-1j*ph)
 			h_p, h_c = h.real, h.imag
 			h_p = np.multiply(h_p.T, (1+np.square(cos_i))/2.).T
@@ -372,9 +401,9 @@ GW_generator
 			phi_0 = theta[:,10]
 			amp, ph = self.align_wave_TD(amp, ph, time_grid, al_merger = True, phi_0 = phi_0)
 
-		for i in range(amp.shape[0]):
+		#for i in range(amp.shape[0]):
 					#wave is aligned with phase 0 at begininning of grid
-			new_amp[i,:], new_ph[i,:] = self.align_wave_TD(new_amp[i,:], new_ph[i,:], interp_grid, al_merger = True)
+		#	new_amp[i,:], new_ph[i,:] = self.align_wave_TD(new_amp[i,:], new_ph[i,:], interp_grid, al_merger = True)
 
 		return amp, ph
 

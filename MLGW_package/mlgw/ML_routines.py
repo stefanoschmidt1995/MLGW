@@ -1,6 +1,6 @@
 """
 Module ML_routines.py
-========================
+=====================
 	Definition of the following ML routines:
 		PCA model
 			class PCA_model: implements a PCA model with methods for fitting and doing data reduction
@@ -13,6 +13,7 @@ Module ML_routines.py
 
 import scipy.stats
 import numpy as np
+import warnings
 
 ################# PCA class
 class PCA_model:
@@ -20,31 +21,53 @@ class PCA_model:
 PCA_model
 =========
 	Class aimed to deal with a PCA model.
-	It fits a PCA model and is able to reduce a dataset to a lower dimensional one and to reconstruct low dimensional data to high dimensional one.
+	It fits a PCA model and is able to reduce a dataset (dimension D) to a lower dimensional (dimension K) one and to reconstruct low dimensional data to high dimensional one.
+	It stores the following parameters (get them with get_PCA_params()):
+		V (D,K)			matrix for dimensional reduction
+		mu (D,)			the average value for each feature of dataset
+		max_PC (K,)		maximum value of PC projection used to redurn scaled low dimensional data (activate it with scale_PC=True in fit_model methods())
+		E (K,)			Eigenvalues of the PCs
 	"""
-	def __init__(self):
-		"Empty constructor"
+	def __init__(self, filename = None):
+		"""
+	__init__
+	========
+		Constructor for PCA model. If filename is given, loads the model from file.
+		Input:
+			filename	file to load the model from
+		"""
 		self.PCA_params = []
+		if filename is not None:
+			self.load_model(filename)
 		return None
 
 	def save_model(self, filename):
 		"""
 	save_model
 	==========
-		Save the PCA model parameters to file in the matrix [V (D,K), mu (D,), scale_factor ()]' with shape (D,K+2)
+		Save the PCA model parameters to file in the matrix
+			[[V (D,K), mu (D,)], [max_PC (K(+1),)], [E (K(+1),)] ]
+		with shape (D+2,K+1)
 		Input:
 			filename	file to save the model in
 		Output:
 		"""
-			#doesn't work properly... :(
 		if self.PCA_params == []:
 			print("Model is not fitted yet! There is nothing to save")
 			return None
+		(D, K) = self.PCA_params[0].shape
 		V = self.PCA_params[0] #(D,K)
 		mu = (self.PCA_params[1])[:,np.newaxis]#(D,1)
-		max_PC = np.zeros(mu.shape) #(D,1)
-		max_PC[:V.shape[1],0] = self.PCA_params[2] #(K,)
-		to_save = np.concatenate((V,mu,max_PC), axis = 1) #(D, K+2)
+		max_PC = (self.PCA_params[2]) #(K,)
+		E = (self.PCA_params[3]) #(K,)
+		first_row = np.concatenate((V,mu), axis = 1) #(D, K+1)
+
+		to_save = np.zeros((D+2, K+1))
+		to_save[:D,:] = first_row
+		to_save[D,:K] = max_PC
+		to_save[D+1,:K] = E.real
+		to_save[D:,-1] = np.NAN		
+
 		np.savetxt(filename, to_save)
 		return None 
 
@@ -57,11 +80,21 @@ PCA_model
 			filename	file to load the model from
 		Output:
 		"""
-		data = np.loadtxt(filename)
-		V = data[:,:data.shape[1]-2]
-		mu = data[:,data.shape[1]-2]
-		max_PC = data[:V.shape[1],data.shape[1]-1]
-		self.PCA_params= [V,mu,max_PC]
+		data = np.loadtxt(filename) #loading data
+
+		if not np.any(np.isnan(data)): #if there is no NaN, the old format is employed. This is to ensure code portability :(
+			warnings.warn("Old PCA model type given. The model is loaded correctly but it is better to save the model to the new format.")
+			V = data[:,:data.shape[1]-2] #(D,K)
+			mu = data[:,data.shape[1]-2] #(D,)
+			max_PC = data[:V.shape[1],data.shape[1]-1] #(K,)
+			E = np.ones((V.shape[1],)) #(K,)
+		else:
+			V = data[:data.shape[0]-2,:data.shape[1]-1]
+			mu = data[:data.shape[0]-2,data.shape[1]-1]
+			max_PC = data[data.shape[0]-2,:data.shape[1]-1]
+			E = data[data.shape[0]-1,:data.shape[1]-1]
+
+		self.PCA_params= [V,mu,max_PC, E]
 		return None
 
 	def reconstruct_data(self, red_data):
@@ -118,10 +151,9 @@ PCA_model
 			K = X.shape[1]
 		#E, V = np.linalg.eig(np.dot(X.T, X))
 		E, V = np.linalg.eig(np.cov(X.T))
-		#E, V = np.linalg.eig(np.corrcoef(X.T+1e-100*np.random.rand())) #trying with correlation matrix (doesn't work)
 		idx = np.argsort(E)[::-1]
 		V = V[:, idx[:K]] # (D,K)
-		self.PCA_params = [V.real, mu, np.ones((K,))]
+		self.PCA_params = [V.real, mu, np.ones((K,)),  E[:K].real]
 
 		if scale_PC:
 			red_data = np.matmul(X, self.PCA_params[0]) #(N,K)
@@ -140,6 +172,17 @@ PCA_model
 		"""
 		return self.PCA_params[0]
 
+	def get_dimensions(self):
+		"""
+	get_dimensions
+	==============
+		Returns dimension of high- and low-dimensional space.
+		Input:
+		Output:
+			(D,K) (tuple)	dimensions in the format (high-dim, low-dim)
+		"""
+		return self.PCA_params[0].shape
+
 	def get_PCA_params(self):
 		"""
 	get_PCA_params
@@ -147,7 +190,7 @@ PCA_model
 		Returns the parameters of the model
 		Input:
 		Output:
-			PCA_params [V (D,K), mu (D,), max_PC (K,)]	paramters for preprocessing and PCA
+			PCA_params [V (D,K), mu (D,), max_PC (K,), E (K,)]	paramters for preprocessing and PCA
 		"""
 		return self.PCA_params
 
@@ -326,9 +369,14 @@ add_extra_features
 	Output:
 		new_data (N,D+L)	data with new feature
 	"""
+	data = np.array(data) #this is required to manipulate freely the data...
 	if data.ndim == 1: data = data[:,np.newaxis]
 	if len(feature_list)==0:
 		return data
+
+	#data[:,0] = data[:,0]/(1+data[:,0])**2 #using symmetric mass ratio
+	data[:,0] = data[:,0]/10. #using symmetric mass ratio
+		#should you scale the features to make them all O(1)????
 
 	new_features = np.zeros((data.shape[0],len(feature_list)))
 	for i in range(len(feature_list)):

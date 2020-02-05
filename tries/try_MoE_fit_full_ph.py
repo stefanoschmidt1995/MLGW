@@ -10,12 +10,13 @@ from EM_MoE import *		#MoE model
 folder = "GW_TD_dataset_mtotconst/"
     #loading PCA datasets
 N_train = 7000
-train_theta = np.loadtxt("../datasets/"+folder+"PCA_train_theta_full.dat")[:N_train,:]
-test_theta = np.loadtxt("../datasets/"+folder+"PCA_test_theta_full.dat")
-PCA_train_ph = np.loadtxt("../datasets/"+folder+"PCA_train_full_ph.dat")[:N_train,:]
-PCA_test_ph = np.loadtxt("../datasets/"+folder+"PCA_test_full_ph.dat")
+train_theta = np.loadtxt("../datasets/"+folder+"PCA_train_theta.dat")[:N_train,:]
+test_theta = np.loadtxt("../datasets/"+folder+"PCA_test_theta.dat")
+PCA_train_ph = np.loadtxt("../datasets/"+folder+"PCA_train_ph.dat")[:N_train,:]
+PCA_test_ph = np.loadtxt("../datasets/"+folder+"PCA_test_ph.dat")
 K_PCA_to_fit = 7
 
+print("Using "+str(PCA_train_ph.shape[0])+" train data")
 
 	#adding extra features for basis function regression
 new_features = ["00", "11","22", "01", "02", "12"#, "111", "110", "112","1111", "1122", "1100", "1120"
@@ -25,6 +26,13 @@ new_features = ["00", "11","22", "01", "02", "12"#, "111", "110", "112","1111", 
 #   ,"00000", "00010","00020", "00110", "00220","00120","01110","01120", "01220", "02220","11110", "11120", "11220", "12220", "22220" 
 #   ,"00001", "00011","00021", "00111", "00221","00121","01111","01121", "01221", "02221","11111", "11121", "11221", "12221", "22221" 
 #   ,"00002", "00012","00022", "00112", "00222","00122","01112","01122", "01222", "02222","11112", "11122", "11222", "12222", "22222" ]
+
+new_features = ["00", "11","22", "01", "02", "12","000", "001", "002", "011", "012", "022", "111", "112", "122", "222", #2nd/3rd order
+"0000", "0001","0002", "0011", "0022","0012","0111","0112", "0122", "0222","1111", "1112", "1122", "1222", "2222", #4th order
+"00000", "00001", "00002", "00011", "00012", "00022", "00111", "00112","00122", "00222", #5th order
+"01111", "01112", "01122", "01222", "02222", "11111", "11112", "11122","11222", "12222", "22222"] #5th order
+
+
 outfile = open("./saved_models_full_ph_TD/ph_feat", "w+")
 outfile.write("\n".join(new_features))
 outfile.close()
@@ -58,14 +66,14 @@ for k in range(0,K_PCA_to_fit):
 
 	MoE_models.append(MoE_model(D,K[k]))
 			#opt	val_set reg verbose threshold	N_it     step
-	args = ["adam", None,   0e-4, False,  1e-4,		150,    2e-3]
+	args = ["adam", None,   0e-4, False,  1e-2,		150,    2e-3]
 	#args = [None,5,0]
 
 	if k in load_list:
 		MoE_models[-1].load("./saved_models_full_ph_TD/ph_exp_"+str(k),"./saved_models_full_ph_TD/ph_gat_"+str(k))
 		print("Loaded model for comp: ", k)
 	else:
-		MoE_models[-1].fit(train_theta, y_train, threshold = 1e-2, args = args, verbose = True, val_set = (test_theta, y_test))
+		MoE_models[-1].fit(train_theta, y_train, threshold = 1e-2, args = args, verbose = False, val_set = (test_theta, y_test))
 		MoE_models[-1].save("./saved_models_full_ph_TD/ph_exp_"+str(k),"./saved_models_full_ph_TD/ph_gat_"+str(k))
 
 		#doing some test
@@ -100,7 +108,7 @@ for k in range(0,K_PCA_to_fit):
 N_waves = 50
 
 ph_PCA = PCA_model()
-ph_PCA.load_model("../datasets/"+folder+"PCA_model_full_ph.dat")
+ph_PCA.load_model("../datasets/"+folder+"ph_PCA_model")
 
 theta_vector_test, amp_dataset_test, ph_dataset_test, frequencies_test = create_dataset_TD(N_waves, N_grid = ph_PCA.get_V_matrix().shape[0], filename = None,
                 t_coal = .4, q_range = (1.,10.), m2_range = None, s1_range = (-0.8,0.8), s2_range = (-0.8,0.8),
@@ -125,6 +133,9 @@ rec_ph_dataset = ph_PCA.reconstruct_data(rec_PCA_dataset)
 
 F = compute_mismatch(amp_dataset_test, rec_ph_dataset, amp_dataset_test, ph_dataset_test)
 print("Avg fit mismatch: ", np.mean(F))
+
+F = compute_mismatch(amp_dataset_test, rec_ph_dataset, amp_dataset_test, ph_PCA.reconstruct_data(red_ph_dataset_test))
+print("Avg fit mismatch vs PCA: ", np.mean(F))
 
 mse = np.sum(np.square( rec_ph_dataset[:,290]-ph_dataset_test[:,290]))/(ph_dataset_test.shape[0])#*ph_dataset_test.shape[1])
 print("Reconstruction mse: ", mse)

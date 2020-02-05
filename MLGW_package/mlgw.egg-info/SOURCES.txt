@@ -7,6 +7,7 @@ setup.py
 ./mlgw/GW_helper.py
 ./mlgw/ML_routines.py
 ./mlgw/__init__.py
+./mlgw/fit_model.py
 mlgw.egg-info/PKG-INFO
 mlgw.egg-info/SOURCES.txt
 mlgw.egg-info/dependency_links.txt

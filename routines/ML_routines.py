@@ -1,6 +1,6 @@
 """
 Module ML_routines.py
-========================
+=====================
 	Definition of the following ML routines:
 		PCA model
 			class PCA_model: implements a PCA model with methods for fitting and doing data reduction
@@ -21,16 +21,24 @@ class PCA_model:
 PCA_model
 =========
 	Class aimed to deal with a PCA model.
-	It fits a PCA model and is able to reduce a dataset to a lower dimensional one and to reconstruct low dimensional data to high dimensional one.
+	It fits a PCA model and is able to reduce a dataset (dimension D) to a lower dimensional (dimension K) one and to reconstruct low dimensional data to high dimensional one.
 	It stores the following parameters (get them with get_PCA_params()):
 		V (D,K)			matrix for dimensional reduction
 		mu (D,)			the average value for each feature of dataset
 		max_PC (K,)		maximum value of PC projection used to redurn scaled low dimensional data (activate it with scale_PC=True in fit_model methods())
 		E (K,)			Eigenvalues of the PCs
 	"""
-	def __init__(self):
-		"Empty constructor"
+	def __init__(self, filename = None):
+		"""
+	__init__
+	========
+		Constructor for PCA model. If filename is given, loads the model from file.
+		Input:
+			filename	file to load the model from
+		"""
 		self.PCA_params = []
+		if filename is not None:
+			self.load_model(filename)
 		return None
 
 	def save_model(self, filename):
@@ -163,6 +171,17 @@ PCA_model
 			V (D,K) matrix of eigenvector used for projection and reconstruction of data
 		"""
 		return self.PCA_params[0]
+
+	def get_dimensions(self):
+		"""
+	get_dimensions
+	==============
+		Returns dimension of high- and low-dimensional space.
+		Input:
+		Output:
+			(D,K) (tuple)	dimensions in the format (high-dim, low-dim)
+		"""
+		return self.PCA_params[0].shape
 
 	def get_PCA_params(self):
 		"""
@@ -338,21 +357,34 @@ GDA
 
 
 ################# Extra features routine
-def add_extra_features(data, feature_list):
+def add_extra_features(data, feature_list, scaling = None):
 	"""
 add_extra_features
 ==================
 	Given a dataset, it enlarge its feature number to make a basis function regression.
 	Features to add must be specified with feature list. Each element in the list is a string in form "ijk" where ijk are feature indices as in numpy array data (repetitions allowed); this represents the new feauture x_new = x_i*x_j*x_k
+	Features can be scaled by an arbitrary value.
 	Input:
 		data (N,D)/(N,)			data to augment
 		feature_list (len L)	list of features to add
+		scaling (D,)			vector of values for scaling data as data_ij = data_ij/scaling_j (if None no scaling is performed)
 	Output:
 		new_data (N,D+L)	data with new feature
 	"""
+	data = np.array(data) #this is required to manipulate freely the data...
 	if data.ndim == 1: data = data[:,np.newaxis]
 	if len(feature_list)==0:
 		return data
+
+	if scaling is None:
+		#scaling = np.ones(data.shape[1])
+		scaling = [10., 0.8, 0.8] #ignorante... funzionerà??		
+
+	#data[:,0] = data[:,0]/(1+data[:,0])**2 #use symmetric mass ratio (??)
+
+	data = np.divide(data,scaling)
+
+		#should you scale the features to make them all O(1)????
 
 	new_features = np.zeros((data.shape[0],len(feature_list)))
 	for i in range(len(feature_list)):
