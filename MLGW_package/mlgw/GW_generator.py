@@ -281,6 +281,7 @@ GW_generator
 					red_grid = True
 					warnings.warn("As no grid is the given, the default reduced grid is used to evaluate the output. red_grid variable is set to True.")
 
+		theta = np.array(theta)
 		if theta.ndim == 1:
 			theta = theta[np.newaxis,:] #(1,D)
 		
@@ -479,6 +480,23 @@ GW_generator
 		Ouput:
 			amp,ph (N,D)	desidered amplitude and phase
 		"""
+		rec_PCA_dataset_amp, rec_PCA_dataset_ph = self.get_red_coefficients(theta)
+
+		rec_amp_dataset = self.amp_PCA.reconstruct_data(rec_PCA_dataset_amp)
+		rec_ph_dataset = self.ph_PCA.reconstruct_data(rec_PCA_dataset_ph)
+
+		return rec_amp_dataset, rec_ph_dataset
+
+	def get_red_coefficients(self, theta):
+		"""
+	get_red_coefficients
+	====================
+		Returns the PCA reduced coefficients, as estimated by the MoE models.
+		Input:
+			theta (N,3)		source parameters to make prediction at
+		Ouput:
+			red_amp,red_ph (N,K)	PCA reduced amplitude and phase
+		"""
 		assert theta.shape[1] == 3
 
 			#adding extra features
@@ -486,19 +504,17 @@ GW_generator
 		ph_theta = add_extra_features(theta, self.ph_features)
 
 			#making predictions for amplitude
-		rec_PCA_dataset_amp = np.zeros((amp_theta.shape[0], self.amp_PCA.get_V_matrix().shape[1]))
+		rec_PCA_dataset_amp = np.zeros((amp_theta.shape[0], self.amp_PCA.get_dimensions()[1]))
 		for k in range(len(self.MoE_models_amp)):
 			rec_PCA_dataset_amp[:,k] = self.MoE_models_amp[k].predict(amp_theta)
 
 			#making predictions for phase
-		rec_PCA_dataset_ph = np.zeros((ph_theta.shape[0], self.ph_PCA.get_V_matrix().shape[1]))
+		rec_PCA_dataset_ph = np.zeros((ph_theta.shape[0], self.ph_PCA.get_dimensions()[1]))
 		for k in range(len(self.MoE_models_ph)):
 			rec_PCA_dataset_ph[:,k] = self.MoE_models_ph[k].predict(ph_theta)
 
-		rec_amp_dataset = self.amp_PCA.reconstruct_data(rec_PCA_dataset_amp)
-		rec_ph_dataset = self.ph_PCA.reconstruct_data(rec_PCA_dataset_ph)
+		return rec_PCA_dataset_amp, rec_PCA_dataset_ph
 
-		return rec_amp_dataset, rec_ph_dataset
 
 	def align_wave_TD(self, amp, ph, x_grid = None, al_merger = True, phi_0=0):
 		"""

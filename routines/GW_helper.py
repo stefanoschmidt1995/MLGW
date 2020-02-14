@@ -113,6 +113,44 @@ compute_mismatch
 	np.divide(F, div_factor, out = F)
 	return 1-F
 
+def compute_optimal_mismatch(h1,h2, return_F = True):
+	"""
+compute_optimal_mismatch
+========================
+	Computes the optimal mismatch/overlap between two complex waveforms by performing the minimization:
+		F = min_phi F[h1, h2*exp(1j*phi)]
+	After the computation, h1 and h2*exp(1j*phi) are optimally aligned.
+	Input:
+		h1 (N,D)/(D,)	complex wave
+		h2 (N,D)/(D,)	complex wave
+		return_F		whether to reteurn mismatch or overlap
+	Output:
+		F_optimal (N,)/()		optimal mismatch/overlap
+		phi_optimal (N,)/()		optimal phi which aligns the two waves
+	"""
+	assert h1.shape == h2.shape
+	if h1.ndim == 1:
+		h1 = h1[np.newaxis,:] #(1,D)
+		h2 = h2[np.newaxis,:] #(1,D)
+
+	scalar = lambda h1_, h2_: np.sum(np.multiply(h1_,np.conj(h2_)), axis = 1)/h1_.shape[1] #(N,)
+
+	norm_factor = np.sqrt(np.multiply(scalar(h1,h1).real, scalar(h2,h2).real))
+	overlap = scalar(h1,h2) #(N,)
+	print(overlap, overlap.real, norm_factor, overlap.real/norm_factor)
+	phi_optimal = np.angle(overlap) #(N,)
+	print(phi_optimal, scalar(h1,h2*np.exp(1j*phi_optimal)), scalar(h1,h2)*np.exp(-1j*phi_optimal) )
+	overlap = np.divide(scalar(h1,h2*np.exp(1j*phi_optimal)), norm_factor)
+	overlap = overlap.real
+	print(overlap)
+
+	if return_F:
+		return 1-overlap, phi_optimal
+	if not return_F:
+		return overlap, phi_optimal
+
+
+
 ################# Dataset related stuff
 
 def create_dataset_TD(N_data, N_grid, filename = None,  t_coal = 0.5, q_range = (1.,5.), m2_range = None, s1_range = (-0.8,0.8), s2_range = (-0.8,0.8), t_step = 1e-5, lal_approximant = "SEOBNRv2_opt", alpha = 0.35):
@@ -250,6 +288,7 @@ create_dataset_TD
 			lal.CreateDict(), #some lal dictionary
 			lalsim.GetApproximantFromString('SEOBNRv2_opt') #approx method for the model
 		)
+		#print(f_min, t_step)#debug
 		#print(m1,m2, spin1z,spin2z) #debug
 
 		h = np.array(hptilde.data.data)+1j*np.array(hctilde.data.data) #complex waveform
@@ -262,7 +301,7 @@ create_dataset_TD
 
 			#bringing waves on the chosen grid
 		time_full = np.linspace(0.0, hptilde.data.length*t_step, hptilde.data.length) #time grid at which wave is computed
-		time_full = (time_full - time_full[np.argmax(temp_amp)])/(m1+m2) #grid is scaled to standard grid #debug (put /(m1+m2) )
+		time_full = (time_full - time_full[np.argmax(temp_amp)])/(m1+m2) #grid is scaled to standard grid
 			#setting waves to the chosen std grid
 		temp_amp = np.interp(time_grid, time_full, temp_amp)
 		temp_ph = np.interp(time_grid, time_full, temp_ph)

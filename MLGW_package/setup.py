@@ -8,7 +8,7 @@ setup(
     author_email='stefanoschmidt1995@gmail.com',
     packages=['mlgw'],
     package_dir = {'mlgw':'./mlgw'},
-    url='none',#'http://pypi.python.org/pypi/??/',
+    url="https://github.com/stefanoschmidt1995/MLGW/",
     license='LICENSE.txt',
     description='ML model for generating gravitational waveforms for a BBH coalescence',
     long_description=open('README.txt').read(),

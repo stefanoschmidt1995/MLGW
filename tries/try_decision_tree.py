@@ -11,20 +11,20 @@ from ML_routines import *	#PCA model
 from EM_MoE import *		#MoE model
 
 # Loading dataset
-folder = "GW_TD_dataset/"
+folder = "GW_TD_dataset_mtotconst/"
     #loading PCA datasets
-N_train = 7000
-train_theta = np.loadtxt("../datasets/"+folder+"PCA_train_theta_full.dat")[:N_train,:]
-test_theta = np.loadtxt("../datasets/"+folder+"PCA_test_theta_full.dat")
-PCA_train_ph = np.loadtxt("../datasets/"+folder+"PCA_train_full_ph.dat")[:N_train,:]
-PCA_test_ph = np.loadtxt("../datasets/"+folder+"PCA_test_full_ph.dat")
+N_train = 70000
+train_theta = np.loadtxt("../datasets/"+folder+"PCA_train_theta.dat")[:N_train,:]
+test_theta = np.loadtxt("../datasets/"+folder+"PCA_test_theta.dat")
+PCA_train_ph = np.loadtxt("../datasets/"+folder+"PCA_train_ph.dat")[:N_train,:]
+PCA_test_ph = np.loadtxt("../datasets/"+folder+"PCA_test_ph.dat")
 K_PCA_to_fit = 8
 
 
 # Fit regression model
-comp_to_fit = 6
+comp_to_fit = 0
 print("Fitting component: ", comp_to_fit)
-regr_1 = DecisionTreeRegressor(max_depth=25)
+regr_1 = DecisionTreeRegressor(max_depth=15)
 regr_2 = RandomForestRegressor(n_estimators = 100, max_depth=15)
 regr_1.fit(train_theta, PCA_train_ph[:,comp_to_fit])
 regr_2.fit(train_theta, PCA_train_ph[:,comp_to_fit])

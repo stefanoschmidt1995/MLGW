@@ -292,19 +292,17 @@ GW_generator
 
 			#generating waves
 		if self.domain == "TD":
-			amp, ph = self.__get_WF_TD__(theta, x_grid, red_grid)
+			#res1,res2 = h_plus, h_cross if plus_cross = True
+			#res1,res2 = amp, ph if plus_cross = False
+			res1, res2 = self.__get_WF_TD__(theta, x_grid, red_grid, plus_cross)
 		else:
-			amp, ph = self.__get_WF_FD__(theta, x_grid, red_grid)
+			amp, ph = self.__get_WF_FD__(theta, x_grid, red_grid, plus_cross)
 
 			#returning to user
-		if plus_cross:
-			h = np.multiply(amp,np.exp(-1j*ph))
-			return h.real, h.imag
-		else:
-			return amp, ph
+		return res1, res2
 
 
-	def __get_WF_TD__(self, theta, time_grid, red_grid):
+	def __get_WF_TD__(self, theta, time_grid, red_grid, plus_cross = False):
 		"""
 	__get_WF_TD__
 	=============
@@ -316,31 +314,35 @@ GW_generator
 		Output:
 			amp,ph (N,D)	desidered amplitude and phase
 		"""
-			#### Dealing with masses and changing grids
-		m2_train = 10. #train parameter fixed when dataset is created
-		
-			#setting theta_std & m_tot
 		D= theta.shape[1] #number of features given
+			#setting theta_std & m_tot_us
 		if D == 3:
 			theta_std = theta
-			#m_tot_us = m2_train*(1+theta_std[:,0]) #total mass in solar masses for the user
 			m_tot_us = 20. * np.ones((theta.shape[0],)) #depending on the convention (ATTENTIOOOOON!!!!!)
 		else:
-			q = np.divide(np.max(theta[:,0:2], axis = 1),np.min(theta[:,0:2], axis = 1)) #mass ratio (N,)
-
-			m_tot_us = theta[:,0] + theta[:,1]	#total mass in solar masses for the user
-			if D == 14:
-				theta_std = np.column_stack((q,theta[:,4], theta[:,7])) #(N,3)
+			if D== 14:
 				if np.any(np.column_stack((theta[:,2:4], theta[:,5:7])) != 0):
 					warnings.warn("Given nonzero spin_x/spin_y components. Model currently supports only spin_z component. Other spin components are ignored")
+				s1_id = 4
+				s2_id = 7
 			else:
-				theta_std = np.column_stack((q,theta[:,2],theta[:,3])) #(N,3)
+				s1_id = 2
+				s2_id = 3
+
+			q = np.divide(theta[:,0],theta[:,1]) #mass ratio (general) (N,)
+			m_tot_us = theta[:,0] + theta[:,1]	#total mass in solar masses for the user
+			theta_std = np.column_stack((q,theta[:,s1_id],theta[:,s2_id])) #(N,3)
+
+			to_switch = np.where(theta_std[:,0] < 1.) #holds the indices of the events to swap
+
+				#switching masses (where relevant)
+			theta_std[to_switch,0] = np.power(theta_std[to_switch,0], -1)
+			theta_std[to_switch,1], theta_std[to_switch,2] = theta_std[to_switch,2], theta_std[to_switch,1]
+
 
 		amp, ph =  self.__get_WF__(theta_std) #raw WF (N, N_grid)
 
 			#doing interpolations
-			#ATTENTIOOOOON!!!!! Choose one alternative
-		#m_tot_std = m2_train*(1+theta_std[:,0])
 		m_tot_std = 20. * np.ones((theta.shape[0],))
 			############
 		new_amp = np.zeros((amp.shape[0], time_grid.shape[0]))
@@ -353,7 +355,7 @@ GW_generator
 			new_amp[i,:] = np.interp(interp_grid, self.times, amp[i,:]) * m_tot_us[i]/m_tot_std[i]
 			new_ph[i,:]  = np.interp(interp_grid, self.times, ph[i,:])
 				#setting amplitude to zero if the model extrapolates outiside the grid
-			if np.abs(interp_grid[0]) > np.abs(self.times[0]):
+			if np.abs(interp_grid[0]) > np.abs(self.times[0]): #try to make it more robust (should work on right as well)
 				warnings.warn("Warning: time grid given is too long for the dataset. Results might be subject to errors.")
 				indices = np.where(np.abs(interp_grid) > np.abs(self.times[0]))[0]
 				new_amp[i,indices] = 0
@@ -382,31 +384,30 @@ GW_generator
 
 			#scaling for setting inclination
 		if not np.all(cos_i == np.ones((amp.shape[0],))): #dealing with inclination is required (computationally expensive)
-			h = amp*np.exp(-1j*ph)
+			if D == 14:
+				phi_0 = theta[:,10]
+			else:
+				phi_0=0.
+
+			h = amp*np.exp(1j*(ph+phi_0)) #choose here a convention... (+? -?) (lal is +)
 			h_p, h_c = h.real, h.imag
 			h_p = np.multiply(h_p.T, (1+np.square(cos_i))/2.).T
 			h_c = np.multiply(h_c.T, cos_i).T
-			amp = np.abs(h_p+1j*h_c)
-			ph = np.unwrap(np.angle(h_p+1j*h_c))
-			#amp, ph = self.align_wave_TD(amp, ph, time_grid, al_merger = True)
-			
-			"""#attempt to work directly with amplitude and phase...
-			amp_factor = (np.multiply(np.square(np.cos(ph)).T, np.square( (1-cos_i_sq)/2.)) + cos_i_sq).T
-			amp = np.sqrt(amp_factor)*amp
-			ph = np.arctan2(np.sin(ph), np.cos(ph)) #wrapping phase
-			ph = np.multiply(ph.T, (1+cos_i_sq)/(2.*cos_i)).T
-			ph = np.unwrap(ph)
-			#amp, ph = self.align_wave_TD(amp, ph, time_grid, al_merger = True)#"""
 
-		if D == 14:
-			phi_0 = theta[:,10]
-			amp, ph = self.align_wave_TD(amp, ph, time_grid, al_merger = True, phi_0 = phi_0)
+			if plus_cross:
+				return h_p, h_c
+			else:
+				amp =  np.abs(h_p+1j*h_c) 
+				ph = np.unwrap(np.angle(h_p+1j*h_c)) + phi_0
+				amp, ph = self.align_wave_TD(amp, ph, time_grid, al_merger = True)
+				return amp, ph
 
-		#for i in range(amp.shape[0]):
-					#wave is aligned with phase 0 at begininning of grid
-		#	new_amp[i,:], new_ph[i,:] = self.align_wave_TD(new_amp[i,:], new_ph[i,:], interp_grid, al_merger = True)
-
-		return amp, ph
+		else:
+			if plus_cross:
+				h = amp*np.exp(1j*(ph+phi_0))
+				return h.real, h.imag
+			else:
+				return amp, ph				
 
 	def __get_WF_FD__(self, theta, freq_grid, red_grid):
 		"""

@@ -2,7 +2,7 @@ Metadata-Version: 1.0
 Name: mlgw
 Version: 0.1.dev0
 Summary: ML model for generating gravitational waveforms for a BBH coalescence
-Home-page: none
+Home-page: https://github.com/stefanoschmidt1995/MLGW/
 Author: S. Schmidt
 Author-email: stefanoschmidt1995@gmail.com
 License: LICENSE.txt

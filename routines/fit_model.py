@@ -94,7 +94,7 @@ create_PCA_dataset
 	return
 
 ################# routine fit_MoE
-def fit_MoE(fit_type, in_folder, out_folder, experts, comp_to_fit = None, features = None, EM_threshold = 1e-2, args = None, verbose = True, test_mismatch = True):
+def fit_MoE(fit_type, in_folder, out_folder, experts, comp_to_fit = None, features = None, EM_threshold = 1e-2, args = None, N_train = None, verbose = True, train_mismatch = False, test_mismatch = True):
 	"""
 fit_MoE
 =======
@@ -116,11 +116,17 @@ fit_MoE
 		features []				list of feature for basis function expansion. It must be in the format of mlgw.ML_routines.add_extra_features. If None, a default second degree polynomial in q, s1, s2 will be used.
 		EM_threshold ()			threshold of minumum change in LL before breaking from the EM algorithm.
 		args []					list of arguments for the softmax function fit routine mlgw.EM_MoE.softmax_regression.fit. They must be in the order [optimizator, validation set, reg. constant, verbose, threshold, # iteration, step for gradient]. If None, default values are used (recommended)
+		N_train					number of training points to use in the PCA dataset. If None, every point available will be used.
 		verbose					whether to display EM iteration messages
-		test_mismatch			whether to compute mismatch on test data
+		train_mismatch			whether to return mismatch and mse on train data (if True, test_mismatch = True)
+		test_mismatch			whether to return mismatch and mse on test data
 	Output:
-		F, mse_list				average test mismatch with PCA reconstructed waves, list of mse for each of the fitted component
+		F, mse_list											average test mismatch with PCA reconstructed waves, list of mse for each of the fitted component
+		F_train, F_test, mse_train_list, mse_test_list		average train (test) mismatch (if relevant). Same format as above.
 	"""
+	if train_mismatch:
+		test_mismatch = True
+
 	if not fit_type in ["amp","ph"]:
 		raise RuntimeError("Data type for fit_type not understood. Required (\"amp\"/\"ph\") but "+str(fit_type)+" given.")
 		return
@@ -139,17 +145,21 @@ fit_MoE
 	if type(features) is not list:
 		raise RuntimeError("Features to use for regression must be given as list. Type "+str(type(features))+" given instead")
 		return
+	
+	if type(N_train) is not int and N_train is not None:
+		raise RuntimeError("Nunmber of training point to use must be be an integer. Type "+str(type(N_train))+" given instead")
+		return
 
 	if args is None:
 				#opt	val_set reg   verbose threshold	N_it step
 		args = ["adam", None,   1e-5, False,  1e-4,		150, 2e-3] #default arguments for sotmax fit routine
 
 		#loading data
-	train_theta = np.loadtxt(in_folder+"PCA_train_theta.dat")		#(N,3)
-	test_theta = np.loadtxt(in_folder+"PCA_test_theta.dat")			#(N',3)
-	PCA_train = np.loadtxt(in_folder+"PCA_train_"+fit_type+".dat")	#(N,K)
-	PCA_test = np.loadtxt(in_folder+"PCA_test_"+fit_type+".dat")	#(N',K)
-	PCA = PCA_model(in_folder+fit_type+"_PCA_model")				#loading PCA model
+	train_theta = np.loadtxt(in_folder+"PCA_train_theta.dat")[:N_train,:]		#(N,3)
+	test_theta = np.loadtxt(in_folder+"PCA_test_theta.dat")						#(N',3)
+	PCA_train = np.loadtxt(in_folder+"PCA_train_"+fit_type+".dat")[:N_train,:]	#(N,K)
+	PCA_test = np.loadtxt(in_folder+"PCA_test_"+fit_type+".dat")				#(N',K)
+	PCA = PCA_model(in_folder+fit_type+"_PCA_model")							#loading PCA model
 
 	print("Using "+str(PCA_train.shape[0])+" train data")
 	
@@ -159,6 +169,8 @@ fit_MoE
 	D = train_theta.shape[1] #dimensionality of input space for MoE
 
 	MoE_models = [] #list of model, one for each component
+	if train_mismatch:
+		PCA_train_pred = np.zeros(PCA_train.shape) #to keep values for reconstruction
 	PCA_test_pred = np.zeros(PCA_test.shape) #to keep values for reconstruction
 
 	if comp_to_fit is None:
@@ -172,7 +184,8 @@ fit_MoE
 	if type(experts) is int:
 		experts = [experts for i in comp_to_fit]
 
-	mse_list = [] #list for holding mse of every PCs
+	mse_train_list = [] #list for holding mse of every PCs
+	mse_test_list = [] #list for holding mse of every PCs
 
 		#starting fit procedure
 	for k in comp_to_fit:
@@ -185,9 +198,14 @@ fit_MoE
 		MoE_models[-1].fit(train_theta, y_train, threshold = EM_threshold, args = args, verbose = verbose, val_set = (test_theta, y_test))
 
 			#doing some test
+		if train_mismatch:
+			y_pred = MoE_models[-1].predict(train_theta)
+			mse_train_list.append( np.sum(np.square(y_pred-y_train))/(y_pred.shape[0]) )
+			PCA_train_pred[:,k] = y_pred
+
 		y_pred = MoE_models[-1].predict(test_theta)
-		mse_list.append( np.sum(np.square(y_pred-y_test))/(y_pred.shape[0]) )
-		print("Test square loss for comp "+str(k)+": ", mse_list[-1] )
+		mse_test_list.append( np.sum(np.square(y_pred-y_test))/(y_pred.shape[0]) )
+		print("Test square loss for comp "+str(k)+": ", mse_test_list[-1] )
 		print("LL for comp "+str(k)+" (train,val): ", (MoE_models[-1].log_likelihood(train_theta,y_train),MoE_models[-1].log_likelihood(test_theta,y_test)))
 		PCA_test_pred[:,k] = y_pred
 
@@ -213,16 +231,6 @@ fit_MoE
 		rec_ph_pred=PCA.reconstruct_data(PCA_test_pred)
 		F_MoE = compute_mismatch(rec_amp, rec_ph, rec_amp, rec_ph_pred)
 		
-		#debug
-		#import matplotlib.pyplot as plt
-		#times = np.loadtxt(out_folder+"times")
-		#plt.plot(times,rec_amp[0,:]*np.exp(1j*rec_ph)[0,:])
-		#plt.plot(times,rec_amp[0,:]*np.exp(1j*rec_ph_pred)[0,:])
-		#plt.plot(test_theta[:,0], PCA_test[:,0],'o')
-		#plt.plot(test_theta[:,0], PCA_test_pred[:,0],'o')
-		#plt.show()
-
-
 	if test_mismatch and fit_type is "amp": #testing for amplitude
 		PCA_test_ph = np.loadtxt(in_folder+"PCA_test_ph.dat")
 		PCA_ph = PCA_model(in_folder+"ph_PCA_model")
@@ -230,10 +238,31 @@ fit_MoE
 		rec_amp=PCA.reconstruct_data(PCA_test)
 		rec_amp_pred=PCA.reconstruct_data(PCA_test_pred)
 		F_MoE = compute_mismatch(rec_amp, rec_ph, rec_amp_pred, rec_ph)
-	
-	print("Average MoE mismatch: ",np.mean(F_MoE))
 
-	return np.mean(F_MoE), mse_list
+	if train_mismatch and fit_type is "ph": #testing for phase
+		PCA_train_amp = np.loadtxt(in_folder+"PCA_train_amp.dat")[:N_train,:]
+		PCA_amp = PCA_model(in_folder+"amp_PCA_model")
+		rec_amp=PCA_amp.reconstruct_data(PCA_train_amp)
+		rec_ph=PCA.reconstruct_data(PCA_train)
+		rec_ph_pred=PCA.reconstruct_data(PCA_train_pred)
+		F_MoE_train = compute_mismatch(rec_amp, rec_ph, rec_amp, rec_ph_pred)
+
+	if train_mismatch and fit_type is "amp": #testing for amplitude
+		PCA_train_ph = np.loadtxt(in_folder+"PCA_train_ph.dat")[:N_train,:]
+		PCA_ph = PCA_model(in_folder+"ph_PCA_model")
+		rec_ph=PCA_ph.reconstruct_data(PCA_train_ph)
+		rec_amp=PCA.reconstruct_data(PCA_train)
+		rec_amp_pred=PCA.reconstruct_data(PCA_train_pred)
+		F_MoE_train = compute_mismatch(rec_amp, rec_ph, rec_amp_pred, rec_ph)
+
+	if test_mismatch:
+		print("Average MoE mismatch: ",np.mean(F_MoE))
+
+	if test_mismatch and not train_mismatch:
+		return np.mean(F_MoE), mse_test_list
+	if train_mismatch and train_mismatch:
+		return np.mean(F_MoE_train), np.mean(F_MoE), mse_train_list, mse_test_list
+	return
 
 
 

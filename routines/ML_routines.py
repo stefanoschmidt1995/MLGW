@@ -376,15 +376,12 @@ add_extra_features
 	if len(feature_list)==0:
 		return data
 
-	if scaling is None:
-		#scaling = np.ones(data.shape[1])
-		scaling = [10., 0.8, 0.8] #ignorante... funzionerà??		
+	data[:,0] = np.log(data[:,0]) #probably a good idea...
 
-	#data[:,0] = data[:,0]/(1+data[:,0])**2 #use symmetric mass ratio (??)
-
-	data = np.divide(data,scaling)
-
-		#should you scale the features to make them all O(1)????
+	if scaling is not None:
+		scaling = np.ones(data.shape[1])
+		#scaling = [10., 0.8, 0.8] #bad idea!!!!!
+		data = np.divide(data,scaling)
 
 	new_features = np.zeros((data.shape[0],len(feature_list)))
 	for i in range(len(feature_list)):

@@ -74,7 +74,7 @@ MoE_model
 			gat_file	file to save the model for gating function
 		"""
 		to_save = np.stack((self.b, self.sigma)) #(2, K)
-		to_save = np.concatenate((self.W,to_save) , axis = 0)
+		to_save = np.concatenate((self.W,to_save) , axis = 0) #(D+2,K)
 		np.savetxt(exp_file, to_save)
 		self.gating.save(gat_file)
 		return
@@ -212,7 +212,7 @@ MoE_model
 		if X.shape[0] > 10*self.K:
 			data = X[:10*self.K,:]
 		else:
-			data = X_train
+			data = X
 		N = data.shape[0]
 
 			#choosing centroids
@@ -446,7 +446,7 @@ softmax_regression
 		"""
 	save
 	====
-		Save the model to file.
+		Save softmax model to file.
 		Input:
 			filename	name of the file to save the model to
 		"""
