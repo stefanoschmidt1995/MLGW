@@ -17,6 +17,7 @@ import numpy as np
 import lalsimulation as lalsim
 import lal
 import os.path
+import matplotlib.pyplot as plt #debug
 
 ################# Overlap related stuff
 def get_low_high_freq_index(flow, fhigh, df):
@@ -84,6 +85,7 @@ compute_mismatch
 	Compute mismatch F between the waves given in input. Mismatch is computed with the formula
 		F = 1-<h_1,h_2>/sqrt(<h_1,h_1><h_2,h_2>)
 	with <,> being the Wigner scalar product for GW.
+	Warning: waves must be aligned. Please use compute_optimal_mismatch for unaligned waves.
 	Input:
 		amp_1/ph_1 (N,D)	amplitude/phase vector for wave 1 in Fourier space sampled in D uniform points within the domain
 		amp_2/ph_2 (N,D)	amplitude/phase vector for wave 1 in Fourier space sampled in D uniform points within the domain
@@ -112,6 +114,47 @@ compute_mismatch
 	div_factor = np.sqrt(np.multiply(compute_scalar(amp_2, ph_2, amp_2, ph_2, df, S), compute_scalar(amp_1, ph_1, amp_1, ph_1, df, S)))
 	np.divide(F, div_factor, out = F)
 	return 1-F
+
+def compute_optimal_mismatch(h1,h2, return_F = True):
+	"""
+compute_optimal_mismatch
+========================
+	Computes the optimal mismatch/overlap between two complex waveforms by performing the minimization:
+		F = min_phi F[h1, h2*exp(1j*phi)]
+	After the computation, h1 and h2*exp(1j*phi) are optimally aligned.
+	Input:
+		h1 (N,D)/(D,)	complex wave
+		h2 (N,D)/(D,)	complex wave
+		return_F		whether to reteurn mismatch or overlap
+	Output:
+		F_optimal (N,)/()		optimal mismatch/overlap
+		phi_optimal (N,)/()		optimal phi which aligns the two waves
+	"""
+	assert h1.shape == h2.shape
+	if h1.ndim == 1:
+		h1 = h1[np.newaxis,:] #(1,D)
+		h2 = h2[np.newaxis,:] #(1,D)
+
+	scalar = lambda h1_, h2_: np.sum(np.multiply(h1_,np.conj(h2_)), axis = 1)/h1_.shape[1] #(N,)
+
+	norm_factor = np.sqrt(np.multiply(scalar(h1,h1).real, scalar(h2,h2).real))
+	overlap = scalar(h1,h2) #(N,)
+	phi_optimal = np.angle(overlap) #(N,)
+	overlap = np.divide(scalar(h1,h2*np.exp(1j*phi_optimal)), norm_factor)
+	overlap = overlap.real
+
+	#plt.plot(np.linspace(0,h1.shape[1],h1.shape[1]),np.squeeze(h1))
+	#plt.plot(np.linspace(0,h1.shape[1],h1.shape[1]),np.squeeze(h2)*np.exp(1j*phi_optimal))
+	#print(1-overlap, overlap)
+	#plt.show()
+
+
+	if return_F:
+		return 1-overlap, phi_optimal
+	if not return_F:
+		return overlap, phi_optimal
+
+
 
 ################# Dataset related stuff
 
@@ -250,6 +293,7 @@ create_dataset_TD
 			lal.CreateDict(), #some lal dictionary
 			lalsim.GetApproximantFromString('SEOBNRv2_opt') #approx method for the model
 		)
+		#print(f_min, t_step)#debug
 		#print(m1,m2, spin1z,spin2z) #debug
 
 		h = np.array(hptilde.data.data)+1j*np.array(hctilde.data.data) #complex waveform
@@ -262,7 +306,7 @@ create_dataset_TD
 
 			#bringing waves on the chosen grid
 		time_full = np.linspace(0.0, hptilde.data.length*t_step, hptilde.data.length) #time grid at which wave is computed
-		time_full = (time_full - time_full[np.argmax(temp_amp)])/(m1+m2) #grid is scaled to standard grid #debug (put /(m1+m2) )
+		time_full = (time_full - time_full[np.argmax(temp_amp)])/(m1+m2) #grid is scaled to standard grid
 			#setting waves to the chosen std grid
 		temp_amp = np.interp(time_grid, time_full, temp_amp)
 		temp_ph = np.interp(time_grid, time_full, temp_ph)

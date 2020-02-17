@@ -38,12 +38,15 @@ A dataset of GW must be created to fit the PCA model. It usually holds waves in 
 
 Usage of mlgw
 =============
+It outputs the GW strain:
+h = h_+ + i h_x = Y_{2,2}(i, phi) h_{2,2}(m1,m2,s1,s2) + Y_{2,-2}(i, phi) h_{2,-2}(m1,m2,s1,s2)
+
 Package mlgw consists in five modules.
    * **GW_generator**: the module holds class ``GW_generator`` which builds up all the model components (i.e. PCA + regressions for each PC) and performs some post processing of the waveform for dealing with known dependence on other physical quantities.
    * **EM_MoE**: holds an implementation of a MoE model as well as the softmax classifier required for it
    * **ML_routines**: holds an implementation of the PCA model as well a GDA classifier and a routine to do data augmentation
    * **GW_helper**: provides some routines to generate a dataset and to evaluate the closeness between waves. This is useful to assess model ability to reproduce original waves
-   * **fit_model**: provides some routines useful to fit the MoE + PCA model. (YET TO BE DEVELOPED)
+   * **fit_model**: provides some routines useful to fit the MoE + PCA model.
 
 Class ``GW_generator`` provides method ``get_WF`` to return the desidered waveform. Orbital parameters must be specified. It accepts data in one of the following layout of D features: ::
 
@@ -51,6 +54,7 @@ Class ``GW_generator`` provides method ``get_WF`` to return the desidered wavefo
 			D = 4	[m1, m2, spin1_z, spin2_z]
 			D = 5	[m1, m2, spin1_z , spin2_z, D_L]
 			D = 6	[m1, m2, spin1_z , spin2_z, D_L, inclination]
+			D = 7	[m1, m2, spin1_z , spin2_z, D_L, inclination, phi_0]
 			D = 14	[m1, m2, spin1 (3,), spin2 (3,), D_L, inclination, phi_0, long_asc_nodes, eccentricity, mean_per_ano]
 
 Method ``__call__`` can only be given the last line.
@@ -65,7 +69,4 @@ This page is intented to present the use of the code for the purpose of generati
    help(mlgw.<module_name>)
 
 For full code source (and much more code) see: <https://github.com/stefanoschmidt1995/MLGW>
-
-.. Text in reStructuredText, suitable for PyPI archive. See: https://docutils.sourceforge.io/rst.html
-
 

@@ -17,6 +17,7 @@ import numpy as np
 import lalsimulation as lalsim
 import lal
 import os.path
+import matplotlib.pyplot as plt #debug
 
 ################# Overlap related stuff
 def get_low_high_freq_index(flow, fhigh, df):
@@ -84,6 +85,7 @@ compute_mismatch
 	Compute mismatch F between the waves given in input. Mismatch is computed with the formula
 		F = 1-<h_1,h_2>/sqrt(<h_1,h_1><h_2,h_2>)
 	with <,> being the Wigner scalar product for GW.
+	Warning: waves must be aligned. Please use compute_optimal_mismatch for unaligned waves.
 	Input:
 		amp_1/ph_1 (N,D)	amplitude/phase vector for wave 1 in Fourier space sampled in D uniform points within the domain
 		amp_2/ph_2 (N,D)	amplitude/phase vector for wave 1 in Fourier space sampled in D uniform points within the domain
@@ -137,12 +139,15 @@ compute_optimal_mismatch
 
 	norm_factor = np.sqrt(np.multiply(scalar(h1,h1).real, scalar(h2,h2).real))
 	overlap = scalar(h1,h2) #(N,)
-	print(overlap, overlap.real, norm_factor, overlap.real/norm_factor)
 	phi_optimal = np.angle(overlap) #(N,)
-	print(phi_optimal, scalar(h1,h2*np.exp(1j*phi_optimal)), scalar(h1,h2)*np.exp(-1j*phi_optimal) )
 	overlap = np.divide(scalar(h1,h2*np.exp(1j*phi_optimal)), norm_factor)
 	overlap = overlap.real
-	print(overlap)
+
+	#plt.plot(np.linspace(0,h1.shape[1],h1.shape[1]),np.squeeze(h1))
+	#plt.plot(np.linspace(0,h1.shape[1],h1.shape[1]),np.squeeze(h2)*np.exp(1j*phi_optimal))
+	#print(1-overlap, overlap)
+	#plt.show()
+
 
 	if return_F:
 		return 1-overlap, phi_optimal

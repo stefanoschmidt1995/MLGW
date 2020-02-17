@@ -3,7 +3,7 @@ from setuptools import setup
 
 setup(
     name='mlgw',
-    version='0.1.dev0',
+    version='0.1.dev1',
     author='S. Schmidt',
     author_email='stefanoschmidt1995@gmail.com',
     packages=['mlgw'],
