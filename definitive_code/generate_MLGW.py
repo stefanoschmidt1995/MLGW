@@ -1,11 +1,5 @@
 ######Wave generator!!!
 
-###Alignment here is the major issue!! Aligning a wave at the beginning of time grid is the thing that seems t work better.
-### However, this is not the cleanest thing one could do: the best would be aligning a wave at merger time...
-### I think the least we fit the better it is!! So... we must use PN expansion up to the maximum we can reach. This is a guarantee that the fit will work at its best
-
-###Of course we could as well try to improve our fitting method... But this is an uncertain path and for sure the previous things to try would help a lot despite the fitting method
-
 import matplotlib.pyplot as plt 
 import numpy as np
 import scipy.stats
@@ -16,60 +10,62 @@ sys.path.insert(1, '../routines') #folder in which every relevant routine is sav
 from GW_generator import *
 from GW_helper import * 	#routines for dealing with datasets
 
-generator = GW_generator("TD", "./TD_model")
+generator = GW_generator("./TD_model")
 
 generator.model_summary()
 
 #testing performances
-N_waves = 10
+N_waves = 16
+plot = False
 
-start_time = time.process_time_ns()/1e6 #ms
+m1_range = (5.,50.)
+m2_range = (5.,50.)
+s1_range = (-0.8,0.8)
+s2_range = (-0.8,0.8)
+d_range = (.5,10.)
+i_range = (0,2*np.pi)
+phi_0_range = (0,np.pi)
 
-#theta_vector_test, amp_dataset_test, ph_dataset_test, frequencies_test = create_dataset_FD(N_waves, N_grid = 2048, filename = None,
-#                q_range = (1.,5.), m2_range = 10, s1_range = (-0.8,0.8), s2_range = (-0.8,0.8),
-#				log_space = True,
-#                f_high = 1000, f_step = 5e-2, f_max = None, f_min =20., lal_approximant = "IMRphenomPv2")
-theta_vector_test, amp_dataset_test, ph_dataset_test, red_test_times = create_dataset_TD(N_waves, N_grid = int(100000), filename = None,
-                t_coal = .4, q_range = (1.2,1.6), m2_range = None, s1_range = (-0.8,0.8), s2_range = (-0.8,0.8),
-#                t_coal = .4, q_range = (1.,10.), m2_range = None, s1_range = (-0.8,0.8), s2_range = (-0.8,0.8),
-				#t_coal = .015, q_range = 1., m2_range = (25.,25.0000001), s1_range = 0.8, s2_range = 0.6,
-                t_step = 1e-5, lal_approximant = "SEOBNRv2_opt", alpha = 1.)
+low_list = [m1_range[0],m2_range[0], s1_range[0], s2_range[0], d_range[0], i_range[0], phi_0_range[0]]
+high_list = [m1_range[1],m2_range[1], s1_range[1], s2_range[1], d_range[1], i_range[1], phi_0_range[1]]
 
-red_test_times = red_test_times +.1
-print(red_test_times)
-#amp_dataset_test, ph_dataset_test = generator.align_wave_TD(amp_dataset_test, ph_dataset_test, red_test_times, al_merger = True)
+theta = np.random.uniform(low = low_list, high = high_list, size = (N_waves, 7))
+F = np.zeros((N_waves,))
+time_lal = np.zeros((N_waves,))
+time_mlgw = np.zeros((N_waves,))
 
-true_h = np.multiply(amp_dataset_test, np.exp(1j*ph_dataset_test))
+for i in range(N_waves):
+	start_time = time.process_time_ns()/1e6 #ms
+	times, amp, ph, h = generate_waveform(*theta[i,:], t_coal = 0.25, t_step = 1e-5)
+	middle_time = time.process_time_ns()/1e6
+	h_p, h_c = generator.get_WF(theta[i,:], plus_cross = True, t_grid = times , red_grid = False)
+	h_rec = (h_p+1j*h_c)[0,:]
+	end_time = time.process_time_ns()/1e6
+	F[i], phi_ref = compute_optimal_mismatch(h, h_rec)
+	time_lal[i] = middle_time-start_time
+	time_mlgw[i] = end_time-middle_time
+	print("F: ",F[i])
+	if plot:
+		plt.figure(0)
+		plt.title("(m1,m2,s1,s2,d, i, phi_0) = "+str(theta[i,:])+"\n F = "+str(F[i]) )
+		plt.plot(times, h.real, '-', label = "true")
+		plt.plot(times, (h_rec*np.exp(1j*phi_ref)).real, '-', label = "rec")
+		plt.legend()
+		plt.show()
 
-middle_time = time.process_time_ns()/1e6
+start_full = time.process_time_ns()/1e6
+generator.get_WF(theta, plus_cross = True, t_grid = times , red_grid = False)
+end_full =  time.process_time_ns()/1e6
 
 #"""
-#theta_vector_test = np.column_stack((theta_vector_test, np.full((N_waves,),1.), np.full((N_waves,),0.*np.pi)))
-rec_amp_dataset, rec_ph_dataset = generator.get_WF(theta_vector_test, plus_cross = False, x_grid = red_test_times*20., red_grid = False)
-
-#rec_amp_dataset, rec_ph_dataset = generator.get_raw_WF(np.column_stack((theta_vector_test[:,0]/theta_vector_test[:,1],theta_vector_test[:,2:4]))) #getting raw waveform 
-rec_h = np.multiply(rec_amp_dataset, np.exp(1j*rec_ph_dataset))#"""
-
-"""
-	#calling with __call__ method
-rec_amp_dataset, rec_ph_dataset = generator(red_test_times*20., theta_vector_test[:,0], theta_vector_test[:,1],
-            np.zeros((N_waves,)),np.zeros((N_waves,)), theta_vector_test[:,2],
-            np.zeros((N_waves,)),np.zeros((N_waves,)), theta_vector_test[:,3],
-            np.ones((N_waves,)), np.zeros((N_waves,)), np.full((N_waves,), 0.),
-            np.zeros((N_waves,)),np.zeros((N_waves,)), np.zeros((N_waves,)), plus_cross = False )
-rec_h = np.multiply(rec_amp_dataset, np.exp(1j*rec_ph_dataset))
-#rec_h = h_plus+1j*h_cross
-rec_amp_dataset = np.abs(rec_h)
-rec_ph_dataset = np.unwrap(np.angle(rec_h))#"""
-
-end_time = time.process_time_ns()/1e6
-
-F = compute_mismatch(amp_dataset_test, ph_dataset_test, rec_amp_dataset, rec_ph_dataset)
 print("Avg fit mismatch (avg,max,min,std): ", np.mean(F), np.max(F), np.min(F), np.std(F))
 
-print("Time for lal (per WF): ", (middle_time-start_time)/float(N_waves), "ms\nTime for MLGW (per WF): ", (end_time-middle_time)/float(N_waves),"ms")
-#print("Time for lal (per WF): ", (middle_time-start_time)/float(1), "ms\nTime for MLGW (per WF): ", (end_time-middle_time)/float(1),"ms")
+print("Time for lal (per WF) (avg,max,min,std): ", np.mean(time_lal), np.max(time_lal), np.min(time_lal), np.std(time_lal),
+"ms\nTime for MLGW (per WF) (avg,max,min,std): ", np.mean(time_mlgw), np.max(time_mlgw), np.min(time_mlgw), np.std(time_mlgw),"ms")
+print("Parallel execution: ", (end_full-start_full)/N_waves)
+quit()
 
+###################################OLD CODE
 #############PLOT TIME
 	#plotting true and reconstructed waves	
 to_plot = "h"

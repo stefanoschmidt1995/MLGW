@@ -206,13 +206,13 @@ GW_generator
 		return self.times
 
 
-	def __call__(self, x_grid, m1, m2, spin1_x, spin1_y, spin1_z, spin2_x, spin2_y, spin2_z, D_L, i, phi_0, long_asc_nodes, eccentricity, mean_per_ano , plus_cross = True):
+	def __call__(self, t_grid, m1, m2, spin1_x, spin1_y, spin1_z, spin2_x, spin2_y, spin2_z, D_L, i, phi_0, long_asc_nodes, eccentricity, mean_per_ano , plus_cross = True):
 		"""
 	__call__
 	========
 		Generates a WF according to the MLGW model. It makes all the required preprocessing to include wave dependance on the full 14 parameters space of the GW forms.
 		Input:
-			x_grid	(N_grid,)		Grid of (physical) time/frequency points to evaluate the wave at
+			t_grid	(N_grid,)		Grid of (physical) time/frequency points to evaluate the wave at
 			m1	()/(N,)				Mass of BH 1
 			m2	()/(N,)				Mass of BH 1
 			spin1_x/y/z	()/(N,)		Each variable represents a spin component of BH 1
@@ -229,10 +229,10 @@ GW_generator
 			amp, phase (1,D)/(N,D)		desidered amplitude and phase (if it applies)
 		"""
 		theta = np.column_stack((m1, m2, spin1_x, spin1_y, spin1_z, spin2_x, spin2_y, spin2_z, D_L, i, phi_0, long_asc_nodes, eccentricity, mean_per_ano)) #(N,D)
-		return self.get_WF(theta, plus_cross = plus_cross, x_grid= x_grid, red_grid = False)
+		return self.get_WF(theta, plus_cross = plus_cross, t_grid= t_grid, red_grid = False)
 
 
-	def get_WF(self, theta, plus_cross = True, x_grid = None, red_grid = False):
+	def get_WF(self, theta, t_grid = None, plus_cross = True, red_grid = False):
 		"""
 	get_WF
 	======
@@ -252,15 +252,15 @@ GW_generator
 			[spin] = adimensional
 		Input:
 			theta (N,D)		source parameters to make prediction at
+			t_grid (D',)	a grid in (physical or reduced) time/frequency to evaluate the wave at (uses np.inter)
 			plus_cross		whether to return h_+ and h_x components (if false amp and phase are returned)
-			x_grid (D',)	a grid in (physical or reduced) time/frequency to evaluate the wave at (uses np.inter)
-			red_grid		whether given x_grid is in reduced space (True) or physical space (False)
+			red_grid		whether given t_grid is in reduced space (True) or physical space (False)
 		Ouput:
 			h_plus, h_cross (N,D)	desidered polarizations (if it applies)
 			amp,ph (N,D)			desidered amplitude and phase (if it applies)
 		"""
-		if x_grid is None:
-			x_grid = self.times
+		if t_grid is None:
+			t_grid = self.times
 			if red_grid == False:
 				red_grid = True
 				warnings.warn("As no grid is given, the default reduced grid is used to evaluate the output. red_grid option is set to True.")
@@ -293,7 +293,7 @@ GW_generator
 
 
 			#generating waves and returning to user
-		res1, res2 = self.__get_WF__(theta, x_grid, red_grid, plus_cross)
+		res1, res2 = self.__get_WF__(theta, t_grid, red_grid, plus_cross)
 			#res1,res2 = h_plus, h_cross if plus_cross = True
 			#res1,res2 = amp, ph if plus_cross = False
 		return res1, res2
@@ -308,7 +308,7 @@ GW_generator
 		Input:
 			theta (N,D)		source parameters to make prediction at (D=3 or D=7)
 			time_grid (D',)	a grid in (physical or reduced) time to evaluate the wave at (uses np.inter)
-			red_grid		whether given x_grid is in reduced space (True) or physical space (False)
+			red_grid		whether given t_grid is in reduced space (True) or physical space (False)
 		Output:
 			amp,ph (N,D)	desidered amplitude and phase
 		"""
@@ -369,7 +369,8 @@ GW_generator
 				#h = h_p +i h_c = Y_22 * h_22 + Y_2-2 * h_2-2
 				#h_22 = h*_2-2
 				#Y_2+-2 = sqrt(5/(64pi))*(1+-cos(inclination))**2 exp(+-2i phi)
-			h = np.multiply(h_22, self.__Y_2m__(2,iota, phi_0)) + np.multiply(np.conj(h_22), self.__Y_2m__(-2,iota, phi_0))
+			print(h_22.shape, iota.shape)
+			h = np.multiply(h_22.T, self.__Y_2m__(2,iota, phi_0)).T + np.multiply(np.conj(h_22).T, self.__Y_2m__(-2,iota, phi_0)).T
 			h = 1e-21*h
 
 			if plus_cross:
@@ -444,7 +445,7 @@ GW_generator
 		return rec_PCA_dataset_amp, rec_PCA_dataset_ph
 
 
-	def align_wave(self, amp, ph, x_grid = None, al_merger = True, phi_0=0):
+	def align_wave(self, amp, ph, t_grid = None, al_merger = True, phi_0=0):
 		"""
 	align_wave
 	==========
@@ -453,7 +454,7 @@ GW_generator
 		Input:
 			amp	(N, N_grid)	amplitude of waves
 			ph (N,N_grid)	phases of waves
-			x_grid (N_grid)	grid at which wave is evaluated	
+			t_grid (N_grid)	grid at which wave is evaluated	
 			phi_0 ()/(N,)	value of phase at the point at which is aligned (default =0)
 		Output:
 			amp, ph (N,N_grid)	amplitude and phases rescaled appropriately
@@ -463,12 +464,12 @@ GW_generator
 			amp = amp[None,:]
 			ph = ph[None,:]
 
-		if x_grid is not None: #adjusting amplitude
+		if t_grid is not None: #adjusting amplitude
 			argmax_amp = np.argmax(amp, axis = 1) #(N,)
-			#huge_grid = np.linspace(x_grid[0], x_grid[-1], int(1e5))
+			#huge_grid = np.linspace(t_grid[0], t_grid[-1], int(1e5))
 			for i in range(amp.shape[0]):
-				amp[i,:] = np.interp( x_grid, x_grid- x_grid[argmax_amp[i]], amp[i,:])
-				ph[i,:]  = np.interp( x_grid, x_grid- x_grid[argmax_amp[i]], ph[i,:])
+				amp[i,:] = np.interp( t_grid, t_grid- t_grid[argmax_amp[i]], amp[i,:])
+				ph[i,:]  = np.interp( t_grid, t_grid- t_grid[argmax_amp[i]], ph[i,:])
 		
 			#aligning phase
 		if not al_merger:

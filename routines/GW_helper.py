@@ -339,6 +339,59 @@ create_dataset_TD
 		filebuff.close()
 		return None
 
+def generate_waveform(m1,m2, s1=0.,s2 = 0.,d=1., iota = 0.,phi_0=0., t_coal = 0.25, t_step = 5e-5):
+	"""
+generate_waveform
+=================
+	Wrapper to lalsimulation.SimInspiralChooseTDWaveform() to generate a single waveform. Wave is not preprocessed.
+	Input:
+		m1,m2,s1,s2,d,iota,phi_0	orbital parameters
+		t_coal						approximate time to coalescence in reduced grid
+		t_step						EOB integration time to be given to lal
+	Output:
+		times (D,)	times at which wave is evaluated
+		amp (N,D)	amplitude of the wave
+		ph (N,D)	phase of the wave
+		h (N,D)		complex strain of the wave
+	"""
+	q = m1/m2
+	mtot = (m1+m2)#*lal.MTSUN_SI
+	mc = (m1*m2)**(3./5.)/(m1+m2)**(1./5.)
+	mc /= 1.21 #M_c / 1.21 M_sun
+
+	f_min = .9* ((151*(t_coal)**(-3./8.) * (((1+q)**2)/q)**(3./8.))/mtot)
+	print("Generating wave @: ",m1,m2,s1,s2,d, iota, phi_0)
+
+	hptilde, hctilde = lalsim.SimInspiralChooseTDWaveform( #where is its definition and documentation????
+		m1*lalsim.lal.MSUN_SI, #m1
+		m2*lalsim.lal.MSUN_SI, #m2
+		0., 0., s1, #spin vector 1
+		0., 0., s2, #spin vector 2
+		d*1e6*lalsim.lal.PC_SI, #distance to source
+		iota, #inclination
+		phi_0, #phi ref
+		0., #longAscNodes
+		0., #eccentricity
+		0., #meanPerAno
+		t_step, # time incremental step
+		f_min, # lowest value of freq
+		f_min, #some reference value of freq (??)
+		lal.CreateDict(), #some lal dictionary
+		lalsim.GetApproximantFromString('SEOBNRv2_opt') #approx method for the model
+		)
+	h =  (hptilde.data.data+1j*hctilde.data.data)
+	(indices, ) = np.where(np.abs(h)!=0) #trimming zeros of amplitude
+	h = h[indices]
+
+	times = np.linspace(0.0, h.shape[0]*t_step, h.shape[0])  #time actually
+	t_m =  times[np.argmax(np.abs(h))]
+	times = times - t_m
+
+	amp = np.abs(h)
+	ph = np.unwrap(np.angle(h))
+	return times, amp, ph, h
+
+
 def create_dataset_FD(N_data, N_grid = None, filename = None, q_range = (1.,5.), m2_range = 20., s1_range = (-0.8,0.8), s2_range = (-0.8,0.8), log_space = True, f_high = 2000, f_step = 1e-2, f_max = None, f_min =None, lal_approximant = "IMRPhenomPv2"):
 	"""
 	Create a dataset for training a ML model to fit GW waveforms in frequency domain.
