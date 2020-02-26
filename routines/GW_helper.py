@@ -369,7 +369,7 @@ generate_waveform
 		0., 0., s2, #spin vector 2
 		d*1e6*lalsim.lal.PC_SI, #distance to source
 		iota, #inclination
-		phi_0, #phi ref
+		phi_0, #phi
 		0., #longAscNodes
 		0., #eccentricity
 		0., #meanPerAno

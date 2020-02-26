@@ -318,9 +318,9 @@ GW_generator
 			#setting theta_std & m_tot_us
 		if D == 3:
 			theta_std = theta
-			m_tot_us = 20. * np.ones((theta.shape[0],)) #depending on the convention (ATTENTIOOOOON!!!!!)
+			m_tot_us = 20. * np.ones((theta.shape[0],)) 
 		else:
-			q = np.divide(theta[:,0],theta[:,1]) #mass ratio (general) (N,)
+			q = np.divide(theta[:,0],theta[:,1]) #theta[:,0]/theta[:,1] #mass ratio (general) (N,)
 			m_tot_us = theta[:,0] + theta[:,1]	#total mass in solar masses for the user
 			theta_std = np.column_stack((q,theta[:,2],theta[:,3])) #(N,3)
 
@@ -333,7 +333,7 @@ GW_generator
 		amp, ph =  self.get_raw_WF(theta_std) #raw WF (N, N_grid)
 
 			#doing interpolations
-		m_tot_std = 20. * np.ones((theta.shape[0],))
+		m_tot_std = 20.
 			############
 		new_amp = np.zeros((amp.shape[0], time_grid.shape[0]))
 		new_ph = np.zeros((amp.shape[0], time_grid.shape[0]))
@@ -342,7 +342,7 @@ GW_generator
 				interp_grid = time_grid/m_tot_us[i]
 			else:
 				interp_grid = time_grid
-			new_amp[i,:] = np.interp(interp_grid, self.times, amp[i,:]) * m_tot_us[i]/m_tot_std[i]
+			new_amp[i,:] = np.interp(interp_grid, self.times, amp[i,:]) * m_tot_us[i]/m_tot_std
 			new_ph[i,:]  = np.interp(interp_grid, self.times, ph[i,:])
 
 				#setting amplitude to zero if the model extrapolates outiside the grid
@@ -353,23 +353,24 @@ GW_generator
 				new_amp[i,indices] = 0
 
 		amp = new_amp #amplitude is scaled. to get its original values should be multiplied by 1e-21
-		ph = np.subtract(new_ph.T,new_ph[:,0]).T #phase are zero at t = 0
+		ph = np.subtract(new_ph.T,new_ph[:,0]).T #phase are zero at t = 0 #Do you need it?? Probably yes... :(
 
 			#### Dealing with distance, inclination and phi_0
 		if D==7: #distance corrections are done
 			dist_pref = theta[:,4] #std_dist = 1 Mpc
 			iota = theta[:,5] #std_inclination = 0.
-			phi_0 = theta[:,6] #
+			phi_0 = theta[:,6] #reference phase
 
 				#scaling to required distance
 			amp = np.divide(amp.T, dist_pref).T
 
 			#scaling for setting inclination (it is done only if required)
-			h_22 = amp*np.exp(1j*(ph)) #choose here a convention... (lal is +)
+			h_22 = np.multiply(amp, np.exp(1j*(ph)) ) #choose here a convention... (lal is +)
+					#parametrization for the wave
 				#h = h_p +i h_c = Y_22 * h_22 + Y_2-2 * h_2-2
 				#h_22 = h*_2-2
 				#Y_2+-2 = sqrt(5/(64pi))*(1+-cos(inclination))**2 exp(+-2i phi)
-			print(h_22.shape, iota.shape)
+			#print(h_22.shape, iota.shape) #DEBUG
 			h = np.multiply(h_22.T, self.__Y_2m__(2,iota, phi_0)).T + np.multiply(np.conj(h_22).T, self.__Y_2m__(-2,iota, phi_0)).T
 			h = 1e-21*h
 
