@@ -10,7 +10,25 @@ from GW_helper import * 	#routines for dealing with datasets
 
 import cProfile
 import pstats
+try:
+	from line_profiler import LineProfiler
 
+	def do_profile(follow=[]):
+		def inner(func):
+			def profiled_func(*args, **kwargs):
+				try:
+					profiler = LineProfiler()
+					profiler.add_function(func)
+					for f in follow:
+						profiler.add_function(f)
+					profiler.enable_by_count()
+					return func(*args, **kwargs)
+				finally:
+					profiler.print_stats()
+			return profiled_func
+		return inner
+except:
+	quit()
 generate_stats = True
 
 	#defining generator and theta
@@ -28,7 +46,6 @@ low_list = [m1_range[0],m2_range[0], s1_range[0], s2_range[0], d_range[0], i_ran
 high_list = [m1_range[1],m2_range[1], s1_range[1], s2_range[1], d_range[1], i_range[1], phi_0_range[1]]
 times = np.linspace(-6.,0.05,500000)
 
-
 def generate_waves(N_waves = 16):
 	theta = np.random.uniform(low = low_list, high = high_list, size = (N_waves, 7))
 		#creating theta_std
@@ -37,9 +54,12 @@ def generate_waves(N_waves = 16):
 	#theta_std[to_switch,0] = np.power(theta_std[to_switch,0], -1)
 	#theta_std[to_switch,1], theta_std[to_switch,2] = theta_std[to_switch,2], theta_std[to_switch,1]
 
-	for i in range(N_waves):
-		h_p, h_c = generator.get_WF(theta[i,:], plus_cross = True, t_grid = times , red_grid = False)
-	#h_p, h_c = generator.get_WF(theta, plus_cross = True, t_grid = times , red_grid = False)
+	#for i in range(N_waves):
+	#	h_p, h_c = generator.get_WF(theta[i,:], plus_cross = True, t_grid = times , red_grid = False)
+	h_p, h_c = generator.get_WF(theta, plus_cross = True, t_grid = times , red_grid = False)
+
+	#plt.plot(times,h_p[0,:])
+	#plt.show()
 
 	return h_p,h_c
 
@@ -51,7 +71,9 @@ N_waves = 16
 #plt.show()
 
 if generate_stats:
-	cProfile.run('generate_waves(1000)', 'wave_stats')
+	cProfile.run('generate_waves(100)', 'wave_stats')
+	#generate_waves(50)
+	#quit()
 
 p = pstats.Stats('wave_stats')
 p.strip_dirs()

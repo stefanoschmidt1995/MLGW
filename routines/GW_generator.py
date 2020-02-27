@@ -17,6 +17,27 @@ sys.path.insert(1, os.path.dirname(__file__)) 	#adding to path folder where mlgw
 from EM_MoE import *			#MoE model
 from ML_routines import *		#PCA model
 
+#############DEBUG PROFILING
+try:
+	from line_profiler import LineProfiler
+
+	def do_profile(follow=[]):
+		def inner(func):
+			def profiled_func(*args, **kwargs):
+				try:
+					profiler = LineProfiler()
+					profiler.add_function(func)
+					for f in follow:
+						profiler.add_function(f)
+					profiler.enable_by_count()
+					return func(*args, **kwargs)
+				finally:
+					profiler.print_stats()
+			return profiled_func
+		return inner
+except:
+	quit()
+
 ################# GW_generator class
 class GW_generator(object):
 	"""
@@ -298,7 +319,7 @@ GW_generator
 			#res1,res2 = amp, ph if plus_cross = False
 		return res1, res2
 
-
+	@do_profile(follow=[])
 	def __get_WF__(self, theta, time_grid, red_grid, plus_cross = False):
 		"""
 	__get_WF__
@@ -314,7 +335,7 @@ GW_generator
 		"""
 		D= theta.shape[1] #number of features given
 		assert D in [3,7] #check that the number of dimension is fine
-	
+
 			#setting theta_std & m_tot_us
 		if D == 3:
 			theta_std = theta
@@ -331,29 +352,29 @@ GW_generator
 			theta_std[to_switch,1], theta_std[to_switch,2] = theta_std[to_switch,2], theta_std[to_switch,1]
 
 		amp, ph =  self.get_raw_WF(theta_std) #raw WF (N, N_grid)
+		amp = 1e-21*amp #scaling back amplitude: less numerically efficient but quicker than doing it at the end
 
 			#doing interpolations
 		m_tot_std = 20.
 			############
 		new_amp = np.zeros((amp.shape[0], time_grid.shape[0]))
 		new_ph = np.zeros((amp.shape[0], time_grid.shape[0]))
+
 		for i in range(amp.shape[0]):
 			if not red_grid:
-				interp_grid = time_grid/m_tot_us[i]
+				interp_grid = np.divide(time_grid,m_tot_us[i])
 			else:
 				interp_grid = time_grid
-			new_amp[i,:] = np.interp(interp_grid, self.times, amp[i,:]) * m_tot_us[i]/m_tot_std
+				#putting the wave on the user grid
+			new_amp[i,:] = np.interp(interp_grid, self.times, amp[i,:]* m_tot_us[i]/m_tot_std ,left = 0, right = 0) #set to zero outside the domain
 			new_ph[i,:]  = np.interp(interp_grid, self.times, ph[i,:])
 
-				#setting amplitude to zero if the model extrapolates outiside the grid
-			if (interp_grid[0] < self.times[0]) or (interp_grid[-1] > self.times[-1]):
-				if (interp_grid[0] < self.times[0]):
-					warnings.warn("Warning: time grid given is too long for the fitted model. Set 0 amplitude outside the fitting domain.")
-				indices = np.where(np.logical_or(interp_grid > self.times[-1], interp_grid < self.times[0]) )[0]
-				new_amp[i,indices] = 0
+				#warning if the model extrapolates outiside the grid
+			if (interp_grid[0] < self.times[0]):
+				warnings.warn("Warning: time grid given is too long for the fitted model. Set 0 amplitude outside the fitting domain.")
 
-		amp = new_amp #amplitude is scaled. to get its original values should be multiplied by 1e-21
-		ph = np.subtract(new_ph.T,new_ph[:,0]).T #phase are zero at t = 0 #Do you need it?? Probably yes... :(
+		amp = new_amp 
+		ph = np.subtract(new_ph.T,new_ph[:,0]).T #phase are zero at t = 0 #SLOOOW: do you need it??
 
 			#### Dealing with distance, inclination and phi_0
 		if D==7: #distance corrections are done
@@ -362,34 +383,71 @@ GW_generator
 			phi_0 = theta[:,6] #reference phase
 
 				#scaling to required distance
-			amp = np.divide(amp.T, dist_pref).T
+			#amp = np.divide(amp.T, dist_pref).T #slow... check better if it works...
 
 			#scaling for setting inclination (it is done only if required)
-			h_22 = np.multiply(amp, np.exp(1j*(ph)) ) #choose here a convention... (lal is +)
-					#parametrization for the wave
+				#checking whether workin with real things is better
+			h_22_real = np.multiply(amp, np.cos(ph) )
+			h_22_imag = np.multiply(amp, np.sin(ph) )
+			#h_22 = h_22_real + 1j*h_22_imag 
+			#h_22 = np.multiply(amp, np.exp(1j*(ph)) ) #choose here a convention... (lal is +) #very slow!!!!
+
+					#parametrization of the wave
 				#h = h_p +i h_c = Y_22 * h_22 + Y_2-2 * h_2-2
 				#h_22 = h*_2-2
 				#Y_2+-2 = sqrt(5/(64pi))*(1+-cos(inclination))**2 exp(+-2i phi)
-			#print(h_22.shape, iota.shape) #DEBUG
-			h = np.multiply(h_22.T, self.__Y_2m__(2,iota, phi_0)).T + np.multiply(np.conj(h_22).T, self.__Y_2m__(-2,iota, phi_0)).T
-			h = 1e-21*h
+
+			#h = np.multiply(h_22.T, self.__Y_2m__(2,iota, phi_0)).T + np.multiply(np.conj(h_22).T, self.__Y_2m__(-2,iota, phi_0)).T #very slow to work with complex numbers 
+			h_p, h_c = self.__set_d_iota_phi_dependence__(h_22_real,h_22_imag, dist_pref, iota, phi_0)
 
 			if plus_cross:
-				return h.real, h.imag
+				return h_p, h_c
 			else: 
-				amp =  np.abs(h) 
-				ph = np.unwrap(np.angle(h))
+				amp =  np.sqrt(np.square(h_p)+np.square(h_c)) 
+				ph = np.unwrap(np.arctan2(h_c,h_c))
 				return amp, ph
 
 		if plus_cross:
-			h = 1e-21*amp*np.exp(1j*(ph))
-			return h.real, h.imag
+			h_p = np.multiply(amp, np.cos(ph))
+			h_c = np.multiply(amp, np.sin(ph))
+			return h_p, h_c
 		else:
-			return 1e-21*amp, ph				
+			return amp, ph				
+
+	def __set_d_iota_phi_dependence__(self, h_p, h_c, dist, iota, phi_0):
+		"""
+	__set_d_iota_phi_dependence__
+	=============================
+		Input:
+			h_p, h_c (N,D)
+			iota (N,)
+			phi_0 (N,)
+		"""
+		const = 1./4.
+		c_i = np.cos(iota) #(N,)
+			#dealing with h_p
+		new_h_p = np.multiply(h_p.T, np.cos(2*phi_0)) - np.multiply(h_c.T, np.sin(2*phi_0)) #(D,N) #included phi dependence
+		new_h_p = np.multiply(new_h_p, 2*const*(1+np.square(c_i))/dist ).T #(N,D) #included iota dependence
+
+			#dealing with h_p
+		new_h_c = np.multiply(h_p.T, np.sin(2*phi_0)) + np.multiply(h_c.T, np.cos(2*phi_0)) #(D,N) #included phi dependence
+		new_h_c = np.multiply(new_h_c, 4*const*c_i/dist ).T #(N,D) #included iota dependence
+
+		return new_h_p, new_h_c
 
 	def __Y_2m__(self,m, iota, phi):
 		"""
-
+	__Y_2m__
+	========
+		Spin 2 spherical harmonics with l = 2. Only m = +2,-2 is implemented.
+		It has the following expression:
+			Y_l+-2 = (1+-cos(iota))**2 e**(2i*m*phi_0)
+		Input:
+			m			index m (only +/-2 is implemented)
+			iota (N,)	inclination angle
+			phi_0 (N,)	reference phase
+		Output:
+			Y_2m (N,)	value of the function
 		"""
 		const = 1./4.#np.sqrt(5./(64*np.pi)) #the constant was already fitted in the wave
 		c_i = np.cos(iota) #(N,)
@@ -445,7 +503,7 @@ GW_generator
 
 		return rec_PCA_dataset_amp, rec_PCA_dataset_ph
 
-
+########THIS IS SHIIIIT!!########
 	def align_wave(self, amp, ph, t_grid = None, al_merger = True, phi_0=0):
 		"""
 	align_wave
