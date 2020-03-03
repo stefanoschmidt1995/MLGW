@@ -339,9 +339,71 @@ create_dataset_TD
 		filebuff.close()
 		return None
 
+def generate_waveform(m1,m2, s1=0.,s2 = 0.,d=1., iota = 0.,phi_0=0., t_coal = 0.4, t_step = 5e-5, f_min = None, t_min = None, verbose = False):
+	"""
+generate_waveform
+=================
+	Wrapper to lalsimulation.SimInspiralChooseTDWaveform() to generate a single waveform. Wave is not preprocessed.
+	Input:
+		m1,m2,s1,s2,d,iota,phi_0	orbital parameters
+		t_coal						approximate time to coalescence in reduced grid (ignored if f_min or t_min is set)
+		t_step						EOB integration time to be given to lal
+		f_min						starting frequency in Hz (if None, it will be determined by t_coal; ignored if t_min is set)
+		t_min						starting time in s (if None, t_coal will be returned)
+		verbose						whether to print messages for each wave...
+	Output:
+		times (D,)	times at which wave is evaluated
+		h_p (N,D)	plus polarization of the wave
+		h_c (N,D)	cross polarization of the wave
+	"""
+	q = m1/m2
+	mtot = (m1+m2)#*lal.MTSUN_SI
+	mc = (m1*m2)**(3./5.)/(m1+m2)**(1./5.)
+	mc /= 1.21 #M_c / 1.21 M_sun
 
+	if t_min is not None:
+		f_min = .8* ((151*(t_min/mtot)**(-3./8.) * (((1+q)**2)/q)**(3./8.))/mtot)
 
+	if f_min is None:
+		f_min = .9* ((151*(t_coal)**(-3./8.) * (((1+q)**2)/q)**(3./8.))/mtot)
 
+	if verbose:
+		print("Generating wave @: ",m1,m2,s1,s2,d, iota, phi_0)
+
+	hp, hc = lalsim.SimInspiralChooseTDWaveform( #where is its definition and documentation????
+		m1*lalsim.lal.MSUN_SI, #m1
+		m2*lalsim.lal.MSUN_SI, #m2
+		0., 0., s1, #spin vector 1
+		0., 0., s2, #spin vector 2
+		d*1e6*lalsim.lal.PC_SI, #distance to source
+		iota, #inclination
+		phi_0, #phi
+		0., #longAscNodes
+		0., #eccentricity
+		0., #meanPerAno
+		t_step, # time incremental step
+		f_min, # lowest value of freq
+		f_min, #some reference value of freq (??)
+		lal.CreateDict(), #some lal dictionary
+		lalsim.GetApproximantFromString('SEOBNRv2_opt') #approx method for the model
+		)
+	h_p, h_c =  hp.data.data, hc.data.data
+	amp = np.sqrt(h_p**2+h_c**2)
+	#(indices, ) = np.where(amp!=0) #trimming zeros of amplitude
+	#h_p = h_p[indices]
+	#h_c = h_c[indices]
+
+	times = np.linspace(0.0, h_p.shape[0]*t_step, h_p.shape[0])  #time actually
+	t_m =  times[np.argmax(amp)]
+	times = times - t_m
+
+	if t_min is not None:
+		arg = np.argmin(np.abs(times+t_min))
+	else:
+		arg=0
+
+	return times[arg:], h_p[arg:], h_c[arg:]
+	
 
 def create_dataset_FD(N_data, N_grid = None, filename = None, q_range = (1.,5.), m2_range = 20., s1_range = (-0.8,0.8), s2_range = (-0.8,0.8), log_space = True, f_high = 2000, f_step = 1e-2, f_max = None, f_min =None, lal_approximant = "IMRPhenomPv2"):
 	"""

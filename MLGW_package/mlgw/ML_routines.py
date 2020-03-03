@@ -363,7 +363,7 @@ add_extra_features
 ==================
 	Given a dataset, it enlarge its feature number to make a basis function regression.
 	Features to add must be specified with feature list. Each element in the list is a string in form "ijk" where ijk are feature indices as in numpy array data (repetitions allowed); this represents the new feauture x_new = x_i*x_j*x_k
-	Features can be scaled by an arbitrary value.
+	Features can be scaled by an arbitrary constant value.
 	Input:
 		data (N,D)/(N,)			data to augment
 		feature_list (len L)	list of features to add
@@ -378,10 +378,8 @@ add_extra_features
 
 	data[:,0] = np.log(data[:,0]) #probably a good idea...
 
-	if scaling is not None:
-		scaling = np.ones(data.shape[1])
-		#scaling = [10., 0.8, 0.8] #bad idea!!!!!
-		data = np.divide(data,scaling)
+	#if scaling is not None:
+	#	data = np.divide(data,scaling)
 
 	new_features = np.zeros((data.shape[0],len(feature_list)))
 	for i in range(len(feature_list)):

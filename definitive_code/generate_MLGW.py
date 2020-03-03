@@ -36,7 +36,8 @@ time_mlgw = np.zeros((N_waves,))
 
 for i in range(N_waves):
 	start_time = time.process_time_ns()/1e6 #ms
-	times, amp, ph, h = generate_waveform(*theta[i,:], t_coal = 0.25, t_step = 1e-5)
+	times, h_p_true, h_c_true = generate_waveform(*theta[i,:], t_coal = 0.25, t_step = 1e-5)
+	h = (h_p_true+1j*h_c_true)
 	middle_time = time.process_time_ns()/1e6
 	h_p, h_c = generator.get_WF(theta[i,:], plus_cross = True, t_grid = times , red_grid = False)
 	h_rec = (h_p+1j*h_c)[0,:]

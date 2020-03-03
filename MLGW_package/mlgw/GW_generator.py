@@ -17,6 +17,27 @@ sys.path.insert(1, os.path.dirname(__file__)) 	#adding to path folder where mlgw
 from EM_MoE import *			#MoE model
 from ML_routines import *		#PCA model
 
+#############DEBUG PROFILING
+try:
+	from line_profiler import LineProfiler
+
+	def do_profile(follow=[]):
+		def inner(func):
+			def profiled_func(*args, **kwargs):
+				try:
+					profiler = LineProfiler()
+					profiler.add_function(func)
+					for f in follow:
+						profiler.add_function(f)
+					profiler.enable_by_count()
+					return func(*args, **kwargs)
+				finally:
+					profiler.print_stats()
+			return profiled_func
+		return inner
+except:
+	pass
+
 ################# GW_generator class
 class GW_generator(object):
 	"""
@@ -116,8 +137,9 @@ GW_generator
 			print("  Loaded time vector")
 			self.times = np.loadtxt(folder+"times")
 		else:
-			raise RuntimeError("Unable to load model: no times/frequency vector given!")
+			raise RuntimeError("Unable to load model: no time vector given!")
 
+		np.matmul(np.zeros((2,2)),np.ones((2,2))) #this has something to do with a speed up of matmul. Once it is called once, matmul gets much faster!
 		return
 
 	def MoE_models(self, model_type, k_list=None):
@@ -206,13 +228,13 @@ GW_generator
 		return self.times
 
 
-	def __call__(self, x_grid, m1, m2, spin1_x, spin1_y, spin1_z, spin2_x, spin2_y, spin2_z, D_L, i, phi_0, long_asc_nodes, eccentricity, mean_per_ano , plus_cross = True):
+	def __call__(self, t_grid, m1, m2, spin1_x, spin1_y, spin1_z, spin2_x, spin2_y, spin2_z, D_L, i, phi_0, long_asc_nodes, eccentricity, mean_per_ano , plus_cross = True):
 		"""
 	__call__
 	========
 		Generates a WF according to the MLGW model. It makes all the required preprocessing to include wave dependance on the full 14 parameters space of the GW forms.
 		Input:
-			x_grid	(N_grid,)		Grid of (physical) time/frequency points to evaluate the wave at
+			t_grid	(N_grid,)		Grid of (physical) time/frequency points to evaluate the wave at
 			m1	()/(N,)				Mass of BH 1
 			m2	()/(N,)				Mass of BH 1
 			spin1_x/y/z	()/(N,)		Each variable represents a spin component of BH 1
@@ -229,10 +251,10 @@ GW_generator
 			amp, phase (1,D)/(N,D)		desidered amplitude and phase (if it applies)
 		"""
 		theta = np.column_stack((m1, m2, spin1_x, spin1_y, spin1_z, spin2_x, spin2_y, spin2_z, D_L, i, phi_0, long_asc_nodes, eccentricity, mean_per_ano)) #(N,D)
-		return self.get_WF(theta, plus_cross = plus_cross, x_grid= x_grid, red_grid = False)
+		return self.get_WF(theta, plus_cross = plus_cross, t_grid= t_grid, red_grid = False)
 
 
-	def get_WF(self, theta, plus_cross = True, x_grid = None, red_grid = False):
+	def get_WF(self, theta, t_grid = None, plus_cross = True, red_grid = False):
 		"""
 	get_WF
 	======
@@ -252,15 +274,15 @@ GW_generator
 			[spin] = adimensional
 		Input:
 			theta (N,D)		source parameters to make prediction at
+			t_grid (D',)	a grid in (physical or reduced) time/frequency to evaluate the wave at (uses np.inter)
 			plus_cross		whether to return h_+ and h_x components (if false amp and phase are returned)
-			x_grid (D',)	a grid in (physical or reduced) time/frequency to evaluate the wave at (uses np.inter)
-			red_grid		whether given x_grid is in reduced space (True) or physical space (False)
+			red_grid		whether given t_grid is in reduced space (True) or physical space (False)
 		Ouput:
 			h_plus, h_cross (N,D)	desidered polarizations (if it applies)
 			amp,ph (N,D)			desidered amplitude and phase (if it applies)
 		"""
-		if x_grid is None:
-			x_grid = self.times
+		if t_grid is None:
+			t_grid = self.times
 			if red_grid == False:
 				red_grid = True
 				warnings.warn("As no grid is given, the default reduced grid is used to evaluate the output. red_grid option is set to True.")
@@ -293,12 +315,12 @@ GW_generator
 
 
 			#generating waves and returning to user
-		res1, res2 = self.__get_WF__(theta, x_grid, red_grid, plus_cross)
+		res1, res2 = self.__get_WF__(theta, t_grid, red_grid, plus_cross)
 			#res1,res2 = h_plus, h_cross if plus_cross = True
 			#res1,res2 = amp, ph if plus_cross = False
 		return res1, res2
 
-
+	#@do_profile(follow=[])
 	def __get_WF__(self, theta, time_grid, red_grid, plus_cross = False):
 		"""
 	__get_WF__
@@ -308,19 +330,19 @@ GW_generator
 		Input:
 			theta (N,D)		source parameters to make prediction at (D=3 or D=7)
 			time_grid (D',)	a grid in (physical or reduced) time to evaluate the wave at (uses np.inter)
-			red_grid		whether given x_grid is in reduced space (True) or physical space (False)
+			red_grid		whether given t_grid is in reduced space (True) or physical space (False)
 		Output:
 			amp,ph (N,D)	desidered amplitude and phase
 		"""
 		D= theta.shape[1] #number of features given
 		assert D in [3,7] #check that the number of dimension is fine
-	
+
 			#setting theta_std & m_tot_us
 		if D == 3:
 			theta_std = theta
-			m_tot_us = 20. * np.ones((theta.shape[0],)) #depending on the convention (ATTENTIOOOOON!!!!!)
+			m_tot_us = 20. * np.ones((theta.shape[0],)) 
 		else:
-			q = np.divide(theta[:,0],theta[:,1]) #mass ratio (general) (N,)
+			q = np.divide(theta[:,0],theta[:,1]) #theta[:,0]/theta[:,1] #mass ratio (general) (N,)
 			m_tot_us = theta[:,0] + theta[:,1]	#total mass in solar masses for the user
 			theta_std = np.column_stack((q,theta[:,2],theta[:,3])) #(N,3)
 
@@ -331,70 +353,109 @@ GW_generator
 			theta_std[to_switch,1], theta_std[to_switch,2] = theta_std[to_switch,2], theta_std[to_switch,1]
 
 		amp, ph =  self.get_raw_WF(theta_std) #raw WF (N, N_grid)
+		amp = 1e-21*amp #scaling back amplitude: less numerically efficient but quicker than doing it at the end
 
 			#doing interpolations
-		m_tot_std = 20. * np.ones((theta.shape[0],))
+		m_tot_std = 20.
 			############
 		new_amp = np.zeros((amp.shape[0], time_grid.shape[0]))
 		new_ph = np.zeros((amp.shape[0], time_grid.shape[0]))
+
 		for i in range(amp.shape[0]):
 			if not red_grid:
-				interp_grid = time_grid/m_tot_us[i]
+				interp_grid = np.divide(time_grid,m_tot_us[i])
 			else:
 				interp_grid = time_grid
-			new_amp[i,:] = np.interp(interp_grid, self.times, amp[i,:]) * m_tot_us[i]/m_tot_std[i]
+				#putting the wave on the user grid
+			new_amp[i,:] = np.interp(interp_grid, self.times, amp[i,:]* m_tot_us[i]/m_tot_std ,left = 0, right = 0) #set to zero outside the domain
 			new_ph[i,:]  = np.interp(interp_grid, self.times, ph[i,:])
 
-				#setting amplitude to zero if the model extrapolates outiside the grid
-			if (interp_grid[0] < self.times[0]) or (interp_grid[-1] > self.times[-1]):
-				if (interp_grid[0] < self.times[0]):
-					warnings.warn("Warning: time grid given is too long for the fitted model. Set 0 amplitude outside the fitting domain.")
-				indices = np.where(np.logical_or(interp_grid > self.times[-1], interp_grid < self.times[0]) )[0]
-				new_amp[i,indices] = 0
+				#warning if the model extrapolates outiside the grid
+			if (interp_grid[0] < self.times[0]):
+				warnings.warn("Warning: time grid given is too long for the fitted model. Set 0 amplitude outside the fitting domain.")
 
-		amp = new_amp #amplitude is scaled. to get its original values should be multiplied by 1e-21
-		ph = np.subtract(new_ph.T,new_ph[:,0]).T #phase are zero at t = 0
+		amp = new_amp 
+		ph = np.subtract(new_ph.T,new_ph[:,0]).T #phase are zero at t = 0 #SLOOOW: do you need it??
 
 			#### Dealing with distance, inclination and phi_0
 		if D==7: #distance corrections are done
 			dist_pref = theta[:,4] #std_dist = 1 Mpc
 			iota = theta[:,5] #std_inclination = 0.
-			phi_0 = theta[:,6] #
+			phi_0 = theta[:,6] #reference phase
 
 				#scaling to required distance
-			amp = np.divide(amp.T, dist_pref).T
+			#amp = np.divide(amp.T, dist_pref).T #slow... check better if it works...
 
 			#scaling for setting inclination (it is done only if required)
-			h_22 = amp*np.exp(1j*(ph)) #choose here a convention... (lal is +)
+				#checking whether workin with real things is better
+			h_22_real = np.multiply(amp, np.cos(ph) )
+			h_22_imag = np.multiply(amp, np.sin(ph) )
+			#h_22 = h_22_real + 1j*h_22_imag 
+			#h_22 = np.multiply(amp, np.exp(1j*(ph)) ) #choose here a convention... (lal is +) #very slow!!!!
+
+					#parametrization of the wave
 				#h = h_p +i h_c = Y_22 * h_22 + Y_2-2 * h_2-2
 				#h_22 = h*_2-2
 				#Y_2+-2 = sqrt(5/(64pi))*(1+-cos(inclination))**2 exp(+-2i phi)
-			h = np.multiply(h_22, self.__Y_2m__(2,iota, phi_0)) + np.multiply(np.conj(h_22), self.__Y_2m__(-2,iota, phi_0))
-			h = 1e-21*h
+
+			#h = np.multiply(h_22.T, self.__Y_2m__(2,iota, phi_0)).T + np.multiply(np.conj(h_22).T, self.__Y_2m__(-2,iota, phi_0)).T #very slow to work with complex numbers 
+			h_p, h_c = self.__set_d_iota_phi_dependence__(h_22_real,h_22_imag, dist_pref, iota, phi_0)
 
 			if plus_cross:
-				return h.real, h.imag
+				return h_p, h_c
 			else: 
-				amp =  np.abs(h) 
-				ph = np.unwrap(np.angle(h))
+				amp =  np.sqrt(np.square(h_p)+np.square(h_c)) 
+				ph = np.unwrap(np.arctan2(h_c,h_c))
 				return amp, ph
 
 		if plus_cross:
-			h = 1e-21*amp*np.exp(1j*(ph))
-			return h.real, h.imag
+			h_p = np.multiply(amp, np.cos(ph))
+			h_c = np.multiply(amp, np.sin(ph))
+			return h_p, h_c
 		else:
-			return 1e-21*amp, ph				
+			return amp, ph				
+
+	def __set_d_iota_phi_dependence__(self, h_p, h_c, dist, iota, phi_0):
+		"""
+	__set_d_iota_phi_dependence__
+	=============================
+		DO IT!!!!!!!!!!!!!!!!
+		Input:
+			h_p, h_c (N,D)
+			iota (N,)
+			phi_0 (N,)
+		"""
+		const = 1./4.
+		c_i = np.cos(iota) #(N,)
+			#dealing with h_p
+		new_h_p = np.multiply(h_p.T, np.cos(2*phi_0)) - np.multiply(h_c.T, np.sin(2*phi_0)) #(D,N) #included phi dependence
+		new_h_p = np.multiply(new_h_p, 2*const*(1+np.square(c_i))/dist ).T #(N,D) #included iota dependence
+
+			#dealing with h_p
+		new_h_c = np.multiply(h_p.T, np.sin(2*phi_0)) + np.multiply(h_c.T, np.cos(2*phi_0)) #(D,N) #included phi dependence
+		new_h_c = np.multiply(new_h_c, 4*const*c_i/dist ).T #(N,D) #included iota dependence
+
+		return new_h_p, new_h_c
 
 	def __Y_2m__(self,m, iota, phi):
 		"""
-
+	__Y_2m__
+	========
+		Spin 2 spherical harmonics with l = 2. Only m = +2,-2 is implemented.
+		It has the following expression:
+			Y_l+-2 = (1+-cos(iota))**2 e**(2i*m*phi_0)
+		Input:
+			m			index m (only +/-2 is implemented)
+			iota (N,)	inclination angle
+			phi_0 (N,)	reference phase
+		Output:
+			Y_2m (N,)	value of the function
 		"""
 		const = 1./4.#np.sqrt(5./(64*np.pi)) #the constant was already fitted in the wave
 		c_i = np.cos(iota) #(N,)
 		Y_2m = const * np.square(1+np.multiply(np.sign(m), c_i)) #(N,)
 		Y_2m = np.multiply(Y_2m, np.exp(1j*np.multiply(np.sign(m), 2*phi)) ) #(N,)
 		return Y_2m
-
 
 	def get_raw_WF(self, theta):
 		"""
@@ -415,6 +476,7 @@ GW_generator
 
 		return rec_amp_dataset, rec_ph_dataset
 
+	#@do_profile(follow=[])
 	def get_red_coefficients(self, theta):
 		"""
 	get_red_coefficients
@@ -434,7 +496,7 @@ GW_generator
 			#making predictions for amplitude
 		rec_PCA_dataset_amp = np.zeros((amp_theta.shape[0], self.amp_PCA.get_dimensions()[1]))
 		for k in range(len(self.MoE_models_amp)):
-			rec_PCA_dataset_amp[:,k] = self.MoE_models_amp[k].predict(amp_theta)
+			rec_PCA_dataset_amp[:,k] = self.MoE_models_amp[k].predict(amp_theta) #why is this much sower than the phase part?
 
 			#making predictions for phase
 		rec_PCA_dataset_ph = np.zeros((ph_theta.shape[0], self.ph_PCA.get_dimensions()[1]))
@@ -443,8 +505,8 @@ GW_generator
 
 		return rec_PCA_dataset_amp, rec_PCA_dataset_ph
 
-
-	def align_wave(self, amp, ph, x_grid = None, al_merger = True, phi_0=0):
+########THIS IS SHIIIIT!!########
+	def align_wave(self, amp, ph, t_grid = None, al_merger = True, phi_0=0):
 		"""
 	align_wave
 	==========
@@ -453,7 +515,7 @@ GW_generator
 		Input:
 			amp	(N, N_grid)	amplitude of waves
 			ph (N,N_grid)	phases of waves
-			x_grid (N_grid)	grid at which wave is evaluated	
+			t_grid (N_grid)	grid at which wave is evaluated	
 			phi_0 ()/(N,)	value of phase at the point at which is aligned (default =0)
 		Output:
 			amp, ph (N,N_grid)	amplitude and phases rescaled appropriately
@@ -463,12 +525,12 @@ GW_generator
 			amp = amp[None,:]
 			ph = ph[None,:]
 
-		if x_grid is not None: #adjusting amplitude
+		if t_grid is not None: #adjusting amplitude
 			argmax_amp = np.argmax(amp, axis = 1) #(N,)
-			#huge_grid = np.linspace(x_grid[0], x_grid[-1], int(1e5))
+			#huge_grid = np.linspace(t_grid[0], t_grid[-1], int(1e5))
 			for i in range(amp.shape[0]):
-				amp[i,:] = np.interp( x_grid, x_grid- x_grid[argmax_amp[i]], amp[i,:])
-				ph[i,:]  = np.interp( x_grid, x_grid- x_grid[argmax_amp[i]], ph[i,:])
+				amp[i,:] = np.interp( t_grid, t_grid- t_grid[argmax_amp[i]], amp[i,:])
+				ph[i,:]  = np.interp( t_grid, t_grid- t_grid[argmax_amp[i]], ph[i,:])
 		
 			#aligning phase
 		if not al_merger:

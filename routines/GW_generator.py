@@ -36,7 +36,7 @@ try:
 			return profiled_func
 		return inner
 except:
-	quit()
+	pass
 
 ################# GW_generator class
 class GW_generator(object):
@@ -137,8 +137,9 @@ GW_generator
 			print("  Loaded time vector")
 			self.times = np.loadtxt(folder+"times")
 		else:
-			raise RuntimeError("Unable to load model: no times/frequency vector given!")
+			raise RuntimeError("Unable to load model: no time vector given!")
 
+		np.matmul(np.zeros((2,2)),np.ones((2,2))) #this has something to do with a speed up of matmul. Once it is called once, matmul gets much faster!
 		return
 
 	def MoE_models(self, model_type, k_list=None):
@@ -319,7 +320,7 @@ GW_generator
 			#res1,res2 = amp, ph if plus_cross = False
 		return res1, res2
 
-	@do_profile(follow=[])
+	#@do_profile(follow=[])
 	def __get_WF__(self, theta, time_grid, red_grid, plus_cross = False):
 		"""
 	__get_WF__
@@ -418,6 +419,7 @@ GW_generator
 		"""
 	__set_d_iota_phi_dependence__
 	=============================
+		DO IT!!!!!!!!!!!!!!!!
 		Input:
 			h_p, h_c (N,D)
 			iota (N,)
@@ -455,7 +457,6 @@ GW_generator
 		Y_2m = np.multiply(Y_2m, np.exp(1j*np.multiply(np.sign(m), 2*phi)) ) #(N,)
 		return Y_2m
 
-
 	def get_raw_WF(self, theta):
 		"""
 	get_raw_WF
@@ -475,6 +476,7 @@ GW_generator
 
 		return rec_amp_dataset, rec_ph_dataset
 
+	#@do_profile(follow=[])
 	def get_red_coefficients(self, theta):
 		"""
 	get_red_coefficients
@@ -494,7 +496,7 @@ GW_generator
 			#making predictions for amplitude
 		rec_PCA_dataset_amp = np.zeros((amp_theta.shape[0], self.amp_PCA.get_dimensions()[1]))
 		for k in range(len(self.MoE_models_amp)):
-			rec_PCA_dataset_amp[:,k] = self.MoE_models_amp[k].predict(amp_theta)
+			rec_PCA_dataset_amp[:,k] = self.MoE_models_amp[k].predict(amp_theta) #why is this much sower than the phase part?
 
 			#making predictions for phase
 		rec_PCA_dataset_ph = np.zeros((ph_theta.shape[0], self.ph_PCA.get_dimensions()[1]))
