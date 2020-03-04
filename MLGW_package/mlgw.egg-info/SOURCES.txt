@@ -1,6 +1,6 @@
 LICENSE
 MANIFEST.in
-README.txt
+README.rst
 setup.py
 ./mlgw/EM_MoE.py
 ./mlgw/GW_generator.py
