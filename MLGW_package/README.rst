@@ -52,7 +52,8 @@ A dataset of GW must be created to fit the PCA model. It usually holds waves in 
 Usage of mlgw
 =============
 It outputs the GW strain:
-.. image:: 
+.. image:: https://github.com/stefanoschmidt1995/MLGW/blob/master/MLGW_package/docs/strain.png
+where theta = (m1,m2,s1,s2)
 .. h = h_+ + i h_x = Y_{2,2}(i, phi) h_{2,2}(m1,m2,s1,s2) + Y_{2,-2}(i, phi) h_{2,-2}(m1,m2,s1,s2)
 
 Package mlgw consists in five modules.
