@@ -39,11 +39,26 @@ To generate a wave:
 	plt.plot(times, h_p[0,:], c='k') #plot the plus polarization
 	plt.xlabel("Time (s)", fontsize = 12)
 	plt.ylabel(r"$h_+$", fontsize = 12)
-	axins = inset_axes(plt.gca(), width="60%", height="30%", loc=2, borderpad = 2.)
+	axins = inset_axes(plt.gca(), width="70%", height="30%", loc=2, borderpad = 2.)
 	axins.plot(times[times >= -0.2], h_p[0,times >= -0.2], c='k')
 	plt.show()
 
-The output is:
+The output is: ::
+
+	###### Summary for MLGW model ######
+	   Grid size:     3500 
+	   Minimum time:  0.7999999999999999 s/M_sun
+	   ## Model for Amplitude 
+	      - #PCs:          4
+	      - #Experts:      4 4 4 4
+	      - #Features:     34
+	      - Features:      00 11 22 01 02 12 000 001 002 011 012 022 111 112 122 222 0000 0001 0002 0011 0022 0012 0111 0112 0122 0222 1111 1112 1122 1222 2222
+	   ## Model for Phase 
+	      - #PCs:          4
+	      - #Experts:      4 4 4 4
+	      - #Features:     34
+	      - Features:      00 11 22 01 02 12 000 001 002 011 012 022 111 112 122 222 0000 0001 0002 0011 0022 0012 0111 0112 0122 0222 1111 1112 1122 1222 2222
+	####################################
 
 .. image:: https://raw.githubusercontent.com/stefanoschmidt1995/MLGW/master/MLGW_package/docs/WF_example.png
    :width: 700px
@@ -55,6 +70,7 @@ The model is composed by a PCA + Mixture of Experts model and aims to generate a
 A PCA model is used to reduce dimensionality, through a linear transformation, of a wave represented in a dense grid. It maps the wave to the linear combination of the first ``K`` principal components of the dataset.
 
 A Mixture of Experts model (MoE) is useful to map the orbital parameters of the black holes to the reduced representation of the wave. A prediction of MoE is a linear combination of regression models (the experts), weighted by the output of a gating function which decides which expert to use. The orbital parameters considered are mass ratio ``q=m1/m2`` and the two BHs z-component spins ``s1`` and ``s2``; the total mass ``m1+m2`` is a scale factor and the dependence on it must not be fitted.
+The experts performs a polynomial regression (using data augmentation in a basis function expansion). The terms in the polynomial are specified at training time.
 
 A complete model includes two PCA models for both phase and amplitude of the wave and a MoE model for each of the PC considered. The expert takes the form of a basis function regression and one can specify the features they want to use for their regression in the training and test data.
 

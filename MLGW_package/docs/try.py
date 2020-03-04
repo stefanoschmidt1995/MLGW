@@ -17,6 +17,6 @@ plt.title("GW by a BBH with [m1,m2,s1,s2] = "+str(theta), fontsize = 15)
 plt.plot(times, h_p[0,:], c='k') #plot the plus polarization
 plt.xlabel("Time (s)", fontsize = 12)
 plt.ylabel(r"$h_+$", fontsize = 12)
-axins = inset_axes(plt.gca(), width="60%", height="30%", loc=2, borderpad = 2.)
+axins = inset_axes(plt.gca(), width="70%", height="30%", loc=2, borderpad = 2.)
 axins.plot(times[times >= -0.2], h_p[0,times >= -0.2], c='k')
 plt.show()
