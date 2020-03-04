@@ -35,12 +35,13 @@ To generate a wave:
 
 	#plotting the wave
 	plt.figure(figsize=(15,8))
-	plt.title("Waves by a BBH with [m1,m2,s1,s2] = "+str(theta), fontsize = 15)
+	plt.title("GW by a BBH with [m1,m2,s1,s2] = "+str(theta), fontsize = 15)
 	plt.plot(times, h_p[0,:], c='k') #plot the plus polarization
+	plt.xlabel("Time (s)", fontsize = 12)
+	plt.ylabel(r"$h_+$", fontsize = 12)
 	axins = inset_axes(plt.gca(), width="60%", height="30%", loc=2, borderpad = 2.)
-	axins.plot(times[times >= -0.25], h_p[0,times >= -0.25], c='k')
+	axins.plot(times[times >= -0.2], h_p[0,times >= -0.2], c='k')
 	plt.show()
-
 
 The output is:
 
@@ -89,7 +90,8 @@ Method ``__call__`` can only be given the last line.
 
 The ML model generates the waves in reduced grid ``t' = t/M_tot`` with a fixed number of grid points. With argument ``t_grid``, the user can specify a grid which they want to evaluate the wave at.
 Any custom grid must meet the convention that the origin of time is at merger and that the inspiral takes place at negative times.
-An additional boolean argument ``red_grid`` must state whether the grid is in reduced time domain or true time domain. Furthermore, the user must choose whether they want phase and amplitude or the plus and cross polarizations.
+An additional boolean argument ``red_grid`` must state whether the grid is in reduced time domain or true time domain.
+Furthermore, the ``plus_cross`` option allows the user to get phase and amplitude of the wave instead of plus and cross polarizations.
 
 Installation & support
 ======================
