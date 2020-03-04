@@ -23,6 +23,7 @@ To generate a wave:
 	import mlgw.GW_generator as generator
 	import numpy as np
 	import matplotlib.pyplot as plt
+	from mpl_toolkits.axes_grid.inset_locator import (inset_axes, InsetPosition,mark_inset)
 
 	#generating the wave
 	generator = generator.GW_generator() #creating an istance of the generator
@@ -33,9 +34,18 @@ To generate a wave:
 	generator.model_summary() #printing model summary
 
 	#plotting the wave
-	plt.title("Waves by a BBH with [m1,m2,s1,s2] = "+str(theta))
-	plt.plot(times, h_p[0,:]) #plot the plus polarization
+	plt.figure(figsize=(15,8))
+	plt.title("Waves by a BBH with [m1,m2,s1,s2] = "+str(theta), fontsize = 15)
+	plt.plot(times, h_p[0,:], c='k') #plot the plus polarization
+	axins = inset_axes(plt.gca(), width="60%", height="30%", loc=2, borderpad = 2.)
+	axins.plot(times[times >= -0.25], h_p[0,times >= -0.25], c='k')
 	plt.show()
+
+
+The output is:
+
+.. image:: https://raw.githubusercontent.com/stefanoschmidt1995/MLGW/master/MLGW_package/docs/WF_example.png
+   :width: 700px
 
 The ML model
 ============
@@ -52,9 +62,11 @@ A dataset of GW must be created to fit the PCA model. It usually holds waves in 
 Usage of mlgw
 =============
 It outputs the GW strain:
-.. image:: https://github.com/stefanoschmidt1995/MLGW/blob/master/MLGW_package/docs/strain.png
-where theta = (m1,m2,s1,s2)
-.. h = h_+ + i h_x = Y_{2,2}(i, phi) h_{2,2}(m1,m2,s1,s2) + Y_{2,-2}(i, phi) h_{2,-2}(m1,m2,s1,s2)
+
+.. image:: https://raw.githubusercontent.com/stefanoschmidt1995/MLGW/master/MLGW_package/docs/strain.png
+   :width: 700px
+
+where m_i and s_i are BH masses and spins, d_L the luminosity distance from the source, i is the inclination angle and phi is a reference phase. See e.g.
 
 Package mlgw consists in five modules.
    * **GW_generator**: the module holds class ``GW_generator`` which builds up all the model components (i.e. PCA + regressions for each PC) and performs some post processing of the waveform for dealing with known dependence on other physical quantities.
@@ -93,5 +105,5 @@ This page is intented to present the use of the code only for generating a wave.
 	help(mlgw)
 	help(mlgw.<module_name>)
 
-For full code source (and much more code) see: <https://github.com/stefanoschmidt1995/MLGW>
+For full code source (and much more) see: <https://github.com/stefanoschmidt1995/MLGW>
 
