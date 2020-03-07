@@ -419,6 +419,29 @@ MoE_model
 		#print("r_new", r_new)
 		return r
 
+	def get_gradient(self,X):
+		"""
+	get_gradient
+	============
+		Returns the gradient of the prediction y:
+			grad_ni = D_i y_n
+		where grad has shape (D,) and D_i denotes the partial derivative w.r.t. x_i.
+		Input:
+			X (N,D)
+		Output:
+			grad (N,D)
+		"""
+		assert X.shape[1] == self.D
+		jac_S = self.gating.get_jacobian(X) #(N,K,D)
+		S = self.gating.predict(X) #(N,K)
+			#self.W (D,K)
+		pred = np.matmul(X, self.W)+ self.b #(N,K)
+		grad = np.multiply(pred[:,:,None],jac_S) #(N,K,D)
+		grad = np.sum(grad, axis = 1)
+		grad = grad + np.matmul(S, self.W.T) #(N,D)
+		#print(X.shape,S.shape,jac_S.shape, grad.shape) #DEBUG
+		return grad
+
 ################# softmax_regression class
 class softmax_regression(object):
 	"""
@@ -472,8 +495,8 @@ softmax_regression
 	=======
 		Makes predictions for the softmax regression model. Weights can be freely specified by the user.
 		Input:
-			X_test (N,D)	test points
-			V (D,K)			weight of the model that gives predictions (if None, internal weights are used)
+			X_test (N,D)/(N,)	test points
+			V (D+1,K)			weight of the model that gives predictions (if None, internal weights are used)
 		Output:
 			y_test (N,K)	model prediction
 		"""
@@ -488,6 +511,29 @@ softmax_regression
 		res = np.divide(res.T, np.sum(res, axis = 1)).T #(N,K) normalizing
 
 		return res
+
+	def get_jacobian(self,X):
+		"""
+	get_jacobian
+	============
+		Returns the jacobian of the softmax function:
+			J_ki = D_i S(V^T x)_k
+		where J has shape (K,D) and D_i denotes the partial derivative w.r.t. x_i.
+		Input:
+			X (N,D)
+		Output:
+			grad (N,K,D)
+		"""
+		assert X.shape[1] == self.D
+		V = self.V[1:,:].T #(K,D)
+		softmax = self.predict(X) #(N,K)
+		jac1 = np.multiply(softmax[:,:,None], V[None,:,:]) #(N,K,D)
+		jac2 = np.matmul(softmax,V) #(N,D)
+		jac2 = np.multiply(jac2[:,None,:], softmax[:,:,None]) #(N,K,D)
+		jac = jac1 -jac2 #(N,K,D)
+		#print("ciao",softmax.shape,jac1.shape,jac2.shape, jac.shape) #DEBUG
+		return jac #(N,K,D)
+		
 
 	def fit_single_loop(self, X_train, y_train):
 		"""

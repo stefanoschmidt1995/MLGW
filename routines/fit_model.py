@@ -164,8 +164,8 @@ fit_MoE
 	print("Using "+str(PCA_train.shape[0])+" train data")
 	
 		#adding new features for basis function expansion
-	train_theta = add_extra_features(train_theta, features)
-	test_theta = add_extra_features(test_theta, features)
+	train_theta = add_extra_features(train_theta, features, log_list = [0])
+	test_theta = add_extra_features(test_theta, features, log_list = [0])
 	D = train_theta.shape[1] #dimensionality of input space for MoE
 
 	MoE_models = [] #list of model, one for each component

@@ -357,17 +357,17 @@ GDA
 
 
 ################# Extra features routine
-def add_extra_features(data, feature_list, scaling = None):
+def add_extra_features(data, feature_list, log_list = None):
 	"""
 add_extra_features
 ==================
 	Given a dataset, it enlarge its feature number to make a basis function regression.
 	Features to add must be specified with feature list. Each element in the list is a string in form "ijk" where ijk are feature indices as in numpy array data (repetitions allowed); this represents the new feauture x_new = x_i*x_j*x_k
-	Features can be scaled by an arbitrary constant value.
+	Features can be log preprocessed.
 	Input:
 		data (N,D)/(N,)			data to augment
 		feature_list (len L)	list of features to add
-		scaling (D,)			vector of values for scaling data as data_ij = data_ij/scaling_j (if None no scaling is performed)
+		log_list []				list of indices in data, to which apply a log preprocessing (None is the same as [])
 	Output:
 		new_data (N,D+L)	data with new feature
 	"""
@@ -376,26 +376,88 @@ add_extra_features
 	if len(feature_list)==0:
 		return data
 
-	data[:,0] = np.log(data[:,0]) #probably a good idea...
+	if log_list is not None:
+		data[:,log_list] = np.log(data[:,log_list]) #probably a good idea...
 
-	#if scaling is not None:
-	#	data = np.divide(data,scaling)
-
+	D = data.shape[1]
 	new_features = np.zeros((data.shape[0],len(feature_list)))
 	for i in range(len(feature_list)):
-		feat_str = feature_list[i]
 		temp = np.ones((data.shape[0],)) #(N,)
-		if len(feat_str) ==1: continue #single feature is already in the data
-		for k in feat_str:
-			try:
-				temp = np.multiply(temp, data[:,int(k)]) #(N,)
-			except:
-				raise RuntimeWarning("Unproper feature code for feature \""+k+"\": unable to add any the feature. Constant feature is placed instead")
-				temp = np.ones((data.shape[0],))
-				break
+		exps = np.zeros((D,)) #(D,)
+		for j in range(D):
+			exps[j] = feature_list[i].count(str(j))
+		temp = np.power(data,exps) #(N,D)
+		temp = np.prod(temp, axis =1) #(N,)
 		new_features[:,i] = temp #assign new feature
 
 	new_data = np.concatenate((data, new_features), axis = 1)
 	return new_data
+
+def jac_extra_features(data, feature_list, log_list = None):
+	"""	
+jac_extra_features
+==================
+	Given a dataset, it computes the jacobian of the augmented data. Data are augmented as in add_extra_features.
+	Features to add must be specified with feature list. Each element in the list is a string in form "ijk" where ijk are feature indices as in numpy array data (repetitions allowed); this represents the new feauture x_new = x_i*x_j*x_k
+	Features can be log preprocessed.
+	Gradients are computed as follows:
+		grad_ijk = D_k (xi_i)_j
+	where (xi_i)_j is the j-th augmented feature for the i-th data point
+	Input:
+		data (N,D)/(N,)			data to augment
+		feature_list (len L)	list of features to add
+		log_list []				list of indices in data, to which apply a log preprocessing (None is the same as [])
+	Output:
+		grad (N,D+L,D)	gradient of the new features
+	"""
+	data = np.array(data) #this is required to manipulate freely the data...
+	if data.ndim == 1: data = data[:,np.newaxis]
+	if len(feature_list)==0:
+		return data
+	D = data.shape[1]
+
+	if log_list is not None:
+		print("HEllO")
+		data[:,log_list] = np.log(data[:,log_list]) #probably a good idea...
+
+	jac = np.zeros((data.shape[0], len(feature_list)+D,D)) #(N,D+L,D)
+	jac[:,:D,:] = np.identity(D) #setting easy gradients
+	for i in range(len(feature_list)):
+		exps = np.zeros((D,)) #(D,)
+		for j in range(D):
+			exps[j] = feature_list[i].count(str(j))
+		for j in range(D):
+			if exps[j] !=0:
+				temp_exps = np.array(exps)
+				temp_exps[j] = temp_exps[j] -1
+				#print(exps[j],temp_exps)
+				jac[:,i+D,j] = exps[j]*np.prod(np.power(data, temp_exps), axis =1)
+
+	if log_list is not None:
+		jac[:,:,log_list] = np.divide(jac[:,:,log_list],np.exp(data[:,None,log_list]))
+
+
+	return jac
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
