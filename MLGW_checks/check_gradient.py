@@ -90,8 +90,35 @@ plt.plot(X_test_raw[:,1], f_prime_y(*X_test_raw.T), 'o', label = 'true gradient'
 plt.legend()
 
 
-plt.show()
+#plt.show()
+
+#checking GW_generator gradients
+gen = GW_generator("../definitive_code/TD_model")
+theta_std = np.array([[2.,0.3,-0.2],[1.5,0.2,.6]])
+theta_tilde = np.array([[20.,15.,0.3,-0.2],[23.,15,0.2,.6]])
+theta = np.array([[20.,15.,0.3,-0.2, 5.6, 0.923, 1.34],[23.,15,0.2,.6,  15.6, 1.923, 2.34]])
+
+grad_Re, grad_Im = gen.get_raw_grads(theta_std)
+grad_Re, grad_Im = gen._GW_generator__grads_theta(theta_tilde, np.linspace(-8.,0.03,10000)) #basic syntax to access a "private" method
+grad_Re, grad_Im = gen.get_grads(theta, np.linspace(-8.,0.03,10000))
+print(grad_Re.shape)
+
+t = np.linspace(0,1,100)
+f = np.exp(t)
+t_new = np.linspace(0.5,1,100)
+
+f_new = np.interp(t_new/2.,t/3., f)
+f_new_bis = np.interp(t_new,2*t/3., f)
+print(np.allclose(f_new, f_new_bis))
+
 
 
 quit()
+
+
+
+
+
+
+
 

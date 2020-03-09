@@ -199,10 +199,10 @@ MoE_model
 		res = np.log(np.sum(res,axis=1)) #(N,)
 		return np.sum(res) / X.shape[0]
 
-	def __initialise_smart__(self, X, args):
+	def __initialise_smart(self, X, args):
 		"""
-	__initialise_smart__
-	====================
+	__initialise_smart
+	==================
 		Having seen the data makes a smart first guess (with farhtest point clustering) for responsibilities and fit gating function model with those responbility.
 		Input:
 			X (N,D)		train data
@@ -243,10 +243,10 @@ MoE_model
 
 
 
-	def __initialise__(self, X, args):
+	def __initialise(self, X, args):
 		"""
-	__initialise__
-	==============
+	__initialise
+	============
 		Having seen the data makes a first guess for responsibilities and fit gating function model with those responbility.
 		Input:
 			X (N,D)		train data
@@ -297,7 +297,7 @@ MoE_model
 
 			#initialization
 		if not self.initialized:
-			r_0 = self.__initialise_smart__(X_train,args)
+			r_0 = self.__initialise_smart(X_train,args)
 			self.EM_step(X_train,y_train, r_0, args)
 
 		i = 0
@@ -687,14 +687,14 @@ softmax_regression
 		args = (X_train, y_train, reg_constant) #arguments for loss and gradients
 		
 		if opt == "adam":
-			return self.__optimize_adam__(args, threshold, N_iter, learning_rate, verbose, val_set)
+			return self.__optimize_adam(args, threshold, N_iter, learning_rate, verbose, val_set)
 		if opt == "bfgs":
-			return self.__optimise_bfgs__(args, verbose, val_set)
+			return self.__optimise_bfgs(args, verbose, val_set)
 
-	def __optimise_bfgs__(self, args, verbose, val_set = None):
+	def __optimise_bfgs(self, args, verbose, val_set = None):
 		"""
-	__optimise_bfgs__
-	=================
+	__optimise_bfgs
+	===============
 		Wrapper to scipy.optimize.fmin_bfgs (https://docs.scipy.org/doc/scipy/reference/generated/scipy.optimize.fmin_bfgs.html) to minimise loss function.
 		Input:
 			args		tuple of arguments to be passed to loss and gradient [X_train (N,D), y_train (N,K), lambda ()]
@@ -723,10 +723,10 @@ softmax_regression
 		return [loss_0, loss_fin]
 
 
-	def __optimize_adam__(self, args, threshold, N_iter, learning_rate, verbose, val_set = None):
+	def __optimize_adam(self, args, threshold, N_iter, learning_rate, verbose, val_set = None):
 		"""
-	__optimise_adam__
-	=================
+	__optimise_adam
+	===============
 		Implements optimizer with to perform adaptive step gradient descent.
 		The implementation follows: https://arxiv.org/abs/1412.6980v8
 		Input:

@@ -88,6 +88,7 @@ where m_i and s_i are BH masses and spins, d_L the luminosity distance from the 
 Package ``mlgw`` consists in five modules.
 
    * **GW_generator**: the module holds class ``GW_generator`` which builds up all the model components (i.e. PCA + regressions for each PC) and performs some post processing of the waveform for dealing with known dependence on other physical quantities.
+It also compute the gradients of the waveform with respct to the relevant physical paramters.
    * **EM_MoE**: holds an implementation of a MoE model as well as the softmax classifier required for it
    * **ML_routines**: holds an implementation of the PCA model as well a GDA classifier and a routine to do data augmentation
    * **GW_helper**: provides some routines to generate a dataset and to evaluate the closeness between waves. This is useful to assess model ability to reproduce original waves

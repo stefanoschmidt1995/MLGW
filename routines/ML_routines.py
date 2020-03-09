@@ -417,7 +417,6 @@ jac_extra_features
 	D = data.shape[1]
 
 	if log_list is not None:
-		print("HEllO")
 		data[:,log_list] = np.log(data[:,log_list]) #probably a good idea...
 
 	jac = np.zeros((data.shape[0], len(feature_list)+D,D)) #(N,D+L,D)
