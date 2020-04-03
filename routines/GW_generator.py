@@ -535,7 +535,7 @@ GW_generator
 			grad_amp (N,D,3)	Gradients of the amplitude
 			grad_ph (N,D,3)		Gradients of the phase
 		"""
-			#computing gradient for the reduced coefficients
+			#computing gradient for the reduced coefficients g
 		#amp
 		D, K_amp = self.amp_PCA.get_dimensions()
 		grad_g_amp = np.zeros((theta.shape[0], K_amp, theta.shape[1])) #(N,K,3)
@@ -547,6 +547,8 @@ GW_generator
 		for k in range(K_ph):
 			grad_g_ph[:,k,:] = self.__MoE_gradients(theta, self.MoE_models_ph[k], self.ph_features) #(N,3)
 		
+		return grad_g_amp, grad_g_ph #debug
+
 			#computing gradients
 		#amp
 		grad_amp = np.zeros((theta.shape[0], D, theta.shape[1])) #(N,D,3)
@@ -611,7 +613,7 @@ GW_generator
 		for i in range(theta_std.shape[0]):
 			grad_M_amp = np.gradient(amp[i,:], t_grid) #(D,)
 			grad_M_ph = np.gradient(ph[i,:], t_grid) #(D,)
-			grad_amp[i,:,0] = amp[i,:]/m_tot_us[i] + np.multiply(t_grid, grad_M_amp) #(D,)
+			grad_amp[i,:,0] = amp[i,:]/m_tot_us[i] + np.multiply(t_grid/20., grad_M_amp) #(D,)
 			grad_ph[i,:,0] = np.multiply(t_grid/20., grad_M_ph) #(D,)
 
 		#computing gradients of the real and imaginary part
@@ -619,13 +621,18 @@ GW_generator
 		grad_Re = np.multiply(grad_amp, np.cos(ph)[:,:,None]) - np.multiply(np.multiply(grad_ph, np.sin(ph)[:,:,None]), amp[:,:,None]) #(N,D,4)
 		grad_Im = np.multiply(grad_amp, np.sin(ph)[:,:,None]) + np.multiply(np.multiply(grad_ph, np.cos(ph)[:,:,None]), amp[:,:,None])#(N,D,4)
 
+			#switching back spins
+			#sure of it???
+		grad_Re[to_switch,:,2], grad_Re[to_switch,:,3] = grad_Re[to_switch,:,3], grad_Re[to_switch,:,2]
+		grad_Im[to_switch,:,2], grad_Im[to_switch,:,3] = grad_Im[to_switch,:,3], grad_Im[to_switch,:,2]
+
 		return grad_Re, grad_Im
 
 	def get_grads(self, theta, t_grid):
 		"""
 	get_grads
 	=========
-		Returns the gradients of the waveform h(m1,m2,s1,s2,d_L, iota, phi).
+		Returns the gradients of the waveform h(m1,m2,s1,s2,d_L, iota, phi) with respect to (M, q, s1, s2, d_L, iota, phi).
 		Gradients are evaluated on the user given time grid t_grid.
 		It returns the real and imaginary part of the gradients.
 		Input:
@@ -635,14 +642,17 @@ GW_generator
 			grad_Re(h) (N,D,7)		Gradients of the real part of the waveform
 			grad_Im(h) (N,D,7)		Gradients of the imaginary part of the waveform
 		"""
+		theta = np.array(theta)
+		if theta.ndim == 1:
+			theta = theta[None,:]
 		assert theta.shape[1]==7
 		grad_Re = np.zeros((theta.shape[0],len(t_grid),theta.shape[1])) #(N,D,7)
 		grad_Im = np.zeros((theta.shape[0],len(t_grid),theta.shape[1])) #(N,D,7)
 		
-			#gradients w.r.t. orbital parameters (m1, m2, s1, s2)
+			#gradients w.r.t. orbital parameters (M, q, s1, s2)
 		grad_theta_tilde_Re, grad_theta_tilde_Im = self.__grads_theta(theta[:,:4], t_grid) #(N,D,4)
 		for i in range(4):
-			grad_theta_tilde_Re[:,:,i], grad_theta_tilde_Im[:,:,i] = self.__set_d_iota_phi_dependence(grad_theta_tilde_Re[:,:,i], grad_theta_tilde_Re[:,:,i], theta[:,4], theta[:,5], theta[:,6]) #(N,D)
+			grad_theta_tilde_Re[:,:,i], grad_theta_tilde_Im[:,:,i] = self.__set_d_iota_phi_dependence(grad_theta_tilde_Re[:,:,i], grad_theta_tilde_Im[:,:,i], theta[:,4], theta[:,5], theta[:,6]) #(N,D)
 
 			#gradients w.r.t. d
 		dist = theta[:,4]
@@ -653,7 +663,6 @@ GW_generator
 			#gradients w.r.t. iota
 		iota_0_theta = np.array(theta)
 		iota_0_theta[:,5]=0.
-		print(iota_0_theta.shape)
 		grad_iota_Re, grad_iota_Im = self.get_WF(iota_0_theta, t_grid) #WF with iota =0 #(N,D)
 		grad_iota_Re = np.multiply(grad_iota_Re.T, -np.sin(2*theta[:,5])).T
 		grad_iota_Im = np.multiply(grad_iota_Im.T, -np.sin(theta[:,5])).T

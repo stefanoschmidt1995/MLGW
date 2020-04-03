@@ -153,7 +153,8 @@ PCA_model
 		E, V = np.linalg.eig(np.cov(X.T))
 		idx = np.argsort(E)[::-1]
 		V = V[:, idx[:K]] # (D,K)
-		self.PCA_params = [V.real, mu, np.ones((K,)),  E[:K].real]
+		E = E[idx[:K]].real #(K,)
+		self.PCA_params = [V.real, mu, np.ones((K,)),  E]
 
 		if scale_PC:
 			red_data = np.matmul(X, self.PCA_params[0]) #(N,K)
