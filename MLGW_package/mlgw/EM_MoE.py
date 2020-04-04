@@ -199,10 +199,10 @@ MoE_model
 		res = np.log(np.sum(res,axis=1)) #(N,)
 		return np.sum(res) / X.shape[0]
 
-	def __initialise_smart__(self, X, args):
+	def __initialise_smart(self, X, args):
 		"""
-	__initialise_smart__
-	====================
+	__initialise_smart
+	==================
 		Having seen the data makes a smart first guess (with farhtest point clustering) for responsibilities and fit gating function model with those responbility.
 		Input:
 			X (N,D)		train data
@@ -243,10 +243,10 @@ MoE_model
 
 
 
-	def __initialise__(self, X, args):
+	def __initialise(self, X, args):
 		"""
-	__initialise__
-	==============
+	__initialise
+	============
 		Having seen the data makes a first guess for responsibilities and fit gating function model with those responbility.
 		Input:
 			X (N,D)		train data
@@ -297,7 +297,7 @@ MoE_model
 
 			#initialization
 		if not self.initialized:
-			r_0 = self.__initialise_smart__(X_train,args)
+			r_0 = self.__initialise_smart(X_train,args)
 			self.EM_step(X_train,y_train, r_0, args)
 
 		i = 0
@@ -419,6 +419,29 @@ MoE_model
 		#print("r_new", r_new)
 		return r
 
+	def get_gradient(self,X):
+		"""
+	get_gradient
+	============
+		Returns the gradient of the prediction y:
+			grad_ni = D_i y_n
+		where grad has shape (D,) and D_i denotes the partial derivative w.r.t. x_i.
+		Input:
+			X (N,D)
+		Output:
+			grad (N,D)
+		"""
+		assert X.shape[1] == self.D
+		jac_S = self.gating.get_jacobian(X) #(N,K,D)
+		S = self.gating.predict(X) #(N,K)
+			#self.W (D,K)
+		pred = np.matmul(X, self.W)+ self.b #(N,K)
+		grad = np.multiply(pred[:,:,None],jac_S) #(N,K,D)
+		grad = np.sum(grad, axis = 1)
+		grad = grad + np.matmul(S, self.W.T) #(N,D)
+		#print(X.shape,S.shape,jac_S.shape, grad.shape) #DEBUG
+		return grad
+
 ################# softmax_regression class
 class softmax_regression(object):
 	"""
@@ -472,8 +495,8 @@ softmax_regression
 	=======
 		Makes predictions for the softmax regression model. Weights can be freely specified by the user.
 		Input:
-			X_test (N,D)	test points
-			V (D,K)			weight of the model that gives predictions (if None, internal weights are used)
+			X_test (N,D)/(N,)	test points
+			V (D+1,K)			weight of the model that gives predictions (if None, internal weights are used)
 		Output:
 			y_test (N,K)	model prediction
 		"""
@@ -488,6 +511,29 @@ softmax_regression
 		res = np.divide(res.T, np.sum(res, axis = 1)).T #(N,K) normalizing
 
 		return res
+
+	def get_jacobian(self,X):
+		"""
+	get_jacobian
+	============
+		Returns the jacobian of the softmax function:
+			J_ki = D_i S(V^T x)_k
+		where J has shape (K,D) and D_i denotes the partial derivative w.r.t. x_i.
+		Input:
+			X (N,D)
+		Output:
+			grad (N,K,D)
+		"""
+		assert X.shape[1] == self.D
+		V = self.V[1:,:].T #(K,D)
+		softmax = self.predict(X) #(N,K)
+		jac1 = np.multiply(softmax[:,:,None], V[None,:,:]) #(N,K,D)
+		jac2 = np.matmul(softmax,V) #(N,D)
+		jac2 = np.multiply(jac2[:,None,:], softmax[:,:,None]) #(N,K,D)
+		jac = jac1 -jac2 #(N,K,D)
+		#print("ciao",softmax.shape,jac1.shape,jac2.shape, jac.shape) #DEBUG
+		return jac #(N,K,D)
+		
 
 	def fit_single_loop(self, X_train, y_train):
 		"""
@@ -641,14 +687,14 @@ softmax_regression
 		args = (X_train, y_train, reg_constant) #arguments for loss and gradients
 		
 		if opt == "adam":
-			return self.__optimize_adam__(args, threshold, N_iter, learning_rate, verbose, val_set)
+			return self.__optimize_adam(args, threshold, N_iter, learning_rate, verbose, val_set)
 		if opt == "bfgs":
-			return self.__optimise_bfgs__(args, verbose, val_set)
+			return self.__optimise_bfgs(args, verbose, val_set)
 
-	def __optimise_bfgs__(self, args, verbose, val_set = None):
+	def __optimise_bfgs(self, args, verbose, val_set = None):
 		"""
-	__optimise_bfgs__
-	=================
+	__optimise_bfgs
+	===============
 		Wrapper to scipy.optimize.fmin_bfgs (https://docs.scipy.org/doc/scipy/reference/generated/scipy.optimize.fmin_bfgs.html) to minimise loss function.
 		Input:
 			args		tuple of arguments to be passed to loss and gradient [X_train (N,D), y_train (N,K), lambda ()]
@@ -677,10 +723,10 @@ softmax_regression
 		return [loss_0, loss_fin]
 
 
-	def __optimize_adam__(self, args, threshold, N_iter, learning_rate, verbose, val_set = None):
+	def __optimize_adam(self, args, threshold, N_iter, learning_rate, verbose, val_set = None):
 		"""
-	__optimise_adam__
-	=================
+	__optimise_adam
+	===============
 		Implements optimizer with to perform adaptive step gradient descent.
 		The implementation follows: https://arxiv.org/abs/1412.6980v8
 		Input:

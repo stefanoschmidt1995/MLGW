@@ -436,7 +436,6 @@ jac_extra_features
 	if log_list is not None:
 		jac[:,:,log_list] = np.divide(jac[:,:,log_list],np.exp(data[:,None,log_list]))
 
-
 	return jac
 
 

@@ -291,7 +291,7 @@ create_dataset_TD
 			f_min, # lowest value of time
 			f_min, #some reference value of time (??)
 			lal.CreateDict(), #some lal dictionary
-			lalsim.GetApproximantFromString('SEOBNRv2_opt') #approx method for the model
+			approx #approx method for the model
 		)
 		#print(f_min, t_step)#debug
 		#print(m1,m2, spin1z,spin2z) #debug
@@ -317,7 +317,7 @@ create_dataset_TD
 		temp_ph = temp_ph - temp_ph[id0] #all phases are shifted by a constant to make every wave start with 0 phase at t=0 (i.e. at maximum amplitude)
 
 			#removing spourious gaps (if present)
-		(index,) = np.where(temp_amp/np.max(temp_amp) < 1e-4) #there should be a way to choose right threshold...
+		(index,) = np.where(temp_amp/np.max(temp_amp) < 1e-4) #there should be a way to choose the right threshold...
 		if len(index) >0:
 			print("Wave killed")
 			temp_amp[index] = temp_amp[index[0]-1]
@@ -339,7 +339,7 @@ create_dataset_TD
 		filebuff.close()
 		return None
 
-def generate_waveform(m1,m2, s1=0.,s2 = 0.,d=1., iota = 0.,phi_0=0., t_coal = 0.4, t_step = 5e-5, f_min = None, t_min = None, verbose = False):
+def generate_waveform(m1,m2, s1=0.,s2 = 0.,d=1., iota = 0.,phi_0=0., t_coal = 0.4, t_step = 5e-5, f_min = None, t_min = None, verbose = False, approx = "SEOBNRv2_opt"):
 	"""
 generate_waveform
 =================
@@ -385,7 +385,7 @@ generate_waveform
 		f_min, # lowest value of freq
 		f_min, #some reference value of freq (??)
 		lal.CreateDict(), #some lal dictionary
-		lalsim.GetApproximantFromString('SEOBNRv2_opt') #approx method for the model
+		lalsim.GetApproximantFromString(approx) #approx method for the model
 		)
 	h_p, h_c =  hp.data.data, hc.data.data
 	amp = np.sqrt(h_p**2+h_c**2)

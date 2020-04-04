@@ -6,7 +6,7 @@ def readme():
 
 setup(
     name='mlgw',
-    version='1.0.post3',
+    version='1.1.0',
     author='Stefano Schmidt',
     author_email='stefanoschmidt1995@gmail.com',
     packages=['mlgw'],
@@ -22,5 +22,6 @@ setup(
 		"scipy >= 1.3.1",
 		"lalsuite >= 6.62"
     ],
+	long_description_content_type = 'text/x-rst'
 )
 

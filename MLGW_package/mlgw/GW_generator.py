@@ -274,7 +274,7 @@ GW_generator
 			[spin] = adimensional
 		Input:
 			theta (N,D)		source parameters to make prediction at
-			t_grid (D',)	a grid in (physical or reduced) time/frequency to evaluate the wave at (uses np.inter)
+			t_grid (D',)	a grid in (physical or reduced) time/frequency to evaluate the wave at (uses np.interp)
 			plus_cross		whether to return h_+ and h_x components (if false amp and phase are returned)
 			red_grid		whether given t_grid is in reduced space (True) or physical space (False)
 		Ouput:
@@ -296,7 +296,7 @@ GW_generator
 			raise RuntimeError("Unable to generata WF. Too few parameters given!!")
 			return
 
-			#creating a standard theta vector for __get_WF__
+			#creating a standard theta vector for __get_WF
 		if D>3 and D!=7:
 			new_theta = np.zeros((theta.shape[0],7))
 			new_theta[:,4] = 1.
@@ -309,30 +309,31 @@ GW_generator
 				indices = [i for i in range(D)]
 				indices_new_theta = indices
 		
-				#building vector to keep standard layout for __get_WF__
+				#building vector to keep standard layout for __get_WF
 			new_theta[:, indices_new_theta] = theta[:,indices]
 			theta = new_theta #(N,7)
 
-
 			#generating waves and returning to user
-		res1, res2 = self.__get_WF__(theta, t_grid, red_grid, plus_cross)
+		res1, res2 = self.__get_WF(theta, t_grid, plus_cross, red_grid)
 			#res1,res2 = h_plus, h_cross if plus_cross = True
 			#res1,res2 = amp, ph if plus_cross = False
 		return res1, res2
 
 	#@do_profile(follow=[])
-	def __get_WF__(self, theta, time_grid, red_grid, plus_cross = False):
+	def __get_WF(self, theta, t_grid, plus_cross, red_grid):
 		"""
-	__get_WF__
-	==========
+	__get_WF
+	========
 		Generates the waves in time domain and perform . Called by get_WF.
 		Accepts only input features as [q,s1,s2] or [m1, m2, spin1_z , spin2_z, D_L, inclination, phi_0].
 		Input:
 			theta (N,D)		source parameters to make prediction at (D=3 or D=7)
-			time_grid (D',)	a grid in (physical or reduced) time to evaluate the wave at (uses np.inter)
+			t_grid (D',)	a grid in (physical or reduced) time to evaluate the wave at (uses np.interp)
+			plus_cross		whether to return h_+ and h_x components (if false amp and phase are returned)
 			red_grid		whether given t_grid is in reduced space (True) or physical space (False)
 		Output:
-			amp,ph (N,D)	desidered amplitude and phase
+			amp,ph (N,D)	desidered amplitude and phase (if it applies)
+			h_p,h_c (N,D)	desidered plus and cross polarization (if it applies)
 		"""
 		D= theta.shape[1] #number of features given
 		assert D in [3,7] #check that the number of dimension is fine
@@ -358,14 +359,14 @@ GW_generator
 			#doing interpolations
 		m_tot_std = 20.
 			############
-		new_amp = np.zeros((amp.shape[0], time_grid.shape[0]))
-		new_ph = np.zeros((amp.shape[0], time_grid.shape[0]))
+		new_amp = np.zeros((amp.shape[0], t_grid.shape[0]))
+		new_ph = np.zeros((amp.shape[0], t_grid.shape[0]))
 
 		for i in range(amp.shape[0]):
 			if not red_grid:
-				interp_grid = np.divide(time_grid,m_tot_us[i])
+				interp_grid = np.divide(t_grid,m_tot_us[i])
 			else:
-				interp_grid = time_grid
+				interp_grid = t_grid
 				#putting the wave on the user grid
 			new_amp[i,:] = np.interp(interp_grid, self.times, amp[i,:]* m_tot_us[i]/m_tot_std ,left = 0, right = 0) #set to zero outside the domain
 			new_ph[i,:]  = np.interp(interp_grid, self.times, ph[i,:])
@@ -374,73 +375,68 @@ GW_generator
 			if (interp_grid[0] < self.times[0]):
 				warnings.warn("Warning: time grid given is too long for the fitted model. Set 0 amplitude outside the fitting domain.")
 
-		amp = new_amp 
+		amp = new_amp
 		ph = np.subtract(new_ph.T,new_ph[:,0]).T #phase are zero at t = 0 #SLOOOW: do you need it??
 
 			#### Dealing with distance, inclination and phi_0
-		if D==7: #distance corrections are done
+		if D==7:
 			dist_pref = theta[:,4] #std_dist = 1 Mpc
 			iota = theta[:,5] #std_inclination = 0.
 			phi_0 = theta[:,6] #reference phase
 
-				#scaling to required distance
-			#amp = np.divide(amp.T, dist_pref).T #slow... check better if it works...
-
-			#scaling for setting inclination (it is done only if required)
-				#checking whether workin with real things is better
 			h_22_real = np.multiply(amp, np.cos(ph) )
 			h_22_imag = np.multiply(amp, np.sin(ph) )
-			#h_22 = h_22_real + 1j*h_22_imag 
-			#h_22 = np.multiply(amp, np.exp(1j*(ph)) ) #choose here a convention... (lal is +) #very slow!!!!
 
 					#parametrization of the wave
 				#h = h_p +i h_c = Y_22 * h_22 + Y_2-2 * h_2-2
 				#h_22 = h*_2-2
 				#Y_2+-2 = sqrt(5/(64pi))*(1+-cos(inclination))**2 exp(+-2i phi)
 
-			#h = np.multiply(h_22.T, self.__Y_2m__(2,iota, phi_0)).T + np.multiply(np.conj(h_22).T, self.__Y_2m__(-2,iota, phi_0)).T #very slow to work with complex numbers 
-			h_p, h_c = self.__set_d_iota_phi_dependence__(h_22_real,h_22_imag, dist_pref, iota, phi_0)
+			h_p, h_c = self.__set_d_iota_phi_dependence(h_22_real,h_22_imag, dist_pref, iota, phi_0)
 
 			if plus_cross:
 				return h_p, h_c
 			else: 
 				amp =  np.sqrt(np.square(h_p)+np.square(h_c)) 
-				ph = np.unwrap(np.arctan2(h_c,h_c))
+				ph = np.unwrap(np.arctan2(h_c,h_p)) #attention here... 
 				return amp, ph
+		if D==3: 
+			if plus_cross:
+				h_p = np.multiply(amp, np.cos(ph))
+				h_c = np.multiply(amp, np.sin(ph))
+				return h_p, h_c
+			else:
+				return amp, ph				
 
-		if plus_cross:
-			h_p = np.multiply(amp, np.cos(ph))
-			h_c = np.multiply(amp, np.sin(ph))
-			return h_p, h_c
-		else:
-			return amp, ph				
-
-	def __set_d_iota_phi_dependence__(self, h_p, h_c, dist, iota, phi_0):
+	def __set_d_iota_phi_dependence(self, h_p, h_c, dist, iota, phi_0):
 		"""
-	__set_d_iota_phi_dependence__
-	=============================
-		DO IT!!!!!!!!!!!!!!!!
+	__set_d_iota_phi_dependence
+	===========================
+		Given h_p, h_c in standard form, it returns the strain with included dependence on distance, inclination iota and reference phase phi_0. It uses the formula
+			h(d,iota,phi_0) = Y_22 * h_22 + Y_2-2 * h*_22
+		where Y_2+-2 = sqrt(5/(64pi))*(1+-cos(inclination))**2 exp(+-2i phi)
 		Input:
-			h_p, h_c (N,D)
-			iota (N,)
-			phi_0 (N,)
+			h_p, h_c (N,D)	polarization of the standard wave (as generated by ML)
+			iota (N,)		inclination for each wave
+			phi_0 (N,)		reference phase for each wave
+		Output:
+			h_p, h_c (N,D)	processed strain, with d, iota, phi_0 dependence included.
 		"""
-		const = 1./4.
 		c_i = np.cos(iota) #(N,)
 			#dealing with h_p
 		new_h_p = np.multiply(h_p.T, np.cos(2*phi_0)) - np.multiply(h_c.T, np.sin(2*phi_0)) #(D,N) #included phi dependence
-		new_h_p = np.multiply(new_h_p, 2*const*(1+np.square(c_i))/dist ).T #(N,D) #included iota dependence
+		new_h_p = np.multiply(new_h_p, 0.5*(1+np.square(c_i))/dist ).T #(N,D) #included iota dependence
 
 			#dealing with h_p
 		new_h_c = np.multiply(h_p.T, np.sin(2*phi_0)) + np.multiply(h_c.T, np.cos(2*phi_0)) #(D,N) #included phi dependence
-		new_h_c = np.multiply(new_h_c, 4*const*c_i/dist ).T #(N,D) #included iota dependence
+		new_h_c = np.multiply(new_h_c, c_i/dist ).T #(N,D) #included iota dependence
 
 		return new_h_p, new_h_c
 
-	def __Y_2m__(self,m, iota, phi):
+	def __Y_2m(self,m, iota, phi):
 		"""
-	__Y_2m__
-	========
+	__Y_2m
+	======
 		Spin 2 spherical harmonics with l = 2. Only m = +2,-2 is implemented.
 		It has the following expression:
 			Y_l+-2 = (1+-cos(iota))**2 e**(2i*m*phi_0)
@@ -469,12 +465,12 @@ GW_generator
 		Ouput:
 			amp,ph (N,D)	desidered amplitude and phase
 		"""
-		rec_PCA_dataset_amp, rec_PCA_dataset_ph = self.get_red_coefficients(theta)
+		rec_PCA_amp, rec_PCA_ph = self.get_red_coefficients(theta) #(N,K)
 
-		rec_amp_dataset = self.amp_PCA.reconstruct_data(rec_PCA_dataset_amp)
-		rec_ph_dataset = self.ph_PCA.reconstruct_data(rec_PCA_dataset_ph)
+		rec_amp = self.amp_PCA.reconstruct_data(rec_PCA_amp) #(N,D)
+		rec_ph = self.ph_PCA.reconstruct_data(rec_PCA_ph) #(N,D)
 
-		return rec_amp_dataset, rec_ph_dataset
+		return rec_amp, rec_ph
 
 	#@do_profile(follow=[])
 	def get_red_coefficients(self, theta):
@@ -490,56 +486,214 @@ GW_generator
 		assert theta.shape[1] == 3
 
 			#adding extra features
-		amp_theta = add_extra_features(theta, self.amp_features)
-		ph_theta = add_extra_features(theta, self.ph_features)
+		amp_theta = add_extra_features(theta, self.amp_features, log_list = [0])
+		ph_theta = add_extra_features(theta, self.ph_features, log_list = [0])
 
 			#making predictions for amplitude
-		rec_PCA_dataset_amp = np.zeros((amp_theta.shape[0], self.amp_PCA.get_dimensions()[1]))
+		rec_PCA_amp = np.zeros((amp_theta.shape[0], self.amp_PCA.get_dimensions()[1]))
 		for k in range(len(self.MoE_models_amp)):
-			rec_PCA_dataset_amp[:,k] = self.MoE_models_amp[k].predict(amp_theta) #why is this much sower than the phase part?
+			rec_PCA_amp[:,k] = self.MoE_models_amp[k].predict(amp_theta) #why is this much sower than the phase part?
 
 			#making predictions for phase
-		rec_PCA_dataset_ph = np.zeros((ph_theta.shape[0], self.ph_PCA.get_dimensions()[1]))
+		rec_PCA_ph = np.zeros((ph_theta.shape[0], self.ph_PCA.get_dimensions()[1]))
 		for k in range(len(self.MoE_models_ph)):
-			rec_PCA_dataset_ph[:,k] = self.MoE_models_ph[k].predict(ph_theta)
+			rec_PCA_ph[:,k] = self.MoE_models_ph[k].predict(ph_theta)
 
-		return rec_PCA_dataset_amp, rec_PCA_dataset_ph
+		return rec_PCA_amp, rec_PCA_ph
 
-########THIS IS SHIIIIT!!########
-	def align_wave(self, amp, ph, t_grid = None, al_merger = True, phi_0=0):
+	def __MoE_gradients(self, theta, MoE_model, feature_list):
 		"""
-	align_wave
-	==========
-		Given a set of waves in time domain, it sets time scale s.t. amplitude is max at t=0 (if a grid is given)
-		It sets ph = ph_0 at t=0 if al_merger is true; ph=ph_0 at beginning of time grid if al_merger is False.
+	__MoE_gradients
+	===============
+		Computes the gradient of a MoE model with basis function expansion at the given value of theta.
+		Gradient is computed with the chain rule:
+			D_i y= D_j y * D_j/D_i
+		where D_j/D_i is the jacobian of the feature augmentation.
 		Input:
-			amp	(N, N_grid)	amplitude of waves
-			ph (N,N_grid)	phases of waves
-			t_grid (N_grid)	grid at which wave is evaluated	
-			phi_0 ()/(N,)	value of phase at the point at which is aligned (default =0)
+			theta (N,3)		Values of orbital parameters to compute the gradient at
+			MoE_model		A mixture of expert model to make the gradient of
+			feature_list	List of features used in data augmentation
 		Output:
-			amp, ph (N,N_grid)	amplitude and phases rescaled appropriately
+			gradients (N,3)		Gradients for the model
 		"""
-		assert amp.shape == ph.shape
-		if amp.ndim == 1:
-			amp = amp[None,:]
-			ph = ph[None,:]
+			#L = len(feature_list)
+		jac_transf = jac_extra_features(theta, feature_list, log_list = [0]) #(N,3+L,3)
+		MoE_grads = MoE_model.get_gradient(add_extra_features(theta, feature_list, log_list = [0])) #(N,3+L)
+		gradients = np.multiply(jac_transf, MoE_grads[:,:,None]) #(N,3+L,3)
+		gradients = np.sum(gradients, axis =1) #(N,3)
+		return gradients
 
-		if t_grid is not None: #adjusting amplitude
-			argmax_amp = np.argmax(amp, axis = 1) #(N,)
-			#huge_grid = np.linspace(t_grid[0], t_grid[-1], int(1e5))
-			for i in range(amp.shape[0]):
-				amp[i,:] = np.interp( t_grid, t_grid- t_grid[argmax_amp[i]], amp[i,:])
-				ph[i,:]  = np.interp( t_grid, t_grid- t_grid[argmax_amp[i]], ph[i,:])
+	def get_raw_grads(self, theta):
+		"""
+	get_raw_grads
+	=============
+		Computes the gradients (at points theta) of the amplitude and phase w.r.t. (q,s1,s2).
+		Gradients are functions dependent on time and are evaluated on the internal reduced grid (GW_generator.get_time_grid()).
+		Input:
+			theta (N,3)		Values of orbital parameters to compute the gradient at
+		Output:
+			grad_amp (N,D,3)	Gradients of the amplitude
+			grad_ph (N,D,3)		Gradients of the phase
+		"""
+			#computing gradient for the reduced coefficients g
+		#amp
+		D, K_amp = self.amp_PCA.get_dimensions()
+		grad_g_amp = np.zeros((theta.shape[0], K_amp, theta.shape[1])) #(N,K,3)
+		for k in range(K_amp):
+			grad_g_amp[:,k,:] = self.__MoE_gradients(theta, self.MoE_models_amp[k], self.amp_features) #(N,3)
+		#ph
+		D, K_ph = self.ph_PCA.get_dimensions()
+		grad_g_ph = np.zeros((theta.shape[0], K_ph, theta.shape[1])) #(N,K,3)
+		for k in range(K_ph):
+			grad_g_ph[:,k,:] = self.__MoE_gradients(theta, self.MoE_models_ph[k], self.ph_features) #(N,3)
 		
-			#aligning phase
-		if not al_merger:
-			return amp, (np.subtract(ph.T,ph[:,0]) + phi_0).T #this works a lot but is very unelegant!!!
+			#computing gradients
+		#amp
+		grad_amp = np.zeros((theta.shape[0], D, theta.shape[1])) #(N,D,3)
+		for i in range(theta.shape[1]):
+			grad_amp[:,:,i] = self.amp_PCA.reconstruct_data(grad_g_amp[:,:,i]) - self.amp_PCA.PCA_params[1] #(N,D)
+		#ph
+		grad_ph = np.zeros((theta.shape[0], D, theta.shape[1])) #(N,D,3)
+		for i in range(theta.shape[1]):
+			grad_ph[:,:,i] = self.ph_PCA.reconstruct_data(grad_g_ph[:,:,i]) - self.ph_PCA.PCA_params[1] #(N,D)
 
-		if al_merger:
-			for i in range(amp.shape[0]):
-				ph_merger = ph[i,np.argmax(amp[i,:])]
-				ph[i,:] = ph[i,:] - ph_merger
-			ph = (ph.T + phi_0).T
-		return amp, ph
+		return grad_amp, grad_ph
+
+	def __grads_theta(self, theta, t_grid):
+		"""
+	__get_grads_theta
+	=================
+		Returns the gradient of the waveform
+			h = A exp(1j*phi) = A cos(phi) + i* A sin(phi)
+		with respect to theta = (M, q, s1, s2).
+		Gradients are evaluated on the user given time grid t_grid.
+		It returns the real and imaginary part of the gradients.
+		Input:
+			theta (N,4)		orbital parameters with format (m1, m2, s1, s2)
+			t_grid (D,)		time grid to evaluate the gradients at
+		Output:
+			grad_Re(h) (N,D,4)		Gradients of the real part of the waveform
+			grad_Im(h) (N,D,4)		Gradients of the imaginary part of the waveform
+		"""
+		assert theta.shape[1] == 4
+			#creating theta_std
+		q = np.divide(theta[:,0],theta[:,1]) #theta[:,0]/theta[:,1] #mass ratio (general) (N,)
+		m_tot_us = theta[:,0] + theta[:,1]	#total mass in solar masses for the user
+		theta_std = np.column_stack((q,theta[:,2],theta[:,3])) #(N,3)
+			#switching masses (where relevant)
+		to_switch = np.where(theta_std[:,0] < 1.) #holds the indices of the events to swap
+		theta_std[to_switch,0] = np.power(theta_std[to_switch,0], -1)
+		theta_std[to_switch,1], theta_std[to_switch,2] = theta_std[to_switch,2], theta_std[to_switch,1]
+
+		grad_amp = np.zeros((theta_std.shape[0], len(t_grid), 4))
+		grad_ph = np.zeros((theta_std.shape[0], len(t_grid), 4))
+
+		#dealing with gradients w.r.t. (q,s1,s2)
+		grad_q_amp, grad_q_ph = self.get_raw_grads(theta_std) #(N,D_std,3)
+		grad_q_amp = 1e-21*grad_q_amp
+		m_tot_std = 20.
+			#interpolating gradients on the user grid
+		for i in range(theta_std.shape[0]):
+			for j in range(1,4):
+				#print(t_grid.shape,self.times.shape)
+				grad_amp[i,:,j] = np.interp(t_grid, self.times * m_tot_us[i], grad_q_amp[i,:,j-1]* m_tot_us[i]/m_tot_std ,left = 0, right = 0) #set to zero outside the domain #(D,)
+				grad_ph[i,:,j]  = np.interp(t_grid, self.times * m_tot_us[i], grad_q_ph[i,:,j-1]) #(D,)
+
+		#dealing with gradients w.r.t. M
+		amp, ph = self.get_WF(theta, t_grid, plus_cross = False, red_grid = False) #true wave evaluated at t_grid #(N,D)
+		for i in range(theta_std.shape[0]):
+			grad_M_amp = np.gradient(amp[i,:], t_grid) #(D,)
+			grad_M_ph = np.gradient(ph[i,:], t_grid) #(D,)
+			grad_amp[i,:,0] = amp[i,:]/m_tot_us[i] - np.multiply(t_grid/m_tot_us[i], grad_M_amp) #(D,)
+			grad_ph[i,:,0]  = -np.multiply(t_grid/m_tot_us[i], grad_M_ph) #(D,)
+
+		grad_ph = np.subtract(grad_ph,grad_ph[:,0,None,:]) #unclear... but apparently compulsory
+			#check when grad is zero and keeping it
+		diff = np.concatenate((np.diff(ph, axis = 1), np.zeros((ph.shape[0],1))), axis =1)
+		zero = np.where(diff== 0)
+		grad_ph[zero[0],zero[1],:] = 0 #takes care of the flat part after ringdown (gradient there shall be zero!!)
+
+		#computing gradients of the real and imaginary part
+		ph = np.subtract(ph.T,ph[:,0]).T
+		grad_Re = np.multiply(grad_amp, np.cos(ph)[:,:,None]) - np.multiply(np.multiply(grad_ph, np.sin(ph)[:,:,None]), amp[:,:,None]) #(N,D,4)
+		grad_Im = np.multiply(grad_amp, np.sin(ph)[:,:,None]) + np.multiply(np.multiply(grad_ph, np.cos(ph)[:,:,None]), amp[:,:,None])#(N,D,4)
+
+			#switching back spins
+			#sure of it???
+		grad_Re[to_switch,:,2], grad_Re[to_switch,:,3] = grad_Re[to_switch,:,3], grad_Re[to_switch,:,2]
+		grad_Im[to_switch,:,2], grad_Im[to_switch,:,3] = grad_Im[to_switch,:,3], grad_Im[to_switch,:,2]
+
+		return grad_Re, grad_Im
+
+	def get_grads(self, theta, t_grid):
+		"""
+	get_grads
+	=========
+		Returns the gradients of the waveform h(m1,m2,s1,s2,d_L, iota, phi) with respect to (M, q, s1, s2, d_L, iota, phi).
+		Gradients are evaluated on the user given time grid t_grid.
+		It returns the real and imaginary part of the gradients.
+		Input:
+			theta (N,7)		orbital parameters with format (m1, m2, s1, s2, d_L, iota, phi_0)
+			t_grid (D,)		time grid to evaluate the gradients at
+		Output:
+			grad_Re(h) (N,D,7)		Gradients of the real part of the waveform
+			grad_Im(h) (N,D,7)		Gradients of the imaginary part of the waveform
+		"""
+		theta = np.array(theta)
+		if theta.ndim == 1:
+			theta = theta[None,:]
+		assert theta.shape[1]==7
+		grad_Re = np.zeros((theta.shape[0],len(t_grid),theta.shape[1])) #(N,D,7)
+		grad_Im = np.zeros((theta.shape[0],len(t_grid),theta.shape[1])) #(N,D,7)
+		
+			#gradients w.r.t. orbital parameters (M, q, s1, s2)
+		grad_theta_tilde_Re, grad_theta_tilde_Im = self.__grads_theta(theta[:,:4], t_grid) #(N,D,4)
+		for i in range(4):
+			grad_theta_tilde_Re[:,:,i], grad_theta_tilde_Im[:,:,i] = self.__set_d_iota_phi_dependence(grad_theta_tilde_Re[:,:,i], grad_theta_tilde_Im[:,:,i], theta[:,4], theta[:,5], theta[:,6]) #(N,D)
+
+			#gradients w.r.t. d
+		dist = theta[:,4]
+		grad_d_Re, grad_d_Im = self.get_WF(theta, t_grid)
+		grad_d_Re = -np.divide(grad_d_Re.T, dist).T
+		grad_d_Im = -np.divide(grad_d_Im.T, dist).T
+		
+			#gradients w.r.t. iota
+		iota_0_theta = np.array(theta)
+		iota_0_theta[:,5]=0.
+		grad_iota_Re, grad_iota_Im = self.get_WF(iota_0_theta, t_grid) #WF with iota =0 #(N,D)
+		grad_iota_Re = np.multiply(grad_iota_Re.T, -0.5*np.sin(2*theta[:,5])).T
+		grad_iota_Im = np.multiply(grad_iota_Im.T, -np.sin(theta[:,5])).T
+
+			#gradients w.r.t. phi_0
+		Re_h, Im_h = self.get_WF(theta[:,:4],t_grid, plus_cross =True) #(N,D)
+		c_i = np.cos(theta[:,5]) #(N,)
+		phi_0 = theta[:,6]
+			#dealing with h_p
+		grad_phi_Re = np.multiply(Re_h.T, np.sin(2*phi_0)) + np.multiply(Im_h.T, np.cos(2*phi_0)) #(D,N) #included phi dependence
+		grad_phi_Re = -2*np.multiply(grad_phi_Re, 0.5*(1+np.square(c_i))/dist ).T #(N,D) #included iota dependence
+			#dealing with h_p
+		grad_phi_Im = np.multiply(Re_h.T, np.cos(2*phi_0)) - np.multiply(Im_h.T, np.sin(2*phi_0)) #(D,N) #included phi dependence
+		grad_phi_Im = 2.*np.multiply(grad_phi_Im, c_i/dist ).T #(N,D) #included iota dependence
+
+			#producing overall gradients
+		grad_Re[:,:,:4] = grad_theta_tilde_Re
+		grad_Im[:,:,:4] = grad_theta_tilde_Im
+		grad_Re[:,:,4] = grad_d_Re
+		grad_Im[:,:,4] = grad_d_Im		
+		grad_Re[:,:,5] = grad_iota_Re
+		grad_Im[:,:,5] = grad_iota_Im	
+		grad_Re[:,:,6] = grad_phi_Re
+		grad_Im[:,:,6] = grad_phi_Im	
+
+		return grad_Re, grad_Im
+
+
+
+
+
+
+
+
+
+
 

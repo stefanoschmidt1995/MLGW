@@ -375,7 +375,7 @@ GW_generator
 			if (interp_grid[0] < self.times[0]):
 				warnings.warn("Warning: time grid given is too long for the fitted model. Set 0 amplitude outside the fitting domain.")
 
-		amp = new_amp 
+		amp = new_amp
 		ph = np.subtract(new_ph.T,new_ph[:,0]).T #phase are zero at t = 0 #SLOOOW: do you need it??
 
 			#### Dealing with distance, inclination and phi_0
@@ -398,7 +398,7 @@ GW_generator
 				return h_p, h_c
 			else: 
 				amp =  np.sqrt(np.square(h_p)+np.square(h_c)) 
-				ph = np.unwrap(np.arctan2(h_c,h_c))
+				ph = np.unwrap(np.arctan2(h_c,h_p)) #attention here... 
 				return amp, ph
 		if D==3: 
 			if plus_cross:
@@ -465,10 +465,10 @@ GW_generator
 		Ouput:
 			amp,ph (N,D)	desidered amplitude and phase
 		"""
-		rec_PCA_amp, rec_PCA_ph = self.get_red_coefficients(theta)
+		rec_PCA_amp, rec_PCA_ph = self.get_red_coefficients(theta) #(N,K)
 
-		rec_amp = self.amp_PCA.reconstruct_data(rec_PCA_amp)
-		rec_ph = self.ph_PCA.reconstruct_data(rec_PCA_ph)
+		rec_amp = self.amp_PCA.reconstruct_data(rec_PCA_amp) #(N,D)
+		rec_ph = self.ph_PCA.reconstruct_data(rec_PCA_ph) #(N,D)
 
 		return rec_amp, rec_ph
 
@@ -547,27 +547,17 @@ GW_generator
 		for k in range(K_ph):
 			grad_g_ph[:,k,:] = self.__MoE_gradients(theta, self.MoE_models_ph[k], self.ph_features) #(N,3)
 		
-		return grad_g_amp, grad_g_ph #debug
-
 			#computing gradients
 		#amp
 		grad_amp = np.zeros((theta.shape[0], D, theta.shape[1])) #(N,D,3)
 		for i in range(theta.shape[1]):
-			grad_amp[:,:,i] = self.amp_PCA.reconstruct_data(grad_g_amp[:,:,i]) #(N,D)
+			grad_amp[:,:,i] = self.amp_PCA.reconstruct_data(grad_g_amp[:,:,i]) - self.amp_PCA.PCA_params[1] #(N,D)
 		#ph
 		grad_ph = np.zeros((theta.shape[0], D, theta.shape[1])) #(N,D,3)
 		for i in range(theta.shape[1]):
-			grad_ph[:,:,i] = self.ph_PCA.reconstruct_data(grad_g_ph[:,:,i]) #(N,D)
+			grad_ph[:,:,i] = self.ph_PCA.reconstruct_data(grad_g_ph[:,:,i]) - self.ph_PCA.PCA_params[1] #(N,D)
 
 		return grad_amp, grad_ph
-			#computing derivatives of the real and imaginary part
-		#amp, ph = self.get_raw_WF(theta) #(N,D)
-		#ph = np.subtract(ph.T,ph[:,0]).T
-
-		#grad_Re = np.multiply(grad_amp, np.cos(ph)[:,:,None]) - np.multiply(np.multiply(grad_ph, np.sin(ph)[:,:,None]), amp[:,:,None]) #(N,D,3)
-		#grad_Im = np.multiply(grad_amp, np.sin(ph)[:,:,None]) + np.multiply(np.multiply(grad_ph, np.cos(ph)[:,:,None]), amp[:,:,None])#(N,D,3)
-
-		#return grad_Re, grad_Im
 
 	def __grads_theta(self, theta, t_grid):
 		"""
@@ -600,10 +590,11 @@ GW_generator
 
 		#dealing with gradients w.r.t. (q,s1,s2)
 		grad_q_amp, grad_q_ph = self.get_raw_grads(theta_std) #(N,D_std,3)
+		grad_q_amp = 1e-21*grad_q_amp
 		m_tot_std = 20.
 			#interpolating gradients on the user grid
 		for i in range(theta_std.shape[0]):
-			for j in range(1,theta_std.shape[1]):
+			for j in range(1,4):
 				#print(t_grid.shape,self.times.shape)
 				grad_amp[i,:,j] = np.interp(t_grid, self.times * m_tot_us[i], grad_q_amp[i,:,j-1]* m_tot_us[i]/m_tot_std ,left = 0, right = 0) #set to zero outside the domain #(D,)
 				grad_ph[i,:,j]  = np.interp(t_grid, self.times * m_tot_us[i], grad_q_ph[i,:,j-1]) #(D,)
@@ -613,8 +604,14 @@ GW_generator
 		for i in range(theta_std.shape[0]):
 			grad_M_amp = np.gradient(amp[i,:], t_grid) #(D,)
 			grad_M_ph = np.gradient(ph[i,:], t_grid) #(D,)
-			grad_amp[i,:,0] = amp[i,:]/m_tot_us[i] + np.multiply(t_grid/20., grad_M_amp) #(D,)
-			grad_ph[i,:,0] = np.multiply(t_grid/20., grad_M_ph) #(D,)
+			grad_amp[i,:,0] = amp[i,:]/m_tot_us[i] - np.multiply(t_grid/m_tot_us[i], grad_M_amp) #(D,)
+			grad_ph[i,:,0]  = -np.multiply(t_grid/m_tot_us[i], grad_M_ph) #(D,)
+
+		grad_ph = np.subtract(grad_ph,grad_ph[:,0,None,:]) #unclear... but apparently compulsory
+			#check when grad is zero and keeping it
+		diff = np.concatenate((np.diff(ph, axis = 1), np.zeros((ph.shape[0],1))), axis =1)
+		zero = np.where(diff== 0)
+		grad_ph[zero[0],zero[1],:] = 0 #takes care of the flat part after ringdown (gradient there shall be zero!!)
 
 		#computing gradients of the real and imaginary part
 		ph = np.subtract(ph.T,ph[:,0]).T
@@ -657,14 +654,14 @@ GW_generator
 			#gradients w.r.t. d
 		dist = theta[:,4]
 		grad_d_Re, grad_d_Im = self.get_WF(theta, t_grid)
-		grad_d_Re = np.divide(grad_d_Re.T, dist).T
-		grad_d_Im = np.divide(grad_d_Im.T, dist).T
+		grad_d_Re = -np.divide(grad_d_Re.T, dist).T
+		grad_d_Im = -np.divide(grad_d_Im.T, dist).T
 		
 			#gradients w.r.t. iota
 		iota_0_theta = np.array(theta)
 		iota_0_theta[:,5]=0.
 		grad_iota_Re, grad_iota_Im = self.get_WF(iota_0_theta, t_grid) #WF with iota =0 #(N,D)
-		grad_iota_Re = np.multiply(grad_iota_Re.T, -np.sin(2*theta[:,5])).T
+		grad_iota_Re = np.multiply(grad_iota_Re.T, -0.5*np.sin(2*theta[:,5])).T
 		grad_iota_Im = np.multiply(grad_iota_Im.T, -np.sin(theta[:,5])).T
 
 			#gradients w.r.t. phi_0
