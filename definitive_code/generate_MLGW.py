@@ -39,7 +39,7 @@ for i in range(N_waves):
 	times, h_p_true, h_c_true = generate_waveform(*theta[i,:], t_coal = 0.25, t_step = 1e-5)
 	h = (h_p_true+1j*h_c_true)
 	middle_time = time.process_time_ns()/1e6
-	h_p, h_c = generator.get_WF(theta[i,:], plus_cross = True, t_grid = times , red_grid = False)
+	h_p, h_c = generator.get_WF(theta[i,:], out_type = 'h+x', t_grid = times , red_grid = False)
 	h_rec = (h_p+1j*h_c)[0,:]
 	end_time = time.process_time_ns()/1e6
 	F[i], phi_ref = compute_optimal_mismatch(h, h_rec)
@@ -55,7 +55,7 @@ for i in range(N_waves):
 		plt.show()
 
 start_full = time.process_time_ns()/1e6
-generator.get_WF(theta, plus_cross = True, t_grid = times , red_grid = False)
+generator.get_WF(theta, out_type = 'h+x', t_grid = times , red_grid = False)
 end_full =  time.process_time_ns()/1e6
 
 #"""

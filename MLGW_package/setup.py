@@ -6,7 +6,7 @@ def readme():
 
 setup(
     name='mlgw',
-    version='1.1.0',
+    version='1.1.2post',
     author='Stefano Schmidt',
     author_email='stefanoschmidt1995@gmail.com',
     packages=['mlgw'],

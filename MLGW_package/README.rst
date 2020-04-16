@@ -108,7 +108,7 @@ Method ``__call__`` can only be given the last line.
 The ML model generates the waves in reduced grid ``t' = t/M_tot`` with a fixed number of grid points. With argument ``t_grid``, the user can specify a grid which they want to evaluate the wave at.
 Any custom grid must meet the convention that the origin of time is at merger and that the inspiral takes place at negative times.
 An additional boolean argument ``red_grid`` must state whether the grid is in reduced time domain or true time domain.
-Furthermore, the ``plus_cross`` option allows the user to get phase and amplitude of the wave instead of plus and cross polarizations.
+Furthermore, the ``out_type`` option allows the user to choose the desidered output representation of the wave. Currently, the code implements the output of plus cross polarizations, amplitude and phase and real and imaginary part of the 22 mode.
 
 Method ``get_grads`` computes the gradients of the waveform with respect to orbital parameters.
 

@@ -228,11 +228,12 @@ GW_generator
 		return self.times
 
 
-	def __call__(self, t_grid, m1, m2, spin1_x, spin1_y, spin1_z, spin2_x, spin2_y, spin2_z, D_L, i, phi_0, long_asc_nodes, eccentricity, mean_per_ano , plus_cross = True):
+	def __call__(self, t_grid, m1, m2, spin1_x, spin1_y, spin1_z, spin2_x, spin2_y, spin2_z, D_L, i, phi_0, long_asc_nodes, eccentricity, mean_per_ano , out_type = 'h+x'):
 		"""
 	__call__
 	========
 		Generates a WF according to the MLGW model. It makes all the required preprocessing to include wave dependance on the full 14 parameters space of the GW forms.
+		Output waveforms can be represented with plus cross polarization, amplitude and phase or h_22 component of the multipole expansion.
 		Input:
 			t_grid	(N_grid,)		Grid of (physical) time/frequency points to evaluate the wave at
 			m1	()/(N,)				Mass of BH 1
@@ -245,16 +246,17 @@ GW_generator
 			long_asc_nodes ()/(N,)	Logitudinal ascentional nodes (currently not implemented)
 			eccentricity ()/(N,)	Eccentricity of the orbit (currently not implemented)
 			mean_per_ano ()/(N,)	Mean per ano (currently not implemented)
-			plus_cross				Whether to return h_+ and h_x components (if false amp and phase are returned)
+			out_type (str)			The output to be returned ('h+x', 'ampph', 'h22')
 		Ouput:
-			h_plus, h_cross (1,D)/(N,D)	desidered polarizations (if it applies)
-			amp, phase (1,D)/(N,D)		desidered amplitude and phase (if it applies)
+			h_plus, h_cross (1,D)/(N,D)		desidered polarizations (if it applies)
+			amp, phase (1,D)/(N,D)			desidered amplitude and phase (if it applies)
+			h22_real, h_22_im (1,D)/(N,D)	desidered h_22 component (if it applies)
 		"""
 		theta = np.column_stack((m1, m2, spin1_x, spin1_y, spin1_z, spin2_x, spin2_y, spin2_z, D_L, i, phi_0, long_asc_nodes, eccentricity, mean_per_ano)) #(N,D)
-		return self.get_WF(theta, plus_cross = plus_cross, t_grid= t_grid, red_grid = False)
+		return self.get_WF(theta, out_type = out_type, t_grid= t_grid, red_grid = False)
 
 
-	def get_WF(self, theta, t_grid = None, plus_cross = True, red_grid = False):
+	def get_WF(self, theta, t_grid = None, out_type = 'h+x', red_grid = False):
 		"""
 	get_WF
 	======
@@ -272,14 +274,16 @@ GW_generator
 			[mass] = M_sun
 			[D_L] = Mpc
 			[spin] = adimensional
+		Output waveforms can be represented with plus cross polarization, amplitude and phase or h_22 component of the multipole expansion.
 		Input:
 			theta (N,D)		source parameters to make prediction at
 			t_grid (D',)	a grid in (physical or reduced) time/frequency to evaluate the wave at (uses np.interp)
-			plus_cross		whether to return h_+ and h_x components (if false amp and phase are returned)
+			out_type (str)	The output to be returned ('h+x', 'ampph', 'h22')
 			red_grid		whether given t_grid is in reduced space (True) or physical space (False)
 		Ouput:
-			h_plus, h_cross (N,D)	desidered polarizations (if it applies)
-			amp,ph (N,D)			desidered amplitude and phase (if it applies)
+			h_plus, h_cross (1,D)/(N,D)		desidered polarizations (if it applies)
+			amp, phase (1,D)/(N,D)			desidered amplitude and phase (if it applies)
+			h22_real, h_22_im (1,D)/(N,D)	desidered h_22 component (if it applies)
 		"""
 		if t_grid is None:
 			t_grid = self.times
@@ -314,13 +318,13 @@ GW_generator
 			theta = new_theta #(N,7)
 
 			#generating waves and returning to user
-		res1, res2 = self.__get_WF(theta, t_grid, plus_cross, red_grid)
+		res1, res2 = self.__get_WF(theta, t_grid, out_type, red_grid)
 			#res1,res2 = h_plus, h_cross if plus_cross = True
 			#res1,res2 = amp, ph if plus_cross = False
 		return res1, res2
 
 	#@do_profile(follow=[])
-	def __get_WF(self, theta, t_grid, plus_cross, red_grid):
+	def __get_WF(self, theta, t_grid, out_type, red_grid):
 		"""
 	__get_WF
 	========
@@ -329,14 +333,16 @@ GW_generator
 		Input:
 			theta (N,D)		source parameters to make prediction at (D=3 or D=7)
 			t_grid (D',)	a grid in (physical or reduced) time to evaluate the wave at (uses np.interp)
-			plus_cross		whether to return h_+ and h_x components (if false amp and phase are returned)
+			out_type (str)	the output to be returned ('h+x', 'ampph', 'h22')
 			red_grid		whether given t_grid is in reduced space (True) or physical space (False)
 		Output:
-			amp,ph (N,D)	desidered amplitude and phase (if it applies)
-			h_p,h_c (N,D)	desidered plus and cross polarization (if it applies)
+			h_plus, h_cross (1,D)/(N,D)		desidered polarizations (if it applies)
+			amp, phase (1,D)/(N,D)			desidered amplitude and phase (if it applies)
+			h22_real, h_22_im (1,D)/(N,D)	desidered h_22 components (if it applies)
 		"""
 		D= theta.shape[1] #number of features given
 		assert D in [3,7] #check that the number of dimension is fine
+		const = 4*np.sqrt(5/(64*np.pi)) #constant of proportionality between h_22 and h_tilde
 
 			#setting theta_std & m_tot_us
 		if D == 3:
@@ -387,6 +393,9 @@ GW_generator
 			h_22_real = np.multiply(amp, np.cos(ph) )
 			h_22_imag = np.multiply(amp, np.sin(ph) )
 
+			if out_type == 'h22':
+				return h_22_real/const, h_22_imag/const
+
 					#parametrization of the wave
 				#h = h_p +i h_c = Y_22 * h_22 + Y_2-2 * h_2-2
 				#h_22 = h*_2-2
@@ -394,19 +403,26 @@ GW_generator
 
 			h_p, h_c = self.__set_d_iota_phi_dependence(h_22_real,h_22_imag, dist_pref, iota, phi_0)
 
-			if plus_cross:
+			if out_type == 'h+x':
 				return h_p, h_c
-			else: 
+			elif out_type == 'ampph':
 				amp =  np.sqrt(np.square(h_p)+np.square(h_c)) 
 				ph = np.unwrap(np.arctan2(h_c,h_p)) #attention here... 
 				return amp, ph
+			else:
+				return np.zeros(h_p.shape), np.zeros(h_c.shape)
 		if D==3: 
-			if plus_cross:
+			if out_type == 'ampph':
+				return amp, ph
+			else:
 				h_p = np.multiply(amp, np.cos(ph))
 				h_c = np.multiply(amp, np.sin(ph))
-				return h_p, h_c
-			else:
-				return amp, ph				
+				if out_type == 'h+x':
+					return h_p, h_c
+				elif out_type == 'h22':
+					return h_p/const, h_c/const
+				else:
+					return np.zeros(h_p.shape), np.zeros(h_c.shape)
 
 	def __set_d_iota_phi_dependence(self, h_p, h_c, dist, iota, phi_0):
 		"""
