@@ -31,7 +31,7 @@ To generate a wave:
 	times = np.linspace(-8,0.02, 100000) #time grid at which waves shall be evaluated
 	h_p, h_c = generator.get_WF(theta, times) #returns amplitude and phase of the wave
 
-	generator.model_summary() #printing model summary
+	generator.summary() #printing model summary
 
 	#plotting the wave
 	plt.figure(figsize=(15,8))
@@ -126,5 +126,9 @@ This page is intented to present the use of the code only for generating a wave.
 	help(mlgw)
 	help(mlgw.<module_name>)
 
-For full source code (and much more) see: <https://github.com/stefanoschmidt1995/MLGW>
+For full source code (and much more) see: https://github.com/stefanoschmidt1995/MLGW
+
+In the thesis, the model is explained in every details as well as the underlying theory and the validation results. The document is available `here <https://raw.githubusercontent.com/stefanoschmidt1995/MLGW/master/MLGW_package/docs/thesis.pdf>`_.
+
+
 

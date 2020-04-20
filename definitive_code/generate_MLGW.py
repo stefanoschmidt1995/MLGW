@@ -10,9 +10,10 @@ sys.path.insert(1, '../routines') #folder in which every relevant routine is sav
 from GW_generator import *
 from GW_helper import * 	#routines for dealing with datasets
 
-generator = GW_generator("./TD_model")
+#generator = GW_generator("./TD_model")
+generator = GW_generator(1)
 
-generator.model_summary()
+generator.summary()
 
 #testing performances
 N_waves = 16

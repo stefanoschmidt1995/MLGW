@@ -13,6 +13,7 @@ import os
 import sys
 import warnings
 import numpy as np
+import ast
 sys.path.insert(1, os.path.dirname(__file__)) 	#adding to path folder where mlgw package is installed (ugly?)
 from EM_MoE import *			#MoE model
 from ML_routines import *		#PCA model
@@ -39,6 +40,43 @@ except:
 	pass
 
 ################# GW_generator class
+def list_models(print_out = True):
+	"""
+list_models
+===========
+	Print to screen the models available by default in the relevant folder.
+	Input:
+		print_out	whether the output should be printed (if False, it is returned as a string)
+	"""
+	if not print_out:
+		to_return = ""
+	else:
+		to_return = None
+	models = os.listdir(os.path.dirname(__file__)+"/TD_models")
+	models.sort()
+	for model in models:
+		folder = os.path.dirname(__file__)+"/TD_models/"+model
+		files = os.listdir(folder)
+		if "README" in files:
+			with open(folder+"/README") as f:
+				contents = f.read()
+			temp_dict = ast.literal_eval(contents) #dictionary holding some relevant information about the model loaded
+			try:
+				temp_dict = ast.literal_eval(contents) #dictionary holding some relevant information about the model loaded
+				description = temp_dict['description']
+				description = ": "+ description
+			except:
+				description = ""
+		else:
+			description = ""
+		model = model.replace("_"," ")
+		if print_out:
+			print(model+description)
+		else:
+			to_return += model+description+"\n"
+
+	return to_return
+
 class GW_generator(object):
 	"""
 GW_generator
@@ -53,23 +91,28 @@ GW_generator
 	No suffixes shall be given to files.
 	The class doesn't implement methods for fitting: it only provides a useful tool to gather them.
 	"""
-	def __init__(self, folder = "default"):
+	def __init__(self, folder = 0):
 		"""
 	__init__
 	========
-		Initialise class by loading models from file. "default" loads a pre-fitted default model (saved in "__dir__/TD_model").
+		Initialise class by loading models from file.
+		A number of pre-fitted models are released: they can be loaded with folder argument by specifying an integer index (default 0. They are all saved in "__dir__/TD_models/model_(index_given)". The pre-fitted models available can be listed with list models().
 		Everything useful for the model must be put within the folder with the standard names:
 			{amp(ph)_exp_# ; amp(ph)_gat_#	; amp(ph)_feat ; amp(ph)_PCA_model; times/frequencies}
 		There can be an arbitrary number of exp and gating functions as long as they match with each other and they are less than PCA components.
 		A compulsory file times/frequencies must hold a list of grid points at which the generated ML wave is evaluated.
+		An optional README file holds more information about the model (in the format of a dictionary).
 		Input:
 			folder				address to folder in which everything is kept (if None, models must be loaded manually with load())
 		"""
 		self.times = None
 		
 		if folder is not None:
-			if folder == "default":
-				folder = os.path.dirname(__file__)+"/TD_model"
+			if type(folder) is int:
+				int_folder = folder
+				folder = os.path.dirname(__file__)+"/TD_models/model_"+str(folder)
+				if not os.path.isdir(folder):
+					raise RuntimeError("Given value {0} for pre-fitted model is not valid. Available models are:\n{1}".format(str(int_folder), list_models(False)))
 			self.load(folder)
 		return
 
@@ -81,10 +124,14 @@ GW_generator
 		Everything useful for the model must be put within the folder with the standard names:
 			{amp(ph)_exp_# ; amp(ph)_gat_#	; amp(ph)_feat ; amp(ph)_PCA_model}
 		There can be an arbitrary number of exp and gating functions as long as they match with each other and they are less than PCA components.
-		It loads frequencies.
+		It loads time vector.
+		If given it loads as a dictionary the README file. Dictionary should include entries (all optional): 'description', 'train model', 'q range', 's1 range', 's2 range'.
 		Input:
 			address to folder in which everything is kept
 		"""
+		if not os.path.isdir(folder):
+			raise RuntimeError("Unable to load folder "+folder+": no such directory!")
+
 		if not folder.endswith('/'):
 			folder = folder + "/"
 		print("Loading model from: ", folder)
@@ -139,6 +186,19 @@ GW_generator
 		else:
 			raise RuntimeError("Unable to load model: no time vector given!")
 
+		if 'README' in file_list:
+			with open(folder+"README") as f:
+				contents = f.read()
+			self.readme = ast.literal_eval(contents) #dictionary holding some relevant information about the model loaded
+			try:
+				self.readme = ast.literal_eval(contents) #dictionary holding some relevant information about the model loaded
+				assert type(self.readme) == dict
+			except:
+				warnings.warn("README file is not a valid dictionary: entry ignored")
+				self.readme = None
+		else:
+			self.readme = None
+
 		np.matmul(np.zeros((2,2)),np.ones((2,2))) #this has something to do with a speed up of matmul. Once it is called once, matmul gets much faster!
 		return
 
@@ -177,7 +237,7 @@ GW_generator
 			return self.ph_PCA
 		return None
 
-	def model_summary(self, filename = None):
+	def summary(self, filename = None):
 		"""
 	PCA_models
 	==========
@@ -191,8 +251,16 @@ GW_generator
 		ph_exp_list = [str(model.get_iperparams()[1]) for model in self.MoE_models_ph]
 
 		output = "###### Summary for MLGW model ######\n"
-		output += "   Grid size:     "+str(self.amp_PCA.get_PCA_params()[0].shape[0]) +" \n"
-		output += "   Minimum time:  "+str(np.abs(self.times[0]))+" s/M_sun\n"
+		if self.readme is not None:
+			keys = list(self.readme.keys())
+			if "description" in keys:
+				output += self.readme['description'] + "\n"
+				keys.remove('description')
+			for k in keys:
+				output += "   "+k+": "+self.readme[k] + "\n"
+
+		output += "   Grid size: "+str(self.amp_PCA.get_PCA_params()[0].shape[0]) +" \n"
+		output += "   Minimum time: "+str(np.abs(self.times[0]))+" s/M_sun\n"
 			#amplitude summary
 		output += "   ## Model for Amplitude \n"
 		output += "      - #PCs:          "+str(self.amp_PCA.get_PCA_params()[0].shape[1])+"\n"

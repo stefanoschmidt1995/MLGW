@@ -158,7 +158,7 @@ compute_optimal_mismatch
 
 ################# Dataset related stuff
 
-def create_dataset_TD(N_data, N_grid, filename = None,  t_coal = 0.5, q_range = (1.,5.), m2_range = None, s1_range = (-0.8,0.8), s2_range = (-0.8,0.8), t_step = 1e-5, lal_approximant = "SEOBNRv2_opt", alpha = 0.35):
+def create_dataset_TD(N_data, N_grid, filename = None,  t_coal = 0.5, q_range = (1.,5.), m2_range = None, s1_range = (-0.8,0.8), s2_range = (-0.8,0.8), t_step = 1e-5, approximant = "SEOBNRv2_opt", alpha = 0.35):
 	"""
 create_dataset_TD
 =================
@@ -182,7 +182,7 @@ create_dataset_TD
 		spin_mag_max_1		tuple with range for random spin #1 values. if single value, s1 is kept fixed at that value
 		spin_mag_max_2		tuple with range for random spin #1 values. if single value, s2 is kept fixed at that value
 		t_step				time step to generate the wave with
-		lal_approximant		string for the approximant model to be used (in lal convention)
+		approximant		string for the approximant model to be used (in lal convention)
 		alpha				distorsion factor for time grid. (In range (0,1], when it's close to 0, more grid points are around merger)
 	Output:
 		if filename is given
@@ -195,11 +195,18 @@ create_dataset_TD
 	"""
 	d=1.
 	inclination = 0.#np.pi/2.
-	if d != 1. or inclination != 0.: #debug
-		print("d is not standard!!! ",d) #debug
-		print("i is not standard!!! ",inclination) #debug
-	LALpars = lal.CreateDict()
-	approx = lalsim.SimInspiralGetApproximantFromString(lal_approximant)
+
+	if approximant == "TEOBResumS":
+		#see https://bitbucket.org/eob_ihes/teobresums/src/development/ for the implementation of TEOBResumS
+		try:
+			import sys
+			sys.path.append('/home/stefano/Desktop/Stefano/scuola/uni/tesi_magistrale/code/TEOBResumS/Python') #path to local installation of TEOBResumS
+			import EOBRun_module
+		except:
+			raise RuntimeError("No valid imput source for module 'EOBRun_module' for TEOBResumS. Unable to continue.")
+	else:
+		LALpars = lal.CreateDict()
+		approx = lalsim.SimInspiralGetApproximantFromString(approximant)
 
 		#checking if N_grid is fine
 	if not isinstance(N_grid, int):
@@ -244,6 +251,7 @@ create_dataset_TD
 
 	for i in range(N_data): #loop on data to be created
 		if i%50 == 0 and i != 0:
+		#if i%1 == 0 and i != 0:
 			print("Generated WF ", i)
 
 			#setting value for data
@@ -276,36 +284,58 @@ create_dataset_TD
 		 #this should be multiplied by a prefactor (~1) for dealing with some small variation due to spins
 
 			#getting the wave
-		hptilde, hctilde = lalsim.SimInspiralChooseTDWaveform( #where is its definition and documentation????
-			m1*lalsim.lal.MSUN_SI, #m1
-			m2*lalsim.lal.MSUN_SI, #m2
-			0., 0., spin1z, #spin vector 1
-			0., 0., spin2z, #spin vector 2
-			d*1e6*lalsim.lal.PC_SI, #distance to source
-			inclination, #inclination
-			0., #phi ref
-			0., #longAscNodes
-			0., #eccentricity
-			0., #meanPerAno
-			t_step, # time incremental step
-			f_min, # lowest value of time
-			f_min, #some reference value of time (??)
-			lal.CreateDict(), #some lal dictionary
-			approx #approx method for the model
-		)
-		#print(f_min, t_step)#debug
-		#print(m1,m2, spin1z,spin2z) #debug
+		if approximant != "TEOBResumS": #using lal to create WFs
+			hptilde, hctilde = lalsim.SimInspiralChooseTDWaveform( #where is its definition and documentation????
+				m1*lalsim.lal.MSUN_SI, #m1
+				m2*lalsim.lal.MSUN_SI, #m2
+				0., 0., spin1z, #spin vector 1
+				0., 0., spin2z, #spin vector 2
+				d*1e6*lalsim.lal.PC_SI, #distance to source
+				inclination, #inclination
+				0., #phi ref
+				0., #longAscNodes
+				0., #eccentricity
+				0., #meanPerAno
+				t_step, # time incremental step
+				f_min, # lowest value of time
+				f_min, #some reference value of time (??)
+				lal.CreateDict(), #some lal dictionary
+				approx #approx method for the model
+			)
+			#print(f_min, t_step)#debug
+			#print(m1,m2, spin1z,spin2z) #debug
 
-		h = np.array(hptilde.data.data)+1j*np.array(hctilde.data.data) #complex waveform
+			h_p, h_c = np.array(hptilde.data.data), np.array(hctilde.data.data) #complex waveform
+			time_full = np.linspace(0.0, hptilde.data.length*t_step, hptilde.data.length) #time grid at which wave is computed
+
+		if approximant == "TEOBResumS": #using TEOBResumS
+			pars = {
+				'M'                  : m1+m2,
+				'q'                  : m1/m2,
+				'Lambda1'            : 0.,
+				'Lambda2'            : 0.,     
+				'chi1'               : spin1z,
+				'chi2'               : spin2z,
+				'domain'             : 0,      # TD
+				'arg_out'            : 0,      # Output hlm/hflm. Default = 0
+				'use_mode_lm'        : [1],      # List of modes to use/output through EOBRunPy
+				'srate_interp'       : 1./t_step,  # srate at which to interpolate. Default = 4096.
+				'use_geometric_units': 0,      # Output quantities in geometric units. Default = 1
+				'initial_frequency'  : f_min,   # in Hz if use_geometric_units = 0, else in geometric units
+				'interp_uniform_grid': 2,      # Interpolate mode by mode on a uniform grid. Default = 0 (no interpolation)
+				'distance': d,
+				'inclination':inclination,
+			}
+			time_full, h_p, h_c = EOBRun_module.EOBRunPy(pars)
+
 		if isinstance(m2_range, tuple):
 			temp_theta = [m1, m2, spin1z, spin2z]		
 		else:
 			temp_theta = [m1/m2, spin1z, spin2z]
-		temp_amp = np.abs(h)
-		temp_ph = np.unwrap(np.angle(h))
 
-			#bringing waves on the chosen grid
-		time_full = np.linspace(0.0, hptilde.data.length*t_step, hptilde.data.length) #time grid at which wave is computed
+		temp_amp = np.sqrt(np.square(h_p)+np.square(h_c))
+		temp_ph = np.unwrap(np.arctan2(h_c,h_p))
+
 		time_full = (time_full - time_full[np.argmax(temp_amp)])/(m1+m2) #grid is scaled to standard grid
 			#setting waves to the chosen std grid
 		temp_amp = np.interp(time_grid, time_full, temp_amp)
@@ -316,8 +346,8 @@ create_dataset_TD
 		id0 = np.where(time_grid == 0)[0]
 		temp_ph = temp_ph - temp_ph[id0] #all phases are shifted by a constant to make every wave start with 0 phase at t=0 (i.e. at maximum amplitude)
 
-			#removing spourious gaps (if present)
-		(index,) = np.where(temp_amp/np.max(temp_amp) < 1e-4) #there should be a way to choose the right threshold...
+			#removing spourious gaps (if present) (do I need it??)
+		(index,) = np.where(temp_amp/np.max(temp_amp) < 1e-5) #there should be a way to choose the right threshold...
 		if len(index) >0:
 			print("Wave killed")
 			temp_amp[index] = temp_amp[index[0]-1]
@@ -403,9 +433,75 @@ generate_waveform
 		arg=0
 
 	return times[arg:], h_p[arg:], h_c[arg:]
-	
 
-def create_dataset_FD(N_data, N_grid = None, filename = None, q_range = (1.,5.), m2_range = 20., s1_range = (-0.8,0.8), s2_range = (-0.8,0.8), log_space = True, f_high = 2000, f_step = 1e-2, f_max = None, f_min =None, lal_approximant = "IMRPhenomPv2"):
+def generate_waveform_TEOBResumS(m1,m2, s1=0.,s2 = 0.,d=1., iota = 0., t_coal = 0.4, t_step = 5e-5, f_min = None, t_min = None, verbose = False):
+	"""
+generate_waveform
+=================
+	Wrapper to lalsimulation.SimInspiralChooseTDWaveform() to generate a single waveform. Wave is not preprocessed.
+	Input:
+		m1,m2,s1,s2,d,iota,phi_0	orbital parameters
+		t_coal						approximate time to coalescence in reduced grid (ignored if f_min or t_min is set)
+		t_step						EOB integration time to be given to lal
+		f_min						starting frequency in Hz (if None, it will be determined by t_coal; ignored if t_min is set)
+		t_min						starting time in s (if None, t_coal will be returned)
+		verbose						whether to print messages for each wave...
+	Output:
+		times (D,)	times at which wave is evaluated
+		h_p (N,D)	plus polarization of the wave
+		h_c (N,D)	cross polarization of the wave
+	"""
+	import sys
+	sys.path.append('/home/stefano/Desktop/Stefano/scuola/uni/tesi_magistrale/code/TEOBResumS/Python') #path to local installation of TEOBResumS
+	import EOBRun_module
+
+	q = m1/m2
+	mtot = (m1+m2)#*lal.MTSUN_SI
+	mc = (m1*m2)**(3./5.)/(m1+m2)**(1./5.)
+	mc /= 1.21 #M_c / 1.21 M_sun
+
+	if t_min is not None:
+		f_min = .8* ((151*(t_min/mtot)**(-3./8.) * (((1+q)**2)/q)**(3./8.))/mtot)
+
+	if f_min is None:
+		f_min = .9* ((151*(t_coal)**(-3./8.) * (((1+q)**2)/q)**(3./8.))/mtot)
+
+	if verbose:
+		print("Generating wave @: ",m1,m2,s1,s2,d, iota)
+
+	pars = {'M'                  : m1+m2,
+			'q'                  : m1/m2,
+			'Lambda1'            : 0.,
+			'Lambda2'            : 0.,     
+			'chi1'               : s1,
+			'chi2'               : s2,
+			'domain'             : 0,      # TD
+			'arg_out'            : 0,      # Output hlm/hflm. Default = 0
+			'use_mode_lm'        : [1],      # List of modes to use/output through EOBRunPy
+			'srate_interp'       : 1./t_step,  # srate at which to interpolate. Default = 4096.
+			'use_geometric_units': 0,      # Output quantities in geometric units. Default = 1
+			'initial_frequency'  : f_min,   # in Hz if use_geometric_units = 0, else in geometric units
+			'interp_uniform_grid': 2,      # Interpolate mode by mode on a uniform grid. Default = 0 (no interpolation)
+			'distance': d,
+			'inclination': iota,
+		}
+	times, h_p, h_c = EOBRun_module.EOBRunPy(pars)
+	amp = np.sqrt(h_p**2+h_c**2)
+
+	t_m =  times[np.argmax(amp)]
+	times = times - t_m
+
+	if t_min is not None:
+		arg = np.argmin(np.abs(times+t_min))
+	else:
+		arg=0
+
+	return times[arg:], h_p[arg:], h_c[arg:]
+
+
+
+
+def create_dataset_FD(N_data, N_grid = None, filename = None, q_range = (1.,5.), m2_range = 20., s1_range = (-0.8,0.8), s2_range = (-0.8,0.8), log_space = True, f_high = 2000, f_step = 1e-2, f_max = None, f_min =None, approximant = "IMRPhenomPv2"):
 	"""
 	Create a dataset for training a ML model to fit GW waveforms in frequency domain.
 	The dataset consists in 3 parameters theta=(q, spin1z, spin2z) associated to the waveform computed in frequency domain for a grid of N_grid points in the range given by the user.
@@ -430,7 +526,7 @@ def create_dataset_FD(N_data, N_grid = None, filename = None, q_range = (1.,5.),
 		f_step			step considered for computation of waveforms
 		f_max			maximum frequency returned to the user (if None is the same as f_max)
 		f_min			minimum frequency returned to the user (if None is the same as f_low = 15)
-		lal_approximant	string for the approximant model to be used (in lal convention)
+		approximant	string for the approximant model to be used (in lal convention)
 	Output:
 		if filename is given
 			None
@@ -451,7 +547,7 @@ def create_dataset_FD(N_data, N_grid = None, filename = None, q_range = (1.,5.),
 	full_freq = np.arange(f_low, f_max, f_step) #full frequency vector as returned by lal
 	d=1.
 	LALpars = lal.CreateDict()
-	approx = lalsim.SimInspiralGetApproximantFromString(lal_approximant)
+	approx = lalsim.SimInspiralGetApproximantFromString(approximant)
 
 		#allocating storage for temp vectors to save a single WF
 	temp_amp = np.zeros((N_grid,))
@@ -506,7 +602,6 @@ def create_dataset_FD(N_data, N_grid = None, filename = None, q_range = (1.,5.),
 			#debug!!!
 		if m1/m2 >4.6 and (np.abs(spin1z) >0.8 or np.abs(spin2z) > 0.8):
 			continue
-
 
 			#getting the wave
 		hptilde, hctilde = lalsim.SimInspiralChooseFDWaveform( #where is its definition and documentation????
@@ -650,234 +745,3 @@ def make_set_split(data, labels, train_fraction = .85, scale_factor = None):
 	test_labels = np.array(labels[int(train_fraction*N):,:])
 	return train_data, test_data, train_labels, test_labels
 
-def process_amplitudes(frequencies, q_vector, amp_dataset, get_true_amp):
-	"""
-	Process an amplitude dataset by scaling it according to:
-		A' = A * (f**(7/6) M_c**(-5/6))
-	It computes A if get_true_amp is true; A' otherwise
-	Input:
-		frequencies (D,)	frequencies at which amplitudes are evaluated
-		q_vector (N,)		vector holding mass ratio q for every GW in the dataset
-		amp_dataset (N,D)	N samples of amplitudes each evaluated at the D point in frequencies
-		get_true_amp		whether to compute A (computes A if True, A' if false)
-	Output:
-		new_amp (N,D)		transformed amplitude dataset
-	"""
-	N = amp_dataset.shape[0]
-	D = amp_dataset.shape[1]
-	M_c = np.reshape(np.divide(np.power(q_vector,3./5.), np.power(1.+q_vector,1./5.)), (N,1)) #chirp mass
-	new_frequencies = np.array(frequencies)
-	new_frequencies = np.repeat(np.reshape(new_frequencies, (1,D) ), N, axis=0)
-	factor = np.multiply(np.power(new_frequencies, 7./6.), np.power(M_c, -5./6.)) * 1e19
-	if get_true_amp is False:
-		return np.multiply(amp_dataset, factor)
-	if get_true_amp is True:
-		return np.divide(amp_dataset, factor)
-
-def process_phases(frequencies, q_vector, ph_dataset, get_true_ph):
-	"""
-	Process a phase dataset by scaling it according to:
-		ph' = ph + offset
-	It computes ph' if get_true_ph is true; ph' otherwise
-	Input:
-		frequencies (D,)	frequencies at which amplitudes are evaluated
-		q_vector (N,)		vector holding mass ratio q for every GW in the dataset
-		ph_dataset (N,D)	N samples of amplitudes each evaluated at the D point in frequencies
-		get_true_ph			whether to compute A (computes A if True, A' if false)
-	Output:
-		new_ph (N,D)	transformed amplitude dataset
-	"""
-	N = ph_dataset.shape[0]
-	D = ph_dataset.shape[1]
-	new_frequencies = np.array(frequencies)
-
-	M_c = np.reshape(np.divide(np.power(q_vector,3./5.), np.power(1.+q_vector,1./5.)), (N,1)) #chirp mass
-	m = 1.+q_vector
-	nu = np.divide(q_vector, np.power(m,2.))
-	prefactor = 6.6e-11 * 2e30 /(3e8)**3 #G*M_sun/c**3
-	M = prefactor*m
-		#PN coefficients... (p.298 Maggiore)
-		#t_i (N,)
-	t_0 = np.divide(np.power(M*np.pi,-5./3.), nu) * (5./(256*np.pi))
-	t_1 = np.multiply(np.power(np.multiply(M*np.pi,nu),-1.), 743./336 + 11/4. * nu) * (5./(192*np.pi))
-	t_1_5 = np.divide(np.power(M*np.pi,-2./3.), nu) / 8.
-	t_2 =  np.multiply(np.divide(np.power(M*np.pi,-1./3.), nu), 3058673./1016064. + 5429/1008 * nu+ 617/144 * np.square(nu))  * (5./(128*np.pi))
-	
-	for i in range(N):
-		offset = (3/5. * t_0[i] * np.power(new_frequencies,-5/3.) + t_1[i] * np.power(new_frequencies,-1.) - 1.5 *t_1_5[i] * np.power(new_frequencies,-2/3.) + 3 * t_2[i] * np.power(new_frequencies,-1./3.) )* 2*np.pi
-		#ph_dataset[i,:] = ph_dataset[i,:]+offset-np.max(ph_dataset[i,:])+100
-
-	offset = (3/5. * np.outer(t_0, np.power(new_frequencies,-5/3.)) + np.outer(t_1, np.power(new_frequencies,-1.)) - 1.5 *np.outer(t_1_5, np.power(new_frequencies,-2/3.)) + 3 *np.outer(t_2, np.power(new_frequencies,-1./3.)) )* 2*np.pi
-	offset = offset + 100
-	#print(np.max(ph_dataset, axis =1)[0:5])
-
-	if get_true_ph is False:
-		return ph_dataset +offset
-	if get_true_ph is True:
-		return ph_dataset - offset
-
-
-
-#################################OLD CODE#######################################
-def create_dataset_red_f(N_data, N_grid = 3000, filename = None, q_max = 18, spin_mag_max = 0.9, w_min = .1, w_max = 1., lal_approximant = "IMRPhenomD"):
-	"""
-	Create a dataset for training a ML model to fit GW waveforms.
-	The dataset consists in 3 parameters theta=(q, spin1z, spin2z) associated to the waveform computed in frequency domain for a grid of N_grid points in the range given by the user.
-	More specifically, data are stored in 3 vectors:
-		theta_vector	vector holding source parameters q, spin1, spin2
-		amp_vector		vector holding amplitudes for each source evaluated at some N_grid equally spaced points
-		ph_vector		vector holding phase for each source evaluated at some N_grid equally spaced points
-	This routine add N_data data to filename if one is specified (if file is not empty it must contain data with the same N_grid); otherwise the datasets are returned as np vectors. 
-	All the waves are evaluated at a constant distance of 1Mpc and with m2 = 10 M_sun and m1 = q M_sun.
-	The waveforms are computed on a fixed grid of reduced (dimensionless) frequency
-		w = scale * f =(m1+m2)*2.0*np.pi * f
-	at some N_grid points equally spaced in range [w_min, w_max]. Phases are divided by the factor scale**(-5/3).
-	Those choices of preprocessing make the dataset more omogenous since every signal has the similar lenght and magnitude O(1).
-	Dataset can be loaded with load_dataset
-	Input:
-		N_data			size of dataset
-		N_grid			number of points to be sampled in the grid (if None every point generated is saved)
-		filename		name of the file to save dataset in (If is None, nothing is saved on a file)
-		q_max			maximum mass ratio q to be considered (>1)
-		spin_mag_max	maximum spin magnitude to be considered (>0) (dangerous: for high q actual spin_mag_max is lower)
-		f_high			highest frequency to do compute
-		f_step			step considered for computation of waveforms
-		f_max			maximum frequency returned to the user (if None is the same as f_max)
-		f_min			minimum frequency returned to the user (if None is the same as f_low = 15)
-		lal_approximant	string for the approximant model to be used (in lal convention)
-	Output:
-		if filename is given
-			None
-		if filename is not given
-			theta_vector (N_data,3)		vector holding ordered set of parameters used to generate amp_dataset and ph_dataset
-			amp_dataset (N_data,N_grid)	dataset with amplitudes
-			ph_dataset (N_data,N_grid)	dataset with phases
-			frequencies (N_grid,)		vector holding frequencies at which waves are evaluated
-	"""
-	wstd = np.linspace(w_min, w_max, N_grid) #reduced grid in which every point is evaluated (returned)
-	dw= ((w_max-w_min)/N_grid)
-	spin_mag_max = np.abs(spin_mag_max)
-	m2 = 10.
-	d=1.
-	LALpars = lal.CreateDict()
-	approx = lalsim.SimInspiralGetApproximantFromString(lal_approximant)
-
-		#allocating storage for temp vectors to save a single WF
-	temp_amp = np.zeros((N_grid,))
-	temp_ph = np.zeros((N_grid,))
-	temp_theta = np.zeros((3,))
-
-	if filename is not None: #doing header if file is empty - nothing otherwise
-		if not os.path.isfile(filename): #file doesn't exist: must be created with proper header
-			filebuff = open(filename,'w')
-			print("New file ", filename, " created")
-			freq_header = np.concatenate((np.zeros((3,)), wstd, wstd) )
-			freq_header = np.reshape(freq_header, (1,len(freq_header)))
-			np.savetxt(filebuff, freq_header, header = "row: theta 3 | amp "+str(N_grid)+"| ph "+str(N_grid)+"\nN_grid = "+str(N_grid)+" | f_red_min ="+str(w_min)+" | f_red_max ="+str(w_max)+ " | q_max = "+str(q_max)+" | spin_mag_max = "+str(spin_mag_max), newline = '\n')
-		else:
-			filebuff = open(filename,'a')
-
-	if filename is None:
-		amp_dataset = np.zeros((N_data,N_grid)) #allocating storage for returning data
-		ph_dataset = np.zeros((N_data,N_grid))
-		theta_vector = np.zeros((N_data,3))
-
-	for i in range(N_data): #loop on data to be created
-		if i%100 == 0 and i != 0:
-			print("Generated WF ", i)
-		m1 = 	np.random.uniform(1,q_max) * m2
-		spin1z = np.random.uniform(-spin_mag_max,spin_mag_max)
-		spin2z = np.random.uniform(-spin_mag_max,spin_mag_max)
-		scale = (m1+m2)*lal.MTSUN_SI*2.0*np.pi #frequency scale factor [1/Hz]: f_red = w = f*scale
-
-			#params for wave generation (given total mass)
-		f_high = w_max/scale
-		f_low = 20.#w_min/scale
-		w_min = scale*20 #debug
-		wstd = np.linspace(w_min, w_max, N_grid) #debug
-		#print(m1+m2,scale,f_low, f_high)
-		f_step = dw/scale
-
-			#getting the wave
-		hptilde, hctilde = lalsim.SimInspiralChooseFDWaveform( #where is its definition and documentation????
-			m1*lalsim.lal.MSUN_SI, #m1
-			m2*lalsim.lal.MSUN_SI, #m2
-			0, 0, spin1z, #spin vector 1
-			0, 0, spin2z, #spin vector 2
-			d*1e6*lalsim.lal.PC_SI, #distance to source
-			0, #inclination
-			0, #something I don't know
-			0, #longAscNodes
-			0, #eccentricity
-			0, #meanPerAno
-			f_step, # frequency incremental step
-			f_low, # lowest value of frequency
-			f_high, # highest value of frequency
-			f_low, #some reference value of frequency (??)
-			LALpars, #some lal dictionary
-			approx #approx method for the model
-			)
-
-		hpt = hptilde.data.data
-		hct = hctilde.data.data
-		ftmp = w_min/scale + dw*np.arange(hpt.shape[0])/scale #grid in which WF are generated
-		fstd = wstd /scale #frequencies s.t. the WF in reduced frequencies is evaluated at wstd grid
-
-		hp = np.interp(fstd,ftmp,hpt) #bringing waves to fstd grid
-		hc = np.interp(fstd,ftmp,hct)
-
-		temp_theta = [m1/m2, spin1z, spin2z]
-		temp_amp = np.abs(hp+1j*hc).real
-		temp_ph = np.unwrap(np.angle(hp+1j*hc)).real/scale**(-5./3.) #phase is scaled by scale**(-5/3)
-
-		if filename is None:
-			amp_dataset[i,:] = temp_amp  #putting waveform in the dataset to return
-			ph_dataset[i,:] =  temp_ph  #phase
-			theta_vector[i,:] = temp_theta
-
-		if filename is not None: #saving to file
-			to_save = np.concatenate((temp_theta,temp_amp, temp_ph))
-			to_save = np.reshape(to_save, (1,len(to_save)))
-			#print(to_save.shape, temp_amp.shape)
-			np.savetxt(filebuff, to_save)
-
-	if filename is None:
-		return theta_vector, amp_dataset.real, ph_dataset.real, wstd
-	else:
-		filebuff.close()
-		return None	
-
-def transform_dataset(theta_vector, amp_dataset, ph_dataset, w_vector, f_vector, set_w_grid):
-	"""
-	Given a dataset (amplitudes vector and phase vector) in some grid, it returns the same WFs evaluated on another grid. The two grids must be of different kinds (there must be a w_grid and a f_grid). It performs as well the suitable scaling in the phase magnitude.
-	Input:
-		theta_vector (N_data,3)	vector holding ordered set of parameters used to generate amp_dataset and ph_dataset
-		amp_dataset (N_data,K)	dataset with amplitudes and wave parameters K = (f_high-30)/(f_step*N_grid)
-		ph_dataset (N_data,K)	dataset with phases and wave parameters K = (f_high-30)/(f_step*N_grid)
-		w_vector (K,)			vector holding frequencies at which waves are evaluated in w_grid
-		f_vector (K',)			vector holding frequencies at which waves are evaluated in f_grid
-		set_w_grid (bool)		if true data are brought from f_grid to w_grid; viceversa if false
-	Output:
-		new_amp_dataset (N_data,K')	new dataset with amplitudes
-		new_ph_dataset (N_data,K')	new dataset with phases
-	"""
-	if set_w_grid:
-		N_grid_new = w_vector.shape[0]
-	else:
-		N_grid_new = f_vector.shape[0]
-
-	new_amp_dataset = np.zeros((amp_dataset.shape[0], N_grid_new))
-	new_ph_dataset = np.zeros((ph_dataset.shape[0], N_grid_new))
-
-	for i in range(amp_dataset.shape[0]):
-		scale = (theta_vector[i,0]+1)*10*lal.MTSUN_SI*2.0*np.pi #frequency scale factor [1/Hz]
-		wtmp = w_vector / scale
-		if set_w_grid:
-			new_amp_dataset[i,:] = np.interp(wtmp, f_vector, amp_dataset[i,:])
-			new_ph_dataset[i,:] = np.interp(wtmp, f_vector, ph_dataset[i,:]) /scale**(-5./3.)
-		else:
-			new_amp_dataset[i,:] = np.interp(f_vector, wtmp, amp_dataset[i,:])
-			#print(f_vector, wtmp)
-			new_ph_dataset[i,:] = np.interp(f_vector, wtmp, ph_dataset[i,:])*scale**(-5./3.)
-
-	return new_amp_dataset, new_ph_dataset
