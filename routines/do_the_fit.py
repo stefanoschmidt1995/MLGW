@@ -16,11 +16,11 @@ fourth_order = ["00", "11","22", "01", "02", "12","000", "001", "002", "011", "0
 "0000", "0001","0002", "0011", "0022","0012","0111","0112", "0122", "0222","1111", "1112", "1122", "1222", "2222"]
 
 if fit_PCA:
-	create_PCA_dataset((6,5), dataset_file, PCA_dataset_folder, train_frac = 0.8)
+	create_PCA_dataset((5,4), dataset_file, PCA_dataset_folder, train_frac = 0.8)
 
 if fit_MoE_model:
 	print("Saving model to: ", model_folder)
 	fit_MoE("ph", PCA_dataset_folder, model_folder, experts = 4, comp_to_fit = None, features = fourth_order, EM_threshold = 1e-2, args = None, N_train = 6000, verbose = True, test_mismatch = True)
-	#fit_MoE("amp", PCA_dataset_folder, model_folder, experts = 3, comp_to_fit = None, features = fourth_order, EM_threshold = 1e-2, args = 	None, N_train = 6000, verbose = True, test_mismatch = True)
+	fit_MoE("amp", PCA_dataset_folder, model_folder, experts = 3, comp_to_fit = None, features = fourth_order, EM_threshold = 1e-2, args = 	None, N_train = 6000, verbose = True, test_mismatch = True)
 
 quit()

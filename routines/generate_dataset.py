@@ -7,10 +7,11 @@ from GW_helper import *
 import matplotlib.pyplot as plt
 from ML_routines import *
 
-if True:
-	create_dataset_TD(10000, N_grid = 2500, filename = "../datasets/GW_TD_dataset_TEOBResumS/GW_TD_dataset.dat",
-                t_coal = 1., q_range = (1.,20.), m2_range = None, s1_range = (-0.8,0.95), s2_range = (-0.8,0.95), #for full dataset
-                t_step = 1e-4, approximant = "TEOBResumS", alpha = 0.5)
+if False:
+	create_dataset_TD(3000, N_grid = 2000, filename = "../datasets/GW_TD_dataset_TEOBResumS_thesis/GW_TD_dataset.dat",
+                t_coal = .8, q_range = (1.,10.), m2_range = None, s1_range = (-0.8,0.8), s2_range = (-0.8,0.8), #for full dataset
+                t_step = 1e-4, approximant = "TEOBResumS", alpha = 0.5,
+				path_TEOBResumS = '/home/stefano/Desktop/Stefano/scuola/uni/tesi_magistrale/code/TEOBResumS/Python')
 #                t_coal = .05, q_range = (1.,5.), m2_range = None, s1_range = -0.3, s2_range = 0.2, #for s_const
 
 #create_dataset_FD(5000, N_grid = 2048, filename = "../datasets/GW_std_dataset.dat",
@@ -20,9 +21,9 @@ if True:
 
 
 
-quit()
+#quit()
 
-theta_vector, amp_dataset, ph_dataset, x_grid = load_dataset("../datasets/GW_TD_dataset_TEOBResumS/GW_TD_dataset.dat", shuffle=False, N_data = None) #loading
+theta_vector, amp_dataset, ph_dataset, x_grid = load_dataset("../datasets/GW_TD_dataset_TEOBResumS_thesis/GW_TD_dataset.dat", shuffle=False, N_data = None) #loading
 #print(theta_vector)
 
 cut_off = -1
@@ -42,19 +43,19 @@ x_grid=x_grid[:cut_off]
 
 plt.figure(0)
 plt.title("Phase of dataset")
-for i in range(2):
+for i in range(20):
 	plt.plot(x_grid, (ph_dataset[i,:]), label = str(i)+' '+str(theta_vector[i,0]))
 
 
 plt.figure(1)
 plt.title("Amplitude of dataset")
-for i in range(2):
+for i in range(20):
 	plt.plot(x_grid, amp_dataset[i,:], label = str(i)+' '+str(theta_vector[i,0]))
 #plt.legend()
 
 plt.figure(2)
 plt.title("Wave")
-for i in range(1):
+for i in range(20):
 	plt.plot(x_grid, amp_dataset[i,:]*np.exp(1j*ph_dataset[i,:]).real, label = str(i)+' '+str(theta_vector[i,0]))
 
 plt.show()

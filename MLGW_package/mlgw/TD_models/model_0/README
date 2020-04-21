@@ -1,7 +1,7 @@
 {
-"train model": "SEOBNRv4",
-"description": "Best of SEOBNR: large q range and long time grid",
-"q range": "[1,15]",
-"s1 range": "[-0.8, 0.8]",
-"s2 range": "[-0.8, 0.8]"
+"train model": "TEOBResumS",
+"description": "Best model ever: large parameter range and high accuracy",
+"q range": "[1,20]",
+"s1 range": "[-0.8, 0.95]",
+"s2 range": "[-0.8, 0.95]"
 }

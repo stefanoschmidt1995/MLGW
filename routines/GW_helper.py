@@ -158,7 +158,7 @@ compute_optimal_mismatch
 
 ################# Dataset related stuff
 
-def create_dataset_TD(N_data, N_grid, filename = None,  t_coal = 0.5, q_range = (1.,5.), m2_range = None, s1_range = (-0.8,0.8), s2_range = (-0.8,0.8), t_step = 1e-5, approximant = "SEOBNRv2_opt", alpha = 0.35):
+def create_dataset_TD(N_data, N_grid, filename = None,  t_coal = 0.5, q_range = (1.,5.), m2_range = None, s1_range = (-0.8,0.8), s2_range = (-0.8,0.8), t_step = 1e-5, approximant = "SEOBNRv2_opt", alpha = 0.35, path_TEOBResumS = None):
 	"""
 create_dataset_TD
 =================
@@ -182,8 +182,9 @@ create_dataset_TD
 		spin_mag_max_1		tuple with range for random spin #1 values. if single value, s1 is kept fixed at that value
 		spin_mag_max_2		tuple with range for random spin #1 values. if single value, s2 is kept fixed at that value
 		t_step				time step to generate the wave with
-		approximant		string for the approximant model to be used (in lal convention)
+		approximant			string for the approximant model to be used (in lal convention)
 		alpha				distorsion factor for time grid. (In range (0,1], when it's close to 0, more grid points are around merger)
+		path_TEOBResumS		path to a local installation of TEOBResumS with routine 'EOBRun_module' (only if TEOBResumS option is chosen)
 	Output:
 		if filename is given
 			None
@@ -200,7 +201,7 @@ create_dataset_TD
 		#see https://bitbucket.org/eob_ihes/teobresums/src/development/ for the implementation of TEOBResumS
 		try:
 			import sys
-			sys.path.append('/home/stefano/Desktop/Stefano/scuola/uni/tesi_magistrale/code/TEOBResumS/Python') #path to local installation of TEOBResumS
+			sys.path.append(path_TEOBResumS) #path to local installation of TEOBResumS
 			import EOBRun_module
 		except:
 			raise RuntimeError("No valid imput source for module 'EOBRun_module' for TEOBResumS. Unable to continue.")
@@ -434,7 +435,7 @@ generate_waveform
 
 	return times[arg:], h_p[arg:], h_c[arg:]
 
-def generate_waveform_TEOBResumS(m1,m2, s1=0.,s2 = 0.,d=1., iota = 0., t_coal = 0.4, t_step = 5e-5, f_min = None, t_min = None, verbose = False):
+def generate_waveform_TEOBResumS(m1,m2, s1=0.,s2 = 0.,d=1., iota = 0., t_coal = 0.4, t_step = 5e-5, f_min = None, t_min = None, verbose = False, path_TEOBResumS = None):
 	"""
 generate_waveform
 =================
@@ -448,14 +449,19 @@ generate_waveform
 		verbose						whether to print messages for each wave...
 	Output:
 		times (D,)	times at which wave is evaluated
-		h_p (N,D)	plus polarization of the wave
-		h_c (N,D)	cross polarization of the wave
+		h_p (D,)	plus polarization of the wave
+		h_c (D,)	cross polarization of the wave
 	"""
+	if path_TEOBResumS is None: #very ugly but useful
+		path_TEOBResumS = '/home/stefano/Desktop/Stefano/scuola/uni/tesi_magistrale/code/TEOBResumS/Python'
 	import sys
-	sys.path.append('/home/stefano/Desktop/Stefano/scuola/uni/tesi_magistrale/code/TEOBResumS/Python') #path to local installation of TEOBResumS
+	sys.path.append(path_TEOBResumS) #path to local installation of TEOBResumS
 	import EOBRun_module
 
 	q = m1/m2
+	if q <1:
+		q = m2/m1
+		s1, s2 = s2, s1
 	mtot = (m1+m2)#*lal.MTSUN_SI
 	mc = (m1*m2)**(3./5.)/(m1+m2)**(1./5.)
 	mc /= 1.21 #M_c / 1.21 M_sun

@@ -14,6 +14,7 @@ import sys
 import warnings
 import numpy as np
 import ast
+import inspect
 sys.path.insert(1, os.path.dirname(__file__)) 	#adding to path folder where mlgw package is installed (ugly?)
 from EM_MoE import *			#MoE model
 from ML_routines import *		#PCA model
@@ -52,10 +53,10 @@ list_models
 		to_return = ""
 	else:
 		to_return = None
-	models = os.listdir(os.path.dirname(__file__)+"/TD_models")
+	models = os.listdir(os.path.dirname(inspect.getfile(list_models))+"/TD_models")
 	models.sort()
 	for model in models:
-		folder = os.path.dirname(__file__)+"/TD_models/"+model
+		folder = os.path.dirname(inspect.getfile(list_models))+"/TD_models/"+model
 		files = os.listdir(folder)
 		if "README" in files:
 			with open(folder+"/README") as f:
@@ -110,7 +111,7 @@ GW_generator
 		if folder is not None:
 			if type(folder) is int:
 				int_folder = folder
-				folder = os.path.dirname(__file__)+"/TD_models/model_"+str(folder)
+				folder = os.path.dirname(inspect.getfile(GW_generator))+"/TD_models/model_"+str(folder)
 				if not os.path.isdir(folder):
 					raise RuntimeError("Given value {0} for pre-fitted model is not valid. Available models are:\n{1}".format(str(int_folder), list_models(False)))
 			self.load(folder)
