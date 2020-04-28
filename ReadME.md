@@ -19,7 +19,6 @@ The repository is organised in the following folders:
 - **MLGW_checks**: it holds some test performed on the definitive code, to ensure that there are no bugs.
 - **definitive_code**: it holds severeal fitted models as well as a small script to check the accuracy of the models stored.
 - **MLGW_package**: it holds code relevant to the package [``mlgw``](https://pypi.org/project/mlgw/ "mlgw package at PyPI").
-- **paper**: it holds the relevant documents for the presentation paper of ``mlgw``.
 
 For more information, you can contact me at [stefanoschmidt1995@gmail.com](mailto:stefanoschmidt1995@gmail.com)
 
