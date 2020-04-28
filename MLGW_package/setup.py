@@ -27,7 +27,7 @@ set_manifest()
 
 setup(
     name='mlgw',
-    version='1.2.0',
+    version='1.2.1',
     author='Stefano Schmidt',
     author_email='stefanoschmidt1995@gmail.com',
     packages=['mlgw'],
@@ -41,7 +41,7 @@ setup(
     install_requires=[
         "numpy >= 1.16.4",
 		"scipy >= 1.3.1",
-		"lalsuite >= 6.62"
+		#"lalsuite >= 6.62"
     ],
 	long_description_content_type = 'text/x-rst'
 )

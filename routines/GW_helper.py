@@ -1,11 +1,13 @@
 """
 Module GW_helper.py
 ===================
-	Various routines for performing some tasks regarding GW signals (it uses lal and lalsimulation to work):
+	Various routines for performing some tasks regarding GW signals:
 		Mismatch computation
 			function compute_mismatch: computes the mismatch between two sets of wave (useful for seeing how important is reconstruction error)
 		Scalar product computation
 			function compute_scalar: computes the Wigner scalar product between two GW waveforms
+		Optimal mismatch computation:
+			function compute_optimal_mismatch: computes the optimal mismatch between two waves (i.e. by minimizing the mismatch w.r.t. the alignment)
 		Dataset creation Time Domain
 			function create_dataset_TD: creates a dataset of GW in time domain.
 		Dataset creation Frequency Domain
@@ -14,8 +16,6 @@ Module GW_helper.py
 #################
 
 import numpy as np
-import lalsimulation as lalsim
-import lal
 import os.path
 import matplotlib.pyplot as plt #debug
 
@@ -102,11 +102,9 @@ compute_mismatch
 			ph_2 = np.reshape(ph_2, (1,ph_2.shape[0]))
 		D = amp_1.shape[1]
 		N = amp_1.shape[0]
-		#print(N,D)
 	else:
-		pass
-		#raise TypeError('Data don\'t have the same shape')
-		#return None
+		raise TypeError('Data don\'t have the same shape')
+		return None
 
 		#computing mismatch vector
 	df = 1. #nothing depends on df so we can set it arbitrarly
@@ -143,6 +141,7 @@ compute_optimal_mismatch
 	overlap = np.divide(scalar(h1,h2*np.exp(1j*phi_optimal)), norm_factor)
 	overlap = overlap.real
 
+		#debug
 	#plt.plot(np.linspace(0,h1.shape[1],h1.shape[1]),np.squeeze(h1))
 	#plt.plot(np.linspace(0,h1.shape[1],h1.shape[1]),np.squeeze(h2)*np.exp(1j*phi_optimal))
 	#print(1-overlap, overlap)
@@ -171,6 +170,7 @@ create_dataset_TD
 	This routine add N_data data to filename if one is specified (if file is not empty it must contain data with the same N_grid); otherwise the datasets are returned as np vectors. 
 	All the waves are evaluated at a constant distance of 1Mpc. Values of q and m2 as well as spins are drawn randomly in the range given by the user: it holds m1 = q *m2 M_sun.
 	The waveforms are computed with a time step t_step; starting from a frequency f_min (set by the routine according to t_coal and m_tot). Waves are given in a rescaled time grid (i.e. t/m_tot) with N_grid points: t=0 occurs when at time of maximum amplitude. A higher density of grid points is placed in the post merger phase.
+	Dataset can be generated either with a lal method (the approximant should be specified by the approximant keyword) either with an implementation of TEOBResumS (in this case a path to a local installation of TEOBResumS should be provided). If lal is used, lalsuite package shall be installed (note that lalsuite is not a prerequisite for mlgw)
 	Dataset can be loaded with load_dataset.
 	Input:
 		N_data				size of dataset
@@ -182,9 +182,9 @@ create_dataset_TD
 		spin_mag_max_1		tuple with range for random spin #1 values. if single value, s1 is kept fixed at that value
 		spin_mag_max_2		tuple with range for random spin #1 values. if single value, s2 is kept fixed at that value
 		t_step				time step to generate the wave with
-		approximant			string for the approximant model to be used (in lal convention)
+		approximant			string for the approximant model to be used (in lal convention; to be used only if lal ought to be used)
 		alpha				distorsion factor for time grid. (In range (0,1], when it's close to 0, more grid points are around merger)
-		path_TEOBResumS		path to a local installation of TEOBResumS with routine 'EOBRun_module' (only if TEOBResumS option is chosen)
+		path_TEOBResumS		path to a local installation of TEOBResumS with routine 'EOBRun_module' (if given, it overwrites the aprroximant entry)
 	Output:
 		if filename is given
 			None
@@ -197,6 +197,9 @@ create_dataset_TD
 	d=1.
 	inclination = 0.#np.pi/2.
 
+	if path_TEOBResumS is not None:
+		approximant = "TEOBResumS"
+
 	if approximant == "TEOBResumS":
 		#see https://bitbucket.org/eob_ihes/teobresums/src/development/ for the implementation of TEOBResumS
 		try:
@@ -206,8 +209,14 @@ create_dataset_TD
 		except:
 			raise RuntimeError("No valid imput source for module 'EOBRun_module' for TEOBResumS. Unable to continue.")
 	else:
+		try:
+			import lal
+			import lalsimulation as lalsim
+		except:
+			raise RuntimeError("Impossible to load lalsimulation: try pip install lalsuite")
 		LALpars = lal.CreateDict()
 		approx = lalsim.SimInspiralGetApproximantFromString(approximant)
+		
 
 		#checking if N_grid is fine
 	if not isinstance(N_grid, int):
@@ -252,7 +261,7 @@ create_dataset_TD
 
 	for i in range(N_data): #loop on data to be created
 		if i%50 == 0 and i != 0:
-		#if i%1 == 0 and i != 0:
+		#if i%1 == 0 and i != 0: #debug
 			print("Generated WF ", i)
 
 			#setting value for data

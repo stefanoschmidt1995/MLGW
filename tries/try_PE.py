@@ -19,7 +19,7 @@ def compute_optimal_overlap(h1,h2):
 
 	norm_factor = 1.#np.sqrt(np.multiply(scalar(h1,h1).real, scalar(h2,h2).real))
 	overlap = scalar(h1,h2) #(N,)
-	phi_optimal = 0#np.angle(overlap) #(N,) #this is not a good idea for the gradients... Find an alternative
+	phi_optimal = np.angle(overlap) #(N,) #this is not a good idea for the gradients... Find an alternative
 	overlap = np.divide(scalar(h1,h2*np.exp(1j*phi_optimal)).T, norm_factor).T
 	overlap = overlap.real
 
@@ -30,20 +30,22 @@ class GW_model:
 	def __init__(self):
 		self.dim=7
 		self.prior_bounds = np.array([[5, 25],[1,10], [-0.8,0.8], [-0.8,0.8], [np.log(1e-21), np.log(1e-19)], [0,3.14], [0,2.28] ])
-		#self.dim = 2 #2 dim
-		#self.prior_bounds = np.array([[5, 25],[1,10]]) #2 dim
-		#self.prior_bounds = np.array([[1,10],[-0.8,0.8]]) #2 dim
 		self.t = np.linspace(-4,.05,3000)
-		self.model = gen.GW_generator("/home/stefano/Desktop/Stefano/scuola/uni/tesi_magistrale/code/definitive_code/TD_model")
-		self.q = np.array([10, 5, .3, -0.4, np.log(100e-20), 0, 0])
+		self.model = gen.GW_generator("/home/stefano/Desktop/Stefano/scuola/uni/tesi_magistrale/code/definitive_code/TD_model_TEOBResumS")
+		self.q = np.array([10, 5, 0.3, -0.4, np.log(1e-2), 0, 0])
 		self.data = self.get_WF(self.q)
 		np.random.seed(0)
 		self.data = self.data* np.random.normal(1, 5., self.data.shape) #adding noise
 	
 	def std_q(self,q):
-		#q = [M, q, s1, s2, d, iota, phi]
+		#q = [Mc, q, s1, s2, d, iota, phi]
 		#assert len(q)==self.dim
-		return [q[1]*q[0]/(1+q[1]),q[0]/(1+q[1]),q[2],q[3], np.exp(q[4]), q[5], q[6]]
+		factor = q[0] * np.power(1. + q[1], 1.0/5.0)
+		m1 = factor * np.power(q[1], -3.0/5.0)
+		m2 = factor * np.power(q[1], +2.0/5.0)
+
+		#return [q[1]*q[0]/(1+q[1]),q[0]/(1+q[1]),q[2],q[3], np.exp(q[4]), q[5], q[6]]
+		return [m1,m2,q[2],q[3], np.exp(q[4]), q[5], q[6]]
 		#return [q[1]*q[0]/(1+q[1]),q[0]/(1+q[1]),q[2],q[3], np.exp(self.q[4]), self.q[5], self.q[6]]
 		#return [q[1]*q[0]/(1+q[1]),q[0]/(1+q[1]),self.q[2],self.q[3], np.exp(self.q[4]), self.q[5], self.q[6]]
 		#return [q[0]*self.q[0]/(1+q[0]),self.q[0]/(1+q[0]),q[1],self.q[3], np.exp(self.q[4]), self.q[5], self.q[6]]
@@ -64,7 +66,7 @@ class GW_model:
 		#print(self.std_q(p))
 		WF = self.get_WF(p)
 		#print(p.shape, WF.shape)
-		LL = compute_optimal_overlap(WF,self.data)
+		LL = 1e34*compute_optimal_overlap(WF,self.data)
 		#LL = LL- 0.5 *compute_optimal_overlap(WF,WF) #adding the rest (useless)
 		#LL = LL - 0.5 *compute_optimal_overlap(self.data,self.data) 
 		return LL
@@ -103,10 +105,10 @@ class GW_model:
 		return to_return
 
 	def p_pot(self, p):
-		return -np.exp(-self.potential_energy(p))
+		return np.exp(-self.potential_energy(p))
 
 	def grad_p_pot(self, p):
-		return -np.exp(-self.potential_energy(p))* self.potential_energy_gradient(p)[[0,1]]
+		return np.exp(-self.potential_energy(p))* self.potential_energy_gradient(p)[[0,1]]
 
 
 
@@ -159,7 +161,8 @@ Z = np.zeros(X.shape)
 for i in range(X.shape[0]):
 	for j in range(X.shape[1]):
 		#Z[i,j] = model.p_pot([X[i,j], Y[i,j]]) # evaluation of the function on the grid
-		Z[i,j] = model.potential_energy([X[i,j], Y[i,j], 0.3, -0.4, np.log(100e-20), 0, 0])
+		#Z[i,j] = model.potential_energy([X[i,j], Y[i,j], 0.3, -0.4, np.log(1e-2), 0, 0])
+		Z[i,j] = model.p_pot([X[i,j], Y[i,j], 0.3, -0.4, np.log(1e-2), 0, 0])
 		#Z[i,j] = model.potential_energy([10, Y[i,j], X[i,j], -0.4, np.log(100e-20), 0, 0]) 
 print(x.shape, y.shape)
 im = imshow(Z,cmap=cm.RdBu) # drawing the function
@@ -177,33 +180,6 @@ show()
 
 quit()
 
-
-#[20, 5, .3, -0.4, 5e-20, 0, 0]
-
-q = np.linspace(model.prior_bounds[1,0], model.prior_bounds[1,1], 50)
-pot = np.array([model.potential_energy([10, q[i], .19, -0.4, 5e-21, 0, 0]) for i in range(len(q))])
-plt.figure()
-plt.plot(q, np.exp(-pot))
-#plt.show()
-
-M = np.linspace(model.prior_bounds[0,0], model.prior_bounds[0,1], 50)
-pot = np.array([model.potential_energy([M[i], 5, .3, -0.4, 5e-20, 0, 0]) for i in range(len(q))])
-plt.figure()
-plt.plot(M, np.exp(-pot))
-
-s1 = np.linspace(model.prior_bounds[2,0], model.prior_bounds[2,1], 50)
-pot = np.array([model.potential_energy([20, 6, s1[i], -0.4, 5e-20, 0, 0]) for i in range(len(q))])
-plt.figure()
-plt.plot(s1, np.exp(-pot))
-
-#plt.show()
-
-d = np.logspace(np.log10(model.prior_bounds[4,0]), np.log10(model.prior_bounds[4,1]), 50)
-pot = np.array([model.potential_energy([20, 1.5, .3, -0.4, d[i], 0, 0]) for i in range(len(q))])
-plt.figure()
-plt.plot(d, pot)
-plt.yscale('log')
-plt.xscale('log')
 
 
 

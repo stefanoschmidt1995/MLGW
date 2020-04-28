@@ -413,6 +413,9 @@ GW_generator
 		assert D in [3,7] #check that the number of dimension is fine
 		const = 4*np.sqrt(5/(64*np.pi)) #constant of proportionality between h_22 and h_tilde
 
+		if not isinstance(t_grid, np.ndarray): #making sure that t_grid is np.array
+			t_grid = np.array(t_grid)
+
 			#setting theta_std & m_tot_us
 		if D == 3:
 			theta_std = theta

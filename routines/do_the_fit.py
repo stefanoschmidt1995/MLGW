@@ -20,7 +20,7 @@ if fit_PCA:
 
 if fit_MoE_model:
 	print("Saving model to: ", model_folder)
-	fit_MoE("ph", PCA_dataset_folder, model_folder, experts = 4, comp_to_fit = None, features = fourth_order, EM_threshold = 1e-2, args = None, N_train = 6000, verbose = True, test_mismatch = True)
-	fit_MoE("amp", PCA_dataset_folder, model_folder, experts = 3, comp_to_fit = None, features = fourth_order, EM_threshold = 1e-2, args = 	None, N_train = 6000, verbose = True, test_mismatch = True)
+	#fit_MoE("ph", PCA_dataset_folder, model_folder, experts = 4, comp_to_fit = None, features = fourth_order, EM_threshold = 1e-2, args = None, N_train = 6000, verbose = False, test_mismatch = True)
+	fit_MoE("amp", PCA_dataset_folder, model_folder, experts = 4, comp_to_fit = None, features = fourth_order, EM_threshold = 1e-2, args = 	None, N_train = 6000, verbose = False, test_mismatch = True)
 
 quit()
