@@ -34,10 +34,11 @@ def interp(x, xp, yp, extrapolate_behaviour = "const"):
 x = np.linspace(0,100,100)
 y = np.exp(x/100.)
 x_new = np.linspace(0,100,500000)
-indices = range(x.shape[0])
-indices_new = np.random.permutation(x_new.shape[0])
-x = x[indices]
-y = y[indices]
+#indices = np.random.permutation(x.shape[0])#range(x.shape[0])
+#indices_new = np.random.permutation(x_new.shape[0])
+#x = x[indices]
+#y = y[indices]
+
 #x_new = x_new[indices_new]
 
 start_time = time.process_time_ns()/1e6 #ms
@@ -50,8 +51,8 @@ print("Number of points: ", len(x_new))
 print("Interpolations agree? ",np.allclose(y_new, y_new_np))
 print("np vs mine", middle_time-start_time, end_time-middle_time)
 
-plt.plot(x,y,'o')
-plt.plot(x_new,y_new,'x')
+plt.plot(x,y,'o', ms =2)
+plt.plot(x_new,y_new,'--')
 plt.show()
 
 

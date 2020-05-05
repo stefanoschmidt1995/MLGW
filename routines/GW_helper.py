@@ -335,6 +335,7 @@ create_dataset_TD
 				'interp_uniform_grid': 2,      # Interpolate mode by mode on a uniform grid. Default = 0 (no interpolation)
 				'distance': d,
 				'inclination':inclination,
+				'nqc_coefs_flx': 2 # {"none", "nrfit_nospin20160209", "fit_spin_202002", "fromfile"}
 			}
 			time_full, h_p, h_c = EOBRun_module.EOBRunPy(pars)
 

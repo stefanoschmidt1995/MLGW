@@ -2,7 +2,6 @@
 #include <cmath>
 #include <chrono>  // for high_resolution_clock
 
-
 double* interp(int N_x, int N_xp, double* x, double* xp, double* yp){
 	int ip = 0;
 	int ip_next = 1;
