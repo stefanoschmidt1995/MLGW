@@ -500,6 +500,7 @@ generate_waveform
 			'interp_uniform_grid': 2,      # Interpolate mode by mode on a uniform grid. Default = 0 (no interpolation)
 			'distance': d,
 			'inclination': iota,
+			'nqc_coefs_flx': 2 # {"none", "nrfit_nospin20160209", "fit_spin_202002", "fromfile"}
 		}
 	times, h_p, h_c = EOBRun_module.EOBRunPy(pars)
 	amp = np.sqrt(h_p**2+h_c**2)
