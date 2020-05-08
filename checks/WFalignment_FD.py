@@ -36,7 +36,8 @@ def generate_waveform(m1,m2):
         f_max, # highest value of frequency
         f_min, #some reference value of frequency (??)
         lal.CreateDict(), #some lal dictionary
-        lalsim.GetApproximantFromString('IMRPHenomPv2') #approx method for the model
+#        lalsim.GetApproximantFromString('IMRPHenomPv2') #approx method for the model
+        lalsim.GetApproximantFromString('SEOBNRv4_ROM') #approx method for the model
         )
 
     frequency = np.linspace(0.0, f_max, hptilde.data.length)

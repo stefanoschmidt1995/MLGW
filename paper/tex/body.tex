@@ -1,5 +1,5 @@
 \section{Introduction}
-The detection of Gravitational Waves (GW) from compact binary coalescences (CBC) has been possible thanks to the joint effort of a number of different fields of expertise, all joining together to achieve the sophisticated detection process. GW data analysis concerns the detection of a GW signal hidden in the raw detector output (\textit{matched filtering}) and subsequently the inference of its physical properties (\textit{parameter estimation}). In order to accomplish its goal, GW data analysis relies on the availability of waveform templates  to compare with the detector output.
+The detection of Gravitational Waves (GW) from compact binary coalescences (CBC) has been possible thanks to the joint effort of a number of different fields of expertise, all joining together to achieve the sophisticated detection process. GW data analysis concerns the detection of a GW signal hidden in the raw detector output (\textit{matched filtering}) and subsequently the inference of its physical properties (\textit{parameter estimation}). In order to accomplish its goal, GW data analysis relies on the availability of waveform (WF) templates to compare with the detector output.
 To accurately explore the posterior distribution for the parameters defining a CBC, state-of-the-art parameter estimation algorithms~\cite{lalinference} can require the generation of as many as $10^7$ waveform templates. It is therefore paramount for the waveform generation to be as fast as possible. At the same time, because of the extreme sensitivity to phase differences in the likelihood  function, the templates must retain a high degree of accuracy to avoid biases in the posterior exploration.
 \par
 Many efforts are devoted to solve Einstein equations for two coalescing objects and to predict the gravitational radiation emitted~\cite{}.
@@ -14,15 +14,15 @@ starting from some decomposition in the waveform space followed by efficient int
 \par
 A Machine Learning model is a promising alternative to the state-of-the-art waveforms generators. Machine Learning (ML) is a branch of statistics that is devoted to reproduce patterns read from data. A ML algorithm needs very little human input and, by a automatically solving an optimization problem, it is able to choose the best performing element among a large class of parametric models for the solution. This is the so-called training procedure. The ML flexibility in modelling data and reproducing trends is appealing: with a proper model choice and with an appropriate training procedure, we can hope to have a reliable, fast to execute generator of GW waveforms, while retaining the accuracy necessary for robust parameter estimation.
 \par
-%%%%%SHOULD I SAY IT HERE OR ONLY IN THE CONCLUSIONS??
-%The advantages are manifold.
-%First of all, a single closed form function is available for this purpose. A significant speed up of the time to generate a waveform is in reach.
-%Furthermore, a reliable ML scheme could be fed only with numerical relativity waveforms. This in principle will allow to bypass the PN approximation and to work directly with the full equations.
-%A third advantage is more technical: a closed form expression for a waveform yields a closed form for the gradients of the waveforms. A gradient based sampling method can be applied to the problem to produce a substantial speed up of the parameter estimation.
+In this work, we explore this opportunity. We developed a ML model that is able to generate a GW signal from a binary black hole (BBH) coalescence. We demonstrate that our model can generate GW signals significantly faster than state-of-the-art EOB models while keeping the same accuracy. Moreover, we also present a successful application in a parameter estimation setting, by computing posterior distributions for GW150914.
 \par
-In this work, we explore this opportunity. We developed a ML model that is able to generate a GW signal from a binary black  hole (BBH) coalescence. We demonstrate that our model can generate GW signals significantly faster than state-of-the-art EOB models while keeping the same accuracy. Moreover, we also present a successful 
-application in a parameter estimation setting, by computing posterior distributions for GW150914.
+Our fast model can be effectively applied to several open problems in the state-of-the-art research.
+First of all, being faster (\textbf{that's strong! You should be very sure of it}) than every waveform model, it could be used to speed up the search of GW waves and the subsequent analysis.
+Furthermore, it is crucial to realise that with our model, the time required to generate a WF does not depend on the lenght of the signal (but only on the number of grid points which the WF is evaluated at). Such feature will be crucial for future surveys (e.g. LISA, ET), where "long" signals are expected to be detected, and the problem of the fast generation of a WF will be more pressing.
+\par
+Finally, our model can be employed for a systematic analysis of the detected signals so far. Being fast to run, it would perform accurate parameter estimation in a low amount of time and it could allow for a comparison between different surrogate WF models, thus yielding invaluable information about the relevant physics.
 
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 \section{Problem specification}
 We now provide a precise statement of the objective of our work.
 A binary black hole is parametrized by a vector $ \boldsymbol{\vartheta} = (m_1,m_2, \mathbf{s}_1,\mathbf{s}_2) $, where $m_i$ are the BHs masses and $\mathbf{s}_i = \frac{\mathbf{S}_i}{m_i^2} <1$ are the \textit{dimensionless} spin. 
@@ -473,9 +473,9 @@ The mismatch and mse are well correlated: the reconstruction of the wave and the
 We note that for low values of $q$ the fit shows poor performance: in that region the relation to catch is less smooth, making the regression less reliable.
 \par
 In the center line of \ref{fig:countour}, we displayed the dependence on spins.
-As long as the $s_1$ dependence is considered, the most striking feature is the inverse correlation of mse and mismatch. WHY IS IT SO?? IT'S REALLY WEIRD... IS THERE SOMETHING WRONG?? OR IT CAN BE EXPLAINED ON PHYSICAL BASIS? ANYWAY, FOR SEOB WE HAD A COMPLETELY DIFFERENT RESULT. WHY?
+As long as the $s_1$ dependence is considered, the most striking feature is the inverse correlation of mse and mismatch. \textbf{WHY IS IT SO?? IT'S REALLY WEIRD... IS THERE SOMETHING WRONG?? OR IT CAN BE EXPLAINED ON PHYSICAL BASIS? ANYWAY, FOR SEOB WE HAD A COMPLETELY DIFFERENT RESULT. WHY?}
 \par
-Apart from this feature, we note that the mismatch tends to grow in the high spins region: this reflects the difficulties of EOB models to model properly the physics. 
+Apart from this feature, we note that the mismatch tends to grow for high spins: the fit is less reliable in such regions.
 \par
 In the third row of \ref{fig:countour}, we displayed the dependence on $q$ and $s_1$, the variables on which the error depends more.
 We note again the inverse correlation between the mismatch and mse, when considering the $s_1$ dependence.
@@ -567,27 +567,40 @@ Finally, we see that the two Bayes factors are similar: the Bayesian analysis as
 However, the evidence for mlgw appears to be slightly higher: probably, our priors cover a smaller region than that in the LIGO-Virgo analysis.
 \par
 %%%%%%%%%%%%%%%
-\subsection{Runime analysis}
-We now measure the average speed up obtained in a realistic simulation.
-The speed up $\mathcal{S}$ is the ratio between the runtime of \texttt{TEOBResumS} and the runtime of \texttt{mlgw} to produce the same waveform.
-We randomly choose physical parameters for wave generation and we set a constant length of the signal $t_{min}=\SI{16}{s}$. Furthermore we set a constant sampling frequency $f_{sam} = \SI{4096}{Hz}$. This is a typical situation for the raw data from an interferometer.
-We report in figure~\ref{fig:time_performance_hist} the histogram for the measured values of the speed up.
-We note that, in this case, an average speed up as high as $35$ is in reach of our mlgw model.
-The result is remarkable: a fast, yet reliable, GW generation is possible with Machine Learning techniques and allows for a significant speed up in a "real-life" scenario.
+\subsection{Runtime analysis} \label{sec:runtime}
+Whean deling in a real detection scenario, we are often interested in generating a WF which starts from a given frequency $f_{min}$. Such fequency is usually set by the detector's sensitivity window.
+Thus, it is crucial to measure the speed up that our model can provide in performing such task.
+We define the speed up $\mathcal{S}$ as the ratio between the runtime of \texttt{TEOBResumS} and the runtime of \texttt{mlgw} to produce the a waveform starting from a given $f_{min}$. Each waveform is produced with constant total mass $M = 100 M_{\odot}$ and random parameters; the WF is sampled at $f_{sam} = \SI{2048}{Hz}$.
+We consider the two cases with $f_{min} = \SI{5}{Hz}$ and $f_{min} = \SI{20}{Hz}$; the first choice refers to the hypotetical lower bound for the sentivity of the Einstein telescope (ET), while the second is close to the Advanced-Ligo lower sensitivity.
+In figure~\ref{fig:time_performance_hist} we report the histogram of the measured speed up values for the two situations.
 
 \begin{figure}
 	\centering
-    \includegraphics[width=\linewidth]{time_performance_hist}
+	\begin{minipage}{\linewidth}
+	    \includegraphics[width=\linewidth]{time_performance_hist_5}
+	\end{minipage}\hfill
+	\begin{minipage}{\linewidth}
+	    \includegraphics[width=\linewidth]{time_performance_hist_20}
+	\end{minipage}
+
 	\caption{
-Histogram for values of the speed up given by \texttt{mlgw}, as compared with \texttt{TEOBResumS} model. It is computed on $N=4000$ test waveforms. Each WF is generated with random physical parameters and lasts exactly $\SI{16}{s}$.
-We set a constant total mass $M=\SI{30}{M_\odot}$ and the sampling rate $f_{sam} = \SI{4096}{Hz}$.
+Histogram for values of the speed up given by \texttt{mlgw}, as compared with \texttt{TEOBResumS} model.
+It is computed on $N=2000$ test waveforms. Each WF is generated with random physical parameters and has a minimum frequency of $\SI{5}{Hz}$ (top panel) and $\SI{20}{Hz}$ (top panel).
+We set a constant total mass $M=\SI{100}{M_\odot}$ and the sampling rate $f_{sam} = \SI{2048}{Hz}$.
 In the inset we represent the cumulative distribution.
 We report the mean value $\mu$, the standard deviation $\sigma$ and the median value $m$ as well as the cumulative distribution function evaluated at some selected points.
 }
 	\label{fig:time_performance_hist}
 \end{figure}
-
-
+%%%%%%%%%%
+We see that in both cases a substantial speed up is achieved. The speed up is higher for longer WFs
+\footnote{This is clearly understood: a longer WF requires more computation for a EOB model, while roughly the same amount of work is done by mlgw}, 
+making our model particulary convenient for advanced detectors, such as ET.
+\par
+Comparison with ROM!!! Will you win??
+\\
+also: should you remove the inset with the cumulative distribution and make the caption bigger??
+\par
 It is interesting to have a knowledge of the time taken by each stage of the WF generation procedure.
 We generated a $100$ waves and we measure the CPU time spent to execute each basic task.
 In table \ref{tab:profiling}, we compare the results for two values of $N_{grid}$.
@@ -623,12 +636,12 @@ We built a ready-to-use Machine Learning model (called mlgw) which generates the
 Our model was built for the case of aligned spins (i.e. the non precessing case) and returns a wave given the BH's masses $m_1, m_2$ and (dimensionless) spins $s_1, s_2$ taking into account the correct dependence on source luminosity distance $d_L$, inclination angle $\iota$ and reference phase $\varphi_0$.
 Our model shows excellent agreement with the underlying training set. At test times the median mismatch is $\bar{\mathcal{F}}\sim 5 \cdot 10^{-3}$. Lastly, the generation time from \texttt{mlgw} is smaller than the underlying training model by a factor of $\sim 35$.
 \par
-Remarkably, we discovered that a PCA is able to reproduce a high dimensional wave using a few number of variables. As for the regression model itself, the MoE model, currently it is 
-the "bottleneck" of the model accuracy. For this reason, we explored several alternative regression 
-methods, including neural networks, but none of them showed better performance.
-Note that, and see appendix A for a detailed discussion of this point, underfitting may be an issue
-whenever the training model shows intrinsic noise due to mis-modeling, e.g. relations that 
-are supposed to be continuous are not, or even due to poor numerical integration schemes.
+Remarkably, we discovered that a PCA is able to reproduce a high dimensional wave using a few number of variables. As for the regression model itself, the MoE model, currently it is the "bottleneck" of the model accuracy. For this reason, we explored several alternative regression methods, including neural networks, but none of them showed better performance.
+Note that underfitting may be an issue whenever the training model shows intrinsic noise due to mis-modeling, e.g. relations that are supposed to be continuous are not, or even due to poor numerical integration schemes.
+\par
+\textbf{Our model opens up interesting opportunities in GW data analysis...
+What do I write here????}\\
+etc... etc... etc...
 \par
 Our work however is far from being over and several issues still require attention.
 \par

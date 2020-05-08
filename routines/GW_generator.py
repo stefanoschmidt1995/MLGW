@@ -350,9 +350,9 @@ GW_generator
 			out_type (str)	The output to be returned ('h+x', 'ampph', 'h22')
 			red_grid		whether given t_grid is in reduced space (True) or physical space (False)
 		Ouput:
-			h_plus, h_cross (1,D)/(N,D)		desidered polarizations (if it applies)
-			amp, phase (1,D)/(N,D)			desidered amplitude and phase (if it applies)
-			h22_real, h_22_im (1,D)/(N,D)	desidered h_22 component (if it applies)
+			h_plus, h_cross (D,)/(N,D)		desidered polarizations (if it applies)
+			amp, phase (D,)/(N,D)			desidered amplitude and phase (if it applies)
+			h22_real, h_22_im (D,)/(N,D)	desidered h_22 component (if it applies)
 		"""
 		if t_grid is None:
 			t_grid = self.times
@@ -362,7 +362,10 @@ GW_generator
 
 		theta = np.array(theta) #to ensure user theta is copied into new array
 		if theta.ndim == 1:
+			to_reshape = True #whether return a one dimensional array
 			theta = theta[np.newaxis,:] #(1,D)
+		else:
+			to_reshape = False
 		
 		D= theta.shape[1] #number of features given
 		if D <3:
@@ -387,10 +390,12 @@ GW_generator
 			theta = new_theta #(N,7)
 
 			#generating waves and returning to user
-		res1, res2 = self.__get_WF(theta, t_grid, out_type, red_grid)
+		res1, res2 = self.__get_WF(theta, t_grid, out_type, red_grid) #(N,D)
 			#res1,res2 = h_plus, h_cross if plus_cross = True
 			#res1,res2 = amp, ph if plus_cross = False
-		return res1, res2
+		if to_reshape:
+			return res1[0,:], res2[0,:] #(D,)
+		return res1, res2 #(N,D)
 
 	#@do_profile(follow=[])
 	def __get_WF(self, theta, t_grid, out_type, red_grid):
