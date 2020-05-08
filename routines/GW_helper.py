@@ -335,7 +335,9 @@ create_dataset_TD
 				'interp_uniform_grid': 2,      # Interpolate mode by mode on a uniform grid. Default = 0 (no interpolation)
 				'distance': d,
 				'inclination':inclination,
-				'nqc_coefs_flx': 2 # {"none", "nrfit_nospin20160209", "fit_spin_202002", "fromfile"}
+				'nqc':2, #{"no", "auto", "manual"}
+				'nqc_coefs_flx': 2, # {"none", "nrfit_nospin20160209", "fit_spin_202002", "fromfile"}
+				'nqc_coefs_hlm':0
 			}
 			time_full, h_p, h_c = EOBRun_module.EOBRunPy(pars)
 
@@ -484,6 +486,8 @@ generate_waveform
 
 	if verbose:
 		print("Generating wave @: ",m1,m2,s1,s2,d, iota)
+	
+	print(f_min)
 
 	pars = {'M'                  : m1+m2,
 			'q'                  : m1/m2,
@@ -500,7 +504,9 @@ generate_waveform
 			'interp_uniform_grid': 2,      # Interpolate mode by mode on a uniform grid. Default = 0 (no interpolation)
 			'distance': d,
 			'inclination': iota,
-			'nqc_coefs_flx': 2 # {"none", "nrfit_nospin20160209", "fit_spin_202002", "fromfile"}
+			'nqc':2, #{"no", "auto", "manual"}
+			'nqc_coefs_flx': 2, # {"none", "nrfit_nospin20160209", "fit_spin_202002", "fromfile"}
+			'nqc_coefs_hlm':0
 		}
 	times, h_p, h_c = EOBRun_module.EOBRunPy(pars)
 	amp = np.sqrt(h_p**2+h_c**2)
