@@ -405,7 +405,9 @@ We report the mean value $\mu$, the standard deviation $\sigma$ and the median v
 \end{figure}
 %%%%
 \paragraph{Test mismatch}
-We compute mismatch value on a number of randomly generated waves. In order to tests the model in the most general case, we extract a random values of the physical parameters (i.e. $m_1,m_2, s_1, s_2, d_L, \iota, \varphi_0$) for each wave.
+We compute mismatch value on a number of randomly generated waves.
+The mismatch is computed with a flat noise curve, i.e. a constant power spectral density for the detector noise.
+In order to tests the model in the most general case, we extract a random values of the physical parameters (i.e. $m_1,m_2, s_1, s_2, d_L, \iota, \varphi_0$) for each wave.
 We report our results in the histogram in figure~\ref{fig:F_hist}.
 We report a median value of the distribution $\mathcal{F}_m = 4 \cdot 10^{-3}$. Furthermore, the $69\%$ of the waveforms have a mismatch below $10^{-2}$. Such results are similar to the discrepancies between state-of-the-art models.
 \par
@@ -597,7 +599,7 @@ We see that in both cases a substantial speed up is achieved. The speed up is hi
 \footnote{This is clearly understood: a longer WF requires more computation for a EOB model, while roughly the same amount of work is done by mlgw}, 
 making our model particulary convenient for advanced detectors, such as ET.
 \par
-Comparison with ROM!!! Will you win??
+\textbf{Comparison with ROM!!! Will you win??}
 \\
 also: should you remove the inset with the cumulative distribution and make the caption bigger??
 \par
@@ -634,16 +636,21 @@ If such huge amount of datapoints is required, very little space is left for spe
 \section{Final remarks and future prospects}
 We built a ready-to-use Machine Learning model (called mlgw) which generates the gravitational wave signal from a binary Black Hole coalescence. The code is released as the package \texttt{mlgw} available via the \texttt{pypi} \texttt{Python} package repository. 
 Our model was built for the case of aligned spins (i.e. the non precessing case) and returns a wave given the BH's masses $m_1, m_2$ and (dimensionless) spins $s_1, s_2$ taking into account the correct dependence on source luminosity distance $d_L$, inclination angle $\iota$ and reference phase $\varphi_0$.
-Our model shows excellent agreement with the underlying training set. At test times the median mismatch is $\bar{\mathcal{F}}\sim 5 \cdot 10^{-3}$. Lastly, the generation time from \texttt{mlgw} is smaller than the underlying training model by a factor of $\sim 35$.
+Our model shows excellent agreement with the underlying training set. At test times the median mismatch is $\bar{\mathcal{F}}\sim 5 \cdot 10^{-3}$. Lastly, the generation time from \texttt{mlgw} is smaller than the underlying training model by a factor of $\sim 35$, for a waveform starting at a frequency of $\SI{5}{Hz}$.
+\textbf{Say something about ROM (if there is anything to say...)}.
 \par
 Remarkably, we discovered that a PCA is able to reproduce a high dimensional wave using a few number of variables. As for the regression model itself, the MoE model, currently it is the "bottleneck" of the model accuracy. For this reason, we explored several alternative regression methods, including neural networks, but none of them showed better performance.
 Note that underfitting may be an issue whenever the training model shows intrinsic noise due to mis-modeling, e.g. relations that are supposed to be continuous are not, or even due to poor numerical integration schemes.
 \par
-\textbf{Our model opens up interesting opportunities in GW data analysis...
-What do I write here????}\\
-etc... etc... etc...
+Our model opens up interesting opportunities in GW data analysis.
+As shown in fig. \ref{fig:time_performance_hist}, the model performs is the most useful whenever a long waveform is computed. Furthermore, the waveform generation time does not depend on the complexity of the underlying surrogate model. The training WFs can be computed with high accuracy, also with a high computational cost, without affecting the performance of the WF generation.
 \par
-Our work however is far from being over and several issues still require attention.
+This fact is crucial for detection of low frequency signals, as is the case for ET. The analysis of such signals can be performed in the same time required to deal with shorter signals: it will become feasible, even with a small amount of resourches.
+In \cite{} (\textbf{plot in email}), it was shown that training model TEOBResumS matches accurately the numerical relativity WFs, even in the case of ET noise curve is used (see plot in the email). Since our model closely reproduces TEOBResumS, it is likely to achieve the target accuracy for the employment in the ET data analysis.
+\par
+\textbf{Is there more to say on that??}\\
+\par
+However, our work is far from being over and several issues still require attention.
 \par
 First of all, the potential speed up of parameter estimation can be even higher, if we take advantage of the closed form expression of the waveform provided by our model.
 Indeed, a closed form expression for the WF allows for prompt computation of the gradients with respect to the orbital parameters $ \boldsymbol{\vartheta} = (m_1,m_2, {s}_1,{s}_2) $.
@@ -652,6 +659,8 @@ Porter and Carré \cite{Porter2014Hamiltonian_MonteCarlo} applied Hamiltonian Mo
 Our Machine Learning model could, in principle, extend the application of Hamiltonian Montecarlo to waveform which included also late inspiral, merger and ringdown.
 It would provide a state-of-the-art accurate parameter estimation and, at the same time, it will offer a substantial speed up.
 We believe that this is a promising option and it is among the natural continuations of our work.
+\par
+Another option, so far never explored, is to use the gradients of the WF for a fast exploration of the likelihood landscape. With any gradient based optimizer, it should be easy to jump to a \textit{local} maximum of the likelihood. Such information can be used to reliably locate a \textit{global} maximum of the likelihood. Once a global maximum is found, the sampling from the posterior distribution should be quicker to perform, yielding an improvement to the overall analysis.
 \par
 In our model we did not consider precessing system. We made this choice to keep the problem simple.
 The expertise gained for the simple non precessing case can be applied to deal with the complicacies posed by the precessing case.
