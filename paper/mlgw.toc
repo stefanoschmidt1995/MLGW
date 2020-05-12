@@ -1,0 +1,26 @@
+\contentsline {title}{Gravitational wave modelling with Machine Learning}{1}{section*.2}
+\contentsline {abstract}{Abstract}{1}{section*.1}
+\tocdepth@munge 
+\contentsline {section}{\numberline {}Contents}{1}{section*.3}
+\tocdepth@restore 
+\contentsline {section}{\numberline {I}Introduction}{1}{section*.4}
+\contentsline {section}{\numberline {II}Problem specification}{2}{section*.5}
+\contentsline {section}{\numberline {III}The model}{3}{section*.6}
+\contentsline {subsection}{\numberline {A}Modelling dependence on total mass}{3}{section*.7}
+\contentsline {subsection}{\numberline {B}The time grid}{3}{section*.8}
+\contentsline {subsection}{\numberline {C}Dataset creation}{4}{section*.9}
+\contentsline {subsection}{\numberline {D}Dimensionality reduction}{4}{section*.10}
+\contentsline {subsection}{\numberline {E}Regression}{4}{section*.11}
+\contentsline {subsection}{\numberline {F}Summary}{5}{section*.12}
+\contentsline {section}{\numberline {IV}Model performance}{5}{section*.13}
+\contentsline {subsection}{\numberline {A}Validation}{5}{section*.14}
+\contentsline {paragraph}{\numberline {a}Dataset generation parameters}{6}{section*.15}
+\contentsline {paragraph}{\numberline {b}MoE parameters}{6}{section*.16}
+\contentsline {paragraph}{\numberline {c}Choosing the number of PCs}{6}{section*.17}
+\contentsline {paragraph}{\numberline {d}Choosing the number of training points}{7}{section*.18}
+\contentsline {subsection}{\numberline {B}Accuracy}{7}{section*.19}
+\contentsline {paragraph}{\numberline {a}Test mismatch}{7}{section*.20}
+\contentsline {paragraph}{\numberline {b}Parameter estimation}{8}{section*.21}
+\contentsline {subsection}{\numberline {C}Runtime analysis}{9}{section*.22}
+\contentsline {section}{\numberline {V}Final remarks and future prospects}{10}{section*.23}
+\contentsline {section}{\numberline {}References}{11}{section*.24}
