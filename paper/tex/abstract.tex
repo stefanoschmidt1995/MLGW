@@ -1,11 +1,12 @@
 \begin{abstract}
 We apply Machine Learning methods to build a model designed to generate a gravitational waveform in the time domain as produced by a binary black hole coalescence. 
-Our model matches in accuracy the performance of the state-of-the-art direct computations while, at the same time, it provides a speed up of a a factor of $\sim 30$ in the generation of the waveform. 
-Furthermore, it provides a closed form expression for the waveform and its gradient with respect to the orbital parameters. This open the possibility to further improve the sampling algorithms used for the parameter estimation.
+Our model matches the accuracy of the state-of-the-art EOB models and has a tiny generation cost, equivalents to those of a fast Reduced Order Model.
+As the generation time does not depend on the lenght of the signal, the model is particularly suitable for long observation surveys, such as ET.
+Furthermore, it provides a closed form expression for the waveform and its gradient with respect to the orbital parameters. This could lead to a further improvement of the sampling algorithms employed for the parameter estimation.
 \par
-We train our model on a number of waveforms computed by \texttt{TEOBResumS} and we infer a relation between the waveform and the masses $m_1$,$m_2$ and (aligned) spins $s_1$, $s_2$ of the two BHs. 
+We train our model on a number of waveforms computed by \texttt{TEOBResumS} and we infer a relation between the waveform and the masses $m_1$, $m_2$ and (aligned) spins $s_1$, $s_2$ of the two BHs. 
 %We reduce the dimensionality of our problem by decomposing each waveform in amplitude and phase and it is further represented in a lower dimensional space using a Principal Component Analysis. The regression from orbital parameters to principal components is performed using a Mixture of Expert model.
-Our implementation is publicly available as a \texttt{Python} package \texttt{mlgw} as \url{https://pypi.org/project/mlgw/}.
+Our implementation is publicly available as a Python package \texttt{mlgw} as \url{https://pypi.org/project/mlgw/}.
 \texttt{mlgw} has all the features required for performing a full parameter estimation (including the waveform dependence on geometrical parameters). 
 We demonstrate the faithfulness of \texttt{mlgw} by successfully reproducing the inference on GW150914 made by the LIGO-Virgo collaboration.
 
