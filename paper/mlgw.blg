@@ -1,0 +1,53 @@
+This is BibTeX, Version 0.99d (TeX Live 2017/Debian)
+Capacity: max_strings=100000, hash_size=100000, hash_prime=85009
+The top-level auxiliary file: mlgw.aux
+The style file: ieeetr.bst
+Database file #1: mlgwNotes.bib
+Database file #2: bibliography.bib
+Repeated entry---line 334 of file bibliography.bib
+ : @article{Aasi:2013jjl
+ :                      ,
+I'm skipping whatever remains of this entry
+Warning--I didn't find a database entry for ""
+You've used 26 entries,
+            1876 wiz_defined-function locations,
+            649 strings with 8722 characters,
+and the built_in function-call counts, 6586 in all, are:
+= -- 604
+> -- 366
+< -- 0
++ -- 133
+- -- 107
+* -- 463
+:= -- 973
+add.period$ -- 27
+call.type$ -- 26
+change.case$ -- 25
+chr.to.int$ -- 0
+cite$ -- 26
+duplicate$ -- 368
+empty$ -- 528
+format.name$ -- 107
+if$ -- 1597
+int.to.chr$ -- 0
+int.to.str$ -- 26
+missing$ -- 24
+newline$ -- 82
+num.names$ -- 26
+pop$ -- 71
+preamble$ -- 1
+purify$ -- 0
+quote$ -- 0
+skip$ -- 305
+stack$ -- 0
+substring$ -- 198
+swap$ -- 187
+text.length$ -- 0
+text.prefix$ -- 0
+top$ -- 0
+type$ -- 0
+warning$ -- 0
+while$ -- 41
+width$ -- 28
+write$ -- 247
+(There was 1 error message)
