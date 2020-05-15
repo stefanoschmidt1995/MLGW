@@ -138,7 +138,7 @@ compute_optimal_mismatch
 	norm_factor = np.sqrt(np.multiply(scalar(h1,h1).real, scalar(h2,h2).real))
 	overlap = scalar(h1,h2) #(N,)
 	phi_optimal = np.angle(overlap) #(N,)
-	overlap = np.divide(scalar(h1,h2*np.exp(1j*phi_optimal)), norm_factor)
+	overlap = np.divide(scalar(h1,(h2.T*np.exp(1j*phi_optimal)).T), norm_factor)
 	overlap = overlap.real
 
 		#debug
@@ -335,7 +335,9 @@ create_dataset_TD
 				'interp_uniform_grid': 2,      # Interpolate mode by mode on a uniform grid. Default = 0 (no interpolation)
 				'distance': d,
 				'inclination':inclination,
-				'nqc_coefs_flx': 2 # {"none", "nrfit_nospin20160209", "fit_spin_202002", "fromfile"}
+				'nqc':2, #{"no", "auto", "manual"}
+				'nqc_coefs_flx': 2, # {"none", "nrfit_nospin20160209", "fit_spin_202002", "fromfile"}
+				'nqc_coefs_hlm':0
 			}
 			time_full, h_p, h_c = EOBRun_module.EOBRunPy(pars)
 
@@ -397,6 +399,8 @@ generate_waveform
 		h_p (N,D)	plus polarization of the wave
 		h_c (N,D)	cross polarization of the wave
 	"""
+	import lal
+	import lalsimulation as lalsim
 	q = m1/m2
 	mtot = (m1+m2)#*lal.MTSUN_SI
 	mc = (m1*m2)**(3./5.)/(m1+m2)**(1./5.)
@@ -484,6 +488,8 @@ generate_waveform
 
 	if verbose:
 		print("Generating wave @: ",m1,m2,s1,s2,d, iota)
+	
+	print(f_min)
 
 	pars = {'M'                  : m1+m2,
 			'q'                  : m1/m2,
@@ -500,7 +506,9 @@ generate_waveform
 			'interp_uniform_grid': 2,      # Interpolate mode by mode on a uniform grid. Default = 0 (no interpolation)
 			'distance': d,
 			'inclination': iota,
-			'nqc_coefs_flx': 2 # {"none", "nrfit_nospin20160209", "fit_spin_202002", "fromfile"}
+			#'nqc':2, #{"no", "auto", "manual"}
+			#'nqc_coefs_flx': 2, # {"none", "nrfit_nospin20160209", "fit_spin_202002", "fromfile"}
+			#'nqc_coefs_hlm':0
 		}
 	times, h_p, h_c = EOBRun_module.EOBRunPy(pars)
 	amp = np.sqrt(h_p**2+h_c**2)
