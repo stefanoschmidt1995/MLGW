@@ -2,7 +2,6 @@ import mlgw
 import mlgw.GW_generator as generator
 import mlgw.EM_MoE as MoE
 import numpy as np
-import os
 import matplotlib.pyplot as plt
 
 

@@ -16,7 +16,7 @@ m1_range = (5.,100.)
 m2_range = (5.,100.)
 s1_range = (-0.8,0.95)
 s2_range = (-0.8,0.95)
-d_range = (.5,10.)
+d_range = (1,1)
 i_range = (0,np.pi) 
 phi_0_range = (0,2*np.pi)
 
