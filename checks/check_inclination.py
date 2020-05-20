@@ -23,7 +23,7 @@ print("iota, phi_0: ", np.arccos(cosiota), phi_0)
 
 times, amp, ph, h = generate_waveform(m1,m2,s1,s2,d, np.arccos(cosiota), phi_0)
 
-generator = GW_generator("../definitive_code/TD_model")
+generator = GW_generator("../definitive_code/TD_model_TEOBResumS")
 rec_amp, rec_ph = generator.get_WF(np.array([m1,m2, s1, s2, d, np.arccos(cosiota), phi_0]), plus_cross = False,
 				t_grid = times, red_grid = False)
 

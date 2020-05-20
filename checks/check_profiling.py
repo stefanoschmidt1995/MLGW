@@ -32,7 +32,7 @@ except:
 generate_stats = True
 
 	#defining generator and theta
-generator = GW_generator("../definitive_code/TD_model")
+generator = GW_generator("../definitive_code/TD_model_TEOBResumS")
 
 m1_range = (5.,50.)
 m2_range = (5.,50.)
@@ -44,7 +44,7 @@ phi_0_range = (0,np.pi)
 
 low_list = [m1_range[0],m2_range[0], s1_range[0], s2_range[0], d_range[0], i_range[0], phi_0_range[0]]
 high_list = [m1_range[1],m2_range[1], s1_range[1], s2_range[1], d_range[1], i_range[1], phi_0_range[1]]
-times = np.linspace(-6.,0.05,100000)
+times = np.linspace(-6.,0.05,1000)
 
 def generate_waves(N_waves = 16):
 	theta = np.random.uniform(low = low_list, high = high_list, size = (N_waves, 7))
@@ -55,8 +55,7 @@ def generate_waves(N_waves = 16):
 	#theta_std[to_switch,1], theta_std[to_switch,2] = theta_std[to_switch,2], theta_std[to_switch,1]
 
 	#for i in range(N_waves):
-	#	h_p, h_c = generator.get_WF(theta[i,:], plus_cross = True, t_grid = times , red_grid = False)
-	h_p, h_c = generator.get_WF(theta, plus_cross = True, t_grid = times , red_grid = False)
+	h_p, h_c = generator.get_WF(theta, t_grid = times)
 
 	#plt.plot(times,h_p[0,:])
 	#plt.show()
@@ -70,8 +69,8 @@ def generate_waves(N_waves = 16):
 
 if generate_stats:
 	#generator.get_red_coefficients(np.array([[1.5,-0.58,0.3],[2.5,0.2,-0.13]]))
-	cProfile.run('generate_waves(100)', 'wave_stats')
-	#generate_waves(50)
+	#cProfile.run('generate_waves(100)', 'wave_stats')
+	generate_waves(100)
 	#quit()
 
 p = pstats.Stats('wave_stats')

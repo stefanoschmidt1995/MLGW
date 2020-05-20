@@ -113,7 +113,7 @@ compute_mismatch
 	np.divide(F, div_factor, out = F)
 	return 1-F
 
-def compute_optimal_mismatch(h1,h2, return_F = True):
+def compute_optimal_mismatch(h1,h2, optimal = True, return_F = True):
 	"""
 compute_optimal_mismatch
 ========================
@@ -123,6 +123,7 @@ compute_optimal_mismatch
 	Input:
 		h1 (N,D)/(D,)	complex wave
 		h2 (N,D)/(D,)	complex wave
+		optimal			whether to optimize w.r.t. a constant phase
 		return_F		whether to reteurn mismatch or overlap
 	Output:
 		F_optimal (N,)/()		optimal mismatch/overlap
@@ -136,9 +137,12 @@ compute_optimal_mismatch
 	scalar = lambda h1_, h2_: np.sum(np.multiply(h1_,np.conj(h2_)), axis = 1)/h1_.shape[1] #(N,)
 
 	norm_factor = np.sqrt(np.multiply(scalar(h1,h1).real, scalar(h2,h2).real))
-	overlap = scalar(h1,h2) #(N,)
-	phi_optimal = np.angle(overlap) #(N,)
-	overlap = np.divide(scalar(h1,h2*np.exp(1j*phi_optimal)), norm_factor)
+	if optimal:
+		overlap = scalar(h1,h2) #(N,)
+		phi_optimal = np.angle(overlap) #(N,)
+	else:
+		phi_optimal = np.zeros(norm_factor.shape)
+	overlap = np.divide(scalar(h1,(h2.T*np.exp(1j*phi_optimal)).T), norm_factor)
 	overlap = overlap.real
 
 		#debug
@@ -399,6 +403,8 @@ generate_waveform
 		h_p (N,D)	plus polarization of the wave
 		h_c (N,D)	cross polarization of the wave
 	"""
+	import lal
+	import lalsimulation as lalsim
 	q = m1/m2
 	mtot = (m1+m2)#*lal.MTSUN_SI
 	mc = (m1*m2)**(3./5.)/(m1+m2)**(1./5.)
@@ -463,6 +469,7 @@ generate_waveform
 		times (D,)	times at which wave is evaluated
 		h_p (D,)	plus polarization of the wave
 		h_c (D,)	cross polarization of the wave
+		t_m 		time at which amplitude peaks
 	"""
 	if path_TEOBResumS is None: #very ugly but useful
 		path_TEOBResumS = '/home/stefano/Desktop/Stefano/scuola/uni/tesi_magistrale/code/TEOBResumS/Python'
@@ -487,7 +494,7 @@ generate_waveform
 	if verbose:
 		print("Generating wave @: ",m1,m2,s1,s2,d, iota)
 	
-	print(f_min)
+	#print(f_min)
 
 	pars = {'M'                  : m1+m2,
 			'q'                  : m1/m2,
@@ -519,7 +526,7 @@ generate_waveform
 	else:
 		arg=0
 
-	return times[arg:], h_p[arg:], h_c[arg:]
+	return times[arg:], h_p[arg:], h_c[arg:], t_m
 
 
 
