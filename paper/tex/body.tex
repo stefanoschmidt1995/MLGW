@@ -1,29 +1,81 @@
 \section{Introduction}
 The detection of Gravitational Waves (GW) from compact binary coalescences (CBC) has been possible thanks to the joint effort of a number of different fields of expertise, all joining together to achieve the sophisticated detection process. GW data analysis concerns the detection of a GW signal hidden in the raw detector output (\textit{matched filtering}) and subsequently the inference of its physical properties (\textit{parameter estimation}). In order to accomplish its goal, GW data analysis relies on the availability of waveform (WF) templates to compare with the detector output.
 To accurately explore the posterior distribution for the parameters defining a CBC, state-of-the-art parameter estimation (PE) algorithms~\cite{Aasi:2013jjl}~\cite{Veitch2014wba} can require the generation of as many as $10^7$ waveform templates. It is therefore paramount for the waveform generation to be as fast as possible. At the same time, because of the extreme sensitivity to phase differences in the likelihood  function, the templates must retain a high degree of accuracy to avoid biases in the posterior exploration.
-\par
+
+\an{May be one should start with NR vs analytical models}
+
 Many efforts have been devoted to solve Einstein equations for two coalescing objects and to predict the gravitational radiation emitted~\cite{}.
-As solving the full equations is still extremely computationally challenging, the LIGO-Virgo Collaboration relies on approximate analytical models. These can be broadly categorised in  two families; (i) the effective-one-body(EOB) waveform models~\cite{Damour1999EOB}~\cite{Damour2009EOB}; (ii) the phenomenological models~\cite{}. 
-EOB models are the most accurate family of analytical models available. They compute the GW signal by solving Hamilton's equations and accurately predict the GW signal up to the plunge. The merger and ringdown  parts 
-of the signal are then joint to the inspiral signal using information obtained from numerical relativity. Because of the numerical integrations involved, they tend to be accurate, but slow to generate, see however \cite{} for a much faster approach \textbf{(Is this about ROMs?? Or other??)}. The phenomenological waveform are based on the post-Newtonian formalism and then calibrated on EOB waveforms and numerical relativity. They tend to be much faster than EOB models, but not as accurate.
+As solving the full equations is still extremely computationally challenging, the LIGO-Virgo Collaboration relies on approximate analytical models. 
+These can be broadly categorized in  two families; (i) the effective-one-body(EOB) waveform 
+models~\cite{Damour1999EOB}~\cite{Damour2009EOB}; (ii) the phenomenological models~\cite{}. 
+EOB models are the analytically most complete family of analytical models available. 
+They compute the GW signal by solving Hamilton's equations and accurately predict the GW signal up to late plunge.
+The merger and ringdown  parts of the signal are then joint to the inspiral signal using information obtained from numerical relativity. 
+Because of the numerical integrations involved, they tend to be accurate, but slow to generate, see however \cite{} 
+for a much faster approach \textbf{(Is this about ROMs?? Or other??)}. 
+
+The phenomenological waveform are based on the post-Newtonian formalism and then calibrated on EOB waveforms and numerical relativity. 
+They tend to be faster than EOB models, but not as accurate.
 Many efforts have been devoted to the task of speeding up the generation of GW signals from EOB families.
-They have come to be known as \textit{surrogate models}. Surrogate modelse are constructed 
-starting from some decomposition in the waveform space followed by efficient interpolation to avoid any  numerical integration. Being fast to generate, they are routinely employed in GW data analysis. 
+For example, one lead to the development of \textit{surrogate models}. Surrogate models are constructed 
+starting from some decomposition in the waveform space followed by efficient interpolation to avoid any  numerical integration. 
+Being fast to generate, they are routinely employed in GW data analysis. 
 \par
-A Machine Learning model is a promising alternative to the state-of-the-art waveforms generators. Machine Learning (ML) is a branch of statistics that is devoted to reproduce patterns read from data. A ML algorithm needs very little human input and, by a automatically solving an optimization problem, it is able to choose the best performing element among a large class of parametric models for the solution. This is the so-called training procedure. The ML flexibility in modelling data and reproducing trends is appealing: with a proper model choice and with an appropriate training procedure, we can hope to have a reliable, fast to execute generator of GW waveforms, while retaining the accuracy necessary for robust parameter estimation.
-\par
-In this work, we explore this opportunity. We developed a ML model that is able to generate a GW signal from a binary black hole (BBH) coalescence.
-We train our model with WFs generated by \texttt{TEOBResumS} \cite{Nagar2018TEOBResumS} model and we demonstrate that it can generate GW signals significantly faster than EOB models, matching the performances of a Reduced Order Modelling (ROM)~\cite{Purrer_2014_ROM}~\cite{Purrer_2016_FDROM}~\cite{Boh2017SEOBNRv4}. At the same time it keeps the same accuracy of the underlying training model. Moreover, we present a successful application in a parameter estimation setting, by computing posterior distributions for GW150914.
-\par
-Our model can be effectively applied to several open problems in GW data analysis.
-First of all, being among the fastest Inspiral-Merger-Ringdown waveform models and matching the state-of-the-art accuracy, it could be used to speed up the search of GW waves and the subsequent analysis.
-Furthermore, it is crucial to realise that with our model, the time required to generate a WF does not depend on the lenght of the signal but only on the number of grid points which the WF is evaluated at. Such feature will be crucial for future surveys (e.g. LISA, ET), where "long" signals are expected to be detected, and the problem of the fast generation of a WF will be more pressing.
-\par
-Finally, our model can be employed for a systematic analysis of the detected signals so far. Being fast to run, it would perform accurate parameter estimation in a low amount of time and it could allow for a comparison between different surrogate WF models\footnote{Indeed it could be trained with different surrogate models: this would create a fast version of the underlying EOB model, which could be employed for parameter estimation.}
-, thus yielding invaluable information about the relevant physics.
+A Machine Learning model is a promising alternative to the state-of-the-art waveforms generators. Machine Learning (ML) is a branch 
+of statistics that is devoted to reproduce patterns read from data. A ML algorithm needs very little human input and, by a automatically solving an optimization problem, it is able to choose the best performing element among a large class of parametric models for the solution. This is the so-called training procedure. 
+The ML flexibility in modeling data and reproducing trends is appealing: with a proper model choice and with an appropriate training 
+procedure, we can hope to have a reliable, fast to execute generator of GW waveforms, while retaining the accuracy necessary for robust parameter estimation.
+ML procedures have been applied so far to Numerical Relativity waveform data~\cite{Gabbard:2017lja,George:2017pmj,George:2017vlv,Rebei:2018lzh,Khan:2020foe}.
+The construction of a NR-trained ML waveform model is currently missing except for a very restricted region of
+the parameter space (nonspinning etc.). The main problem behind this is because of the need of a large set of
+NR simulations that would be needed to train such an algorithm.
+
+By contrast, and EOB model, informed by NR simulations, does not have such drawback as it can generate 
+waveforms all over the BBH parameter space. However, since the dynamics and waveforms are analytically
+incomplete, one has to rely on a certain amount of NR simulations to improve/complete the purely analytical
+waveform through merger and ringdown. The NR information enters EOB models in two places: (i) on the one
+hand, it allows to compute an accurate description of the merger and postmerger phase; (ii) on the other hand,
+allows one to inform (or calibrate) some effective parameters entering the interacting Hamiltonian.
+This is the case of the most recent avatar of the \texttt{TEOBResumS}~\cite{Nagar:2018zoe} model, 
+\texttt{TEOBResumS\_SM}~\cite{Nagar:2020pcj}. This model used several hundreds (though many are redundant)
+of availabe SXS simulations to compute a highly accurate description of the postmerger-ringdown phase
+and just around 40 datasets to improve the behavior of the dynamics. The resulting model shows a 
+mismatch, over Advanced LIGO noise, $\lesssim 4\times 10^{-3}$ all over $\sim 500$ hundred spin-aligned 
+NR waveforms by the SXS collaboration. It is currently the most NR-faithful existing EOB model for spin-aligned 
+binaries.
+Thus we develop a ML waveform model for BBH coalescence that is trained by \texttt{TEOBResumS\_SM}.
+Although higher modes are available in the original implementation, we focus here only on the dominant $\ell=m=2$
+quadrupole waveform. We demonstrate that it can generate GW signals significantly faster than 
+the original implementation, matching the performances of a Reduced Order Modelling 
+(ROM)~\cite{Purrer_2014_ROM,Purrer_2016_FDROM,Boh2017SEOBNRv4}. 
+At the same time it keeps the same accuracy of the underlying training model.
+As a relevant physical application, we use the \texttt{TEOBResumS\_SMML} model to provide a completely new,
+and independent analysis, of the 10 BBHs coalescence events collected in the O1/O2 LIGO-Virgo observing 
+runs~\cite{LIGOScientific:2018mvr}. The physical parameters we find are compatible with previous
+analyses obtained with radically different models~\cite{LIGOScientific:2018mvr}, though with some distinguo: 
+(i) the individual masses obtained with our model are systematically {\it larger} than LVC published results; 
+(ii) similarly, the individual spins of the objects, when measurable, are systematically larger than published
+results. This is consistent with previously published analysis of GW150914 data using a slightly different version 
+of \texttt{TEOBResumS}~\cite{Nagar:2018zoe}.
+
+
+%Finally, our model can be employed for a systematic analysis of the detected signals so far. Being fast to run, it would perform accurate parameter estimation in a low amount of time and it could allow for a comparison between different surrogate WF models\footnote{Indeed it could be trained with different surrogate models: this would create a fast version of the underlying EOB model, which could be employed for parameter estimation.}
+%, thus yielding invaluable information about the relevant physics.
+On top of the specific application discussed here, our ML waveform model could also be used directly 
+to speed up GW searches. Furthermore, since the time required to generate a WF does not depend
+on the signal time length but only only on the number of grid points which the WF is evaluated at,
+the applicability of our approach goes far beyond the LIGO/Virgo physics scenario. In particular,
+we think about the forthcoming Einstein Telescope, that will be sensitive to very long stellar-mass 
+inspirals from 5Hz, or to extreme mass ratio inspiral as LISA sources. In these context the problem
+of WF fast generation will be more pressing and our approach, provided a suitable waveform model 
+for training,  might be essential for detection and parameter estimation. 
+
+The paper is organized as follows: 
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 \section{Problem specification}
+\label{sec:setup}
+%--------------------------------------
 We now provide a precise statement of the objective of our work.
 A binary black hole is parametrized by a vector $ \boldsymbol{\vartheta} = (m_1,m_2, \mathbf{s}_1,\mathbf{s}_2) $, where $m_i$ are the BHs masses and $\mathbf{s}_i = \frac{\mathbf{S}_i}{m_i^2} <1$ are the \textit{dimensionless} spin. 
 We call them the \textit{orbital parameters}.
