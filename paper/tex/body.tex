@@ -308,11 +308,13 @@ We now discuss some tests on our model. We first study how its performance depen
 Finally, we measure the speed up provided by our model as compared with standard EOB methods.
 As it is common, we measure the similarity between two waves by means of the \textit{optimal mismatch}:
 \begin{align}
-	\bar{\mathcal{F}}[h_1,h_2] &\equiv \argmin_{\phi_0} \left[ 1- \frac{\langle h_1, h_2 e^{i\phi_0} \rangle}{\sqrt{\langle h_1, h_1 \rangle \langle h_2, h_2 \rangle}} \right]	\label{eq:mismatch_def} \\
-	& = \argmin_{\phi_0} \left[ 1- \frac{ \mathrm{Re} \int \d{f} \; \frac{\tilde{A}_1 \tilde{A}_2}{S_n} e^{i(\phi_1-\phi_2-\phi_0)}}
-		{\sqrt{\left(\mathrm{Re} \int \d{f} \; \frac{\tilde{A}_1^2}{S_n}\right)
-		\left( \mathrm{Re} \int \d{f} \; \frac{\tilde{A}_2^2}{S_n} \right)}} \right] \nonumber
+	\bar{\mathcal{F}}[h_1,h_2] &\equiv \min_{\phi_0} \left[ 1- \frac{\langle h_1, h_2 e^{i\phi_0} \rangle}{\sqrt{\langle h_1, h_1 \rangle \langle h_2, h_2 \rangle}} \right]	\label{eq:mismatch_def}
+%\\
+%	& = \min_{\phi_0} \left[ 1- \frac{ \mathrm{Re} \int \d{f} \; \frac{\tilde{A}_1 \tilde{A}_2}{S_n} e^{i(\phi_1-\phi_2-\phi_0)}}
+%		{\sqrt{\left(\mathrm{Re} \int \d{f} \; \frac{\tilde{A}_1^2}{S_n}\right)
+%		\left( \mathrm{Re} \int \d{f} \; \frac{\tilde{A}_2^2}{S_n} \right)}} \right] \nonumber
 \end{align}
+and we always use a flat noise curve (i.e. constant power spectral density for the detector noise).
 %%%%%%%
 \subsection{Validation}
 Wherever relevant, we will employ a dataset with $5800$ waveforms generated in the domain $\mathcal{P} = [1,20]\times[-0.8,0.95]\times[-0.8,0.95]$, with $\tau_{min} = \SI{1.0}{s/M_\odot}$. The dataset was generated with TEOBResumS model \cite{}.
@@ -434,9 +436,7 @@ The $95\%$ of the test waves have a mismatch lower than $7.5 \cdot 10^{-3}$.
 	\label{fig:F_hist}
 \end{figure}
 %%%%
-We compute mismatch value on a number of randomly generated waves.
-The mismatch is computed with a flat noise curve, i.e. a constant power spectral density for the detector noise.
-In order to tests the model in the most general case, we extract a random values of the physical parameters (i.e. $m_1,m_2, s_1, s_2, d_L, \iota, \varphi_0$) for each wave.
+We compute mismatch value on a number of WFs with random values of the physical parameters (i.e. $m_1,m_2, s_1, s_2, d_L, \iota, \varphi_0$) for each wave.
 We report our results in the histogram in figure~\ref{fig:F_hist}.
 We report a median value of the distribution $\mathcal{F}_m = 4 \cdot {10^{-3}}^{+???}_{-???}$. Such results are similar to the discrepancies between state-of-the-art models.
 \par
