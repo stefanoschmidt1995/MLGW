@@ -30,7 +30,7 @@ The construction of a NR-trained ML waveform model is currently missing except f
 the parameter space (nonspinning etc.). The main problem behind this is because of the need of a large set of
 NR simulations that would be needed to train such an algorithm.
 
-By contrast, and EOB model, informed by NR simulations, does not have such drawback as it can generate 
+By contrast, an EOB model, informed by NR simulations, does not have such drawback as it can generate 
 waveforms all over the BBH parameter space. However, since the dynamics and waveforms are analytically
 incomplete, one has to rely on a certain amount of NR simulations to improve/complete the purely analytical
 waveform through merger and ringdown. The NR information enters EOB models in two places: (i) on the one
@@ -83,7 +83,7 @@ Let the wave direction of propagation be identified with the spherical coordinat
 A GW is parametrized as:
 \begin{align} \label{eq:h_parametrization}
 	&h(t, d_L,\iota,\varphi_0; \boldsymbol{\vartheta}) = h_+ + i h_\times \nonumber \\
-		&\qquad= {\frac{\SI{1}{Mpc}}{d_L}} \sum_{m = -2}^{2} \tensor[^{-2}]{Y}{_{2 m}}(\iota, \varphi_0) \cdot H_{2m}(t; \boldsymbol{\vartheta})
+		&\qquad= {\frac{\SI{1}{Mpc}}{d_L}} \sum_{l = 2}^{\infty} \sum_{m = -l}^{l} \tensor[^{-2}]{Y}{_{l m}}(\iota, \varphi_0) \cdot H_{lm}(t; \boldsymbol{\vartheta})
 \end{align}
 where $\tensor[^{-2}]{Y}{_{l m}}(\iota, \varphi_0)$ are the spin-2 spherical harmonics.
 %In the expression, and for the rest of this paper, we included only the lowest order term in the multipole expansion, which is the dominant term in every realistic case.
@@ -95,12 +95,13 @@ So, we approximate the full multipolar waveform with just the  the single comple
 \begin{equation}\label{eq:h_std}
 	\tilde{h}(t; \boldsymbol{\vartheta}) \equiv \tensor[^{-2}]{Y}{_{2 2}}(0,0) \cdot H_{22}(t; \boldsymbol{\vartheta}) = 4\cdot\sqrt{\frac{5}{64\pi}}H_{22}(t; \boldsymbol{\vartheta})
 \end{equation}
-and we express $\tilde{h}$ in terms of two functions $A(t; \boldsymbol{\vartheta})$ and $\phi(t; \boldsymbol{\vartheta})$ such that:
+and we express $\tilde{h}$ in terms of its amplitude and phase:
 \begin{equation}\label{eq:h_ML}
 	\tilde{h}(t; \boldsymbol{\vartheta}) = A(t; \boldsymbol{\vartheta}) e^{i \phi(t; \boldsymbol{\vartheta})} 
 \end{equation}
 %%%
 We may also write $f_{\boldsymbol{\vartheta}}(t)$ to denote a function $f(t;\boldsymbol{\vartheta})$ of time with parametric dependence on $\boldsymbol{\vartheta}$.
+In what follows, $f$ stands for any of the functions $A_{\tilde{\boldsymbol{\vartheta}}}(t)$ and ${\phi}_{\tilde{\boldsymbol{\vartheta}}}(t)$.
 \par
 With this definition, the full waveform can be expressed as:
 \begin{align} 
@@ -136,12 +137,12 @@ More formally, we seek a ML model that reliably reproduce the following map:
 	(q, s_1, s_2) &\longmapsto \phi_{(q, s_1, s_2)}(t) \label{eq:objective_ph}
 \end{align}
 \par
-In the context of ML, our task reduces to performing a regression\footnote{A regression is a statistical method to infer the relationship between a set of ``independent variables" and a set of ``dependent variable". A model consist in a functional form for such relation, usually with many free parameters to be specified. By looking at the data, one should be able to make a proper choice for the paramters. This is common in almost every ML model.} 
-from the orbital paramters to the WF. 
-Before being able to perform a regression, several steps are required.
+In the context of ML, our task reduces to performing two regressions\footnote{A regression is a statistical method to infer the relationship between a set of ``independent variables" and a set of ``dependent variable". A model consist in a functional form for such relation, usually with many free parameters to be specified. By looking at the data, one should be able to make a proper choice for their value.} 
+from the orbital paramters to the amplitude and phase of WF. 
+In order to be able to perform each regression, several steps are required.
 
 \begin{enumerate}[label=(\Alph*)]
-	\item \textit{Setting a time grid}. Each WF must be represented on a discrete time grid, which allows for efficient and reliable reconstruction on an arbitrary grid. After this operation, the functions $A(t)$ and $\phi(t)$ are represented as vectors\footnote{
+	\item \textit{Setting a time grid}. Each WF must be represented on a discrete time grid, which allows for efficient and reliable reconstruction on an arbitrary, user-given, grid. After this operation, the functions $A(t)$ and $\phi(t)$ are represented as vectors\footnote{
 In ML jargon, this procedure is called preprocessing and aims to create a standard representation for all the data available (in our case the WFs).
 }.
 	\item \textit{Creating a dataset of WFs}. A large number of WFs must be generated on the the chosen time grid for a different number of orbital paramter $(q,s_1,s_2)$. This will be the training set for the ML model.
@@ -154,8 +155,9 @@ In ML jargon, this procedure is called preprocessing and aims to create a standa
 	\centering
 	\includegraphics[width=\columnwidth,keepaspectratio, trim = {.5cm 0cm .5cm 1cm}]{tau_grid}
 	\caption{Amplitude (arbitrary units) of a GW wave represented on a grid with 30 points.
-It is set $\alpha = 0.3$ and $\tau_{min} = \SI{-0.3}{s/M_\odot}$
+It is set $\alpha = 0.3$ and $\tau_{min} = \SI{0.3}{s/M_\odot}$
 The $\boldsymbol{\tau}$ grid is finer around the merger.
+\sschmidt{Do we really need this??}
 }
 	\label{fig:tau_grid}
 \end{figure}
@@ -164,17 +166,14 @@ The $\boldsymbol{\tau}$ grid is finer around the merger.
 Each function $f$ to fit (i.e. amplitude and phase) must be represented by its values $\mathbf{f} \in \R^D$ on a discrete grid of $D$ points $\mathbf{t} \in \R^D$.
 It is convenient to work in a grid of (dimensionless) reduced time $\boldsymbol{\tau} = \frac{\mathbf{t}}{M}$.
 The time grid is chosen with the convention that at $\tau=0$ the function $A(t;\boldsymbol{\vartheta})$ (i.e. the amplitude of the $H_{22}$ mode) has a peak.
-\par
-Both amplitude and phase are represented by:
+Once a time grid is set, the vector $\mathbf{f}$ is defined as follows:
 \begin{equation}
 	\mathbf{f}({\tilde{\boldsymbol{\vartheta}}})_i = f_{{\tilde{\boldsymbol{\vartheta}}}}(\boldsymbol{\tau}_i) \;\;\; 
 \end{equation}
-where $f$ stands for any of the functions $A_{\tilde{\boldsymbol{\vartheta}}}(t)$ and ${\phi}_{\tilde{\boldsymbol{\vartheta}}}(t)$.
 \par
-The value of $f$ at an arbitrary time must be found by interpolation and this introduces an error in the value of the function.
+The value of $f$ at an arbitrary time must be found by interpolation and this introduces an error in the reconstructed value.
 To make the interpolation effective, we want a finer grid when the function changes much.
-Clearly an equally spaced grid over times is not the best choice since the amplitude has a very narrow peak at $\tau=0$
-\footnote{As the phase has a rather regular behavior, it is not important to choose the right grid. For this reason a single grid for amplitude and phase, tuned on the behavior of amplitude, is used.}.
+Clearly an equally spaced grid over times is not the best choice since the amplitude has a very narrow peak at $\tau=0$\footnote{As the phase has a rather regular behavior, it is not important to choose the right grid. For this reason a single grid for amplitude and phase, tuned on the behavior of amplitude, is used.}.
 A good solution is to create an equally spaced grid $\boldsymbol{\tilde{\tau}}$ for the variable
 \begin{equation} \label{eq:tau_tilde}
 	{\tilde{\tau}} \equiv \sign{\tau} \cdot (|\tau|)^\alpha ;\;\; \alpha < 1
@@ -184,10 +183,12 @@ and build the $\tau$ grid ${\boldsymbol{\tau}}$ as:
 	{\boldsymbol{\tau}}_i = \sign{\boldsymbol{\tilde{\tau}}_i} \cdot (|\boldsymbol{\tilde{\tau}}_i|)^{\frac{1}{\alpha}}
 \end{equation}
 We call $\alpha$ \textit{distortion parameter}.
-As can be seen in fig.~\ref{fig:tau_grid}, such choice ensures that more points are accumulated around the amplitude peak.
+As can be seen in fig.~\ref{fig:tau_grid}, such choice ensures that more points are accumulated around the peak of amplitude.
 \par
 The lenght of the time grid determines the maximum lenght of the WFs that the model can generate.
 Let us define $\tau_{min} = -{\boldsymbol{\tau}}_0 > 0 $ the starting point of the grid; this means that each WF start at a time $\tau_{min}\cdot M$ before the merger.
+Note that $\tau_{min}$ is an important hyperparameter, set by the user, which strongly impacts on the model applicability.
+\par
 We find that the minimum frequency in the signal as a function of $M, q$ and $\tau_{min}$ is given by:
 \begin{align}\label{eq:f_min}
 	f_{min} = \SI{151}{Hz}  \left( \frac{(1+q)^2}{q} \right)^{\frac{3}{8}}  \left( \frac{M_\odot}{M} \right)  \left(\frac{\SI{1}{ \frac{s}{M_\odot}}}{\tau_{min}} \right)^{\frac{3}{8}}  
@@ -205,26 +206,31 @@ where $X_{i:}$ denotes the i-th row of the dataset matrix.
 \par
 The dataset is filled with random values of parameters ${\tilde{\boldsymbol{\vartheta}}}_i \sim \textrm{Unif}(\mathcal{P})$
 \footnote{We denote by $\textrm{Unif}(\mathcal{P})$ a uniform probability distribution on the set $\mathcal{P}$.}.
-To generate the training waves the \texttt{TEOBResumS} model is used \sschmidt{(CITE...)}.
-Waves are generated with a standard set of parameters: $\iota =0 $, $\varphi_0 = 0$, $d_0 = \SI{1}{Mpc}$ and $M = \SI{20}{M_\odot}$.
-The output of the training surrogate model must be interpolated to the chosen grid.
+To generate the training waves the \texttt{TEOBResumS} model is used.
+Waves in eq.~\eqref{eq:h_std} are generated with a standard total mass $M = \SI{20}{M_\odot}$.
+The output of the training model must be interpolated to the chosen time grid.
 \par
-It is important to ensure that all waves have zero phase at a constant time point $\bar{t}$. This is crucial in order to have a continuous dependence of the phase components on the orbital parameters; a random alignment would wash out any relation. Model performances are not seen to depend on the choice of $\bar{t}$.
+It is important to ensure that all waves have zero phase at a constant time point $\bar{t}$: this is crucial to obtain a continuous dependence of the phase components on the orbital parameters. Model performances are not seen to depend on the choice of $\bar{t}$.
 %%%%%%%%%%%%%
 \subsection{Dimensionality reduction}
 Once we are able to represent waveforms, a regressions ${\tilde{\boldsymbol{\vartheta}}} \longmapsto \boldsymbol{A}_{{\tilde{\boldsymbol{\vartheta}}}}, \boldsymbol{\phi}_{{\tilde{\boldsymbol{\vartheta}}}}$ is unfeasible. The dimension of the target space is too large for this task. Luckily, the elements of $\boldsymbol{A}, \boldsymbol{\phi}$ are strongly correlated with each other: the independent amount of information, required to fully reconstruct the wave, can be stored in a low dimensional vector.
 A number of ML techniques to perform such a task are available. Among them, Principal Component Analysis (PCA) \cite[ch. 12]{murphy2012machine} was found to be particularly effective.
 \par
-A PCA model is trained with the dataset in \eqref{eq:dataset}: it represents an (approximate) bijective map between the high dimensional waveform $\mathbf{f} = \boldsymbol{A}, \boldsymbol{\phi} \in \R^D$ and the low-dimensional representation $\mathbf{g} = \mathbf{g}_A , \mathbf{g}_\phi \in \R^K$.
-Here $K$ is the dimension of low-dimensional representation.
-In what follows, $\mathbf{f}$ will be the high order representation of any of the function $A_{{\tilde{\boldsymbol{\vartheta}}}}(t)$, $\phi_{{\tilde{\boldsymbol{\vartheta}}}}(t)$, while  $\mathbf{g}$ will be the PCA reduced lower order representation of $\mathbf{f}$.
+The basic idea behind PCA is to seek a \textit{linear relation} between high dimensional and low dimensional data: high dimensional data ($\in \R^D$) are projected onto a $K$ dimensional subspace, by means of an orthogonal projection.
+A theorem guarantees that, for zero mean data, the generators of subspace are the (orthonormal) first $K$ eigenvectors of the empirical covariance matrix $\Sigma \in \mathbf{Mat}(D,D)$. The eigenvectors are also called Principal Components (PCs) of the data.
+Thus, the projection matrix $H\in \mathbf{Mat}(K,D)$ holds in each row the PCs and each high-dimensional point can be effectively expressed as a linear combination of the $K$ PCs\footnote{For this reason, PCA can also be seen as a perturbative expansion of a high dimensional observation. A more realiable reconstruction can be achieved by adding more and more PCs, each of which is less important than its previous.}.
+\par
+A PCA model is trained with the dataset eq.~\eqref{eq:dataset}: it represents an (approximate) bijective map between the high dimensional WF $\mathbf{f} = \boldsymbol{A}_{\tilde{\boldsymbol{\vartheta}}}, \boldsymbol{\phi}_{\tilde{\boldsymbol{\vartheta}}} \in \R^D$ and the low-dimensional representation $\mathbf{g} = \mathbf{g}_A , \mathbf{g}_\phi \in \R^K$.
+%In what follows, $\mathbf{g}$ will be the PCA reduced lower order representation of $\mathbf{f}$ (i.e. of amplitude and phase).
 The relation takes the following form:
 \begin{align}
 	\mathbf{g} = H (\mathbf{f} - \boldsymbol{\mu}) \label{eq:PCA_reduction_model}\\
 	\mathbf{f} = H^T \mathbf{g} + \boldsymbol{\mu} \label{eq:PCA_reconstruction_model}
 \end{align}
-where, as usual in PCA, $H \in \mathbf{Mat}(K,D)$ is the matrix whose colums are the first K eigenvalues of the empirical covariance matrix $\Sigma = \frac{1}{N} \sum_{i=1}^N \mathbf{f}_i \mathbf{f}^T_i \in \mathbf{Mat}(D,D)$; the eigenvectors are also called principal components of the data (PCs). $\boldsymbol{\mu}$ is the empirical mean vector: ${\boldsymbol{\mu} = \frac{1}{N} \sum_{i=1}^N (\boldsymbol{f}_i)}$.
-In the equations above, the ${\tilde{\boldsymbol{\vartheta}}}$ dependence is omitted for notational simplicity.
+where $\boldsymbol{\mu}$ is the empirical mean vector ${\boldsymbol{\mu} = \frac{1}{N} \sum_{i=1}^N \boldsymbol{f}_i \in \R^D}$ and the matrix $H$ is computed from the empirical covariance ${\Sigma = \frac{1}{N} \sum_{i=1}^N (\mathbf{f}_i-\boldsymbol{\mu}) (\mathbf{f}-\boldsymbol{\mu})^T_i}$
+
+%where, as usual in PCA, $H \in \mathbf{Mat}(K,D)$ is the matrix whose colums are the first K eigenvalues of the empirical covariance matrix $\Sigma = \frac{1}{N} \sum_{i=1}^N \mathbf{f}_i \mathbf{f}^T_i \in \mathbf{Mat}(D,D)$; the eigenvectors are also called principal components of the data (PCs). 
+%In the equations above, the ${\tilde{\boldsymbol{\vartheta}}}$ dependence is omitted for notational simplicity.
 \par
 
 %%
@@ -235,7 +241,7 @@ Once a dimensional reduction (and reconstruction) scheme is available, the aim i
 \end{equation}
 A number of ML models are avaiable for this purpose. The model Mixture of Experts (MoE) \cite{Jacobs1991AdaptiveMoE} \cite[ch. 11]{murphy2012machine} is found to be a good choice.
 \par
-It performs the following 1D regression:
+MoE performs the following 1D regression:
 \begin{equation} \label{eq:MoE}
 	y(\mathbf{x}) = \sum_{l=1}^L (W^T \mathbf{x})_l \cdot \mathcal{S}(V^T\mathbf{x})_l
 \end{equation}
@@ -244,7 +250,7 @@ where $\mathcal{S}$ is the \textit{softmax function}:
 	\mathcal{S}(V^T{\mathbf{x}})_l = \frac{e^{(V^T{\mathbf{x}})_l}}{\sum_{l^\prime = 1}^L e^{(V^T{\mathbf{x}})_{l^\prime}}}
 \end{equation}
 and ${\mathbf{x}} \in \R^{\tilde{M}}$ and $V,W \in \mathbf{Mat}(\tilde{M},L)$.
-The meaning of eq.~\eqref{eq:MoE} is clear: the output is a weighted combination of $L$ linear regressions $(W^T \mathbf{x})_l$ (each called an \textit{experts}); each expert perform a reliable regression in a small region of the space. The softmax function (in this context also called \textit{gating function}) switches on the expert contributions whenever this is required.
+The meaning of eq.~\eqref{eq:MoE} is clear: the output is a weighted combination of $L$ linear regressions $(W^T \mathbf{x})_l$ (called \textit{experts}); each expert perform a reliable regression in a small region of the space. The softmax function (in this context also called \textit{gating function}) switches on the expert contributions whenever this is required.
 MoE is usually fitted with the Expectation Maximization (EM) algorithm, which iteratively sets the $W$ and $V$ by refining a lower bound to the log-likelihood of the model.
 \par
 Linear regression is a very simple model, often inadequate to model a complex relation. A simple trick to improve its performance is called \textit{basis functions expansion}. It consist in the replacement:
@@ -438,6 +444,7 @@ To understand better model performances, it is interesting to display the accura
 We generate waves for randomly chosen values of $\vartheta = (q, M, s_1, s_2)$ and, for each wave, we measure test mismatch $\mathcal{F}$ and mse on the reconstruction of the first PC for the phase.
 The latter is useful to test the accuracy of the fit before wave reconstruction.
 The results are reported in the contour plots in figure \ref{fig:countour}.
+\sschmidt{Probably the comments below are not really interesting...}
 \par
 
 %%
@@ -510,13 +517,13 @@ We note again the inverse correlation between the mismatch and mse, when conside
 %%%%%%%%%%%%%%%%%%
 %%%%%%%%%%%%%%%
 \subsection{Runtime analysis} \label{sec:runtime}
-Whean dealing with a real detection scenario, we are often interested in generating a WF which starts from a given frequency $f_{min}$, which is usually set by the detector's sensitivity window.
-Thus, it is crucial to measure the speed up that our model can provide in performing such task.
-We make a comparison with both \texttt{TEOBResumS} (the train model and the state-of-the-art in accuracy) and \texttt{SEOBNRv4\_ROM} (the state-of-the-art in time performance).
+We now asses the time performances of our model.
+We are interested to make a comparison with both \texttt{TEOBResumS} (the train model and the state-of-the-art in accuracy) and \texttt{SEOBNRv4\_ROM} \cite{} (the state-of-the-art in speed of execution).
+We then measure the time that our code takes to generate a WF.
+\paragraph{Comparison with \texttt{TEOBResumS}}
+When dealing with a real detection scenario, we are often interested in generating a WF which starts from a given frequency $f_{min}$, which is usually set by the detector's sensitivity window.Thus, it is crucial to measure the speed up that our model can provide in performing such task.
 We define the speed up $\mathcal{S}$ as the ratio between the runtime of benchmark model and the runtime of \texttt{mlgw} to produce the a waveform starting from a given $f_{min}$. Each waveform is produced with constant total mass $M = 100 M_{\odot}$ and random parameters; the WF is sampled at $f_{sam} = \SI{2048}{Hz}$.
 We consider the two cases with $f_{min} = \SI{5}{Hz}$ and $f_{min} = \SI{20}{Hz}$; the first choice refers to the hypotetical lower bound for the sentivity of the Einstein telescope (ET), while the second is close to that of Advanced-LIGO/Virgo.
-%%
-\paragraph{Comparison with \texttt{TEOBResumS}}
 In figure~\ref{fig:time_performance_hist} we report the histogram of the measured speed up values for model \texttt{TEOBResumS}.
 
 \newcommand{\factor}{.9}
@@ -541,15 +548,16 @@ We report the median value $q_{50\%}$ as well as the positions $q_{5\%}$ and $q_
 \begin{figure}
 	\centering
 	\begin{minipage}{\factor\linewidth}
-	    \includegraphics[width=\linewidth]{time_performance_hist_ROM_5}
+	    \includegraphics[width=\linewidth]{time_performance_hist_ROM_20_1024}
 	\end{minipage}\hfill
 	\begin{minipage}{\factor\linewidth}
-	    \includegraphics[width=\linewidth]{time_performance_hist_ROM_20}
+	    \includegraphics[width=\linewidth]{time_performance_hist_ROM_20_2048}
 	\end{minipage}
 
 	\caption{
-Histograms for values of the speed up given by \texttt{mlgw}, as compared with ROM model \texttt{SEOBNRv4\_ROM}, computed on $N=2000$ test waveforms. Each WF is generated with random physical parameters and has a minimum frequency of $\SI{5}{Hz}$ (top panel) and $\SI{20}{Hz}$ (bottom panel).
-We set a constant total mass $M=\SI{100}{M_\odot}$ and the sampling rate $f_{sam} = \SI{2048}{Hz}$.
+Histograms for values of the speed up given by \texttt{mlgw}, as compared with ROM model \texttt{SEOBNRv4\_ROM}, computed on $N=2000$ test waveforms.
+Each WF is generated with random physical parameters and has a sampling frequency $f_{sam}$ of $\SI{1024}{Hz}$ (top panel) and $\SI{2048}{Hz}$ (bottom panel).
+We set a constant total mass $M=\SI{100}{M_\odot}$ and the same starting frequency $f_{min} = \SI{20}{Hz}$.
 We report the median value $q_{50\%}$ as well as the positions $q_{5\%}$ and $q_{95\%}$ of the 5th and 95th percentile.
 }
 	\label{fig:time_performance_hist_ROM}
@@ -561,15 +569,15 @@ We see that in both cases a substantial speed up is achieved. The speed up is hi
 making our model particulary convenient for advanced detectors, with a larger sensitivity window.
 \par
 \paragraph{Comparison with \texttt{SEOBNRv4\_ROM}}
-In figure~\ref{fig:time_performance_hist_ROM} we report the histogram of the measured speed up values for model \texttt{SEOBNRv4\_ROM}.
+In figure~\ref{fig:time_performance_hist_ROM} we report the histogram of the measured speed up values for model \texttt{SEOBNRv4\_ROM}, which is now the state of the art for the WF generation time.
+The comparison is made in the same wave as above only for the $f_{min} = \SI{20}{Hz}$; the ROM has not been built for $f_{min} = \SI{5}{Hz}$.
 As the ROM model yields WFs in frequency domain, in the time comparison we included a fast Fourier trasform (FFT) of the time domain WF of \texttt{mlgw}. This is to ensure that we evaluate the two model at the same conditions.
 Interestingly, the time taken by the FFT (in the numpy implementation) is similar to that required to generate a WF. Thus for a WF in FD our model cannot be substantially faster, due to the limitation imposed by the FFT.
 \par
 We note the the performances are quite similar to each other.
-The performances of \texttt{mlgw} worsen for the $\SI{5}{Hz}$ case because more grid points are included in the computation, which results in less efficient generation.
-If a lower sampling rate is employed, \texttt{mlgw} outperforms \texttt{SEOBNRv4\_ROM}.
+If a lower sampling rate is employed, \texttt{mlgw} slighly improves its performances.
 \par
-However, it is important to stress that \texttt{mlgw} is written in pure Python, while \texttt{SEOBNRv4\_ROM} is coded in C. Thus, the fact the the two models show similar performances is remarkable: surely, a C implementation of \texttt{mlgw} would be faster than \texttt{SEOBNRv4\_ROM}.
+It is important to stress that \texttt{mlgw} is written in pure Python, while \texttt{SEOBNRv4\_ROM} is coded in C. Thus, the fact the the two models show similar performances is remarkable: surely, a C implementation of \texttt{mlgw} would be faster than \texttt{SEOBNRv4\_ROM}.
 Furthermore, \texttt{mlgw} is more efficient in reconstructing the waveforms: it requires only $O(5\cdot 10^3)$ WFs for the training, while in order to build a ROM as many as $O(5\cdot 10^5)$ WFs are required.
 \par
 %%%
@@ -580,7 +588,7 @@ In table \ref{tab:profiling}, we compare the results for two values of $N_{grid}
 \begin{table}
 	\def\arraystretch{1.5}
 	\begin{tabular}{ l c c }
-		\multirow{2}{*}{Task}& \multicolumn{2}{c}{CPU time (ms)}\\
+		\multirow{2}{*}{Task (for 100 WFs)}& \multicolumn{2}{c}{CPU time (ms)}\\
 			&$N_{grid} = 10^3$	& $N_{grid} = 10^5$\\
 	\hline \hline
 		 Generation of raw WF 			& $6.9 \; (46.9\%)$	& $7 \; (1.6\%)$ \\ 
@@ -738,7 +746,7 @@ A good starting point is given in \cite{Schmidt2015Precession}. The dynamics (de
 	(s_{2x},s_{2y}, s_{2z}) &\longmapsto (0, 0, s_{2z})
 \end{align*}
 where $s_P = s_P(q,s_{1x},s_{1y}, s_{2x},s_{2y})$ (see \cite[eq. 3]{Schmidt2015Precession}).
-In the authors' word, the effective spin parameter $s_{P}$ "accurately captures the dominant precession-induced features in GW signals across the full parameter space".
+In the authors' word, the effective spin parameter $s_{P}$ ``accurately captures the dominant precession-induced features in GW signals across the full parameter space".
 The waveform dependence on the effective spin parameter $s_P$ can be fitted by a ML model in the same fashion of the other orbital parameters, thus simplyfing the regression problem.
 \par
 All surrogate models provides numerical solutions to approximate form of the Einstein equations. They are useful to catch the dominant physics but we expect them to show a degree of inaccuracy, especially close to coalescence.
