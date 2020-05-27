@@ -303,8 +303,9 @@ GW_generator
 	========
 		Generates a WF according to the MLGW model. It makes all the required preprocessing to include wave dependance on the full 14 parameters space of the GW forms.
 		Output waveforms can be represented with plus cross polarization, amplitude and phase or h_22 component of the multipole expansion.
+		The WF is shifted such that the peak of the 22 mode is placed at t=0. If the reference phase is 0, the phase of the 22 mode is 0 at t=0.
 		Input:
-			t_grid	(N_grid,)		Grid of (physical) time/frequency points to evaluate the wave at
+			t_grid	(N_grid,)		Grid of (physical) time points to evaluate the wave at
 			m1	()/(N,)				Mass of BH 1
 			m2	()/(N,)				Mass of BH 1
 			spin1_x/y/z	()/(N,)		Each variable represents a spin component of BH 1
@@ -331,6 +332,7 @@ GW_generator
 	======
 		Generates a WF according to the MLGW model. It makes all the required preprocessing to include wave dependance on the full 15 parameters space of the GW forms.
 		Wherever not specified, all waves are evaluated at a luminosity distance of 1 Mpc.
+		The WF is shifted such that the peak of the 22 mode is placed at t=0. If the reference phase is 0, the phase of the 22 mode is 0 at t=0.
 		It accepts data in one of the following layout of D features:
 			D = 3	[q, spin1_z, spin2_z]
 			D = 4	[m1, m2, spin1_z, spin2_z]
@@ -346,7 +348,7 @@ GW_generator
 		Output waveforms can be represented with plus cross polarization, amplitude and phase or h_22 component of the multipole expansion.
 		Input:
 			theta (N,D)		source parameters to make prediction at
-			t_grid (D',)	a grid in (physical or reduced) time/frequency to evaluate the wave at (uses np.interp)
+			t_grid (D',)	a grid in (physical or reduced) time to evaluate the wave at (uses np.interp)
 			out_type (str)	The output to be returned ('h+x', 'ampph', 'h22')
 			red_grid		whether given t_grid is in reduced space (True) or physical space (False)
 		Ouput:
@@ -458,8 +460,9 @@ GW_generator
 			if (interp_grid[0] < self.times[0]):
 				warnings.warn("Warning: time grid given is too long for the fitted model. Set 0 amplitude outside the fitting domain.")
 
+			#amplitude and phase of 22 mode (maximum of amp at t=0)
 		amp = new_amp
-		ph = np.subtract(new_ph.T,new_ph[:,0]).T #phase are zero at t = 0 #SLOOOW: do you need it??
+		ph = new_ph #phase is zero when h_22 peaks (i.e. at t =0) - this is a feature of the dataset!!!
 
 			#### Dealing with distance, inclination and phi_0
 		if D==7:

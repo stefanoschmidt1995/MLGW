@@ -41,13 +41,11 @@ setup.py
 ./mlgw/TD_models/model_1/amp_exp_1
 ./mlgw/TD_models/model_1/amp_exp_2
 ./mlgw/TD_models/model_1/amp_exp_3
-./mlgw/TD_models/model_1/amp_exp_4
 ./mlgw/TD_models/model_1/amp_feat
 ./mlgw/TD_models/model_1/amp_gat_0
 ./mlgw/TD_models/model_1/amp_gat_1
 ./mlgw/TD_models/model_1/amp_gat_2
 ./mlgw/TD_models/model_1/amp_gat_3
-./mlgw/TD_models/model_1/amp_gat_4
 ./mlgw/TD_models/model_1/ph_PCA_model
 ./mlgw/TD_models/model_1/ph_exp_0
 ./mlgw/TD_models/model_1/ph_exp_1

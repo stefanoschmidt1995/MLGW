@@ -1,6 +1,6 @@
 {
 "train model": "TEOBResumS",
-"description": "Accurate version of TEOBResumS: flag nqc_coefs_flx is switched on",
+"description": "Long time grid of TEOBResumS",
 "q range": "[1,20]",
 "s1 range": "[-0.8, 0.95]",
 "s2 range": "[-0.8, 0.95]"
