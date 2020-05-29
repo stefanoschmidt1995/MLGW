@@ -19,6 +19,8 @@ sys.path.insert(1, os.path.dirname(__file__)) 	#adding to path folder where mlgw
 from EM_MoE import *			#MoE model
 from ML_routines import *		#PCA model
 
+warnings.simplefilter("always", UserWarning) #always print a warning message ??
+
 #############DEBUG PROFILING
 try:
 	from line_profiler import LineProfiler
@@ -152,12 +154,14 @@ GW_generator
 		self.amp_features = f.readlines()
 		for i in range(len(self.amp_features)):
 			self.amp_features[i] = self.amp_features[i].rstrip()
+		f.close()
 
 		f = open(folder+"ph_feat", "r")
 		self.ph_features = f.readlines()
 		for i in range(len(self.ph_features)):
 			self.ph_features[i] = self.ph_features[i].rstrip()
-		
+		f.close()		
+
 		print("  Loaded features for amplitude: ", self.amp_features)
 		print("  Loaded features for phase: ", self.ph_features)
 	
