@@ -1,0 +1,7 @@
+{
+"train model": "TEOBResumS",
+"description": "Long time grid of TEOBResumS",
+"q range": "[1,20]",
+"s1 range": "[-0.8, 0.95]",
+"s2 range": "[-0.8, 0.95]"
+}

@@ -19,7 +19,7 @@ sys.path.insert(1, os.path.dirname(__file__)) 	#adding to path folder where mlgw
 from EM_MoE import *			#MoE model
 from ML_routines import *		#PCA model
 
-warnings.simplefilter("always", UserWarning) #always print a warning message ??
+warnings.simplefilter("always", UserWarning) #always print a UserWarning message ??
 
 #############DEBUG PROFILING
 try:
@@ -397,8 +397,9 @@ GW_generator
 
 			#generating waves and returning to user
 		res1, res2 = self.__get_WF(theta, t_grid, out_type, red_grid) #(N,D)
-			#res1,res2 = h_plus, h_cross if plus_cross = True
-			#res1,res2 = amp, ph if plus_cross = False
+			#res1,res2 = h_plus, h_cross if out_type = "h+x"
+			#res1,res2 = amp, ph if out_type = ""ampph"
+			#res1,res2 = H22.real, H22.imag if out_type = "h22"
 		if to_reshape:
 			return res1[0,:], res2[0,:] #(D,)
 		return res1, res2 #(N,D)
@@ -587,11 +588,13 @@ GW_generator
 			#making predictions for amplitude
 		rec_PCA_amp = np.zeros((amp_theta.shape[0], self.amp_PCA.get_dimensions()[1]))
 		for k in range(len(self.MoE_models_amp)):
-			rec_PCA_amp[:,k] = self.MoE_models_amp[k].predict(amp_theta) #why is this much sower than the phase part?
+			if k >= self.amp_PCA.get_dimensions()[1]: break
+			rec_PCA_amp[:,k] = self.MoE_models_amp[k].predict(amp_theta)
 
 			#making predictions for phase
 		rec_PCA_ph = np.zeros((ph_theta.shape[0], self.ph_PCA.get_dimensions()[1]))
 		for k in range(len(self.MoE_models_ph)):
+			if k >= self.ph_PCA.get_dimensions()[1]: break
 			rec_PCA_ph[:,k] = self.MoE_models_ph[k].predict(ph_theta)
 
 		return rec_PCA_amp, rec_PCA_ph
@@ -695,7 +698,7 @@ GW_generator
 				grad_ph[i,:,j]  = np.interp(t_grid, self.times * m_tot_us[i], grad_q_ph[i,:,j-1]) #(D,)
 
 		#dealing with gradients w.r.t. M
-		amp, ph = self.get_WF(theta, t_grid, plus_cross = False, red_grid = False) #true wave evaluated at t_grid #(N,D)
+		amp, ph = self.get_WF(theta, t_grid, out_type = "ampph", red_grid = False) #true wave evaluated at t_grid #(N,D)
 		for i in range(theta_std.shape[0]):
 			grad_M_amp = np.gradient(amp[i,:], t_grid) #(D,)
 			grad_M_ph = np.gradient(ph[i,:], t_grid) #(D,)
@@ -760,7 +763,7 @@ GW_generator
 		grad_iota_Im = np.multiply(grad_iota_Im.T, -np.sin(theta[:,5])).T
 
 			#gradients w.r.t. phi_0
-		Re_h, Im_h = self.get_WF(theta[:,:4],t_grid, plus_cross =True) #(N,D)
+		Re_h, Im_h = self.get_WF(theta[:,:4],t_grid, out_type = "h+x") #(N,D)
 		c_i = np.cos(theta[:,5]) #(N,)
 		phi_0 = theta[:,6]
 			#dealing with h_p
