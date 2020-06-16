@@ -27,7 +27,7 @@ set_manifest()
 
 setup(
     name='mlgw',
-    version='1.2.5',
+    version='1.2.6',
     author='Stefano Schmidt',
     author_email='stefanoschmidt1995@gmail.com',
     packages=['mlgw'],
