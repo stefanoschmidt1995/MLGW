@@ -452,15 +452,24 @@ The results are reported in the contour plots in figure \ref{fig:countour}.
 \afterpage{
 \begin{figure}[!ht]
 	\newcommand{\minipagesize}{.5}
+	\newcommand{\titlefontsize}{7}
 	\centering 
     \begin{minipage}{\linewidth}
         \centering
 	 	\begin{minipage}{\minipagesize\linewidth}
 		    \centering
+			{\fontfamily{DejaVuSans-TLF} \fontsize{\titlefontsize}{12}\selectfont 
+			Mismatch%
+			} \\
+			\vskip0.3em
 		    \includegraphics[width=\linewidth]{F_countour_mass}
 		\end{minipage}\hfill
 		\begin{minipage}{\minipagesize\linewidth}
 		    \centering
+			{\fontfamily{DejaVuSans-TLF} \fontsize{\titlefontsize}{12}\selectfont 
+			Mean Squared Error%
+			} \\
+			\vskip0.3em
 		    \includegraphics[width=\linewidth]{mse_countour_mass}
 		\end{minipage}
     \end{minipage}\hfill
