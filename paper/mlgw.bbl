@@ -1,0 +1,119 @@
+\begin{thebibliography}{10}
+
+\bibitem{Aasi:2013jjl}
+J.~Aasi {\em et~al.}, ``{Parameter estimation for compact binary coalescence
+  signals with the first generation gravitational-wave detector network},''
+  {\em Phys. Rev.}, vol.~D88, p.~062001, 2013.
+
+\bibitem{Veitch2014wba}
+J.~Veitch {\em et~al.}, ``{Parameter estimation for compact binaries with
+  ground-based gravitational-wave observations using the LALInference software
+  library},'' {\em Phys. Rev.}, vol.~D91, no.~4, p.~042003, 2015.
+
+\bibitem{Damour1999EOB}
+A.~Buonanno and T.~Damour, ``Effective one-body approach to general
+  relativistic two-body dynamics,'' {\em Phys. Rev. D}, vol.~59, p.~084006, Mar
+  1999.
+
+\bibitem{Damour2009EOB}
+T.~{Damour} and A.~{Nagar}, ``{The Effective One Body description of the
+  Two-Body problem},'' {\em arXiv e-prints}, p.~arXiv:0906.1769, Jun 2009.
+
+\bibitem{Purrer_2014_ROM}
+M.~Pürrer, ``Frequency-domain reduced order models for gravitational waves
+  from aligned-spin compact binaries,'' {\em Classical and Quantum Gravity},
+  vol.~31, p.~195010, Sep 2014.
+
+\bibitem{Purrer_2016_FDROM}
+M.~Pürrer, ``Frequency domain reduced order model of aligned-spin
+  effective-one-body waveforms with generic mass ratios and spins,'' {\em
+  Physical Review D}, vol.~93, Mar 2016.
+
+\bibitem{Boh2017SEOBNRv4}
+A.~Bohé, L.~Shao, A.~Taracchini, A.~Buonanno, S.~Babak, I.~W. Harry,
+  I.~Hinder, S.~Ossokine, M.~Pürrer, V.~Raymond, and et~al., ``Improved
+  effective-one-body model of spinning, nonprecessing binary black holes for
+  the era of gravitational-wave astrophysics with advanced detectors,'' {\em
+  Physical Review D}, vol.~95, Feb 2017.
+
+\bibitem{Arbey2019scaling}
+A.~Arbey and J.-F. Coupechoux, ``Black hole mergers, gravitational waves and
+  scaling relations,'' 2019.
+
+\bibitem{murphy2012machine}
+K.~Murphy, {\em {Machine Learning: A Probabilistic Perspective}}.
+\newblock Adaptive Computation and Machine Learning series, MIT Press, 2012.
+
+\bibitem{Jacobs1991AdaptiveMoE}
+R.~A. Jacobs, M.~I. Jordan, S.~J. Nowlan, and G.~E. Hinton, ``Adaptive mixtures
+  of local experts,'' {\em Neural Computation}, vol.~3, pp.~79--87, 1991.
+
+\bibitem{Ohme2013PCA_GW}
+F.~Ohme, A.~B. Nielsen, D.~Keppel, and A.~Lundgren, ``Statistical and
+  systematic errors for gravitational-wave inspiral signals: A principal
+  component analysis,'' {\em Physical Review D}, vol.~88, Aug 2013.
+
+\bibitem{Abbott2016GW150914}
+A.~et~al., ``Observation of gravitational waves from a binary black hole
+  merger,'' {\em Physical Review Letters}, vol.~116, Feb 2016.
+
+\bibitem{skilling2006nested_sampling}
+J.~Skilling, ``Nested sampling for general bayesian computation,'' {\em
+  Bayesian Analysis}, vol.~1, pp.~833--860, 12 2006.
+
+\bibitem{Abbott_2016_GW150914prop}
+B.~Abbott, R.~Abbott, T.~Abbott, M.~Abernathy, F.~Acernese, K.~Ackley,
+  C.~Adams, T.~Adams, P.~Addesso, R.~Adhikari, and et~al., ``Properties of the
+  binary black hole merger gw150914,'' {\em Physical Review Letters}, vol.~116,
+  Jun 2016.
+
+\bibitem{Abbott2016propGW150914}
+B.~Abbott, R.~Abbott, T.~Abbott, M.~Abernathy, F.~Acernese, K.~Ackley,
+  C.~Adams, T.~Adams, P.~Addesso, R.~Adhikari, and et~al., ``Properties of the
+  binary black hole merger gw150914,'' {\em Physical Review Letters}, vol.~116,
+  Jun 2016.
+
+\bibitem{JimenezForteza2016fit_final_BH}
+X.~Jiménez-Forteza, D.~Keitel, S.~Husa, M.~Hannam, S.~Khan, and M.~Pürrer,
+  ``{Hierarchical data-driven approach to fitting numerical relativity data for
+  nonprecessing binary black holes with an application to final spin and
+  radiated energy},'' {\em Phys. Rev.}, vol.~D95, no.~6, p.~064024, 2017.
+
+\bibitem{pycorner}
+D.~Foreman-Mackey, ``corner.py: Scatterplot matrices in python,'' {\em The
+  Journal of Open Source Software}, vol.~24, 2016.
+
+\bibitem{Baird2013spin_degeneracy}
+E.~{Baird}, S.~{Fairhurst}, M.~{Hannam}, and P.~{Murphy}, ``{Degeneracy between
+  mass and spin in black-hole-binary waveforms},'' {\em Phys. Rev. D}, vol.~87,
+  p.~024035, Jan. 2013.
+
+\bibitem{Purrer2015meas_spin_deg}
+M.~Pürrer, M.~Hannam, and F.~Ohme, ``{Can we measure individual black-hole
+  spins from gravitational-wave observations?},'' {\em Phys. Rev.}, vol.~D93,
+  no.~8, p.~084042, 2016.
+
+\bibitem{betancourt2017hamiltonianMC}
+M.~Betancourt, ``A conceptual introduction to hamiltonian monte carlo,'' 2017.
+
+\bibitem{Porter2014Hamiltonian_MonteCarlo}
+E.~K. Porter and J.~Carré, ``A hamiltonian monte–carlo method for bayesian
+  inference of supermassive black hole binaries,'' {\em Classical and Quantum
+  Gravity}, vol.~31, p.~145004, Jul 2014.
+
+\bibitem{Schmidt2015Precession}
+P.~Schmidt, F.~Ohme, and M.~Hannam, ``Towards models of gravitational waveforms
+  from generic binaries: Modelling precession effects with a single effective
+  precession parameter,'' {\em Physical Review D}, vol.~91, Jan 2015.
+
+\bibitem{Mroue2013NRWFcatalog}
+A.~H. Mroue {\em et~al.}, ``{Catalog of 174 Binary Black Hole Simulations for
+  Gravitational Wave Astronomy},'' {\em Phys. Rev. Lett.}, vol.~111, no.~24,
+  p.~241104, 2013.
+
+\bibitem{Healy2017NRWFcatalog}
+J.~Healy, C.~O. Lousto, Y.~Zlochower, and M.~Campanelli, ``The rit binary black
+  hole simulations catalog,'' {\em Classical and Quantum Gravity}, vol.~34,
+  p.~224001, Oct 2017.
+
+\end{thebibliography}
