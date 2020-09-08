@@ -622,94 +622,111 @@ It is important to stress that the latter two tasks are slow only because they d
 If such huge amount of datapoints is required, very little space is left for speed up.
 \par
 
-\section{Parameter estimation on GWTC-1 catalog}
-\sschmidt{Choose a better title and write the whole section...}
-\par
-We run a PE on the signal GW150914 \cite{Abbott2016GW150914}.
-We performed a sampling from the posterior of the signal with a Nested Sampling algorithm \cite{skilling2006nested_sampling} \cite{Aasi:2013jjl}.
-Besides a set of sampled points, the algorithm provides an estimation of the Bayes factor for the model\footnote{The Bayes factor $\mathcal{B}=\frac{Z_z}{Z_n}$ is the ratio between the evidence of the model $Z_s$, where data are assumed to be a superposition of GW signal and noise, and the evidence $Z_n$ of the noise model, where data are assumed to be composed only by noise. It measures framework the probability that the WF model explain the data.}.
-We plot some (marginalized) posterior probability distribution functions (PDF) in figures~\ref{fig:PDF_BBH}.
-In table \ref{tab:PE_results}, we report our physical predictions for the source parameters and a number of other quantities and we compare them with the published LIGO-Virgo results in \cite{Abbott_2016_GW150914prop}.
-\par
-\begin{table}
-	\centering
-	\footnotesize
-	\def\arraystretch{1.5}
-	\begin{tabular}{ l @{\hspace{2em}} c @{\hspace{2em}} c@{\hspace{0em}} }
-										  & LIGO-Virgo & mlgw \\ 
-	\hline \hline
-		 Total mass $\mathcal{M}_c (M_\odot)$ & $70.3^{+5.3}_{-4.8}$ & $74.2^{+4.5}_{-4.8}$ \\ 
-	\hline
-		 Chirp mass $\mathcal{M}_c (M_\odot)$ & $30.2^{+2.5}_{-1.9}$ & $32.0^{+1.9}_{-2.4}$  \\ 
-	\hline
-		 Primary mass $m_1 (M_\odot)$ & $39.4^{+5.5}_{-4.9}$ & $40.6^{+5.4}_{-4.0}$  \\ 
-	\hline
-		 Secondary mass $m_2 (M_\odot)$ & $30.9^{+4.8}_{-4.4}$ & $33.6^{+5.4}_{-4.1}$  \\ 
-	\hline
-		 Inverse mass ratio $\bar{q}= \frac{1}{q} = \frac{m_2}{m_1}$ & $0.79^{+0.18}_{-0.19}$ & $0.83^{+0.15}_{-0.21}$\\  
-	\hline
-		 Effective spin parameter $\chi_{eff}$ & $-0.09^{+0.19}_{-0.17}$ & $-0.08^{+0.13}_{-0.17}$     \\
-	\hline
-		 (dimensionless) spin $s_1$ & $0.32^{+0.45}_{-0.28}$ & $0.14^{+0.51}_{-0.66}$    \\
-	\hline
-		 (dimensionless) spin $s_2$ & $0.57^{+0.40}_{-0.51}$ & $-0.02^{+0.78}_{-0.59}$   \\
-	\hline
-		 Luminosity distance $d_L (Mpc)$ & $390^{+170}_{-180}$ & $490^{+158}_{-208}$   \\
-	\hline
-		 Final mass $M_f (M_\odot)$ & $67.1^{+4.6}_{-4.4}$ & $70.5^{+3.9}_{-4.2}$  \\
-	\hline
-		 Final spin $s_L (M_\odot)$ & $0.67^{+0.06}_{-0.08}$ & $0.70^{+0.05}_{-0.08}$ \\
-	\hline
-		 Log Bayes factor $\log\mathcal{B} = \log \frac{Z_s}{Z_n}$ & $288.7^{+0.2}_{-0.2}$ & $302^{+0.2}_{-0.2}$ \\
-	\hline \hline
-	\end{tabular}
-	\caption{Several physical quantities extracted from signal GW150914 by sampling the posterior distribution.
-Results of \texttt{mlgw} model are compared by those published by the LIGO-Virgo collaboration (using EOB model) \cite{Abbott2016propGW150914}.
-We report the measures (i.e. the median value of the marginalized posterior) and their $90\%$ confidence interval.
-The final BH mass and spins are obtained with the formula from \cite{JimenezForteza2016fit_final_BH}.
-}
-	\label{tab:PE_results}
-\end{table}
-\par
-%%%%%%
+\section{Application to GWTC-1}
+
+We test the implementation of our TEOBResumS model on the public data from GWTC-1, the first GW catalog~\cite{}. 
+The GWTC-1 catalog consists of 10 BBH systems and a BNS system. Because of the training of the WF model, we do not analyse GW170817, the BNS system, and concentrate exclusively on the BBH signals. Our parameter estimation algorithm is \texttt{gwmodel}~\cite{} a publicly available infrastructure 
+written in a mixture of \texttt{Python} and \texttt{cython} that serves as interface for the parallel nested sampling implementation \texttt{cpnest}~\cite{}. 
+The analysis of each BBH system is set up as follows; we choose a total of 2000 Live Points, four parallel MCMC chains with a maximum length of 5000 steps to ensure that each successive sample is independent of the previous. These settings yield an average of $\sim$ 15000 posterior samples and 
+evidence calculations that are accurate to the first decimal digit. For each BBH system we choose prior distributions as described in the GWTC-1 release paper~\cite{}. Finally, and critically, to ensure that our results can be compared fairly to published ones, we employ the power spectral densities released as part of GWTC-1. No calibration uncertainty model is assumed for these runs. 
 \begin{figure}
 	\centering
-    \includegraphics[width=.75\linewidth, trim = {3cm 0cm 3cm 0cm}]{img/intrinsic.pdf}
+    \includegraphics[width=.75\linewidth, trim = {3cm 0cm 3cm 0cm}]{img/posterior_masses_source.pdf}
 	\caption{
-Marginalized posteriors for the chirp mass $\mathcal{M}_c$, inverse mass ration $\bar{q}=\frac{1}{q}$ and spins $s_1, s_2$ for GW150914. We report the histograms for the one dimensional posteriors of each quantity; the dashed lines reports the median value as well as the $68\%$ credible interval.
-In the contour plots, we report the two dimensional posteriors for each pair of quantities.
-The figure holds $16411$ samples and is generated with Python package \texttt{corner} \cite{pycorner}.
+Two-dimensional posterior distributions for the component masses for all BBH systems in GWTC-1.
 }
-	\label{fig:PDF_BBH}
+	\label{fig:summary-masses}
 \end{figure}
-%%%%%%%%%%%%
-%%%%%%
-\begin{figure}
-	\centering
-    \includegraphics[width=.75\linewidth, trim = {3cm 0cm 3cm 0cm}]{img/extrinsic.pdf}
-	\caption{
-Marginalized posteriors for the sky position angles, luminosity distance, time of coalescence and cosine of the inclination of the orbital plane for GW150914. We report the histograms for the one dimensional posteriors of each quantity; the dashed lines reports the median value as well as the $68\%$ credible interval.
-In the contour plots, we report the two dimensional posteriors for each pair of quantities.
-The figure holds $16411$ samples and is generated with Python package \texttt{corner} \cite{pycorner}.
-}
-	\label{fig:PDF_BBH_extrinsic}
-\end{figure}
-%%%%%%%%%%%%
-We note that the predictions of \texttt{mlgw} are consistent with those of the LIGO-Virgo collaboration.
-The mass related parameters (i.e. chirp mass, total mass and individual masses) are very close to their reference value.
-The same happens for luminosity distance and for the final BH mass and spins.
-\par
-Despite being compatible with the reference values due to high uncertainties, the predicted values for the spins are rather different from the LIGO-Virgo reference values.
-Indeed, the measurement of individual spins are difficult due to spin degeneracy of the waveform, as explained in \cite{Baird2013spin_degeneracy} \cite{Purrer2015meas_spin_deg} with a study of the PN waveform.
-As a consequence, only the effective spin parameter ${\chi_{eff} = \frac{m_1 s_1 + m_2 s_2}{M}}$ can be reliably measured.
-In fact, the two measures of $\chi_{eff}$ agree well with each other: a further confirmation of \texttt{mlgw} accuracy.
-The same feature can be observed on the probability distribution $p(s_1,s_2|\mathcal{D})$ in figure~\ref{fig:PDF_BBH}: individual spins are poor constrained but the ``slope" of their correlation (i.e. the effective spin parameter) is well measured.
-\par
-We note that our model slightly overestimates the value of the BHs masses. This feature was already noted for a PE run with \texttt{TEOBResumS}. The fact that we obtain the same result means that \texttt{mlgw} is able to recover with details the training model.
-\par
-Finally, we see that the two Bayes factors are similar: the Bayesian analysis assigns to both a similar probability that the GW150914 is actually described by the model.
-However, the evidence for \texttt{mlgw} appears to be slightly higher: probably, our priors cover a smaller region than that in the LIGO-Virgo analysis.
-\par
+
+Figure~\ref{fig:summary-masses} and Table~\ref{tab:summary} summarise our results.
+
+
+%\par
+%We run a PE on the signal GW150914 \cite{Abbott2016GW150914}.
+%We performed a sampling from the posterior of the signal with a Nested Sampling algorithm \cite{skilling2006nested_sampling} \cite{Aasi:2013jjl}.
+%Besides a set of sampled points, the algorithm provides an estimation of the Bayes factor for the model\footnote{The Bayes factor $\mathcal{B}=\frac{Z_z}{Z_n}$ is the ratio between the evidence of the model $Z_s$, where data are assumed to be a superposition of GW signal and noise, and the evidence $Z_n$ of the noise model, where data are assumed to be composed only by noise. It measures framework the probability that the WF model explain the data.}.
+%We plot some (marginalized) posterior probability distribution functions (PDF) in figures~\ref{fig:PDF_BBH}.
+%In table \ref{tab:PE_results}, we report our physical predictions for the source parameters and a number of other quantities and we compare them with the published LIGO-Virgo results in \cite{Abbott_2016_GW150914prop}.
+%\par
+%\begin{table}
+%	\centering
+%	\footnotesize
+%	\def\arraystretch{1.5}
+%	\begin{tabular}{ l @{\hspace{2em}} c @{\hspace{2em}} c@{\hspace{0em}} }
+%										  & LIGO-Virgo & mlgw \\ 
+%	\hline \hline
+%		 Total mass $\mathcal{M}_c (M_\odot)$ & $70.3^{+5.3}_{-4.8}$ & $74.2^{+4.5}_{-4.8}$ \\ 
+%	\hline
+%		 Chirp mass $\mathcal{M}_c (M_\odot)$ & $30.2^{+2.5}_{-1.9}$ & $32.0^{+1.9}_{-2.4}$  \\ 
+%	\hline
+%		 Primary mass $m_1 (M_\odot)$ & $39.4^{+5.5}_{-4.9}$ & $40.6^{+5.4}_{-4.0}$  \\ 
+%	\hline
+%		 Secondary mass $m_2 (M_\odot)$ & $30.9^{+4.8}_{-4.4}$ & $33.6^{+5.4}_{-4.1}$  \\ 
+%	\hline
+%		 Inverse mass ratio $\bar{q}= \frac{1}{q} = \frac{m_2}{m_1}$ & $0.79^{+0.18}_{-0.19}$ & $0.83^{+0.15}_{-0.21}$\\  
+%	\hline
+%		 Effective spin parameter $\chi_{eff}$ & $-0.09^{+0.19}_{-0.17}$ & $-0.08^{+0.13}_{-0.17}$     \\
+%	\hline
+%		 (dimensionless) spin $s_1$ & $0.32^{+0.45}_{-0.28}$ & $0.14^{+0.51}_{-0.66}$    \\
+%	\hline
+%		 (dimensionless) spin $s_2$ & $0.57^{+0.40}_{-0.51}$ & $-0.02^{+0.78}_{-0.59}$   \\
+%	\hline
+%		 Luminosity distance $d_L (Mpc)$ & $390^{+170}_{-180}$ & $490^{+158}_{-208}$   \\
+%	\hline
+%		 Final mass $M_f (M_\odot)$ & $67.1^{+4.6}_{-4.4}$ & $70.5^{+3.9}_{-4.2}$  \\
+%	\hline
+%		 Final spin $s_L (M_\odot)$ & $0.67^{+0.06}_{-0.08}$ & $0.70^{+0.05}_{-0.08}$ \\
+%	\hline
+%		 Log Bayes factor $\log\mathcal{B} = \log \frac{Z_s}{Z_n}$ & $288.7^{+0.2}_{-0.2}$ & $302^{+0.2}_{-0.2}$ \\
+%	\hline \hline
+%	\end{tabular}
+%	\caption{Several physical quantities extracted from signal GW150914 by sampling the posterior distribution.
+%Results of \texttt{mlgw} model are compared by those published by the LIGO-Virgo collaboration (using EOB model) \cite{Abbott2016propGW150914}.
+%We report the measures (i.e. the median value of the marginalized posterior) and their $90\%$ confidence interval.
+%The final BH mass and spins are obtained with the formula from \cite{JimenezForteza2016fit_final_BH}.
+%}
+%	\label{tab:PE_results}
+%\end{table}
+%\par
+%%%%%%%
+%\begin{figure}
+%	\centering
+%    \includegraphics[width=.75\linewidth, trim = {3cm 0cm 3cm 0cm}]{img/intrinsic.pdf}
+%	\caption{
+%Marginalized posteriors for the chirp mass $\mathcal{M}_c$, inverse mass ration $\bar{q}=\frac{1}{q}$ and spins $s_1, s_2$ for GW150914. We report the histograms for the one dimensional posteriors of each quantity; the dashed lines reports the median value as well as the $68\%$ credible interval.
+%In the contour plots, we report the two dimensional posteriors for each pair of quantities.
+%The figure holds $16411$ samples and is generated with Python package \texttt{corner} \cite{pycorner}.
+%}
+%	\label{fig:PDF_BBH}
+%\end{figure}
+%%%%%%%%%%%%%
+%%%%%%%
+%\begin{figure}
+%	\centering
+%    \includegraphics[width=.75\linewidth, trim = {3cm 0cm 3cm 0cm}]{img/extrinsic.pdf}
+%	\caption{
+%Marginalized posteriors for the sky position angles, luminosity distance, time of coalescence and cosine of the inclination of the orbital plane for GW150914. We report the histograms for the one dimensional posteriors of each quantity; the dashed lines reports the median value as well as the $68\%$ credible interval.
+%In the contour plots, we report the two dimensional posteriors for each pair of quantities.
+%The figure holds $16411$ samples and is generated with Python package \texttt{corner} \cite{pycorner}.
+%}
+%	\label{fig:PDF_BBH_extrinsic}
+%\end{figure}
+%%%%%%%%%%%%%
+%We note that the predictions of \texttt{mlgw} are consistent with those of the LIGO-Virgo collaboration.
+%The mass related parameters (i.e. chirp mass, total mass and individual masses) are very close to their reference value.
+%The same happens for luminosity distance and for the final BH mass and spins.
+%\par
+%Despite being compatible with the reference values due to high uncertainties, the predicted values for the spins are rather different from the LIGO-Virgo reference values.
+%Indeed, the measurement of individual spins are difficult due to spin degeneracy of the waveform, as explained in \cite{Baird2013spin_degeneracy} \cite{Purrer2015meas_spin_deg} with a study of the PN waveform.
+%As a consequence, only the effective spin parameter ${\chi_{eff} = \frac{m_1 s_1 + m_2 s_2}{M}}$ can be reliably measured.
+%In fact, the two measures of $\chi_{eff}$ agree well with each other: a further confirmation of \texttt{mlgw} accuracy.
+%The same feature can be observed on the probability distribution $p(s_1,s_2|\mathcal{D})$ in figure~\ref{fig:PDF_BBH}: individual spins are poor constrained but the ``slope" of their correlation (i.e. the effective spin parameter) is well measured.
+%\par
+%We note that our model slightly overestimates the value of the BHs masses. This feature was already noted for a PE run with \texttt{TEOBResumS}. The fact that we obtain the same result means that \texttt{mlgw} is able to recover with details the training model.
+%\par
+%Finally, we see that the two Bayes factors are similar: the Bayesian analysis assigns to both a similar probability that the GW150914 is actually described by the model.
+%However, the evidence for \texttt{mlgw} appears to be slightly higher: probably, our priors cover a smaller region than that in the LIGO-Virgo analysis.
+%\par
 
 
 
