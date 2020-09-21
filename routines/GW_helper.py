@@ -18,6 +18,7 @@ Module GW_helper.py
 import numpy as np
 import os.path
 import matplotlib.pyplot as plt #debug
+import warnings
 
 ################# Overlap related stuff
 def get_low_high_freq_index(flow, fhigh, df):
@@ -233,7 +234,7 @@ create_dataset_TD
 
 		#creating time_grid
 	t_end = 5.2e-4 #estimated maximum time for ringdown: WF will be killed after that time
-	#alpha = 0.35 #exponent for "time distorsion"
+	#t_end = 6e-5 #ONLY FOR mode = 3 (very ugly here...)
 	time_grid = np.linspace(-np.power(np.abs(t_coal), alpha), np.power(t_end, alpha), N_grid)
 	time_grid = np.multiply( np.sign(time_grid) , np.power(np.abs(time_grid), 1./alpha))
 
@@ -254,7 +255,7 @@ create_dataset_TD
 			print("New file ", filename, " created")
 			freq_header = np.concatenate((np.zeros((3,)), time_grid, time_grid) )
 			freq_header = np.reshape(freq_header, (1,len(freq_header)))
-			np.savetxt(filebuff, freq_header, header = "row: theta "+str(D_theta)+" | amp (1,"+str(N_grid)+")| ph (1,"+str(N_grid)+")\nN_grid = "+str(N_grid)+" | t_coal ="+str(t_coal)+" | t_step ="+str(t_step)+" | q_range = "+str(q_range)+" | m2_range = "+str(m2_range)+" | s1_range = "+str(s1_range)+" | s2_range = "+str(s2_range), newline = '\n')
+			np.savetxt(filebuff, freq_header, header = "# row: theta "+str(D_theta)+" | amp (1,"+str(N_grid)+")| ph (1,"+str(N_grid)+")\n# N_grid = "+str(N_grid)+" | t_coal ="+str(t_coal)+" | t_step ="+str(t_step)+" | q_range = "+str(q_range)+" | m2_range = "+str(m2_range)+" | s1_range = "+str(s1_range)+" | s2_range = "+str(s2_range), newline = '\n')
 		else:
 			filebuff = open(filename,'a')
 
@@ -323,6 +324,7 @@ create_dataset_TD
 			time_full = np.linspace(0.0, hptilde.data.length*t_step, hptilde.data.length) #time grid at which wave is computed
 
 		if approximant == "TEOBResumS": #using TEOBResumS
+			mode = 1
 			pars = {
 				'M'                  : m1+m2,
 				'q'                  : m1/m2,
@@ -332,7 +334,7 @@ create_dataset_TD
 				'chi2'               : spin2z,
 				'domain'             : 0,      # TD
 				'arg_out'            : 0,      # Output hlm/hflm. Default = 0
-				'use_mode_lm'        : [1],      # List of modes to use/output through EOBRunPy
+				'use_mode_lm'        : [mode],      # List of modes to use/output through EOBRunPy
 				'srate_interp'       : 1./t_step,  # srate at which to interpolate. Default = 4096.
 				'use_geometric_units': 0,      # Output quantities in geometric units. Default = 1
 				'initial_frequency'  : f_min,   # in Hz if use_geometric_units = 0, else in geometric units
@@ -343,8 +345,10 @@ create_dataset_TD
 				#'nqc_coefs_flx': 2, # {"none", "nrfit_nospin20160209", "fit_spin_202002", "fromfile"}
 				#'nqc_coefs_hlm':0
 			}
+			if mode != 1:
+				warnings.warn("Using non dominant mode "+str(mode))
 			time_full, h_p, h_c = EOBRun_module.EOBRunPy(pars)
-
+			
 		if isinstance(m2_range, tuple):
 			temp_theta = [m1, m2, spin1z, spin2z]		
 		else:
@@ -364,10 +368,10 @@ create_dataset_TD
 		temp_ph = temp_ph - temp_ph[id0] #all phases are shifted by a constant to make every wave start with 0 phase at t=0 (i.e. at maximum amplitude)
 
 			#removing spourious gaps (if present) (do I need it??)
-		(index,) = np.where(temp_amp/np.max(temp_amp) < 1e-5) #there should be a way to choose the right threshold...
+		(index,) = np.where(temp_amp/np.max(temp_amp) < 1e-10) #there should be a way to choose the right threshold...
 		if len(index) >0:
-			print("Wave killed")
-			temp_amp[index] = temp_amp[index[0]-1]
+			#print("Wave killed")
+			temp_amp[index] = 0#temp_amp[index[0]-1]
 			temp_ph[index] = temp_ph[index[0]-1]
 
 		if filename is None:
@@ -385,6 +389,158 @@ create_dataset_TD
 	else:
 		filebuff.close()
 		return None
+
+
+def create_shift_dataset(N_data, modes, filename = None, q_range = (1.,5.), m2_range = None, s1_range = (-0.8,0.8), s2_range = (-0.8,0.8), path_TEOBResumS = None):
+	"""
+create_shift_dataset
+====================
+	Create a dataset which relates the peak position of a given higher mode "mode" w.r.t. the peak position of the 22 mode. It uses (so far) only the TEOBResumS WF model. 
+	Input:
+		N_data				size of dataset
+		modes				mode(s) to be evaluated ( (list of) tuple (l,m), e.g. (3,1)/(2,0)...)
+		filename			name of the file to save dataset in (If is None, nothing is saved on a file)
+		q_range				tuple with range for random q values. if single value, q is kept fixed at that value
+		m2_range			tuple with range for random m2 values. if single value, m2 is kept fixed at that value. If None, m2 will be chosen s.t. m_tot = m1+m2 = 20. M_sun
+		spin_mag_max_1		tuple with range for random spin #1 values. if single value, s1 is kept fixed at that value
+		spin_mag_max_2		tuple with range for random spin #1 values. if single value, s2 is kept fixed at that value
+		path_TEOBResumS		path to a local installation of TEOBResumS with routine 'EOBRun_module' (if given, it overwrites the aprroximant entry)
+	Output:
+		if filename is given
+			None
+		if filename is not given
+			theta_vector (N_data,3)				vector holding ordered set of parameters used to generate the dataset
+			shift_dataset (N_data,N_modes)		dataset with shifts
+	"""
+		#import TEOBResumS
+	try:
+		import sys
+		sys.path.append(path_TEOBResumS) #path to local installation of TEOBResumS
+		import EOBRun_module
+	except:
+		raise RuntimeError("No valid imput source for module 'EOBRun_module' for TEOBResumS. Unable to continue.")
+
+	#do some checks on modes... better!!!
+	modes_to_k = lambda modes:[int(x[0]*(x[0]-1)/2 + x[1]-2) for x in modes]
+	k_modes = modes_to_k(modes)
+	k_modes.append(1) #adding 22 mode
+	time_shifts = np.zeros((len(modes),)) #to save the shifts
+
+	if isinstance(m2_range, tuple):
+		D_theta = 4 #m2 must be included as a feature
+	else:
+		D_theta = 3
+
+	if filename is not None: #doing header if file is empty - nothing otherwise
+		if not os.path.isfile(filename): #file doesn't exist: must be created with proper header
+			filebuff = open(filename,'w')
+			print("New file ", filename, " created")
+			filebuff.write("# row: theta ("+str(D_theta)+") | shifts ("+str(len(modes))+") for modes "+str(modes)+"\n"+"# | q_range = "+str(q_range)+" | m2_range = "+str(m2_range)+" | s1_range = "+str(s1_range)+" | s2_range = "+str(s2_range)+"\n")
+		else:
+			filebuff = open(filename,'a')
+
+	if filename is None:
+		shift_dataset = np.zeros((N_data,len(modes))) #allocating storage for returning data
+		theta_vector = np.zeros((N_data,D_theta))
+
+	for i in range(N_data): #loop on data to be created
+		if i%50 == 0 and i != 0:
+		#if i%1 == 0 and i != 0: #debug
+			print("Generated WF ", i)
+
+			#setting value for data
+		if isinstance(m2_range, tuple):
+			m2 = np.random.uniform(m2_range[0],m2_range[1])
+		elif m2_range is not None:
+			m2 = float(m2_range)
+		if isinstance(q_range, tuple):
+			q = np.random.uniform(q_range[0],q_range[1])
+		else:
+			q = float(q_range)
+		if isinstance(s1_range, tuple):
+			spin1z = np.random.uniform(s1_range[0],s1_range[1])
+		else:
+			spin1z = float(s1_range)
+		if isinstance(s2_range, tuple):
+			spin2z = np.random.uniform(s2_range[0],s2_range[1])
+		else:
+			spin2z = float(s2_range)
+
+		if m2_range is None:
+			m2 = 20. / (1+q)
+			m1 = q * m2
+		else:
+			m1 = q* m2
+
+			#computing f_min
+		t_coal_freq = .05
+		f_min = .9* ((151*(t_coal_freq)**(-3./8.) * (((1+q)**2)/q)**(3./8.))/(m1+m2))
+		 #in () there is the right scaling formula for frequency in order to get always the right reduced time
+		 #this should be multiplied by a prefactor (~1) for dealing with some small variation due to spins
+
+		#generating WFs for HMs and 22
+		pars = {
+				'M'                  : m1+m2,
+				'q'                  : m1/m2,
+				'Lambda1'            : 0.,
+				'Lambda2'            : 0.,     
+				'chi1'               : spin1z,
+				'chi2'               : spin2z,
+				'domain'             : 0,      # TD
+				'arg_out'            : 1,      # Output hlm/hflm. Default = 0
+				'use_mode_lm'        : k_modes,      # List of modes to use/output through EOBRunPy
+				'srate_interp'       : 10*4096,  # srate at which to interpolate. Default = 4096.
+				'use_geometric_units': 0,      # Output quantities in geometric units. Default = 1
+				'initial_frequency'  : f_min,   # in Hz if use_geometric_units = 0, else in geometric units
+				'interp_uniform_grid': 2,      # Interpolate mode by mode on a uniform grid. Default = 0 (no interpolation)
+				'distance': 1.,
+				'inclination':0.,
+				#'nqc':2, #{"no", "auto", "manual"}
+				#'nqc_coefs_flx': 2, # {"none", "nrfit_nospin20160209", "fit_spin_202002", "fromfile"}
+				#'nqc_coefs_hlm':0
+			}
+		time_full, h_p, h_c, hlm = EOBRun_module.EOBRunPy(pars)
+		#print(hlm.keys(), k_modes)
+		t_22 = time_full[np.argmax(hlm['1'][0])] #time at which peak of 22 mode happens
+		for j in range(len(modes)):
+			t_lm = time_full[np.argmax(np.abs(hlm[str(k_modes[j])][0]))] #time at which peak of lm mode happens
+			time_shifts[j] = t_lm-t_22
+
+		"""import matplotlib.pyplot as plt
+		plt.plot(time_full,hlm['1'][0])
+		for j in range(len(modes)):	
+			print("plotting", k_modes[j])
+			plt.plot(time_full,hlm[str(k_modes[j])][0])
+			plt.axvline(t_22, c = 'r')
+			plt.axvline(time_full[np.argmax(np.abs(hlm[str(k_modes[j])][0]))], c = 'g')
+			
+		#plt.show()
+		"""
+
+
+		#saving to file
+		if isinstance(m2_range, tuple):
+			temp_theta = [m1, m2, spin1z, spin2z]		
+		else:
+			temp_theta = [m1/m2, spin1z, spin2z]
+
+		if filename is None:
+			shift_dataset[i,:] = time_shifts  #putting waveform in the dataset to return
+			theta_vector[i,:] = temp_theta
+
+		if filename is not None: #saving to file
+			to_save = np.concatenate((temp_theta, time_shifts))
+			to_save = np.reshape(to_save, (1,len(to_save)))
+			np.savetxt(filebuff, to_save)
+			
+	if filename is None:
+		return theta_vector, shift_dataset
+	else:
+		filebuff.close()
+		return None
+
+
+
 
 def generate_waveform(m1,m2, s1=0.,s2 = 0.,d=1., iota = 0.,phi_0=0., t_coal = 0.4, t_step = 5e-5, f_min = None, t_min = None, verbose = False, approx = "SEOBNRv2_opt"):
 	"""
@@ -503,7 +659,7 @@ generate_waveform
 			'chi1'               : s1,
 			'chi2'               : s2,
 			'domain'             : 0,      # TD
-			'arg_out'            : 0,      # Output hlm/hflm. Default = 0
+			'arg_out'            : 0,        'arg_out'            : 1,      #Output hlm/hflm. Default = 0      # Output hlm/hflm. Default = 0
 			'use_mode_lm'        : [1],      # List of modes to use/output through EOBRunPy
 			'srate_interp'       : 1./t_step,  # srate at which to interpolate. Default = 4096.
 			'use_geometric_units': 0,      # Output quantities in geometric units. Default = 1
@@ -598,7 +754,7 @@ def create_dataset_FD(N_data, N_grid = None, filename = None, q_range = (1.,5.),
 			print("New file ", filename, " created")
 			freq_header = np.concatenate((np.zeros((3,)), frequencies, frequencies) )
 			freq_header = np.reshape(freq_header, (1,len(freq_header)))
-			np.savetxt(filebuff, freq_header, header = "row: theta 3 | amp "+str(frequencies.shape[0])+"| ph "+str(frequencies.shape[0])+"\nN_grid = "+str(N_grid)+" | f_step ="+str(f_step)+" | q_range = "+str(q_range)+" | s1_range = "+str(s1_range)+" | s2_range = "+str(s2_range), newline = '\n')
+			np.savetxt(filebuff, freq_header, header = "# row: theta 3 | amp "+str(frequencies.shape[0])+"| ph "+str(frequencies.shape[0])+"\n# N_grid = "+str(N_grid)+" | f_step ="+str(f_step)+" | q_range = "+str(q_range)+" | s1_range = "+str(s1_range)+" | s2_range = "+str(s2_range), newline = '\n')
 		else:
 			filebuff = open(filename,'a')
 
@@ -703,7 +859,7 @@ def save_dataset(filename, theta_vector, dataset1, dataset, x_grid):
 	q_max = np.max(theta_vector[:,0])
 	spin_mag_max = np.max(np.abs(theta_vector[:,1:2]))
 	x_step = x_grid[1]-x_grid[0]
-	np.savetxt(filename, to_save, header = "row: theta 3 | amp "+str(amp_dataset.shape[1])+"| ph "+str(ph_dataset.shape[1])+"\nN_grid = "+str(x_grid.shape[0])+" | f_step ="+str(x_step)+" | q_max = "+str(q_max)+" | spin_mag_max = "+str(spin_mag_max), newline = '\n')
+	np.savetxt(filename, to_save, header = "# row: theta 3 | amp "+str(amp_dataset.shape[1])+"| ph "+str(ph_dataset.shape[1])+"\n# N_grid = "+str(x_grid.shape[0])+" | f_step ="+str(x_step)+" | q_max = "+str(q_max)+" | spin_mag_max = "+str(spin_mag_max), newline = '\n')
 	return
 
 

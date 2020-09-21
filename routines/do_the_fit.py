@@ -1,8 +1,8 @@
 from fit_model import *
 
-dataset_file = "/home/stefano/Desktop/Stefano/scuola/uni/tesi_magistrale/code/datasets/GW_TD_dataset_TEOBResumS_long/GW_dataset.dat"
-PCA_dataset_folder = "/home/stefano/Desktop/Stefano/scuola/uni/tesi_magistrale/code/datasets/GW_TD_dataset_TEOBResumS_long"
-model_folder = "/home/stefano/Desktop/Stefano/scuola/uni/tesi_magistrale/code/definitive_code/TD_model_TEOBResumS_long"
+dataset_file = "/home/stefano/Desktop/Stefano/scuola/uni/tesi_magistrale/code/datasets/GW_TD_mode_3/GW_TD_dataset.dat"
+PCA_dataset_folder = "/home/stefano/Desktop/Stefano/scuola/uni/tesi_magistrale/code/datasets/GW_TD_mode_3"
+model_folder = "/home/stefano/Desktop/Stefano/scuola/uni/tesi_magistrale/code/definitive_code/TD_model_mode_3"
 
 fit_PCA = False
 fit_MoE_model = True

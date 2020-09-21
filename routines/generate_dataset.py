@@ -8,7 +8,7 @@ import matplotlib.pyplot as plt
 from ML_routines import *
 
 if True:
-	create_dataset_TD(3000, N_grid = 2000, filename = "../datasets/GW_TD_dataset_TEOBResumS_perfect/GW_dataset.dat",
+	create_dataset_TD(20, N_grid = 2000, filename = "../datasets/GW_TD_mode_0/GW_dataset.dat",
                 t_coal = 1.2, q_range = (1.,10.), m2_range = None, s1_range = (-0.8,0.8), s2_range = (-0.8,0.8), #for full dataset
                 t_step = 1e-4, approximant = "TEOBResumS", alpha = 0.5,
 				path_TEOBResumS = '/home/stefano/Desktop/Stefano/scuola/uni/tesi_magistrale/code/TEOBResumS/Python'
@@ -22,9 +22,9 @@ if True:
 
 
 
-quit()
+#quit()
 
-theta_vector, amp_dataset, ph_dataset, x_grid = load_dataset("../datasets/GW_TD_dataset_TEOBResumS_thesis/GW_TD_dataset.dat", shuffle=False, N_data = None) #loading
+theta_vector, amp_dataset, ph_dataset, x_grid = load_dataset("../datasets/GW_TD_mode_3/GW_TD_dataset.dat", shuffle=False, N_data = None) #loading
 #print(theta_vector)
 
 cut_off = -1
