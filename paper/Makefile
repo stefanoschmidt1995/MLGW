@@ -1,6 +1,14 @@
-compile:
+all: mlgw.pdf
+
+mlgw.pdf: mlgw.tex tex/*.tex mlgw.bbl mlgw.aux
 	pdflatex -synctex=1 -interaction=nonstopmode "mlgw".tex
+	
+mlgw.aux:
+	pdflatex -synctex=1 -interaction=nonstopmode "mlgw".tex
+
+mlgw.bbl: mlgw.aux
+	bibtex "mlgw".aux
 
 clean:
 	rm -f mlgw.bbl mlgw.out mlgwNotes.bib mlgw.aux mlgw.log mlgw.blg mlgw.toc mlgw.synctex.gz
-	rm -r img/*-eps-converted-to.pdf
+	rm -rf img/*-eps-converted-to.pdf
