@@ -1,22 +1,26 @@
 \section{Introduction}
 The detection of Gravitational Waves (GW) from compact binary coalescences (CBC) has been possible thanks to the joint effort of a number of different fields of expertise, all joining together to achieve the sophisticated detection process. GW data analysis concerns the detection of a GW signal hidden in the raw detector output (\textit{matched filtering}) and subsequently the inference of its physical properties (\textit{parameter estimation}). In order to accomplish its goal, GW data analysis relies on the availability of waveform (WF) templates to compare with the detector output.
-To accurately explore the posterior distribution for the parameters defining a CBC, state-of-the-art parameter estimation (PE) algorithms~\cite{Aasi:2013jjl}~\cite{Veitch2014wba} can require the generation of as many as $10^7$ waveform templates. It is therefore paramount for the waveform generation to be as fast as possible. At the same time, because of the extreme sensitivity to phase differences in the likelihood  function, the templates must retain a high degree of accuracy to avoid biases in the posterior exploration.
-Many efforts have been devoted to solve Einstein equations for two coalescing objects and to predict the gravitational radiation emitted~\cite{}.
+To accurately explore the posterior distribution for the parameters defining a CBC, state-of-the-art parameter estimation (PE) algorithms~\cite{Aasi:2013jjl}~\cite{Veitch2014wba} can require the generation of as many as $10^7$ waveform templates. It is therefore paramount for the waveform generation to be as fast as possible. At the same time, because of the extreme sensitivity to phase differences in the likelihood  function, 
+the templates must retain a high degree of accuracy to avoid biases in the posterior exploration.
+Many efforts have been devoted to numerically solve Einstein equations for two coalescing objects and 
+to predict the gravitational radiation emitted~\cite{}.
 As solving the full equations is still extremely computationally challenging, the LIGO-Virgo Collaboration relies on approximate analytical models. 
 These can be broadly categorized in  two families; (i) the effective-one-body(EOB) waveform 
-models~\cite{Damour1999EOB}~\cite{Damour2009EOB}; (ii) the phenomenological models~\cite{}. 
-EOB models are the most complete family of analytical models available. 
-They compute the GW signal by solving Hamilton's equations and accurately predict the GW signal up to late plunge.
-The merger and ringdown  parts of the signal are then joint to the inspiral signal using information obtained from numerical relativity. 
-Because of the numerical integrations involved, they tend to be accurate, but slow to generate, see however \cite{} 
-for a much faster approach \sschmidt{There is a missing citation here: Is this about ROMs?? Or other??}. 
+models~\cite{Damour:2009kr,Chiaramello:2020ehz}; (ii) the phenomenological 
+models~\cite{Khan:2015jqa,Pratten:2020ceb,Estelles:2020osj}. EOB models are the most complete family 
+of analytical models available. They compute the GW signal by solving Hamilton's equations 
+and accurately predict the GW signal up to late plunge. The merger and ringdown  parts of 
+the signal are then joint to the inspiral signal using information obtained from numerical relativity. 
+Because of the numerical integrations involved, they tend to be accurate, but slow to generate, 
+see however~\cite{Nagar:2018gnk} for a more efficient approach to obtain the dynamics.
 
-The phenomenological waveform are based on the post-Newtonian formalism and then calibrated on EOB waveforms and numerical relativity. 
-They tend to be faster than EOB models, but not as accurate.
-Many efforts have been devoted to the task of speeding up the generation of GW signals from EOB families.
-For example, one lead to the development of \textit{surrogate models}. Surrogate models are constructed 
-starting from some decomposition in the waveform space followed by efficient interpolation to avoid any  numerical integration. 
-Being fast to generate, they are routinely employed in GW data analysis. 
+The phenomenological waveform are based on the post-Newtonian formalism and then calibrated 
+to  EOB waveforms and numerical relativity. They tend to be faster than EOB models, but not as accurate.
+Many efforts have been devoted to the task of speeding up the generation of GW signals from 
+EOB families. For example, one lead to the development of \textit{surrogate models}. Surrogate 
+models are constructed starting from some decomposition in the waveform space followed by efficient 
+interpolation to avoid any  numerical integration~\cite{Purrer:2015tud,Bohe:2016gbl,Purrer:2017str,Lackey:2018zvw,Cotesta:2020qhw}. 
+Being fast to generate, they are routinely employed in GW ,data analysis. 
 \par
 A Machine Learning model is a promising alternative to the state-of-the-art waveforms generators. Machine Learning (ML) is a branch 
 of statistics that is devoted to reproduce patterns read from data. A ML algorithm needs very little human input and, by a automatically solving an optimization problem, it is able to choose the best performing element among a large class of parametric models for the solution. This is the so-called training procedure. 
@@ -685,29 +689,30 @@ Another option, so far never explored, is to use the gradients of the WF for a f
 In our model we did not consider precessing system. We made this choice to keep the problem simple.
 The expertise gained for the simple non precessing case can be applied to deal with the complicacies posed by the precessing case.
 A good starting point is given in \cite{Schmidt2015Precession}, where the whole spin dynamics (dependent on 6 parameters) is mapped to a simpler problem, where the precession is controlled by a single parameter $s_P$.
-The waveform dependence on the effective spin parameter $s_P$ can be fitted by a ML model in the same fashion of the other orbital parameters, thus avoid to complicate (much) the regression problem.
-\par
-All EOB models provides numerical solutions to approximate form of the Einstein equations. They are useful to catch the dominant physics but we expect them to show a degree of inaccuracy, especially close to coalescence.
-Numerical relativity solves numerically the unapproximated Einstein equations and so far yields the best available solutions.
-Of course, NR waveforms are much slow to generate and cannot be used in parameter estimation.
-Our model could be trained on the publicly available NR waveforms catalogs (see e.g. \cite{Mroue2013NRWFcatalog} and \cite{Healy2017NRWFcatalog}) and it would provide the best generalization of the numerical waveform.
-If the model proved to be reliable and effective, we could dispense with the EOB models altogether and use only NR inputs for a parameter estimation. This would ensure that all the relevant physics close to merger is adequately captured.
-Furthermore, a training set of NR waveforms can be used to address situations where an approximation to Einstein equations (such as the PN expansion) is not available, e.g. in the extreme mass ratio limit.
-\sschmidt{is it true that in the extreme mass ratio limit we don't have approximation to Einstein equations? Would it be interesting to deal with such case?}
-\par
-Unfortunately, at the moment there are too few NR waveforms ($O(10^2)$) available to perform a reliable training: we need at least $O(10^3)$ waveforms. However, in the future we expect more and more waveforms to be included in the dataset, eventually allowing for a reliable training.
-Furthermore, NR waveforms are too short as compared to detected signals in interferometers. Probably, some form of hybridization from PN models is required to tackle the inspiral phase.
-\par
-Our machine learning approach to signal generation is very flexible and provides a general framework for a ML-based WF generator. We expect it to work for every source for which a number of training waveforms are available (also those for which no EOB models are available).
-Machine learning models for various wealth of sources might be crucial in the future, where signals from a number of different sources are expected to be detected. In that scenario, a parameter estimation must be able to detect among different source and this will require a lot of computational work. Speed up will be more pressing.
+The waveform dependence on the effective spin parameter $s_P$ can be fitted by a ML model in the same fashion of 
+the other orbital parameters, thus avoid to complicate (much) the regression problem.
 
+All EOB models provides numerical solutions to approximate form of the Einstein equations. They are useful to catch 
+the dominant physics but we expect them to show a degree of inaccuracy, especially close to coalescence.
+Numerical relativity solves numerically Einstein equations without approximations and so far yields the physically most 
+complete available solutions. However, NR waveforms by themselves cannot be used in parameter estimation because
+of their sparse coverage of the parameter space. Our model could be trained on the publicly available NR waveforms 
+catalogs (see e.g.~\cite{Mroue:2013xna,Boyle:2019kee,Healy:2019jyf} and it would provide the best generalization of 
+the numerical waveform. If the model proved to be reliable and effective,  we could dispense with the EOB models 
+altogether and use only NR inputs for a parameter estimation.  This would ensure that all the relevant physics close 
+to merger is adequately captured. 
+Unfortunately, at the moment there are too few NR waveforms ($O(10^2)$) available to perform a reliable 
+training: we need at least $O(10^3)$ waveforms. However, in the future we expect more and more waveforms 
+to be included in the dataset, eventually allowing for a reliable training. Furthermore, currently available 
+NR waveforms are too short to be used as they are, and an extension (e.g. by hybridization with EOB waveforms)
+towards the early inspiral is needed to compute any kind of NR-based surrogate model.
 
-
-
-
-
-
-
+Our machine learning approach to signal generation is very flexible and provides a general framework 
+for a ML-based WF generator. We expect it to work for every source for which a number of training 
+waveforms are available. Machine learning models for various wealth of sources might be crucial in 
+the future, where signals from a number of different sources are expected to be detected. In that scenario, 
+a parameter estimation must be able to detect among different source and this will require a lot 
+of computational work. Speed up will be more pressing.
 
 
 
