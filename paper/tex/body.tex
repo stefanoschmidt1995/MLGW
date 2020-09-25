@@ -14,53 +14,67 @@ the signal are then joint to the inspiral signal using information obtained from
 Because of the numerical integrations involved, they tend to be accurate, but slow to generate, 
 see however~\cite{Nagar:2018gnk} for a more efficient approach to obtain the dynamics.
 
-The phenomenological waveform are based on the post-Newtonian formalism and then calibrated 
+The phenomenological waveforms are based on the post-Newtonian formalism and then calibrated 
 to  EOB waveforms and numerical relativity. They tend to be faster than EOB models, but not as accurate.
 Many efforts have been devoted to the task of speeding up the generation of GW signals from 
 EOB families. For example, one lead to the development of \textit{surrogate models}. Surrogate 
 models are constructed starting from some decomposition in the waveform space followed by efficient 
 interpolation to avoid any  numerical integration~\cite{Purrer:2015tud,Bohe:2016gbl,Purrer:2017str,Lackey:2018zvw,Cotesta:2020qhw}. 
-Being fast to generate, they are routinely employed in GW ,data analysis. 
-\par
-A Machine Learning model is a promising alternative to the state-of-the-art waveforms generators. Machine Learning (ML) is a branch 
-of statistics that is devoted to reproduce patterns read from data. A ML algorithm needs very little human input and, by 
-automatically solving an optimization problem, it is able to choose the best performing element among a large 
-class of parametric models for the solution. This is the so-called training procedure. 
-The ML flexibility in modeling data and reproducing trends is appealing: with a proper model choice and with an appropriate training 
-procedure, we can hope to have a reliable, fast to execute generator of GW waveforms, while retaining the accuracy necessary for robust parameter estimation. ML procedures have been applied so far to Numerical Relativity 
+Being fast to generate, they are routinely employed in GW data analysis. 
+
+A Machine Learning model is a promising alternative to the state-of-the-art waveforms generators. 
+Machine Learning (ML) is a branch of statistics that is devoted to reproduce patterns read from data. 
+A ML algorithm needs very little human input and, by automatically solving an optimization problem, 
+it is able to choose the best performing element among a large  class of parametric models for the solution. 
+This is the so-called training procedure. 
+The ML flexibility in modeling data and reproducing trends is appealing: with a proper model choice 
+and with an appropriate training procedure, we can hope to have a reliable, fast to execute generator 
+of GW waveforms, while retaining the accuracy necessary for robust parameter estimation. 
+ML procedures have been applied so far to Numerical Relativity 
 waveform data~\cite{Gabbard:2017lja,George:2017pmj,George:2017vlv,Rebei:2018lzh,Khan:2020foe}.
 The construction of a NR-trained ML waveform model is currently missing except for a very 
 restricted region of the parameter space (nonspinning etc.). The main problem behind this is 
-because of the need of a large set of NR simulations that would be needed to train such an algorithm.
+because of the absence of a large set of NR simulations ($\simeq 10^{3}$) that would be 
+needed to train such an algorithm.
 
-By contrast, an EOB model, informed by NR simulations, does not have such drawback as 
-it can generate waveforms all over the BBH parameter space. One has indeed to remember 
-that, although NR-informed EOB models can be checked only on the part of the parameter space
-covered by NR simulations, they are also typically able to robustly {\it extrapolate} waveforms 
-outside this NR-information domain (e.g. large mass ratios and spins). This is, for example, 
-the case of the most  recent avatar of the \texttt{TEOBResumS}~\cite{Nagar:2018zoe} model,
-that incorporates subdominant waveforms modes,  \texttt{TEOBResumS\_SM}~\cite{Nagar:2019wds,Nagar:2020pcj}. 
-This model used several hundreds (though most of them are redundant) of the available 
-SXS simulations to inform a highly accurate description of the postmerger-ringdown 
-phase~\cite{Damour:2014yha}, but only around 40 datasets to improve the behavior 
-of the analytical EOB dynamics, suitably improving the orbital and spin-orbit interaction.
-Thus we use \texttt{TEOBResumS\_SM} to train our machine learning model for BBH coalescence.
-For simplicity, we focus here only on the dominant $\ell=m=2$ quadrupole waveform. 
-We demonstrate that it can generate GW signals significantly faster than 
-the training model, matching the performances of a Reduced Order Modelling 
-(ROM)~\cite{Purrer:2015tud,Bohe:2016gbl,Purrer:2017str}.  At the same time it 
-keeps the same accuracy of the underlying training model\footnote{Of course, 
-the ML framework is completely general and it works for any EOB model; indeed 
-a successful ML model was trained using also \texttt{SEOBNRv2} model~\cite{Taracchini_2014_SEOBNRv2}.}.
+By contrast, an EOB model, informed by NR simulations, does not have such drawback 
+since it is designed to generate waveforms all over the BBH parameter space. 
+One has indeed to remember that, although NR-informed EOB models are {\it checked} 
+only on the part of the parameter space covered by NR simulations, 
+they are also typically able to robustly {\it extrapolate} waveforms 
+outside this NR-information domain (e.g. large mass ratios and spins). 
+This is, for example, the case of the most  recent avatar of 
+the spin-aligned \texttt{TEOBResumS}~\cite{Nagar:2018zoe} model, 
+that incorporates subdominant waveform modes,  \texttt{TEOBResumS\_SM}~\cite{Nagar:2019wds,Nagar:2020pcj}. 
+This model used several hundreds (though most of them are redundant) 
+of the available SXS simulations to inform a highly accurate description 
+of the postmerger-ringdown phase~\cite{Damour:2014yha}, but 
+only around 40 datasets to improve the behavior of the analytical EOB dynamics, 
+suitably modifying the analytical orbital and spin-orbit interaction.
+Thus we use \texttt{TEOBResumS\_SM} to train our machine learning 
+model for BBH coalescence. For simplicity, we focus here only on the 
+dominant $\ell=m=2$ quadrupole waveform. 
+We demonstrate that such ML-based model can generate 
+GW signals significantly faster than the training model, 
+matching the performances of a Reduced Order Modelling 
+(ROM)~\cite{Purrer:2015tud,Bohe:2016gbl,Purrer:2017str}.  
+At the same time it keeps the same accuracy of the underlying 
+training model\footnote{Let us note, in passing, that the ML framework 
+is completely general and it works for any EOB model; indeed 
+a successful ML model was trained using also the \texttt{SEOBNRv2} 
+waveform model~\cite{Taracchini:2013rva}.}.
 
-As a relevant physical application, we use the our Machine learning model \texttt{mlgw} to provide a completely new,
-and independent analysis, of the 10 BBHs coalescence events collected in the O1/O2 LIGO-Virgo observing 
-runs~\cite{LIGOScientific:2018mvr}. The physical parameters we find are compatible with previous
-analyses obtained with radically different models~\cite{LIGOScientific:2018mvr}, though with some distinguo: 
-(i) the chirp masses obtained with our model are systematically {\it larger} than LVC published results, the mass ratios being systematically {\it smaller}; 
+As a relevant physical application, we use the our ML model \texttt{mlgw} 
+to provide a completely new, and independent, analysis of the 10 BBHs 
+coalescence events collected in the O1/O2 LIGO-Virgo observing 
+runs~\cite{LIGOScientific:2018mvr}. The physical parameters we find are 
+compatible with previous analyses obtained with radically different 
+models~\cite{LIGOScientific:2018mvr}, though with some distinguo: 
+(i) the chirp masses obtained with our model are systematically {\it larger} 
+than LVC published results, the mass ratios being systematically {\it smaller}; 
 (ii) similarly, the individual spins of the objects, when measurable, are systematically larger than published
-results. This is consistent with previously published analysis of GW150914 data using a slightly different version 
-of \texttt{TEOBResumS}~\cite{Nagar:2018zoe}.
+results. This is consistent with previously published analysis of GW150914 
+data using a slightly different version of \texttt{TEOBResumS}~\cite{Nagar:2018zoe}.
 
 On top of the specific application discussed here, our ML waveform model could also be used directly 
 to speed up GW searches. Furthermore, since the time required to generate a WF does not depend
