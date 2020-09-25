@@ -101,7 +101,7 @@ if __name__=="__main__":
     import matplotlib.lines as mlines
     
     colors = cm.rainbow(np.linspace(0, 1, len(events)))
-    colors = ['dodgerblue','olivedrab','goldenrod','yellowgreen','peru','magenta','mediumturquoise','acquamarine','skyblue','mediumpurple']
+    colors = ['dodgerblue','olivedrab','goldenrod','yellowgreen','peru','magenta','mediumturquoise','aquamarine','skyblue','mediumpurple']
     line_style = ['-','--', '-','-','--','-','-','--','--','--']
     from utils import McQ2Masses, chi_eff, final_mass, final_spin
 #    events = ['gw151226']
@@ -118,8 +118,9 @@ if __name__=="__main__":
     handles = []
     O = cs.CosmologicalParameters(0.68,0.31,0.69,-1.0,0.0)
     for c, ls,e in zip(colors,line_style, events):
-        try:
-            print(os.path.join(path,e+'/Nested_sampler/posterior.dat'))
+#        try:
+        if 1:
+            print(os.path.join(path,e+'/Nested_sampler/posterior.dat'),c)
 #            BBH_file = '/Users/wdp/Desktop/GWTC-1_sample_release'+e.upper()+'_GWTC-1.hdf5'
 #            BBH = h5py.File(BBH_file, 'r')
             p = np.genfromtxt(os.path.join(path,e+'/Nested_sampler/posterior.dat'),names= True)
@@ -140,8 +141,8 @@ if __name__=="__main__":
             levs = np.sort(FindHeightForLevel(np.log(PDF),[0.9]))
             ax3.contour(X,Y,np.log(PDF),levs, linestyles = (ls,ls), colors=(c,c,),linewidths=1.5)
             handles.append(mlines.Line2D([], [], linestyle = ls, color=c, label=e.upper()))
-        except:
-            print(e+' posterior not found')
+#        except:
+#            print(e+' posterior not found')
 
     fig1.legend(bbox_to_anchor=(.9, 1.), loc='upper left', borderaxespad=0.,fancybox=True,handles=handles)
     fig2.legend(bbox_to_anchor=(.9, 1.), loc='upper left', borderaxespad=0.,fancybox=True,handles=handles)
