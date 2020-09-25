@@ -10,5 +10,5 @@ mlgw.bbl: mlgw.aux
 	bibtex "mlgw".aux
 
 clean:
-	rm -f mlgw.bbl mlgw.out mlgwNotes.bib mlgw.aux mlgw.log mlgw.blg mlgw.toc mlgw.synctex.gz
+	rm -f mlgw.bbl mlgw.out mlgwNotes.bib mlgw.aux mlgw.log mlgw.blg mlgw.toc mlgw.synctex.gz mlgw.pdf
 	rm -rf img/*-eps-converted-to.pdf
