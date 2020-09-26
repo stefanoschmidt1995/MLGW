@@ -44,7 +44,7 @@ superscriptaddress,10pt]{revtex4-1}
 \newcommand{\pr}[1]{{\textcolor{cyan}{\texttt{PR: #1}} }}
 \newcommand{\fm}[1]{{\textcolor{blue}{\texttt{FM: #1}} }}
 \newcommand{\sschmidt}[1]{{\textcolor{red}{\texttt{SS: #1}} }}
-
+\newcommand{\BS}[1]{{\textcolor{green}{\texttt{SB: #1}} }}
 
 
 \begin{document}
@@ -68,7 +68,17 @@ superscriptaddress,10pt]{revtex4-1}
 
 	%\appendix
 	%\input{./tex/appendix}
-	
+
+        %% refs.bib file:
+        %% To start, the following actions are required.
+        %% - tex file uses bib from 
+        %%   $ git clone https://bernuzzi@bitbucket.org/bernuzzi/bibtexrefs.git
+        %% - set a sym link to the file 
+        %%   $ ln -s PATH/TO/REPOS/bibtexrefs/refs.bib references.bib
+        %% - for in prep or other nonstandard bib entries use the
+        %%   `bibliography.bib`
+        %%   note some double refs need to be commented in the latter.
+        
 	\bibliography{refs.bib,bibliography.bib}
 	\bibliographystyle{ieeetr}
 

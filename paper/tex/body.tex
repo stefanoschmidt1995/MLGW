@@ -7,7 +7,9 @@ to predict the gravitational radiation emitted~\cite{}.
 As solving the full equations is still extremely computationally challenging, the LIGO-Virgo Collaboration relies on approximate analytical models. 
 These can be broadly categorized in  two families; (i) the effective-one-body(EOB) waveform 
 models~\cite{Damour:2009kr,Chiaramello:2020ehz}; (ii) the phenomenological 
-models~\cite{Khan:2015jqa,Pratten:2020ceb,Estelles:2020osj}. EOB models are the most complete family 
+models~\cite{Khan:2015jqa,Pratten:2020ceb,Estelles:2020osj}.
+\BS{would add NRsurrogates}
+EOB models are the most complete family 
 of analytical models available. They compute the GW signal by solving Hamilton's equations 
 and accurately predict the GW signal up to late plunge. The merger and ringdown  parts of 
 the signal are then joint to the inspiral signal using information obtained from numerical relativity. 
@@ -22,7 +24,9 @@ models are constructed starting from some decomposition in the waveform space fo
 interpolation to avoid any  numerical integration~\cite{Purrer:2015tud,Bohe:2016gbl,Purrer:2017str,Lackey:2018zvw,Cotesta:2020qhw}. 
 Being fast to generate, they are routinely employed in GW data analysis. 
 
-A Machine Learning model is a promising alternative to the state-of-the-art waveforms generators. 
+A Machine Learning model is a promising alternative to the
+state-of-the-art waveforms generators. \bs{[would say] to ACCELERATE
+  waveform generation}
 Machine Learning (ML) is a branch of statistics that is devoted to reproduce patterns read from data. 
 A ML algorithm needs very little human input and, by automatically solving an optimization problem, 
 it is able to choose the best performing element among a large  class of parametric models for the solution. 
@@ -31,7 +35,11 @@ The ML flexibility in modeling data and reproducing trends is appealing: with a 
 and with an appropriate training procedure, we can hope to have a reliable, fast to execute generator 
 of GW waveforms, while retaining the accuracy necessary for robust parameter estimation. 
 ML procedures have been applied so far to Numerical Relativity 
-waveform data~\cite{Gabbard:2017lja,George:2017pmj,George:2017vlv,Rebei:2018lzh,Khan:2020foe}.
+waveform
+data~\cite{Gabbard:2017lja,George:2017pmj,George:2017vlv,Rebei:2018lzh,Khan:2020foe}. \BS{[check
+    carefully  refs, I think there are more][also note the Gabbard
+    paper uses EOB not NR, I am not sure of the sentence ``ML is
+    applied so far to NR'']}
 The construction of a NR-trained ML waveform model is currently missing except for a very 
 restricted region of the parameter space (nonspinning etc.). The main problem behind this is 
 because of the absence of a large set of NR simulations ($\simeq 10^{3}$) that would be 
