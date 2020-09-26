@@ -788,6 +788,15 @@ In light of our findings, we think that the resolution of the spin physics is pa
 %%%%%%%%%%%%%%%%%%%
 \section{Final remarks and future prospects}
 \label{sec:end}
+
+\BS{[I think this needs a bit more structure. All the material is there it is matter of re-organinzing shortening] e.g. logic following from the paper could be
+\begin{itemize}
+\item Short summary of the key ML ingredients of the method and how to go beyond /improve those
+\item Short summary of the WF performances and how to improve them, extension of mlgw to modes, precession, and freq-domain, NR data etc
+\item Short summary of PE application and future prospects
+\end{itemize}
+}
+
 We built a ready-to-use Machine Learning model which generates the (dominant quadrupole) gravitational wave signal from a binary Black Hole coalescence in the non precessing case. The code is released as the package \texttt{mlgw} available via the \texttt{PyPI} Python package repository.
 %Our model was built for the case of aligned spins and returns a wave given the BH's masses $m_1, m_2$ and (dimensionless) spins $s_1, s_2$ taking into account the correct dependence on source luminosity distance $d_L$, inclination angle $\iota$ and reference phase $\varphi_0$.
 Our model shows excellent agreement with the underlying training set. At test times the median mismatch is $\bar{\mathcal{F}}\sim 5 \cdot 10^{-4}$. Lastly, the generation time from \texttt{mlgw} is smaller than the underlying training model by a factor of $\sim 40$, for a waveform starting at a frequency of $\SI{5}{Hz}$.
