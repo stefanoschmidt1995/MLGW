@@ -10,5 +10,26 @@ Our implementation is publicly available as a Python package \texttt{mlgw} as \u
 \texttt{mlgw} has all the features required for performing a full parameter estimation (including the waveform dependence on geometrical parameters). 
 We employ \texttt{mlgw} to analyse the public data from GWTC-1, the first GW transient catalog. Our results are largely compatible with those published by the LIGO-Virgo collaboration.
 
+\BS{[suggestion, please improve/correct/fix]\\
+We apply machine learning methods to build a time-domain model for
+gravitational waveforms from binary black hole mergers called \texttt{mlgw}.
+The dimensionality of the problem is handled by representing the 
+waveform's amplitude and phase in a lower
+dimensional space using a principal component analysis.
+We train \texttt{mlgw} on about $\mathcal{O}(10^3)$ \texttt{TEOBResumS} effective-one-body
+waveforms with mass ratios $q\in[1,128]$ and aligned dimensionless
+spins $\chi\in[-0.99,0.99]$. We obtain a model that is faithful to the
+training set at the ${\sim}10^{-3}$ average level, while speeding up
+the single waveform generation of a factor 10-50 (depending on the
+binary mass/initial frequency.)
+As demonstration of the capabilities of \texttt{mlgw} to perform a
+full parameter estimation, we re-analyze the public data from the first
+GW transient catalog (GWTC-1).
+Since the generation time does not depend on the length of the signal,
+our model is particularly suitable for the analysis of long signals
+and/or and in view of third-generation detectors.
+Future applications comprise the analysis of waveform systematics and
+model selection in parameter estimation.}
+
 \end{abstract}
 

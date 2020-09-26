@@ -108,7 +108,11 @@ results. This is consistent with previously published analysis of GW150914
 data using a slightly different version of \texttt{TEOBResumS}~\cite{Nagar:2018zoe}.
 
 On top of the specific application discussed here, our ML waveform model could also be used directly 
-to speed up GW searches. Furthermore, since the time required to generate a WF does not depend
+to speed up GW searches.
+%
+\BS{[But searches don't use template banks pre-computed?]}
+%
+Furthermore, since the time required to generate a WF does not depend
 on the signal time length but only only on the number of grid points which the WF is evaluated at,
 the applicability of our approach goes far beyond the LIGO/Virgo physics scenario. In particular,
 we think about the forthcoming Einstein Telescope, that will be sensitive to very long stellar-mass 
@@ -279,6 +283,9 @@ dependence of the phase components on the orbital parameters. Model
 performances are not seen to depend on the choice of
 $\bar{t}$.\BS{[yes, but what you choose?]}
 
+\BS{[Here it is important to state the ranges of mass ratio and spins
+    covered by the model!]}
+
 %%%%%%%%%%%%%
 \subsection{Dimensionality reduction}
 Once we are able to represent waveforms, a regressions ${\tilde{\boldsymbol{\vartheta}}} \longmapsto \boldsymbol{A}_{{\tilde{\boldsymbol{\vartheta}}}}, \boldsymbol{\phi}_{{\tilde{\boldsymbol{\vartheta}}}}$ is unfeasible, as the dimension of the target space is too large. Luckily, the elements of $\boldsymbol{A}, \boldsymbol{\phi}$ are strongly correlated with each other: the independent amount of information, required to fully reconstruct the wave, can be stored in a low dimensional vector.
@@ -365,7 +372,12 @@ The model can extrapolate outside the range of orbital parameters, without guara
 
 %%%% Where do I put it??
 \BS{[this goes at the end of conclusions]}
-A Python implementation of the model is released in the package \texttt{mlgw}, publicly available at \href{https://pypi.org/project/mlgw/}{pypi.org/project/mlgw/}. The user might install it with the command \texttt{pip install mlgw}. The package provides also the gradients $\frac{\partial h}{\partial \vartheta_i}$ of the waveform.
+A Python implementation of the model is released in the package
+\texttt{mlgw}, publicly available at
+\href{https://pypi.org/project/mlgw/}{pypi.org/project/mlgw/}. The
+user might install it with the command \texttt{pip install mlgw}. The
+package provides also the gradients $\frac{\partial h}{\partial
+  \vartheta_i}$ of the waveform. \BS{[How are these gradients calculated?]}
 
 %%%%%%%%%%%%%%%%%%
 \section{Model performance}
