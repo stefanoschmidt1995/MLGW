@@ -1,25 +1,24 @@
 \begin{abstract}
-We apply Machine Learning methods to build a model designed to generate a gravitational waveform in the time domain as produced by a binary black hole coalescence. 
-Our model matches the accuracy of the state-of-the-art EOB models and has a tiny generation cost, equivalent to those of a fast Reduced Order Model.
-As the generation time does not depend on the lenght of the signal, the model is particularly suitable for long observation surveys, such as ET.
-Furthermore, it provides a closed form expression for the waveform and its gradient with respect to the orbital parameters. This could lead to a further improvement of the sampling algorithms employed for the parameter estimation.
-\par
-We train our model on a number of waveforms computed by \texttt{TEOBResumS} and we infer a relation between the waveform and the masses $m_1$, $m_2$ and (aligned) spins $s_1$, $s_2$ of the two BHs. 
-%We reduce the dimensionality of our problem by decomposing each waveform in amplitude and phase and it is further represented in a lower dimensional space using a Principal Component Analysis. The regression from orbital parameters to principal components is performed using a Mixture of Expert model.
-Our implementation is publicly available as a Python package \texttt{mlgw} as \url{https://pypi.org/project/mlgw/}.
-\texttt{mlgw} has all the features required for performing a full parameter estimation (including the waveform dependence on geometrical parameters). 
-We employ \texttt{mlgw} to analyse the public data from GWTC-1, the first GW transient catalog. Our results are largely compatible with those published by the LIGO-Virgo collaboration.
+%We apply Machine Learning methods to build a model designed to generate a gravitational waveform in the time domain as produced by a binary black hole coalescence. 
+%Our model matches the accuracy of the state-of-the-art EOB models and has a tiny generation cost, equivalent to those of a fast Reduced Order Model.
+%As the generation time does not depend on the lenght of the signal, the model is particularly suitable for long observation surveys, such as ET.
+%Furthermore, it provides a closed form expression for the waveform and its gradient with respect to the orbital parameters. This could lead to a further improvement of the sampling algorithms employed for the parameter estimation.
+%We train our model on a number of waveforms computed by \texttt{TEOBResumS} and we infer a relation between the waveform and the masses $m_1$, $m_2$ and (aligned) spins $s_1$, $s_2$ of the two BHs. 
+%Our implementation is publicly available as a Python package \texttt{mlgw} as \url{https://pypi.org/project/mlgw/}.
+%\texttt{mlgw} has all the features required for performing a full parameter estimation (including the waveform dependence on geometrical parameters). 
+%We employ \texttt{mlgw} to analyse the public data from GWTC-1, the first GW transient catalog. Our results are largely compatible with those published by the LIGO-Virgo collaboration.
 
-\BS{[suggestion, please improve/correct/fix]\\
 We apply machine learning methods to build a time-domain model for
 gravitational waveforms from binary black hole mergers called \texttt{mlgw}.
 The dimensionality of the problem is handled by representing the 
 waveform's amplitude and phase using a principal component analysis.
 We train \texttt{mlgw} on about $\mathcal{O}(10^3)$ \texttt{TEOBResumS} effective-one-body
-waveforms with mass ratios $q\in[1,128]$ and aligned dimensionless
+waveforms with mass ratios $q\in[1,20]$ and aligned dimensionless
 spins $\chi\in[-0.99,0.99]$. The resulting model is faithful to the
 training set at the ${\sim}10^{-3}$ level (averaged on the parameter space), while speeding up the single waveform generation of a factor 10-50 (depending on the
-binary mass/initial frequency.)
+binary mass and initial frequency.)
+Furthermore, \texttt{mlgw} provides a closed form expression for the waveform and its gradient with respect to the orbital parameters; such an information might be for future improvements in GW data analysis.
+\par
 As demonstration of the capabilities of \texttt{mlgw} to perform a
 full parameter estimation, we re-analyze the public data from the first
 GW transient catalog (GWTC-1) to find consistent results at  a fraction of the cost.
@@ -27,7 +26,7 @@ Since the generation time does not depend on the length of the signal,
 our model is particularly suitable for the analysis of long signals
 and/or and in view of third-generation detectors.
 Future applications include the analysis of waveform systematics and
-model selection in parameter estimation.}
+model selection in parameter estimation.
 
 \end{abstract}
 

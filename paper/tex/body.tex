@@ -28,11 +28,8 @@ models are constructed starting from some decomposition in the waveform space fo
 interpolation to avoid any  numerical integration~\cite{Purrer:2015tud,Bohe:2016gbl,Purrer:2017str,Lackey:2018zvw,Cotesta:2020qhw}. 
 Being fast to generate, they are routinely employed in GW data analysis. 
 
-A Machine Learning model is a promising alternative to the
-state-of-the-art waveforms generators.
-%
-\BS{[would say] to ACCELERATE waveform generation}
-%
+A Machine Learning model is a promising alternative to accelerate the
+waveforms generation of state-of-the-art models.
 Machine Learning (ML) is a branch of statistics that is devoted to reproduce patterns read from data. 
 A ML algorithm needs very little human input and, by automatically solving an optimization problem, 
 it is able to choose the best performing element among a large  class of parametric models for the solution. 
@@ -69,12 +66,7 @@ spins).
 This is, for example, the case of the most  recent avatar of 
 the spin-aligned \texttt{TEOBResumS}~\cite{Nagar:2018zoe} model, 
 that incorporates subdominant waveform modes,  \texttt{TEOBResumS\_SM}~\cite{Nagar:2019wds,Nagar:2020pcj}. 
-This model used several hundreds (though most of them are
-redundant
-%
-\BS{[so why you use them all hundreds?]}) 
-%
-of the available SXS simulations to inform a highly accurate description 
+This model used several hundreds of the available SXS simulations to inform a highly accurate description 
 of the postmerger-ringdown phase~\cite{Damour:2014yha}, but 
 only around 40 datasets to improve the behavior of the analytical EOB dynamics, 
 suitably modifying the analytical orbital and spin-orbit interaction.
@@ -108,10 +100,7 @@ results. This is consistent with previously published analysis of GW150914
 data using a slightly different version of \texttt{TEOBResumS}~\cite{Nagar:2018zoe}.
 
 On top of the specific application discussed here, our ML waveform model could also be used directly 
-to speed up GW searches.
-%
-\BS{[But searches don't use template banks pre-computed?]}
-%
+to speed up GW data analysis.
 Furthermore, since the time required to generate a WF does not depend
 on the signal time length but only only on the number of grid points which the WF is evaluated at,
 the applicability of our approach goes far beyond the LIGO/Virgo physics scenario. In particular,
@@ -143,17 +132,12 @@ spins $\mathbf{s}_1$ and $\mathbf{s}_2$ are \textit{aligned}.
 
 For this reason, we approximate the full multipolar waveform with just the single complex quantity $H_{22}$ and we define
 \begin{equation}\label{eq:h_std}
-	\tilde{h}(t; \boldsymbol{\vartheta}) \equiv \tensor[^{-2}]{Y}{_{2 2}}(0,0) \cdot H_{22}(t; \boldsymbol{\vartheta}) = 4\cdot\sqrt{\frac{5}{64\pi}}H_{22}(t; \boldsymbol{\vartheta})
+	h_{FIT}(t; \boldsymbol{\vartheta}) \equiv \tensor[^{-2}]{Y}{_{2 2}}(0,0) \cdot H_{22}(t; \boldsymbol{\vartheta}) = 4\cdot\sqrt{\frac{5}{64\pi}}H_{22}(t; \boldsymbol{\vartheta})
 \end{equation}
-%
-\BS{[what means the tilde on top of h? Usually this is used for the
-    FT. If you mean an approximation I'd use: $h\simeq...$][Does the
-    factor 4 takes into account the c.c.?]}
-%
-and we express $\tilde{h}$ in terms of its amplitude and phase
-(\BS{note we adopt a nonstandard sign convention for the phase}):
+and we express it in terms of its amplitude and phase
+\footnote{Note we adopt a nonstandard sign convention for the phase}:
 \begin{equation}\label{eq:h_ML}
-	\tilde{h}(t; \boldsymbol{\vartheta}) = A(t; \boldsymbol{\vartheta}) e^{i \phi(t; \boldsymbol{\vartheta})} 
+	h_{FIT}(t; \boldsymbol{\vartheta}) = A(t; \boldsymbol{\vartheta}) e^{i \phi(t; \boldsymbol{\vartheta})} 
 \end{equation}
 %%%
 We may also write $f_{\boldsymbol{\vartheta}}(t)$ to denote a function $f(t;\boldsymbol{\vartheta})$ of time with parametric dependence on $\boldsymbol{\vartheta}$.
@@ -162,10 +146,6 @@ In what follows, $f$ stands for any of the functions $A_{\tilde{\boldsymbol{\var
 With this definition, the full waveform can be expressed as:
 \begin{align} 
 	&h(t, d_L,\iota,\varphi_0; \boldsymbol{\vartheta}) =  \nonumber\\
-		%&= {\frac{\SI{1}{Mpc}}{d_L}} \cdot \Bigg\{ \frac{1+\cos^2\iota}{2} \left[ \cos 2\varphi_0 \cdot \mathrm{Re}(\tilde{h}) 
-		%	- \sin 2\varphi_0 \cdot \mathrm{Im}(\tilde{h}) \right] \nonumber \\
-		%&+  i \cdot \cos\iota \left[ \sin 2\varphi_0 \cdot \mathrm{Re}(\tilde{h}) 
-		%	+ \cos 2\varphi_0 \cdot \mathrm{Im}(\tilde{h})  \right] \Bigg\}
 		&= {\frac{\SI{1}{Mpc}}{d_L}} \cdot \Bigg\{ \frac{1+\cos^2\iota}{2} \cdot A_{\boldsymbol{\vartheta}}(t)  \cos[\phi_{\boldsymbol{\vartheta}}(t)+2\varphi_0]  \nonumber \\
 		&+ i \cdot \cos\iota \cdot A_{\boldsymbol{\vartheta}}(t) \sin[\phi_{\boldsymbol{\vartheta}}(t)+2\varphi_0] \Bigg\}
 \label{eq:h_parametrization_simple}
@@ -182,26 +162,17 @@ We choose the convention that $\phi_{\boldsymbol{\vartheta}} = 0$ when the ampli
 %======================
 %
 The goal of the present work is to provide an accurate Machine Learning model which outputs the functions $A(t;\boldsymbol{\vartheta})$ and $\phi(t;\boldsymbol{\vartheta})$ (eq.~\eqref{eq:h_ML}), as generated by the state-of-the-art time domain WF models.
-Because of scale invariance of GR, the dependence on total mass $M= m_1+m_2$ can be inserted analytically \cite{Arbey2019scaling} and we only need to consider the variables $\tilde{\boldsymbol{\vartheta}} = (q, s_1, s_2)$, where $q= m_1/m_2 \geq 1$.
-\BS{[alt.] Since BBH waveforms trivially scales with the binary mass
-  $M$, we only need to consider the variables
-  $\tilde{\boldsymbol{\vartheta}} = (q, s_1, s_2)$, where $q= m_1/m_2
-  \geq 1$, to describe the waveform's multipoles.}
+Since BBH waveforms trivially scales with the binary mass $M$, we only need to consider 
+the variables $\tilde{\boldsymbol{\vartheta}} = (q, s_1, s_2)$, where $q= m_1/m_2 \geq 1$, to describe the waveform's multipoles.
 More formally, we seek a ML model that reliably reproduces the following map:
 \begin{align}
 	(q, s_1, s_2) &\longmapsto A_{(q, s_1, s_2)}(t) \label{eq:objective_amp}\\
 	(q, s_1, s_2) &\longmapsto \phi_{(q, s_1, s_2)}(t) \label{eq:objective_ph}
 \end{align}
-\sschmidt{Cited here the paper on scaling relations, beacause we used
-  it and was really helpful. Keep it?}\BS{[ma anche no]}
 
 \par
 In the context of ML, our task reduces to performing two regressions\footnote{A regression is a statistical method to infer the relationship between a set of ``independent variables" and a set of ``dependent variable". A model consist in a functional form for such relation, usually with many free parameters to be specified. By looking at the data, one should be able to make a proper choice for their value.} 
-from the orbital parameters
-%
-\BS{[orbital parameters have been defined above as (m1,m2,s1,s2), but now you refer to (q,s1,s2)]}
-%
-to the amplitude and phase of WF. 
+from $\tilde{\boldsymbol{\vartheta}}$ to the amplitude and phase of WF. 
 In order to be able to perform each regression, several steps are required.
 
 \begin{enumerate}[label=(\Alph*)]
@@ -210,21 +181,20 @@ In ML jargon, this procedure is called preprocessing and aims to create a standa
 }.
 	\item \textit{Creating a dataset of WFs}. A large number of WFs must be generated on the the chosen time grid for a different number of orbital paramter $(q,s_1,s_2)$. This will be the training set for the ML model.
 	\item \textit{Reducing the dimensionality of a WF}. In order
-          to make the regression feasible, \oldnewtxt{we need to reduce the dimensionality of a WF: we must be able to represent a single WF with very few real numbers; that is, we build a low dimensional representation of the WF}{we build a low dimensional representation of the WF}. This operation must be invertible: once a low dimensional representation is given, one should be able to reconstruct the higher dimensional WF.
-	\item \textit{Learning a regression}. \oldnewtxt{Eventually, w}{W}e train a model to perform the regression from $(q, s_1, s_2)$ to the low dimensional representation of the WF.
+          to make the regression feasible, we build a low dimensional representation of the WF}. This operation must be invertible: once a low dimensional representation is given, one should be able to reconstruct the higher dimensional WF.
+	\item \textit{Learning a regression}. We train a model to perform the regression from $(q, s_1, s_2)$ to the low dimensional representation of the WF.
 \end{enumerate}
-\BS{We discuss these points in detail in what follows.}
+We discuss these points in detail in what follows.
 
-\begin{figure}[!t]
-	\centering
-	\includegraphics[width=\columnwidth,keepaspectratio]{tau_grid}
-	\caption{Amplitude (arbitrary units) of a GW wave represented on a grid with 30 points.
-It is set $\alpha = 0.3$ and $\tau_{min} = \SI{0.3}{s/M_\odot}$
-The $\boldsymbol{\tau}$ grid is finer around the merger.
-\sschmidt{Do we really need this??}\BS{[I think no, but up to you]}
-}
-	\label{fig:tau_grid}
-\end{figure}
+%\begin{figure}[!t]
+%	\centering
+%	\includegraphics[width=\columnwidth,keepaspectratio]{tau_grid}
+%	\caption{Amplitude (arbitrary units) of a GW wave represented on a grid with 30 points.
+%It is set $\alpha = 0.3$ and $\tau_{min} = \SI{0.3}{s/M_\odot}$
+%The $\boldsymbol{\tau}$ grid is finer around the merger.
+%}
+%	\label{fig:tau_grid}
+%\end{figure}
 %
 \subsection{The time grid}
 Each function $f(t)$ to fit (i.e. amplitude and phase) must be represented by its values $\mathbf{f} \in \R^D$ on a discrete grid of $D$ points $\mathbf{t} \in \R^D$.
@@ -236,19 +206,17 @@ Once a time grid is set, the vector $\mathbf{f}$ is defined as follows:
 \end{equation}
 \par
 The value of $f$ at an arbitrary time must be found by interpolation and this introduces an error in the reconstructed value.
-To make the interpolation effective, \oldnewtxt{we want a finer grid
-  when the function changes much.}{we introduce a grid adapted to the
-  function's variation.}
+To make the interpolation effective, we introduce a grid adapted to the
+  function's variation.
 Clearly an equally spaced grid over times is not the best choice since the amplitude has a very narrow peak at $\tau=0$\footnote{As the phase has a rather regular behavior, it is not important to choose the right grid. For this reason a single grid for amplitude and phase, tuned on the behavior of amplitude, is used.}.
 A good solution is to build the $\tau$ grid ${\boldsymbol{\tau}}$ as:
 \begin{equation} \label{eq:tau_grid}
 	{\boldsymbol{\tau}}_i = \sign{\boldsymbol{\tilde{\tau}}_i} \cdot (|\boldsymbol{\tilde{\tau}}_i|)^{\frac{1}{\alpha}} \;\;\;\;\;\; i = 1, \ldots D
 \end{equation}
-where $\boldsymbol{\tilde{\tau}}_i$ are D equally spaced points in the range of interest.
-We call $\alpha$ \textit{distortion parameter}.
-As can be seen in fig.~\ref{fig:tau_grid}, this choice ensures that more points are accumulated around the peak of amplitude.
+where $\boldsymbol{\tilde{\tau}}_i$ are D equally spaced points in the range of interest and we call $\alpha$ \textit{distortion parameter}.
+This choice ensures that more points are accumulated around the peak of amplitude.
 \par
-The \oldnewtxt{lenght}{length} of the time grid determines the maximum lenght of the WFs that the model can generate.
+The length of the time grid determines the maximum lenght of the WFs that the model can generate.
 Let us define $\tau_{min} = -{\boldsymbol{\tau}}_0 > 0 $ the starting point of the grid; thus each WF start at a time $\tau_{min}\cdot M$ before the merger.
 Note that $\tau_{min}$ is an important hyperparameter, set by the user, which strongly impacts on the model applicability.
 \par
@@ -279,12 +247,12 @@ The output of the training model must be interpolated to the chosen time grid.
 \par
 It is important to ensure that all waves have zero phase at a constant
 time point $\bar{t}$: this is crucial to obtain a continuous
-dependence of the phase components on the orbital parameters. Model
+dependence of the phase components on the orbital parameters. As model
 performances are not seen to depend on the choice of
-$\bar{t}$.\BS{[yes, but what you choose?]}
+$\bar{t}$, we arbitrarly set $\bar{t} = 0$.
+\par
+The range $\mathcal{P}$ of masses and spins covered by the model, as well as the starting point of the grid $\tau_{min}$, can be freely choose by the user, depending on their needs.
 
-\BS{[Here it is important to state the ranges of mass ratio and spins
-    covered by the model!]}
 
 %%%%%%%%%%%%%
 \subsection{Dimensionality reduction}
@@ -292,7 +260,7 @@ Once we are able to represent waveforms, a regressions ${\tilde{\boldsymbol{\var
 A number of ML techniques to perform such a task are available. Among them, Principal Component Analysis (PCA) \cite[ch. 12]{murphy2012machine} was found to be particularly effective.
 \par
 The basic idea behind PCA is to seek a \textit{linear relation} between high dimensional and low dimensional data: high dimensional data ($\in \R^D$) are projected onto a $K$ dimensional subspace, by means of an orthogonal projection.
-A theorem\BS{[what theorem?]} guarantees that, for zero mean data, the generators of subspace are the (orthonormal) first $K$ eigenvectors of the empirical covariance matrix $\Sigma \in \mathbf{Mat}(D,D)$. The eigenvectors are also called Principal Components (PCs) of the data.
+A theorem \cite[sec. 12.2.1]{murphy2012machine} guarantees that, for zero mean data, the generators of subspace are the (orthonormal) first $K$ eigenvectors of the empirical covariance matrix $\Sigma \in \mathbf{Mat}(D,D)$. The eigenvectors are also called Principal Components (PCs) of the data.
 Thus, the projection matrix $H\in \mathbf{Mat}(K,D)$ holds in each row the PCs and each high-dimensional point can be effectively expressed as a linear combination of the $K$ PCs\footnote{For this reason, PCA can also be seen as a perturbative expansion of a high dimensional observation. A more realiable reconstruction can be achieved by adding more and more PCs, each of which is less important than its previous.}.
 \par
 A PCA model is trained with the dataset eq.~\eqref{eq:dataset}: it represents an (approximate) bijective map between the high dimensional WF $\mathbf{f} = \boldsymbol{A}_{\tilde{\boldsymbol{\vartheta}}}, \boldsymbol{\phi}_{\tilde{\boldsymbol{\vartheta}}} \in \R^D$ and the low-dimensional representation $\mathbf{g} = \mathbf{g}_A , \mathbf{g}_\phi \in \R^K$.
@@ -364,20 +332,12 @@ The model has the following explicit form:
 where ${\boldsymbol{\xi}}({\tilde{\boldsymbol{\vartheta}}}) \in \R^M $ are the chosen basis function for the regression and $\mathcal{S}(\cdot)_k$ is the \textit{softmax} function eq~\eqref{eq:softmax}.
 Two relations of the same type must be fitted, one for the amplitude, the other for the phase.
 \par
-Once weights are set properly, the expression provides an estimation for the waveform $\tilde{h}$ in \eqref{eq:h_std}.
-The fitted expression for  $\tilde{h}$ is evaluated at constant mass $M = \SI{20}{M_\odot}$; the dependence on total mass is inserted analytically and the dependence on $(d_L, \iota, \varphi_0)$ is computed with eq.~\eqref{eq:h_parametrization_simple}.
+Once weights are set properly, the expression provides an estimation for the waveform $h_{FIT}$ in \eqref{eq:h_std}.
+The fitted expression for  $h_{FIT}$ is evaluated at constant mass $M = \SI{20}{M_\odot}$; the dependence on total mass is inserted analytically and the dependence on $(d_L, \iota, \varphi_0)$ is computed with eq.~\eqref{eq:h_parametrization_simple}.
 We are thus able to obtain a complex waveform $h(t;m_1,m_2, s_1, s_2, d_L, \iota, \varphi_0)$ which reproduces closely a waveform from the training model.
-The model can extrapolate outside the range of orbital parameters, without guarantee of reliable results.
+The model can extrapolate outside the range of train orbital parameters, without guarantee of reliable results.
 \par
-
-%%%% Where do I put it??
-\BS{[this goes at the end of conclusions]}
-A Python implementation of the model is released in the package
-\texttt{mlgw}, publicly available at
-\href{https://pypi.org/project/mlgw/}{pypi.org/project/mlgw/}. The
-user might install it with the command \texttt{pip install mlgw}. The
-package provides also the gradients $\frac{\partial h}{\partial
-  \vartheta_i}$ of the waveform. \BS{[How are these gradients calculated?]}
+Note that equation \ref{eq:model} can be used to compute a closed form expression for the gradients of the waveform with respect to the orbital parameters. Such calculations are included in the released version of \texttt{mlgw}.
 
 %%%%%%%%%%%%%%%%%%
 \section{Model performance}
@@ -386,15 +346,16 @@ We now discuss some tests on our model. We first study how its performance depen
 Finally, we measure the speed up provided by our model as compared with training \texttt{TEOBResumS} model.
 As it is common, we measure the similarity between two waves by means of the \textit{optimal mismatch}:
 \begin{align}
-	%\bar{\mathcal{F}}[h_1,h_2] &\equiv \min_{\phi_0} \left[ 1- \frac{\langle h_1, h_2 e^{i\phi_0} \rangle}{\sqrt{\langle h_1, h_1 \rangle \langle h_2, h_2 \rangle}} \right]	\label{eq:mismatch_def}
 	\bar{\mathcal{F}}[h_1,h_2] &\equiv 1- \frac{\langle h_1, h_2 \rangle}{\sqrt{\langle h_1, h_1 \rangle \langle h_2, h_2 \rangle}}	\label{eq:mismatch_def}
 \end{align}
-\BS{[define the Wiener product in the above eq.]}
-We always use a flat noise curve (i.e. constant power spectral density for the detector noise).
+where, as usual, we defined the \textit{Wiener product} as:
+\begin{equation}
+	 {\langle h_1, h_2 \rangle} = 4 \int_0^\infty \d{f} \; \frac{h_1^*(f) h_2(f)}{S_n(f)}
+	\label{ew:Wiener}
+\end{equation}
+In the equation above, $S_n(f)$ is the detector's noise curve and the $*$ denotes complex conjugate.
+In what follows, we always use a flat noise curve (i.e. constant power spectral density for the detector noise).
 %%%%%%%
-
-\BS{[some colors in these figures would be nice and help the reader.]}
-
 
 \subsection{Validation}
 Wherever relevant, we will employ a dataset with $5800$ waveforms generated in the domain $\mathcal{P} = [1,20]\times[-0.8,0.95]\times[-0.8,0.95]$, with $\tau_{min} = \SI{1.0}{s/M_\odot}$. The dataset was generated with TEOBResumS model \cite{}.
@@ -471,7 +432,7 @@ MoE model is chosen to be the optimal one with $4$ experts and a fourth order po
 Of course, the accuracy of the reconstruction of the low dimensional representation depends on the number $K$ of principal components considered: the more PCs are used, the best accuracy can be achieved.
 However in practice, due to error in the MoE regression, one cannot reduce the reconstruction mismatch
 arbitrarily\footnote{Indeed, at high PC order the relations to fit become noisy and the regression becomes less accurate, eventually washing out any improvement brought by a higher number of PCs.}
-and they\BS{one ?} should choose the number of PCs, while checking MoE performance.
+and one should choose the number of PCs, while checking MoE performance.
 \par
 In figure \ref{fig:mismatch_MoE_vs_PCA} we report a numerical study of this. We plot the reconstruction mismatch as a function of the number of PCs considered. We consider separetely the amplitude and the phase. In one series, we reconstruct the wave using true values of PCs: the mismatch is a measure of PCA accuracy. In the other, we reconstruct a wave using values for PCs as guessed by MoE regression: this is a measure of accuracy of both PCA and regression.
 For the first two PCs, the regression is accurate enough for reproducing the PCA accuracy.
@@ -670,24 +631,19 @@ The comparison is made as above only for $f_{min} = \SI{20}{Hz}$; the ROM has no
 As the ROM model yields WFs in frequency domain, in the time comparison we included a fast Fourier trasform (FFT) of the time domain WF of \texttt{mlgw}. This is to ensure that we evaluate the two model at the same conditions.
 Interestingly, the time taken by the FFT (in the \texttt{numpy}
 implementation) is similar to that required to generate a WF. Thus for
-a WF in FD our model cannot be substantially faster, due to the
+a WF in FD, our model cannot be substantially faster, due to the
 limitation imposed by the FFT.\BS{[How about the interpolation to the
     uniform grid required before the FFT?]}
+\sschmidt{I don't get the point here...}
 \par
 We note the the performances are quite similar to each other.
 If a lower sampling rate is employed, \texttt{mlgw} slighly improves its performances.
 \par
 It is important to stress that \texttt{mlgw} is written in pure
-Python, while \texttt{SEOBNRv4\_ROM} is coded in C. Thus, the fact the
-the two models show similar performances is remarkable: surely, a C
-implementation of \texttt{mlgw} would be faster than
-\texttt{SEOBNRv4\_ROM}.
+Python, while \texttt{SEOBNRv4\_ROM} is coded in C.
+In fact, a python code could be easily accelerated (i.e. parellelized, run on GPUs, etc...) with dedicated libraries, thus allowing to push the code performance further.
 %
-\BS{well, this depend on how you code in C and how much build-in
-  features of python you use. The latter might accelerate things
-  significantly (e.g. vectorization, GPUs)
-  and be trivial to implement in python (something more difficult to
-  achieve for the average physicist working in C)}
+\sschmidt{Is it ok now??}
 %
 Furthermore, \texttt{mlgw} is more efficient in reconstructing the
 waveforms: it requires only $O(5\cdot 10^3)$ WFs for the training,
@@ -716,7 +672,7 @@ In table \ref{tab:profiling}, we compare the results for two values of $N_{grid}
 	\end{tabular}
 	\caption{
 Time taken by different stages of the generation of $100$ waveforms; data refers to two different values of $N_{grid}$.
-Generation of raw WF refers to the computation of the strain $\tilde{h}$ as produced by a ML model. Interpolation to user grid evaluates the WF on the grid chosen by the user. In the post-processing phase, the dependence on $d_L$, $\iota$ and $\varphi_0$ is included.
+Generation of raw WF refers to the computation of the strain $h_{FIT}$ as produced by a ML model. Interpolation to user grid evaluates the WF on the grid chosen by the user. In the post-processing phase, the dependence on $d_L$, $\iota$ and $\varphi_0$ is included.
 }
 	\label{tab:profiling}
 \end{table}
@@ -729,7 +685,8 @@ If such an amount of datapoints is required, very little space is left for speed
 \section{Application to GWTC-1}
 \label{sec:GWTC1}
 
-We test the implementation of our MLGW-TEOBResumS model on the public data from GWTC-1, the first GW catalog~\cite{}. 
+We test the implementation of our MLGW-TEOBResumS model on the public data from GWTC-1, the first GW catalog~\cite{}.
+We trained \texttt{mlgw} in the range $\mathcal{P} = [1,20]\times[-0.8,0.95]\times[-0.8,0.95]$ and we set $\tau_{min} = \SI{4}{s/M_\odot}$.
 The GWTC-1 catalog consists of 10 BBH systems and a BNS system. Because of the training of the WF model, we do not analyse GW170817, the BNS system, and concentrate exclusively on the BBH signals. Our parameter estimation algorithm is \texttt{gwmodel}~\cite{} a publicly available infrastructure 
 written in a mixture of \texttt{Python} and \texttt{cython} that serves as interface for the parallel nested sampling implementation \texttt{cpnest}~\cite{}. 
 The analysis of each BBH system is set up as follows; we choose a total of 2000 Live Points, four parallel MCMC chains with a maximum length of 5000 steps to ensure that each successive sample is independent of the previous. These settings yield an average of $\sim$ 15000 posterior samples and 
@@ -797,70 +754,131 @@ In light of our findings, we think that the resolution of the spin physics is pa
 \end{itemize}
 }
 
-We built a ready-to-use Machine Learning model which generates the (dominant quadrupole) gravitational wave signal from a binary Black Hole coalescence in the non precessing case. The code is released as the package \texttt{mlgw} available via the \texttt{PyPI} Python package repository.
-%Our model was built for the case of aligned spins and returns a wave given the BH's masses $m_1, m_2$ and (dimensionless) spins $s_1, s_2$ taking into account the correct dependence on source luminosity distance $d_L$, inclination angle $\iota$ and reference phase $\varphi_0$.
-Our model shows excellent agreement with the underlying training set. At test times the median mismatch is $\bar{\mathcal{F}}\sim 5 \cdot 10^{-4}$. Lastly, the generation time from \texttt{mlgw} is smaller than the underlying training model by a factor of $\sim 40$, for a waveform starting at a frequency of $\SI{5}{Hz}$.
-\texttt{mlgw} performance matches closely those of a ROM, which is currently the state-of-the-art for a quick generation.
-Moreover, it was successfully employed for the analysis of the GWTC-1 catalog of waveforms.
+We built a ready-to-use Machine Learning model which generates the (dominant quadrupole) time-domain gravitational wave signal from a binary Black Hole coalescence in the non precessing case. The code is released as the package \texttt{mlgw}, publicly available at
+\href{https://pypi.org/project/mlgw/}{pypi.org/project/mlgw/}. The user might install it with the command \texttt{pip install mlgw}.
+The model consists of a PCA model to reduce the dimensionality of the 22 mode (decomposed in amplitude and phase). A regression (a MoE model) is performed to infer a relation from the orbital paramters to the low dimensional representation of the WF.
 \par
-Remarkably, we discovered that a PCA is able to reproduce a high dimensional wave using a few number of variables. As for the regression model itself, the MoE model, currently it is the ``bottleneck" of the model accuracy. For this reason, we explored several alternative regression methods, including neural networks, but none of them showed dramaticaly better performance.
-Note that underfitting may be an issue whenever the training model shows intrinsic noise due to mis-modeling, e.g. relations that are supposed to be continuous are not, or even due to poor numerical integration schemes.
+It is important to stress that our model is very simple, i.e. it has a very little number of trainable paramters and it is not expensive to train, and flexible, i.e. it works for a large range of paramters and for long waveforms.
+In \cite{Chua_2019}, a ML model for GW generation is built, with similar performances. However, the reduced dimension space is considerably larger ($O(200)$) than ours ($O(10)$).
+In \cite{khan2020gravitationalwave}, the low dimensional space has a similar dimension $O(30)$ and the ML model achieves a similar performance in the time execution (when computed on a CPU). They manage to achieve a better accuracy $O(2\cdot10^{-5})$ but they generate significantly shorter WFs ($f_{min} = \SI{15}{Hz}$ for $M = \SI{60}{M_{\odot}}$ against $f_{min} \simeq \SI{2.5}{Hz}$) and employ a larger training time ($O(\SI{6}{hours})$ against $O(\SI{6}{minutes})$).
 \par
-Our work opens up interesting opportunities in GW data analysis.
-As shown in fig.~\ref{fig:time_performance_hist}, the model is the most useful whenever a long waveform is required. Furthermore, the waveform generation time does not depend on the complexity of the underlying surrogate model. The training WFs can be computed with high accuracy, also at high computational cost, without affecting the performance of the WF generation.
+Remarkably, we discovered that a PCA is able to reproduce a high dimensional wave using a few number of variables.
+On the other hand, the MoE model is currently it is the ``bottleneck" of the model accuracy. For this reason, we explored several alternative regression methods, including neural networks, but none of them showed dramaticaly better performance: perhaps much more computational power and a larger training set are required to improve the fit performances any better.
 \par
-This fact is crucial for detection of low frequency signals, as is the case for ET. The analysis of such signals can be performed in the same time required to deal with shorter signals: it will become feasible, even with a small amount of resourches, \textit{without any loss of WF quality}.
-In \cite{} (\sschmidt{plot in email}), it was shown that training model TEOBResumS matches accurately the numerical relativity WFs, even in the case of ET noise curve is used (see plot in the email). Since our model closely reproduces TEOBResumS, it is likely to achieve the target accuracy for the employment in the ET data analysis.
-\sschmidt{Here I wanted to include the plot sent by Nagar. Is it in a paper? Do we include it here? Or do we just skip it??}
+Despite this, our model shows excellent agreement with the underlying training set. At test time, the median mismatch is $\bar{\mathcal{F}}\sim 5 \cdot 10^{-4}$.
+Furthermore, a single WF generations takes $\SI{0.1}{}-\SI{5}{ms}$ (depending mostly on the number of grid points required by the user), which is a factor of $\sim 40$ faster than the underlying train model.
+\texttt{mlgw} slightly outperforms a ROM, which is currently the state-of-the-art for quick generation.
 \par
-
-
-The fact that a parameter estimation with \texttt{mlgw} is remarkably fast opens up the opportunity for a systematic comparison between different waveform model.
-By training (and the training procedure is moderately quick) \texttt{mlgw} with different waveform models, it will be possible to compare their predictions on several observed events. This could allow to detect systematic biases or to prefer a model over another by means of Bayesian model selection (i.e. by comparing different model evidences).
-We started this program by analysing GWTC-1 with \texttt{mlgw} trained on \texttt{TEOBResumS} and highlited some differences in the predictions as compared to the published results (see section \ref{sec:GWTC1}). Future work might repeat such an analysis on other models or with more observations.
+Our ML framework allows for several generalization, which might build a more accurate WF generator.
+First of all, it is quite straightforward to include higher order modes (HMs) in the WF computation. Different regressions, each for each mode, might be done as we already did for the 22 mode. A future update of \texttt{mlgw} is in program.
+Second, also the precession effects might be included in the model.
+The precession dynamics could be inserted as a single spin parameter $s_P$ \cite{Schmidt2015Precession} and the WF depencence on $s_P$ can be fitted together with the other orbital parameters.
 \par
-However, our work is far from being over and several issues still require attention.
-\par
-First of all, it is quite straightforward to include higher order modes (HMs) in the WF computation. Different regressions, each for each mode, might be done as we already did for the 22 mode. This is the most natural generalization of our work and a future update of \texttt{mlgw} is in program.
-\par
-Second, the potential speed up of parameter estimation can be even higher, if we take advantage of the closed form expression of the waveform provided by our model.
-Indeed, a closed form expression for the WF allows for prompt computation of the gradients with respect to the orbital parameters $ \boldsymbol{\vartheta} = (m_1,m_2, {s}_1,{s}_2) $.
-Hamiltonian Montecarlo \cite{betancourt2017hamiltonianMC}~\cite{Porter2014Hamiltonian_MonteCarlo}, a variant of Markov chain Montecarlo, employs gradients of the waveform to perform an effective sampling of the posterior distibution, which is able to ``find quickly" the high density regions.
-%Porter and Carré \cite{Porter2014Hamiltonian_MonteCarlo} applied Hamiltonian Montecarlo to parameter estimation. However, they only use analytical waveforms, which completely neglects the late inspiral and the merger.
-%Our Machine Learning model could, in principle, extend the application of Hamiltonian Montecarlo to waveform which included also late inspiral, merger and ringdown.
-It would provide a state-of-the-art accurate parameter estimation and, at the same time, it will offer a substantial speed up.
-We believe that this is a promising option and it is among the natural continuations of our work.
-\par
-Another option, so far never explored, is to use the gradients of the WF for a fast exploration of the likelihood landscape. With any gradient based optimizer, it should be easy to jump to a \textit{local} maximum of the likelihood. Such information might be helpful to reliably locate a \textit{global} maximum of the likelihood. Once a global maximum is found, the sampling from the posterior distribution should be quicker to perform, yielding an improvement to the overall analysis.
-\par
-In our model we did not consider precessing system. We made this choice to keep the problem simple.
-The expertise gained for the simple non precessing case can be applied to deal with the complicacies posed by the precessing case.
-A good starting point is given in \cite{Schmidt2015Precession}, where the whole spin dynamics (dependent on 6 parameters) is mapped to a simpler problem, where the precession is controlled by a single parameter $s_P$.
-The waveform dependence on the effective spin parameter $s_P$ can be fitted by a ML model in the same fashion of 
-the other orbital parameters, thus avoid to complicate (much) the regression problem.
-
-All EOB models provides numerical solutions to approximate form of the Einstein equations. They are useful to catch 
-the dominant physics but we expect them to show a degree of inaccuracy, especially close to coalescence.
-Numerical relativity solves numerically Einstein equations without approximations and so far yields the physically most 
-complete available solutions. However, NR waveforms by themselves cannot be used in parameter estimation because
-of their sparse coverage of the parameter space. Our model could be trained on the publicly available NR waveforms 
+Furthermore, our model could be trained on the publicly available NR waveforms 
 catalogs (see e.g.~\cite{Mroue:2013xna,Boyle:2019kee,Healy:2019jyf} and it would provide the best generalization of 
-the numerical waveform. If the model proved to be reliable and effective,  we could dispense with the EOB models 
-altogether and use only NR inputs for a parameter estimation.  This would ensure that all the relevant physics close 
-to merger is adequately captured. 
+the numerical waveform, dispensing with the EOB models altogether.
 Unfortunately, at the moment there are too few NR waveforms ($O(10^2)$) available to perform a reliable 
-training: we need at least $O(10^3)$ waveforms. However, in the future we expect more and more waveforms 
-to be included in the dataset, eventually allowing for a reliable training. Furthermore, currently available 
-NR waveforms are too short to be used as they are, and an extension (e.g. by hybridization with EOB waveforms)
+training\footnote{At least $O(5\cdot 10^3)$ waveforms are required.}
+and the improvement shall wait until enough NR waveforms are available.
+Moreover, NR waveforms are too short to be used as they are and probably, an extension (e.g. by hybridization with EOB waveforms)
 towards the early inspiral is needed to compute any kind of NR-based surrogate model.
-
-Our machine learning approach to signal generation is very flexible and provides a general framework 
-for a ML-based WF generator. We expect it to work for every source for which a number of training 
-waveforms are available. Machine learning models for various wealth of sources might be crucial in 
+\par
+Latly, we expect our ML approach to work for every kind of source for which a training set of 
+waveforms is available. Machine learning models to generate WFs might be crucial in 
 the future, where signals from a number of different sources are expected to be detected. In that scenario, 
 a parameter estimation must be able to detect among different source and this will require a lot 
 of computational work. Speed up will be more pressing.
+\par
 
+Our work opens up interesting opportunities in GW data analysis (seaches and parameter estimation), both because of its speed and of the closed form expression for the WF.
+
+Due to its speed, \texttt{mlgw} could be employed for a systematic comparison between different waveform models, directly on data.
+By training (and the training procedure is also quick) \texttt{mlgw} with different waveform models, it will be possible to compare their predictions on several observed events. This could allow to detect systematic biases or to prefer a model over another by means of Bayesian model selection (i.e. by comparing different model evidences).
+We started this program by analysing GWTC-1 with \texttt{mlgw} trained on \texttt{TEOBResumS} and highlited some differences in the predictions as compared to the published results (see section \ref{sec:GWTC1}). Future work might repeat such an analysis on other models or with more observations.
+\par
+Furthermore, as shown in fig.~\ref{fig:time_performance_hist}, the model is most useful whenever a long waveform is required: in such case, the speed-up gets even more substantial.
+This is crucial for the detection of low frequency signals, as is the case for ET. The analysis of such signals can be performed in the same time required to deal with shorter signals: it will become feasible, even with a small amount of resourches, \textit{without any loss of WF quality}.
+%In \cite{} (\sschmidt{plot in email}), it was shown that training model TEOBResumS matches accurately the numerical relativity WFs, even in the case of ET noise curve is used (see plot in the email). Since our model closely reproduces TEOBResumS, it is likely to achieve the target accuracy for the employment in the ET data analysis.
+%\sschmidt{Here I wanted to include the plot sent by Nagar. Is it in a paper? Do we include it here? Or do we just skip it??}
+\par
+A closed form expression for the gradients of the waveform with respect to the orbital parameters $m_1,m_2, {s}_1,{s}_2$
+\footnote{The computation of gradient is already included in the \texttt{mlgw} package.}
+could give an advantage on the parameter estimation procedure by using the Hamiltonian MonteCarlo (HM).
+HM \cite{betancourt2017hamiltonianMC}~\cite{Porter2014Hamiltonian_MonteCarlo} is a variant of Markov chain Montecarlo, which employs gradients of the likelihood (which depends on the gradient of the waveform) to perform an effective sampling of the posterior distibution. The sampling chain conveges faster to the steady state by ``find quickly" the high density regions, thus offering a speed up of the PE.
+\par
+Another option, so far never explored, is to use the gradients of the WF for a fast exploration of the likelihood landscape. With any gradient based optimizer, it should be easy to jump to a \textit{local} maximum of the likelihood. Such information might be helpful to reliably locate a \textit{global} maximum of the likelihood.
+The ability to quickly locate a global maximum could speed up the searches and the parameter estimation.
+\par
+\sschmidt{Frase a effetto finale??}
+
+
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%% OLD
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%We built a ready-to-use Machine Learning model which generates the (dominant quadrupole) gravitational wave signal from a binary Black Hole coalescence in the non precessing case. The code is released as the package \texttt{mlgw} available via the \texttt{PyPI} Python package repository.
+%Our model shows excellent agreement with the underlying training set. At test times the median mismatch is $\bar{\mathcal{F}}\sim 5 \cdot 10^{-4}$. Lastly, the generation time from \texttt{mlgw} is smaller than the underlying training model by a factor of $\sim 40$, for a waveform starting at a frequency of $\SI{5}{Hz}$.
+%\texttt{mlgw} performance matches closely those of a ROM, which is currently the state-of-the-art for a quick generation.
+%Moreover, it was successfully employed for the analysis of the GWTC-1 catalog of waveforms.
+%\par
+%Remarkably, we discovered that a PCA is able to reproduce a high dimensional wave using a few number of variables. As for the regression model itself, the MoE model, currently it is the ``bottleneck" of the model accuracy. For this reason, we explored several alternative regression methods, including neural networks, but none of them showed dramaticaly better performance.
+%Note that underfitting may be an issue whenever the training model shows intrinsic noise due to mis-modeling, e.g. relations that are supposed to be continuous are not, or even due to poor numerical integration schemes.
+%\par
+%Our work opens up interesting opportunities in GW data analysis.
+%As shown in fig.~\ref{fig:time_performance_hist}, the model is the most useful whenever a long waveform is required. Furthermore, the waveform generation time does not depend on the complexity of the underlying surrogate model. The training WFs can be computed with high accuracy, also at high computational cost, without affecting the performance of the WF generation.
+%\par
+%This fact is crucial for detection of low frequency signals, as is the case for ET. The analysis of such signals can be performed in the same time required to deal with shorter signals: it will become feasible, even with a small amount of resourches, \textit{without any loss of WF quality}.
+%In \cite{} (\sschmidt{plot in email}), it was shown that training model TEOBResumS matches accurately the numerical relativity WFs, even in the case of ET noise curve is used (see plot in the email). Since our model closely reproduces TEOBResumS, it is likely to achieve the target accuracy for the employment in the ET data analysis.
+%\sschmidt{Here I wanted to include the plot sent by Nagar. Is it in a paper? Do we include it here? Or do we just skip it??}
+%\par
+
+
+%The fact that a parameter estimation with \texttt{mlgw} is remarkably fast opens up the opportunity for a systematic comparison between different waveform model.
+%By training (and the training procedure is moderately quick) \texttt{mlgw} with different waveform models, it will be possible to compare their predictions on several observed events. This could allow to detect systematic biases or to prefer a model over another by means of Bayesian model selection (i.e. by comparing different model evidences).
+%We started this program by analysing GWTC-1 with \texttt{mlgw} trained on \texttt{TEOBResumS} and highlited some differences in the predictions as compared to the published results (see section \ref{sec:GWTC1}). Future work might repeat such an analysis on other models or with more observations.
+%\par
+%However, our work is far from being over and several issues still require attention.
+%\par
+%First of all, it is quite straightforward to include higher order modes (HMs) in the WF computation. Different regressions, each for each mode, might be done as we already did for the 22 mode. This is the most natural generalization of our work and a future update of \texttt{mlgw} is in program.
+%\par
+%Second, the potential speed up of parameter estimation can be even higher, if we take advantage of the closed form expression of the waveform provided by our model.
+%Indeed, a closed form expression for the WF allows for prompt computation of the gradients with respect to the orbital parameters $ \boldsymbol{\vartheta} = (m_1,m_2, {s}_1,{s}_2) $.
+%Hamiltonian Montecarlo \cite{betancourt2017hamiltonianMC}~\cite{Porter2014Hamiltonian_MonteCarlo}, a variant of Markov chain Montecarlo, employs gradients of the waveform to perform an effective sampling of the posterior distibution, which is able to ``find quickly" the high density regions.
+%Porter and Carré \cite{Porter2014Hamiltonian_MonteCarlo} applied Hamiltonian Montecarlo to parameter estimation. However, they only use analytical waveforms, which completely neglects the late inspiral and the merger.
+%Our Machine Learning model could, in principle, extend the application of Hamiltonian Montecarlo to waveform which included also late inspiral, merger and ringdown.
+%It would provide a state-of-the-art accurate parameter estimation and, at the same time, it will offer a substantial speed up.
+%We believe that this is a promising option and it is among the natural continuations of our work.
+%\par
+%Another option, so far never explored, is to use the gradients of the WF for a fast exploration of the likelihood landscape. With any gradient based optimizer, it should be easy to jump to a \textit{local} maximum of the likelihood. Such information might be helpful to reliably locate a \textit{global} maximum of the likelihood. Once a global maximum is found, the sampling from the posterior distribution should be quicker to perform, yielding an improvement to the overall analysis.
+%\par
+%In our model we did not consider precessing system. We made this choice to keep the problem simple.
+%The expertise gained for the simple non precessing case can be applied to deal with the complicacies posed by the precessing case.
+%A good starting point is given in \cite{Schmidt2015Precession}, where the whole spin dynamics (dependent on 6 parameters) is mapped to a simpler problem, where the precession is controlled by a single parameter $s_P$.
+%The waveform dependence on the effective spin parameter $s_P$ can be fitted by a ML model in the same fashion of the other orbital parameters, thus avoid to complicate (much) the regression problem.
+
+%All EOB models provides numerical solutions to approximate form of the Einstein equations. They are useful to catch 
+%the dominant physics but we expect them to show a degree of inaccuracy, especially close to coalescence.
+%Numerical relativity solves numerically Einstein equations without approximations and so far yields the physically most 
+%complete available solutions. However, NR waveforms by themselves cannot be used in parameter estimation because
+%of their sparse coverage of the parameter space. Our model could be trained on the publicly available NR waveforms 
+%catalogs (see e.g.~\cite{Mroue:2013xna,Boyle:2019kee,Healy:2019jyf} and it would provide the best generalization of 
+%the numerical waveform. If the model proved to be reliable and effective,  we could dispense with the EOB models 
+%altogether and use only NR inputs for a parameter estimation.  This would ensure that all the relevant physics close 
+%to merger is adequately captured. 
+%Unfortunately, at the moment there are too few NR waveforms ($O(10^2)$) available to perform a reliable 
+%training: we need at least $O(10^3)$ waveforms. However, in the future we expect more and more waveforms 
+%to be included in the dataset, eventually allowing for a reliable training. Furthermore, currently available 
+%NR waveforms are too short to be used as they are, and an extension (e.g. by hybridization with EOB waveforms)
+%towards the early inspiral is needed to compute any kind of NR-based surrogate model.
+
+%Our machine learning approach to signal generation is very flexible and provides a general framework 
+%for a ML-based WF generator. We expect it to work for every source for which a number of training 
+%waveforms are available. Machine learning models for various wealth of sources might be crucial in 
+%the future, where signals from a number of different sources are expected to be detected. In that scenario, 
+%a parameter estimation must be able to detect among different source and this will require a lot 
+%of computational work. Speed up will be more pressing.
+
+%A Python implementation of the model is released in the package \texttt{mlgw}, publicly available at \href{https://pypi.org/project/mlgw/}{pypi.org/project/mlgw/}. The user might install it with the command \texttt{pip install mlgw}. The package provides also the gradients $\frac{\partial h}{\partial\vartheta_i}$ of the waveform, computed analytically from equation \ref{eq:model}.
 
 
 
