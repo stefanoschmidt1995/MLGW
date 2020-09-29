@@ -1,5 +1,3 @@
-\BS{[my comment] suggestion for text}
-
 \section{Introduction}
 The detection of Gravitational Waves (GW) from compact binary coalescences (CBC) has been possible thanks to the joint effort of a number of different fields of expertise, all joining together to achieve the sophisticated detection process. GW data analysis concerns the detection of a GW signal hidden in the raw detector output (\textit{matched filtering}) and subsequently the inference of its physical properties (\textit{parameter estimation}). In order to accomplish its goal, GW data analysis relies on the availability of waveform (WF) templates to compare with the detector output.
 To accurately explore the posterior distribution for the parameters defining a CBC, state-of-the-art parameter estimation (PE) algorithms~\cite{Aasi:2013jjl}~\cite{Veitch2014wba} can require the generation of as many as $10^7$ waveform templates. It is therefore paramount for the waveform generation to be as fast as possible. At the same time, because of the extreme sensitivity to phase differences in the likelihood  function, 
@@ -88,17 +86,8 @@ to provide a completely new, and independent, analysis of the 10 BBHs
 coalescence events collected in the O1/O2 LIGO-Virgo observing 
 runs~\cite{LIGOScientific:2018mvr}. The physical parameters we find are 
 compatible with previous analyses obtained with radically different 
-models~\cite{LIGOScientific:2018mvr}, though with some
-distinguo:
+models~\cite{LIGOScientific:2018mvr}.
 %
-\BS{[TEOBResumS or aligned spin effect? this needs to be checked]} 
-%
-(i) the chirp masses obtained with our model are systematically {\it larger} 
-than LVC published results, the mass ratios being systematically {\it smaller}; 
-(ii) similarly, the individual spins of the objects, when measurable, are systematically larger than published
-results. This is consistent with previously published analysis of GW150914 
-data using a slightly different version of \texttt{TEOBResumS}~\cite{Nagar:2018zoe}.
-
 On top of the specific application discussed here, our ML waveform model could also be used directly 
 to speed up GW data analysis.
 Furthermore, since the time required to generate a WF does not depend
@@ -133,7 +122,7 @@ spins $\mathbf{s}_1$ and $\mathbf{s}_2$ are \textit{aligned} with the orbital an
 In this work, we concentrate on the single complex quantity $H_{22}$.
 Since the dependence on the two angles and distance are known, we fix their value to ${\iota, \varphi_0 = 0}$ and ${d_L = \SI{1}{Mpc}}$ and we only work with waveforms $h_{FIT}(t; \boldsymbol{\vartheta}) = h(t; d_L = \SI{1}{Mpc}, \iota = 0, \varphi_0 = 0, \boldsymbol{\vartheta}) $:
 \begin{equation}  \label{eq:h_std}
-	h_{FIT}(t; \boldsymbol{\vartheta}) &\equiv \tensor[^{-2}]{Y}{_{2 2}}(0,0) \cdot H_{22}(t; \boldsymbol{\vartheta}) = 4\cdot\sqrt{\frac{5}{64\pi}}H_{22}(t; \boldsymbol{\vartheta}) \; .
+	h_{FIT}(t; \boldsymbol{\vartheta}) \equiv \tensor[^{-2}]{Y}{_{2 2}}(0,0) \cdot H_{22}(t; \boldsymbol{\vartheta}) = 4\cdot\sqrt{\frac{5}{64\pi}}H_{22}(t; \boldsymbol{\vartheta}) \; .
 \end{equation}
 Finally, we express  $h_{FIT}$ in terms of its amplitude and phase
 \footnote{Note we adopt a nonstandard sign convention for the phase}:
@@ -181,8 +170,7 @@ In order to be able to perform each regression, several steps are required.
 In ML jargon, this procedure is called preprocessing and aims to create a standard representation for all the data available (in our case the WFs).
 }.
 	\item \textit{Creating a dataset of WFs}. A large number of WFs must be generated on the the chosen time grid for a different number of orbital paramter $(q,s_1,s_2)$. This will be the training set for the ML model.
-	\item \textit{Reducing the dimensionality of a WF}. In order
-          to make the regression feasible, we build a low dimensional representation of the WF}. This operation must be invertible: once a low dimensional representation is given, one should be able to reconstruct the higher dimensional WF.
+	\item \textit{Reducing the dimensionality of a WF}. In order to make the regression feasible, we build a low dimensional representation of the WF. This operation must be invertible: once a low dimensional representation is given, one should be able to reconstruct the higher dimensional WF.
 	\item \textit{Learning a regression}. We train a model to perform the regression from $(q, s_1, s_2)$ to the low dimensional representation of the WF.
 \end{enumerate}
 We discuss these points in detail in what follows.
@@ -570,7 +558,7 @@ We note again the inverse correlation between the mismatch and mse, when conside
 \subsection{Runtime analysis} \label{sec:runtime}
 We now asses the time performances of our model.
 We are interested to make a comparison with both \texttt{TEOBResumS}
-(the train model) and \texttt{SEOBNRv4\_ROM} \cite{}.
+(the training model) and \texttt{SEOBNRv4\_ROM} \cite{}.
 %
 \paragraph{Comparison with \texttt{TEOBResumS}}
 When dealing with a real detection scenario, we are often interested in generating a WF which starts from a given frequency $f_{min}$, which is usually set by the detector's sensitivity window. Thus, it is crucial to measure the speed up that our model can provide in performing such task.
@@ -765,7 +753,7 @@ Remarkably, we discovered that a PCA is able to reproduce a high dimensional wav
 On the other hand, the MoE model is currently it is the ``bottleneck" of the model accuracy. For this reason, we explored several alternative regression methods, including neural networks, but none of them showed dramaticaly better performance: perhaps much more computational power and a larger training set are required to improve the fit performances any better.
 \par
 Despite this, our model shows excellent agreement with the underlying training set. At test time, the median mismatch is $\bar{\mathcal{F}}\sim 5 \cdot 10^{-4}$.
-Furthermore, a single WF generations takes $\SI{0.1}{}-\SI{5}{ms}$ (depending mostly on the number of grid points required by the user), which is a factor of $\sim 40$ faster than the underlying train model.
+Furthermore, a single WF generations takes $\SI{0.1}{}-\SI{5}{ms}$ (depending mostly on the number of grid points required by the user), which is a factor of $\sim 40$ faster than the underlying training model.
 \texttt{mlgw} slightly outperforms a ROM, which is currently the state-of-the-art for quick generation.
 \par
 Our ML framework allows for several generalization, which might build a more accurate WF generator.
@@ -782,7 +770,7 @@ and the improvement shall wait until enough NR waveforms are available.
 Moreover, NR waveforms are too short to be used as they are and probably, an extension (e.g. by hybridization with EOB waveforms)
 towards the early inspiral is needed to compute any kind of NR-based surrogate model.
 \par
-Latly, we expect our ML approach to work for every kind of source for which a training set of 
+Lastly, we expect our ML approach to work for every kind of source for which a training set of 
 waveforms is available. Machine learning models to generate WFs might be crucial in 
 the future, where signals from a number of different sources are expected to be detected. In that scenario, 
 a parameter estimation must be able to detect among different source and this will require a lot 
