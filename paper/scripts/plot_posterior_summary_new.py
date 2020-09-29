@@ -118,8 +118,8 @@ if __name__=="__main__":
     handles = []
     O = cs.CosmologicalParameters(0.68,0.31,0.69,-1.0,0.0)
     for c, ls,e in zip(colors,line_style, events):
-#        try:
-        if 1:
+        try:
+#        if 1:
             print(os.path.join(path,e+'/Nested_sampler/posterior.dat'),c)
 #            BBH_file = '/Users/wdp/Desktop/GWTC-1_sample_release'+e.upper()+'_GWTC-1.hdf5'
 #            BBH = h5py.File(BBH_file, 'r')
@@ -141,12 +141,12 @@ if __name__=="__main__":
             levs = np.sort(FindHeightForLevel(np.log(PDF),[0.9]))
             ax3.contour(X,Y,np.log(PDF),levs, linestyles = (ls,ls), colors=(c,c,),linewidths=1.5)
             handles.append(mlines.Line2D([], [], linestyle = ls, color=c, label=e.upper()))
-#        except:
-#            print(e+' posterior not found')
+        except:
+            print(e+' posterior not found')
 
-    fig1.legend(bbox_to_anchor=(.9, 1.), loc='upper left', borderaxespad=0.,fancybox=True,handles=handles)
-    fig2.legend(bbox_to_anchor=(.9, 1.), loc='upper left', borderaxespad=0.,fancybox=True,handles=handles)
-    fig3.legend(bbox_to_anchor=(.9, 1.), loc='upper left', borderaxespad=0.,fancybox=True,handles=handles)
+    fig1.legend(bbox_to_anchor=(.9, 0.5), loc='center left', borderaxespad=0.,fancybox=True,handles=handles)
+    fig2.legend(bbox_to_anchor=(.9, 0.5), loc='center left', borderaxespad=0.,fancybox=True,handles=handles)
+    fig3.legend(bbox_to_anchor=(.9, 0.5), loc='center left', borderaxespad=0.,fancybox=True,handles=handles)
     
     ax1.set_xlabel('$m_1/M_\odot$')
     ax1.set_ylabel('$m_2/M_\odot$')
@@ -162,13 +162,13 @@ if __name__=="__main__":
 
     #filling ax1
     line_width = 0.3
-    ax1.fill_between([0,50],[0,50],[1000,1000], color = 'grey') #excluding q<1 region
+    ax1.fill_between([0,50],[0,50],[1000,1000], color = 'grey', zorder=100) #excluding q<1 region
     ax1.plot([0,200], [0,100], ls = '--', lw = line_width, color = 'grey', label = "2")
     ax1.plot([0,400], [0,100], ls = '-.', lw = line_width, color = 'grey', label = "4")
     ax1.plot([0,800], [0,100], ls = ':', lw = line_width, color = 'grey', label = "8")
     #ax1.legend(loc="upper left", fontsize = 8, edgecolor = 'black', facecolor = 'silver', title = "q" , framealpha = 1.)
     legend = ax1.legend(frameon = 1,loc="upper left", fontsize = 8, edgecolor = 'black', facecolor = 'silver', title = "q" , framealpha = 1., borderpad = 1.)
-
+    legend.set_zorder(102)
 #    fig1.savefig('/Users/wdp/repositories/MLGW/paper/img/posterior_masses_source.pdf', bbox_inches='tight')
 #    fig2.savefig('/Users/wdp/repositories/MLGW/paper/img/spins.pdf', bbox_inches='tight')
     fig1.savefig('../img/posterior_masses_source.pdf', bbox_inches='tight', pad_inches = .2)
