@@ -34,6 +34,8 @@ def init_plotting():
     plt.gca().spines['top'].set_color('none')
     plt.gca().xaxis.set_ticks_position('bottom')
     plt.gca().yaxis.set_ticks_position('left')
+    plt.rcParams['text.usetex'] = True
+
 
 def twod_kde(x,y):
     X, Y = np.mgrid[x.min()*0.9:x.max()*1.1:100j, y.min()*0.9:y.max()*1.1:100j]
@@ -157,7 +159,7 @@ if __name__=="__main__":
     ax2.set_xlabel('$s_1$')
     ax2.set_ylabel('$s_2$')
     ax3.set_xlabel('$M_f/M_\odot$')
-    ax3.set_ylabel('$a_f$')
+    ax3.set_ylabel(r"$\mathit{a_f}$")
     ax3.set_xlim(0,110)
     ax3.set_ylim(0.4,1)
 
@@ -174,7 +176,8 @@ if __name__=="__main__":
 
 #    fig1.savefig('/Users/wdp/repositories/MLGW/paper/img/posterior_masses_source.pdf', bbox_inches='tight')
 #    fig2.savefig('/Users/wdp/repositories/MLGW/paper/img/spins.pdf', bbox_inches='tight')
-    fig1.savefig('../img/posterior_masses_final.pdf', bbox_inches='tight', pad_inches = .2)
+    #fig1.savefig('../img/posterior_masses_final.pdf', bbox_inches='tight', pad_inches = .2)
+    fig1.savefig('posterior_masses_final.pdf', bbox_inches='tight', pad_inches = .2)
     fig2.savefig('../img/spins.pdf', bbox_inches='tight', pad_inches = .2)
     #fig3.savefig('../img/final_spin_mass.pdf', bbox_inches='tight', pad_inches = .2)
 
