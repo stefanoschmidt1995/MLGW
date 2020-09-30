@@ -671,7 +671,7 @@ generate_waveform
 			#'nqc_coefs_flx': 2, # {"none", "nrfit_nospin20160209", "fit_spin_202002", "fromfile"}
 			#'nqc_coefs_hlm':0
 		}
-	times, h_p, h_c = EOBRun_module.EOBRunPy(pars)
+	times, h_p, h_c, hlm = EOBRun_module.EOBRunPy(pars)
 	amp = np.sqrt(h_p**2+h_c**2)
 
 	t_m =  times[np.argmax(amp)]

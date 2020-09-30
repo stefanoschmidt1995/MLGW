@@ -60,6 +60,7 @@ spins).
 \BS{[more than extrapolating I would say something technical like] well-defined for any
   adiabatic inspirals from PN knowledge, informed in test-mass regime,
   defined for arbitrary length, etc...}
+\sschmidt{I wouldn't go too technical, because it is not the point of the paper...}
 %
 This is, for example, the case of the most  recent avatar of 
 the spin-aligned \texttt{TEOBResumS}~\cite{Nagar:2018zoe} model, 
@@ -85,7 +86,7 @@ As a relevant physical application, we use the our ML model \texttt{mlgw}
 to provide a completely new, and independent, analysis of the 10 BBHs 
 coalescence events collected in the O1/O2 LIGO-Virgo observing 
 runs~\cite{LIGOScientific:2018mvr}. The physical parameters we find are 
-compatible with previous analyses obtained with radically different 
+compatible with previous analyses obtained with different 
 models~\cite{LIGOScientific:2018mvr}.
 %
 On top of the specific application discussed here, our ML waveform model could also be used directly 
@@ -106,54 +107,57 @@ in section \ref{sec:setup} we briefly set the notation and the core of the ML pr
 \section{Conventions setup}
 \label{sec:setup}
 %--------------------------------------
-A binary black hole is parametrized by a vector $ \boldsymbol{\vartheta} = (m_1,m_2, \mathbf{s}_1,\mathbf{s}_2) $, where $m_i$ are the BHs masses and $\mathbf{s}_i = \frac{\mathbf{S}_i}{m_i^2} <1$ are the \textit{dimensionless} spin. 
+A binary black hole is parametrized by a vector $ \boldsymbol{\vartheta} = (m_1,m_2, \mathbf{s}_1,\mathbf{s}_2) $, where $m_i$ are the BHs masses and $\mathbf{s}_i = \frac{\mathbf{S}_i}{m_i^2} <1$ are the \textit{dimensionless} spin.
 We call them the \textit{orbital parameters}.
-Let the wave direction of propagation be identified with the spherical coordinates $(d_L, \iota, \varphi_0)$, where $d_L$ is the luminosity distance, $\iota$ the polar angle and $\varphi_0$ the azimuthal angle. The polar angle $\iota$ is also called inclination and it is measured with respect to the normal to the orbital plane.
+In what follows, we will focus on the case in which spins $\mathbf{s}_1$ and $\mathbf{s}_2$ are \textit{aligned} with the orbital angular momentum. 
+Let $d_L$ be the luminosity distance and $\iota$ and $\varphi_0$ the polar angle (inclination) and the azimuthal angle of the orbital plane.
 A GW is parametrized as:
 \begin{align} \label{eq:h_parametrization}
 	&h(t, d_L,\iota,\varphi_0; \boldsymbol{\vartheta}) = h_+ + i h_\times \nonumber \\
-		&\qquad= \sum_{l = 2}^{\infty} \sum_{m = -l}^{l} \tensor[^{-2}]{Y}{_{l m}}(\iota, \varphi_0) \cdot H_{lm}(t; \boldsymbol{\vartheta})
+		&\qquad= \frac{G}{c^2} \frac{M}{d_L}\sum_{\ell = 2}^{\infty} \sum_{m = -\ell}^{\ell} \tensor[^{-2}]{Y}{_{\ell m}}(\iota, \varphi_0) \cdot H_{\ell m}(t/M; \boldsymbol{\tilde{\vartheta}})
 \end{align}
-where $\tensor[^{-2}]{Y}{_{l m}}(\iota, \varphi_0)$ are the spin-2 spherical harmonics.
-We call $(m_1,m_2, \mathbf{s}_1,\mathbf{s}_2, d_L,\iota,\varphi_0)$ \textit{physical parameters} and they fully express the source 
-proprieties as well as its orientation and position. In what follows, we will focus on the case in which 
-spins $\mathbf{s}_1$ and $\mathbf{s}_2$ are \textit{aligned} with the orbital angular momentum. 
+where $\tensor[^{-2}]{Y}{_{\ell m}}(\iota, \varphi_0)$ are the spin-2 spherical harmonics and $M = m_1+m_2$ is the total mass.
+Once written as a function of the dimensionless time $t/M$, the quantities $H_{\ell m}$ depends only on the variables $\tilde{\boldsymbol{\vartheta}} = (q, s_1, s_2)$, where $q= m_1/m_2 \geq 1$.
+%We call $(m_1,m_2, \mathbf{s}_1,\mathbf{s}_2, d_L,\iota,\varphi_0)$ \textit{physical parameters} and they fully express the source 
 \par
-In this work, we concentrate on the single complex quantity $H_{22}$.
-Since the dependence on the two angles and distance are known, we fix their value to ${\iota, \varphi_0 = 0}$ and ${d_L = \SI{1}{Mpc}}$ and we only work with waveforms $h_{FIT}(t; \boldsymbol{\vartheta}) = h(t; d_L = \SI{1}{Mpc}, \iota = 0, \varphi_0 = 0, \boldsymbol{\vartheta}) $:
-\begin{equation}  \label{eq:h_std}
-	h_{FIT}(t; \boldsymbol{\vartheta}) \equiv \tensor[^{-2}]{Y}{_{2 2}}(0,0) \cdot H_{22}(t; \boldsymbol{\vartheta}) = 4\cdot\sqrt{\frac{5}{64\pi}}H_{22}(t; \boldsymbol{\vartheta}) \; .
-\end{equation}
+In this work, we consider only the dominant mode $\ell=|m|=2$.
+Since the dependence on the two angles, on the distance and total mass is known, we fix their value to ${\iota, \varphi_0 = 0}$, ${d_L = \SI{1}{Mpc}}$ and $M = \SI{20}{M_\odot}$ and we only work with waveforms ${h_{FIT}(t; \boldsymbol{\vartheta}) = h(t; d_L = \SI{1}{Mpc}, \iota = 0, \varphi_0 = 0, M = \SI{20}{M_\odot}, \boldsymbol{\tilde{\vartheta}}) }$:
+\begin{align}  
+	h_{FIT}(t; \boldsymbol{\vartheta}) &\equiv 9.6 \cdot 10^{-19} \tensor[^{-2}]{Y}{_{2 2}}(0,0) \cdot H_{22}(t/\SI{20}{M_\odot}; \boldsymbol{\tilde{\vartheta}})  \nonumber \\
+	&= 6 \cdot 10^{-19} \cdot H_{22}(t/\SI{20}{M_\odot}; \boldsymbol{\tilde{\vartheta}}) \label{eq:h_std} \; .
+\end{align}
 Finally, we express  $h_{FIT}$ in terms of its amplitude and phase
 \footnote{Note we adopt a nonstandard sign convention for the phase}:
 \begin{equation} \label{eq:h_ML}
-	h_{FIT}(t; \boldsymbol{\vartheta}) = A(t; \boldsymbol{\vartheta}) e^{i \phi(t; \boldsymbol{\vartheta})} \; . 
+	h_{FIT}(t; \boldsymbol{\vartheta}) = A(t; \boldsymbol{\tilde{\vartheta}}) e^{i \phi(t; \boldsymbol{\tilde{\vartheta}})} \; . 
 \end{equation}
 %%%
-We may also write $f_{\boldsymbol{\vartheta}}(t)$ to denote a function $f(t;\boldsymbol{\vartheta})$ of time with parametric dependence on $\boldsymbol{\vartheta}$.
-In what follows, $f$ stands for any of the functions $A_{\tilde{\boldsymbol{\vartheta}}}(t)$ and ${\phi}_{\tilde{\boldsymbol{\vartheta}}}(t)$.
+We may also write $f_{\boldsymbol{\tilde{\vartheta}}}(t)$ to denote a function $f(t;\boldsymbol{\tilde{\vartheta}})$ of time with parametric dependence on $\boldsymbol{\vartheta}$.
+In what follows, $f$ stands as a placeholder for any of the functions $A_{\tilde{\boldsymbol{\vartheta}}}(t)$ and ${\phi}_{\tilde{\boldsymbol{\vartheta}}}(t)$.
 \par
 With this definition, the full waveform can be expressed as:
 \begin{align} 
-	&h(t, d_L,\iota,\varphi_0; \boldsymbol{\vartheta}) =  \nonumber\\
-		&= {\frac{\SI{1}{Mpc}}{d_L}} \cdot \Bigg\{ \frac{1+\cos^2\iota}{2} \cdot A_{\boldsymbol{\vartheta}}(t)  \cos[\phi_{\boldsymbol{\vartheta}}(t)+2\varphi_0]  \nonumber \\
-		&+ i \cdot \cos\iota \cdot A_{\boldsymbol{\vartheta}}(t) \sin[\phi_{\boldsymbol{\vartheta}}(t)+2\varphi_0] \Bigg\}
+	h&(t, d_L,\iota,\varphi_0; \boldsymbol{\vartheta}) = \frac{M}{\SI{20}{M_\odot}} \frac{\SI{1}{Mpc}}{d_L} \times  \nonumber \\
+		&\times \cdot \Bigg\{ \frac{1+\cos^2\iota}{2} \cdot A_{\boldsymbol{\vartheta}}(t_M)  \cos[\phi_{\boldsymbol{\vartheta}}(t_M)+2\varphi_0]  \nonumber \\
+		&+ i \cdot \cos\iota \cdot A_{\boldsymbol{\vartheta}}(t_M)
+ \sin[\phi_{\boldsymbol{\vartheta}}(t_M)+2\varphi_0] \Bigg\}
 \label{eq:h_parametrization_simple}
 \end{align}
-where we split the real and the imaginary part of $h$ and we used the relation ${\tensor[^{-2}]{Y}{_{2 \pm 2}}(\iota, \varphi_0) = (1 \pm \cos \iota)^2 e^{\pm i 2 \varphi_0}}$.
+where $t_M = t \cdot \frac{M}{\SI{20}{M_\odot}}$.
+Note that in the equation above, we split the real and the imaginary part of $h$ and we used the relation ${\tensor[^{-2}]{Y}{_{2 \pm 2}}(\iota, \varphi_0) = (1 \pm \cos \iota)^2 e^{\pm i 2 \varphi_0}}$.
 We choose the convention that $\phi_{\boldsymbol{\vartheta}} = 0$ when the amplitude $A_{\boldsymbol{\vartheta}}$ has a maximum
 \footnote{Indeed, a constant translation of $\phi_{\boldsymbol{\vartheta}}$ can be absorbed in the definition of $\varphi_0$ and does not affect the physics.}.
 \par
 \an{All text above should be simplified!!}
+\sschmidt{Now it's more precise and it is exactly what we did. Although probably is not really simple...}
 
 %======================
-\section{The model \BS{[How about:] MLGW}}
+\section{\texttt{mlgw}}
 \label{sec:model}
 %======================
 %
-The goal of the present work is to provide an accurate Machine Learning model which outputs the functions $A(t;\boldsymbol{\vartheta})$ and $\phi(t;\boldsymbol{\vartheta})$ (eq.~\eqref{eq:h_ML}), as generated by the state-of-the-art time domain WF models.
-Since BBH waveforms trivially scales with the binary mass $M$, we only need to consider 
-the variables $\tilde{\boldsymbol{\vartheta}} = (q, s_1, s_2)$, where $q= m_1/m_2 \geq 1$, to describe the waveform's multipoles.
+The goal of the present work is to provide an accurate Machine Learning model which outputs the functions $A(t;\boldsymbol{\tilde{\vartheta}})$ and $\phi(t;\boldsymbol{\tilde{\vartheta}})$ (eq.~\eqref{eq:h_ML}), as generated by the state-of-the-art time domain WF models.
+%Since BBH waveforms trivially scales with the binary mass $M$, we only need to consider the variables ${\boldsymbol{\tilde{\vartheta}}} = (q, s_1, s_2)$, where $q= m_1/m_2 \geq 1$, to describe the waveform's multipoles.
 More formally, we seek a ML model that reliably reproduces the following map:
 \begin{align}
 	(q, s_1, s_2) &\longmapsto A_{(q, s_1, s_2)}(t) \label{eq:objective_amp}\\
@@ -348,7 +352,7 @@ In what follows, we always use a flat noise curve (i.e. constant power spectral 
 %%%%%%%
 
 \subsection{Validation}
-Wherever relevant, we will employ a dataset with $5800$ waveforms generated in the domain $\mathcal{P} = [1,20]\times[-0.8,0.95]\times[-0.8,0.95]$, with $\tau_{min} = \SI{1.0}{s/M_\odot}$. The dataset was generated with TEOBResumS model \cite{}.
+Wherever relevant, we will employ a dataset with $5800$ waveforms generated in the domain $\mathcal{P} = [1,20]\times[-0.8,0.95]\times[-0.8,0.95]$, with $\tau_{min} = \SI{1.0}{s/M_\odot}$. The dataset was generated with TEOBResumS model.
 \paragraph{Dataset generation parameters}
 We first evaluate the impact of number of grid points $N_{grid}$ and distortion parameter $\alpha$.
 Let $\mathbf{f}_{N_{grid}, \alpha}$ the wave stored in a dataset where $\tau_{min}$ and $\mathcal{P}$ are fixed as above. We compare it with the output of the EOB model $\mathbf{f}_{EOB}$.
@@ -358,7 +362,8 @@ We then vary $N_{grid}$ and $\alpha$ and report the resulting mismatch $\mathcal
 	\centering
 	\includegraphics[width=\linewidth,keepaspectratio]{N_grid}
 	\caption{Mismatch between waves $\mathbf{f}_{N_{grid}, \alpha}$ and raw waves from EOB model, as a function of time grid size $N_{grid}$. Each series refers to a different values of $\alpha$.
-Mismatch is computed on $10$ test waves.  textwidth: \printinunitsof{in}\prntlen{\linewidth}
+Mismatch is computed on $10$ test waves. 
+%textwidth: \printinunitsof{in}\prntlen{\linewidth}
 %The raw wave from EOB is evaluated at the original time grid provided by EOB: this means that it spans $\sim \SI{4}{s}$ sampled at $10^5$ step per second.
 }
 	\label{fig:N_grid}
@@ -558,7 +563,7 @@ We note again the inverse correlation between the mismatch and mse, when conside
 \subsection{Runtime analysis} \label{sec:runtime}
 We now asses the time performances of our model.
 We are interested to make a comparison with both \texttt{TEOBResumS}
-(the training model) and \texttt{SEOBNRv4\_ROM} \cite{}.
+(the training model) and \texttt{SEOBNRv4\_ROM} \cite{Boh__2017__SEOBNRv4}.
 %
 \paragraph{Comparison with \texttt{TEOBResumS}}
 When dealing with a real detection scenario, we are often interested in generating a WF which starts from a given frequency $f_{min}$, which is usually set by the detector's sensitivity window. Thus, it is crucial to measure the speed up that our model can provide in performing such task.
@@ -672,18 +677,18 @@ If such an amount of datapoints is required, very little space is left for speed
 \section{Application to GWTC-1}
 \label{sec:GWTC1}
 
-We test the implementation of our MLGW-TEOBResumS model on the public data from GWTC-1, the first GW catalog~\cite{}.
+We test the implementation of our MLGW-TEOBResumS model on the public data from GWTC-1, the first GW catalog~\cite{LIGOScientific:2018mvr}.
 We trained \texttt{mlgw} in the range $\mathcal{P} = [1,20]\times[-0.8,0.95]\times[-0.8,0.95]$ and we set $\tau_{min} = \SI{4}{s/M_\odot}$.
 The GWTC-1 catalog consists of 10 BBH systems and a BNS system. Because of the training of the WF model, we do not analyse GW170817, the BNS system, and concentrate exclusively on the BBH signals. Our parameter estimation algorithm is \texttt{gwmodel}~\cite{} a publicly available infrastructure 
 written in a mixture of \texttt{Python} and \texttt{cython} that serves as interface for the parallel nested sampling implementation \texttt{cpnest}~\cite{}. 
 The analysis of each BBH system is set up as follows; we choose a total of 2000 Live Points, four parallel MCMC chains with a maximum length of 5000 steps to ensure that each successive sample is independent of the previous. These settings yield an average of $\sim$ 15000 posterior samples and 
-evidence calculations that are accurate to the first decimal digit. For each BBH system we choose prior distributions as described in the GWTC-1 release paper~\cite{}. Finally, and critically, to ensure that our results can be compared fairly to published ones, we employ the power spectral densities released as part of GWTC-1. No calibration uncertainty model is assumed for these runs. 
+evidence calculations that are accurate to the first decimal digit. For each BBH system we choose prior distributions as described in the GWTC-1 release paper~\cite{LIGOScientific:2018mvr}. Finally, and critically, to ensure that our results can be compared fairly to published ones, we employ the power spectral densities released as part of GWTC-1. No calibration uncertainty model is assumed for these runs. 
 \begin{figure*}[]
 	\centering
     \includegraphics[width=.75\linewidth]{img/posterior_masses_source.pdf}
 	\caption{
 Two-dimensional posterior distributions for the component masses for all BBH systems in GWTC-1. The contours enclose the 90\% credible regions.
-The figure shall be compared with figure 10 in \cite{Abbott_2019_GWTC} (left panel).
+The figure shall be compared with figure 10 in \cite{LIGOScientific:2018mvr} (left panel).
 }
 	\label{fig:summary-masses}
 \end{figure*}
@@ -693,7 +698,7 @@ The figure shall be compared with figure 10 in \cite{Abbott_2019_GWTC} (left pan
     \includegraphics[width=.75\linewidth]{img/final_spin_mass.pdf}
 	\caption{
 Two-dimensional posterior distributions for the final masses and spins for all BBH systems in GWTC-1. The contours enclose the 90\% credible regions.
-The figure shall be compared with figure 10 in \cite{Abbott_2019_GWTC} (right panel).
+The figure shall be compared with figure 10 in \cite{LIGOScientific:2018mvr} (right panel).
 }
 	\label{fig:summary-final-state}
 \end{figure*}
@@ -747,7 +752,7 @@ The model consists of a PCA model to reduce the dimensionality of the 22 mode (d
 \par
 It is important to stress that our model is very simple, i.e. it has a very little number of trainable paramters and it is not expensive to train, and flexible, i.e. it works for a large range of paramters and for long waveforms.
 In \cite{Chua_2019}, a ML model for GW generation is built, with similar performances. However, the reduced dimension space is considerably larger ($O(200)$) than ours ($O(10)$).
-In \cite{khan2020gravitationalwave}, the low dimensional space has a similar dimension $O(30)$ and the ML model achieves a similar performance in the time execution (when computed on a CPU). They manage to achieve a better accuracy $O(2\cdot10^{-5})$ but they generate significantly shorter WFs ($f_{min} = \SI{15}{Hz}$ for $M = \SI{60}{M_{\odot}}$ against $f_{min} \simeq \SI{2.5}{Hz}$) and employ a larger training time ($O(\SI{6}{hours})$ against $O(\SI{6}{minutes})$).
+In \cite{Khan:2020fso}, the low dimensional space has a similar dimension $O(30)$ and the ML model achieves a similar performance in the time execution (when computed on a CPU). They manage to achieve a better accuracy $O(2\cdot10^{-5})$ but they generate significantly shorter WFs ($f_{min} = \SI{15}{Hz}$ for $M = \SI{60}{M_{\odot}}$ against $f_{min} \simeq \SI{2.5}{Hz}$) and employ a larger training time ($O(\SI{6}{hours})$ against $O(\SI{6}{minutes})$).
 \par
 Remarkably, we discovered that a PCA is able to reproduce a high dimensional wave using a few number of variables.
 On the other hand, the MoE model is currently it is the ``bottleneck" of the model accuracy. For this reason, we explored several alternative regression methods, including neural networks, but none of them showed dramaticaly better performance: perhaps much more computational power and a larger training set are required to improve the fit performances any better.
