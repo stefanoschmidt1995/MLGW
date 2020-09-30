@@ -691,8 +691,13 @@ evidence calculations that are accurate to the first decimal digit. For each BBH
     \includegraphics[width=.45\textwidth]{img/posterior_masses_source.pdf}
     \includegraphics[width=.45\textwidth]{img/final_spin_mass.pdf}
 	\caption{
-Two-dimensional posterior distributions for the component masses for all BBH systems in GWTC-1. The contours enclose the 90\% credible regions.
-The figure is consistent with, though different from, Fig.~4 of Ref.~\cite{LIGOScientific:2018mvr}.
+	Posterior probability densities of the component masses and final masses and spins 
+	of all the BBH system in GWTC-1. The contours enclose the $90\%$ credible regions.
+	Left panel: Source-frame component masses $m_1$ and $m_2$. We use the convention $m_1\geq m_2$ which 
+	produces the sharp cut in the two-dimensional $(m1,m2)$ distribution (shaded region). Lines of
+	constant mass ratio $q\equiv m_2/m_1$ are shown for $1/q=\{2,4,8\}$. Right panel: the mass $M_f$
+	and dimensionless spin magnitude $a_f$ of the final black holes. The figure is consistent with, though 
+	different from, Fig.~4 of Ref.~\cite{LIGOScientific:2018mvr}.
 }
 	\label{fig:gwtc1-summary}
 \end{figure*}
@@ -711,6 +716,7 @@ into a redshift by assuming the cosmological parameters given in Ref.~\cite{}.
 \sschmidt{What about $q$ in GWTC-1?? Is not in GWTC-1 paper...}
 }
 \label{tab:summary}
+\begin{ruledtabular}
 \begin{tabular}{cccccc|ccccc}
                               & \multicolumn{5}{c}{MLGW}                                                   & \multicolumn{5}{c|}{GWTC-1}                                                \\ \hline
 \multicolumn{1}{c|}{Event}    & $m_1/M_\odot$ & $m_2/M_\odot$ & $\mathcal{M}/M_\odot$ & $q$ & $\chi_{eff}$ & $m_1/M_\odot$ & $m_2/M_\odot$ & $\mathcal{M}/M_\odot$ & $q$ & $\chi_{eff}$ \\ \hline
@@ -725,6 +731,7 @@ into a redshift by assuming the cosmological parameters given in Ref.~\cite{}.
 \multicolumn{1}{c|}{GW170818} &$34.62_{-5.18}^{+11.61}$& $27.09_{-7.80}^{+5.59}$& $26.34_{-2.77}^{+4.03}$& $0.80_{-0.37}^{+0.18}$& $0.28_{-0.19}^{+0.20}$&   $35.4_{-4.7}^{+7.5}$            &               $26.7_{-5.2}^{+4.3}$& $26.5_{-1.7}^{+2.1}$                      & ?? &  $-0.09_{-0.21}^{+0.18}$            \\
 \multicolumn{1}{c|}{GW170823} & $40.69_{-6.68}^{+10.21}$& $31.17_{-8.09}^{+7.13}$& $30.63_{-3.75}^{+5.01}$& $0.78_{-0.30}^{+0.19}$& $0.31_{-0.20}^{+0.18}$&  $39.5_{-6.7}^{+11.2}$             &               $29.0_{-7.8}^{+6.7}$&   $29.2_{-3.6}^{+4.6}$                    & ?? &   $0.09_{-0.26}^{+0.22}$           \\ \hline
 \end{tabular}
+\end{ruledtabular}
 \end{table*}
 
 Our results are, in general, extremely similar to what published by the LVK Collaboration. This is reassuring as it validates both the WF model hereby presented as well as the data analysis scheme and sampler implemented\footnote{However, a full validation of the algorithm is presented in ~\cite{}.}.
