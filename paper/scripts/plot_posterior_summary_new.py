@@ -9,7 +9,7 @@ import h5py
 import matplotlib.font_manager
 
 def init_plotting():
-    plt.rcParams['figure.figsize'] = (2*3.4, 3.4)
+    plt.rcParams['figure.figsize'] = (3*3.4, 3.4)
     plt.rcParams['font.size'] = 11
     plt.rcParams['font.family'] = 'Times New Roman'
     plt.rcParams['font.sans-serif'] = ['Bitstream Vera Sans']
@@ -101,7 +101,7 @@ if __name__=="__main__":
     import matplotlib.lines as mlines
     
     colors = cm.rainbow(np.linspace(0, 1, len(events)))
-    colors = ['dodgerblue','olivedrab','goldenrod','yellowgreen','peru','magenta','mediumturquoise','aquamarine','skyblue','mediumpurple']
+    colors = ['dodgerblue','olivedrab','goldenrod','yellowgreen','peru','magenta','mediumturquoise','acquamarine','skyblue','mediumpurple']
     line_style = ['-','--', '-','-','--','-','-','--','--','--']
     from utils import McQ2Masses, chi_eff, final_mass, final_spin
 #    events = ['gw151226']
@@ -109,11 +109,12 @@ if __name__=="__main__":
     path = "../img/GWTC-1_results"
     init_plotting()
     fig1 = plt.figure()
-    ax1 = fig1.add_subplot(111)
+    ax1 = fig1.add_subplot(121)
     fig2 = plt.figure()
     ax2 = fig2.add_subplot(111)
-    fig3 = plt.figure()
-    ax3 = fig3.add_subplot(111)    
+    #fig3 = plt.figure()
+    ax3 = fig1.add_subplot(122)
+    fig1.subplots_adjust(bottom = 0.3, wspace = 0.2)  
 
     handles = []
     O = cs.CosmologicalParameters(0.68,0.31,0.69,-1.0,0.0)
@@ -144,9 +145,10 @@ if __name__=="__main__":
         except:
             print(e+' posterior not found')
 
-    fig1.legend(bbox_to_anchor=(.9, 0.5), loc='center left', borderaxespad=0.,fancybox=True,handles=handles)
-    fig2.legend(bbox_to_anchor=(.9, 0.5), loc='center left', borderaxespad=0.,fancybox=True,handles=handles)
-    fig3.legend(bbox_to_anchor=(.9, 0.5), loc='center left', borderaxespad=0.,fancybox=True,handles=handles)
+    #fig1.legend(bbox_to_anchor=(.9, 0.5), loc='center left', borderaxespad=0.,fancybox=True,handles=handles)
+    fig1.legend(bbox_to_anchor=(0.45, 0.2), loc='upper center', ncol=4, borderaxespad=0.,fancybox=True,handles=handles)
+    fig2.legend(bbox_to_anchor=(.9, 0.5), loc='center left', borderaxespad=0.,fancybox=True, handles=handles)
+    #fig3.legend(bbox_to_anchor=(.9, 0.5), loc='center left', borderaxespad=0.,fancybox=True,handles=handles)
     
     ax1.set_xlabel('$m_1/M_\odot$')
     ax1.set_ylabel('$m_2/M_\odot$')
@@ -169,11 +171,12 @@ if __name__=="__main__":
     #ax1.legend(loc="upper left", fontsize = 8, edgecolor = 'black', facecolor = 'silver', title = "q" , framealpha = 1.)
     legend = ax1.legend(frameon = 1,loc="upper left", fontsize = 8, edgecolor = 'black', facecolor = 'silver', title = "q" , framealpha = 1., borderpad = 1.)
     legend.set_zorder(102)
+
 #    fig1.savefig('/Users/wdp/repositories/MLGW/paper/img/posterior_masses_source.pdf', bbox_inches='tight')
 #    fig2.savefig('/Users/wdp/repositories/MLGW/paper/img/spins.pdf', bbox_inches='tight')
-    fig1.savefig('../img/posterior_masses_source.pdf', bbox_inches='tight', pad_inches = .2)
+    fig1.savefig('../img/posterior_masses_final.pdf', bbox_inches='tight', pad_inches = .2)
     fig2.savefig('../img/spins.pdf', bbox_inches='tight', pad_inches = .2)
-    fig3.savefig('../img/final_spin_mass.pdf', bbox_inches='tight', pad_inches = .2)
+    #fig3.savefig('../img/final_spin_mass.pdf', bbox_inches='tight', pad_inches = .2)
 
 
 
