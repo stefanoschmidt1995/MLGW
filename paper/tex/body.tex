@@ -679,35 +679,33 @@ If such an amount of datapoints is required, very little space is left for speed
 
 We test the implementation of our MLGW-TEOBResumS model on the public data from GWTC-1, the first GW catalog~\cite{LIGOScientific:2018mvr}.
 We trained \texttt{mlgw} in the range $\mathcal{P} = [1,20]\times[-0.8,0.95]\times[-0.8,0.95]$ and we set $\tau_{min} = \SI{4}{s/M_\odot}$.
-The GWTC-1 catalog consists of 10 BBH systems and a BNS system. Because of the training of the WF model, we do not analyse GW170817, the BNS system, and concentrate exclusively on the BBH signals. Our parameter estimation algorithm is \texttt{gwmodel}~\cite{} a publicly available infrastructure 
+The GWTC-1 catalog consists of 10 BBH systems and a BNS system. Because of the training of the WF model, we do not analyze GW170817, the BNS system, and concentrate exclusively on the BBH signals. Our parameter estimation algorithm is \texttt{gwmodel}~\cite{} a publicly available infrastructure 
 written in a mixture of \texttt{Python} and \texttt{cython} that serves as interface for the parallel nested sampling implementation \texttt{cpnest}~\cite{}. 
 The analysis of each BBH system is set up as follows; we choose a total of 2000 Live Points, four parallel MCMC chains with a maximum length of 5000 steps to ensure that each successive sample is independent of the previous. These settings yield an average of $\sim$ 15000 posterior samples and 
 evidence calculations that are accurate to the first decimal digit. For each BBH system we choose prior distributions as described in the GWTC-1 release paper~\cite{LIGOScientific:2018mvr}. Finally, and critically, to ensure that our results can be compared fairly to published ones, we employ the power spectral densities released as part of GWTC-1. No calibration uncertainty model is assumed for these runs. 
-\begin{figure*}[]
+%========================
+% Posterior masses and final spin
+%========================
+\begin{figure*}[t]
 	\centering
-    \includegraphics[width=.75\linewidth]{img/posterior_masses_source.pdf}
+    \includegraphics[width=.45\textwidth]{img/posterior_masses_source.pdf}
+    \includegraphics[width=.45\textwidth]{img/final_spin_mass.pdf}
 	\caption{
 Two-dimensional posterior distributions for the component masses for all BBH systems in GWTC-1. The contours enclose the 90\% credible regions.
-The figure shall be compared with figure 10 in \cite{LIGOScientific:2018mvr} (left panel).
+The figure is consistent with, though different from, Fig.~4 of Ref.~\cite{LIGOScientific:2018mvr}.
 }
-	\label{fig:summary-masses}
+	\label{fig:gwtc1-summary}
 \end{figure*}
 
-\begin{figure*}[]
-	\centering
-    \includegraphics[width=.75\linewidth]{img/final_spin_mass.pdf}
-	\caption{
-Two-dimensional posterior distributions for the final masses and spins for all BBH systems in GWTC-1. The contours enclose the 90\% credible regions.
-The figure shall be compared with figure 10 in \cite{LIGOScientific:2018mvr} (right panel).
-}
-	\label{fig:summary-final-state}
-\end{figure*}
-
-Figure~\ref{fig:summary-masses}~\ref{fig:summary-final-state} and Table~\ref{tab:summary} summarise our results. In Table~\ref{tab:summary} we report exclusively 
-summary statistic for the intrinsic parameters of the system. All mass parameters quoted are in the source frame. The redshift of each BBH is estimated 
-from its luminosity distance posterior and converted into a redshift by assuming the cosmological parameters given in Ref.~\cite{}.
-
-\begin{table*}[]
+Figure~\ref{fig:gwtc1-summary} and Table~\ref{tab:summary} summarize our results. 
+In Table~\ref{tab:summary} we report exclusively  summary statistic for the intrinsic 
+parameters of the system. All mass parameters quoted are in the source frame. 
+The redshift of each BBH is estimated from its luminosity distance posterior and converted 
+into a redshift by assuming the cosmological parameters given in Ref.~\cite{}.
+%============
+% Table of results
+%============
+\begin{table*}[t]
 \centering
 \caption{Summary table for the inferred intrinsic parameters from MLGW and the released GWTC-1 credible intervals. All mass parameters quoted are computed in the source frame, see the text for details of the calculation. For GWTC-1 we report results from Table III, thus coming from averaging over two waveform models. The uncertainties correspond to the 90\% credible intervals.
 \sschmidt{What about $q$ in GWTC-1?? Is not in GWTC-1 paper...}
