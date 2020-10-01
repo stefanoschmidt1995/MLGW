@@ -669,20 +669,32 @@ Generation of raw WF refers to the computation of the strain $h_{FIT}$ as produc
 	\label{tab:profiling}
 \end{table}
 \par
-We see that the cost of generating the raw WF does not depend on the number of grid points. On the other hand, the interpolation and the post processing depends on $N_{grid}$ and their cost grows dramatically as the user requires more and more points.
-It is important to stress that the latter two tasks are slow only because they deal with a large amount of points. Indeed they perform trivial and ``quick" operations and their execution relies on well optimized \texttt{numpy} routines.
+We see that the cost of generating the raw WF does not depend on the number of grid points. 
+On the other hand, the interpolation and the post processing depends on $N_{grid}$ and their 
+cost grows dramatically as the user requires more and more points. It is important to stress that 
+the latter two tasks are slow only because they deal with a large amount of points. Indeed they perform 
+trivial and ``quick" operations and their execution relies on well optimized \texttt{numpy} routines.
 If such an amount of datapoints is required, very little space is left for speed up.
-\par
+
 
 \section{Application to GWTC-1}
 \label{sec:GWTC1}
 
-We test the implementation of our MLGW-TEOBResumS model on the public data from GWTC-1, the first GW catalog~\cite{LIGOScientific:2018mvr}.
-We trained \texttt{mlgw} in the range $\mathcal{P} = [1,20]\times[-0.8,0.95]\times[-0.8,0.95]$ and we set $\tau_{min} = \SI{4}{s/M_\odot}$.
-The GWTC-1 catalog consists of 10 BBH systems and a BNS system. Because of the training of the WF model, we do not analyze GW170817, the BNS system, and concentrate exclusively on the BBH signals. Our parameter estimation algorithm is \texttt{gwmodel}~\cite{} a publicly available infrastructure 
-written in a mixture of \texttt{Python} and \texttt{cython} that serves as interface for the parallel nested sampling implementation \texttt{cpnest}~\cite{}. 
-The analysis of each BBH system is set up as follows; we choose a total of 2000 Live Points, four parallel MCMC chains with a maximum length of 5000 steps to ensure that each successive sample is independent of the previous. These settings yield an average of $\sim$ 15000 posterior samples and 
-evidence calculations that are accurate to the first decimal digit. For each BBH system we choose prior distributions as described in the GWTC-1 release paper~\cite{LIGOScientific:2018mvr}. Finally, and critically, to ensure that our results can be compared fairly to published ones, we employ the power spectral densities released as part of GWTC-1. No calibration uncertainty model is assumed for these runs. 
+We test the implementation of our MLGW-TEOBResumS and MLGW-SEOBNRv4 models on the 
+public data from GWTC-1, the first GW catalog~\cite{LIGOScientific:2018mvr}. We trained \texttt{mlgw} 
+in the range $\mathcal{P} = [1,20]\times[-0.8,0.95]\times[-0.8,0.95]$ and we set $\tau_{min} = \SI{4}{s/M_\odot}$.
+The GWTC-1 catalog consists of 10 BBH systems and a BNS system. Because of the training 
+of the WF model, we do not analyze GW170817, the BNS system, and concentrate exclusively 
+on the BBH signals. Our parameter estimation algorithm is \texttt{gwmodel}~\cite{} a publicly available infrastructure 
+written in a mixture of \texttt{Python} and \texttt{cython} that serves as interface for the parallel nested 
+sampling implementation \texttt{cpnest}~\cite{}. 
+The analysis of each BBH system is set up as follows; we choose a total of 2000 Live Points, f
+our parallel MCMC chains with a maximum length of 5000 steps to ensure that each successive 
+sample is independent of the previous. These settings yield an average of $\sim$ 15000 posterior samples and 
+evidence calculations that are accurate to the first decimal digit. For each BBH system we choose prior 
+distributions as described in the GWTC-1 release paper~\cite{LIGOScientific:2018mvr}. Finally, 
+and critically, to ensure that our results can be compared fairly to published ones, 
+we employ the power spectral densities released as part of GWTC-1. No calibration uncertainty model is assumed for these runs. 
 %========================
 % Posterior masses and final spin
 %========================
@@ -691,9 +703,11 @@ evidence calculations that are accurate to the first decimal digit. For each BBH
     \includegraphics[width=\textwidth]{img/posterior_masses_final.pdf}
 	\caption{
 	Posterior probability densities of the component masses and final masses and spins 
-	of all the BBH system in GWTC-1. The contours enclose the $90\%$ credible regions.
-	Left panel: Source-frame component masses $m_1$ and $m_2$. We use the convention $m_1\geq m_2$ which 
-	produces the sharp cut in the two-dimensional $(m1,m2)$ distribution (shaded region). Lines of
+	of all the BBH system in GWTC-1 obtained using MLGW trained with 
+	the {\tt TEOBResumS}~\cite{Nagar:2020pcj} spin-aligned waveform model. 
+	The contours enclose the $90\%$ credible regions. Left panel: Source-frame component 
+	masses $m_1$ and $m_2$. We use the convention $m_1\geq m_2$ which produces 
+	the sharp cut in the two-dimensional $(m1,m2)$ distribution (shaded region). Lines of
 	constant mass ratio $q\equiv m_1/m_2$ are shown for $q=\{2,4,8\}$. Right panel: the mass $M_f$
 	and dimensionless spin magnitude $a_f$ of the final black holes. The figure is consistent with, though 
 	different from, Fig.~4 of Ref.~\cite{LIGOScientific:2018mvr}.
@@ -711,14 +725,16 @@ into a redshift by assuming the cosmological parameters given in Ref.~\cite{}.
 %============
 \begin{table*}[t]
 \centering
-\caption{Summary table for the inferred intrinsic parameters from MLGW and the released GWTC-1 credible intervals. All mass parameters quoted are computed in the source frame, 
-see the text for details of the calculation. For GWTC-1 we report results from Table~III in Ref.~\cite{LigoScientific:2018mvr}, that were obtained
-by averaging together results from the {\it precessing} {\tt SEOBNRv3} and {\tt IMRPhenomPv2} waveform models. The uncertainties correspond to the 90\% credible intervals.
+\caption{Summary table for the inferred intrinsic parameters from MLGW with {\tt TEOBResumS} and the released GWTC-1 credible intervals. 
+All mass parameters quoted are computed in the source frame, see the text for details of the calculation. For GWTC-1 we report results 
+from Table~III  of Ref.~\cite{LigoScientific:2018mvr}. These results were obtained by averaging together the outcomes of the 
+{\it precessing} {\tt SEOBNRv3}~\cite{Babak:2016tgq} and {\tt IMRPhenomPv2} waveform models. 
+The uncertainties correspond to the 90\% credible intervals.
 Note that the inverse mass ratio, $1/q$, is not listed in Ref.~\cite{LIGOScientific:2018mvr}.}
 \label{tab:summary}
 \begin{ruledtabular}
 \begin{tabular}{cccccccccc}
-                              & \multicolumn{5}{c}{MLGW}                                                   & \multicolumn{4}{c|}{GWTC-1}                                                \\ 
+                              & \multicolumn{5}{c}{MLGW-{\tt TEOBResumS}}                                                   & \multicolumn{4}{c|}{GWTC-1}                                                \\ 
                               \hline
 Event    & $m_1/M_\odot$ & $m_2/M_\odot$ & $\mathcal{M}/M_\odot$ & $1/q$ & $\chi_{eff}$ & $m_1/M_\odot$ & $m_2/M_\odot$ & $\mathcal{M}/M_\odot$ & $\chi_{eff}$
 \\ \hline
@@ -746,7 +762,62 @@ GW170823 & $40.69_{-6.68}^{+10.21}$& $31.17_{-8.09}^{+7.13}$& $30.63_{-3.75}^{+5
 \end{ruledtabular}
 \end{table*}
 
-Our results are, in general, extremely similar to what published by the LVK Collaboration. This is reassuring as it validates both the WF model hereby presented as well as the data analysis scheme and sampler implemented\footnote{However, a full validation of the algorithm is presented in ~\cite{}.}.
+%===================
+% Results with SEOBNRv4
+%====================
+\begin{figure*}[t]
+	\centering
+    \includegraphics[width=\textwidth]{img/posterior_masses_final_seob.pdf}
+	\caption{
+	Posterior probability densities of the component masses and final masses and spins 
+	of all the BBH system in GWTC-1. The contours enclose the $90\%$ credible regions.
+	Left panel: Source-frame component masses $m_1$ and $m_2$. We use the convention $m_1\geq m_2$ which 
+	produces the sharp cut in the two-dimensional $(m1,m2)$ distribution (shaded region). Lines of
+	constant mass ratio $q\equiv m_1/m_2$ are shown for $q=\{2,4,8\}$. Right panel: the mass $M_f$
+	and dimensionless spin magnitude $a_f$ of the final black holes. The figure is consistent with, though 
+	different from, Fig.~4 of Ref.~\cite{LIGOScientific:2018mvr}.
+}
+	\label{fig:gwtc1-summary}
+\end{figure*}
+
+\begin{table*}[t]
+\centering
+\caption{Summary table for the inferred intrinsic parameters from a different MLGW model obtained using  {\tt SEOBNRv4} as training,
+spin-aligned, waveform model~\cite{Bohe:2016gbl} on the released GWTC-1 data. All mass parameters quoted are computed in the 
+source frame. The results are very consistent with those obtained using {\tt TEOBResumS} listed in Table~\ref{tab:summary} and similarly
+slightly larger than the published LVC ones obtained using different waveform models.} 
+\label{tab:summary_seob}
+\begin{ruledtabular}
+\begin{tabular}{cccccc}
+Event    & $m_1/M_\odot$ & $m_2/M_\odot$ & $\mathcal{M}/M_\odot$ & $1/q$ & $\chi_{eff}$ \\ \hline
+\vspace{1.0 mm}
+GW150914& $36.09_{-2.58}^{+4.89}$& $32.55_{-4.37}^{+2.80}$& $29.70_{-1.36}^{+1.95}$& $0.91_{-0.21}^{+0.08}$& $0.10_{-0.08}^{+0.09}$ \\
+\vspace{1.0 mm}
+GW151012& $32.54_{-12.12}^{+20.08}$& $12.18_{-4.50}^{+6.44}$& $16.96_{-2.84}^{+2.67}$& $0.37_{-0.21}^{+0.50}$& $0.53_{-0.32}^{+0.19}$\\
+\vspace{1.0 mm}
+GW151226& $16.35_{-5.61}^{+12.60}$& $6.36_{-2.22}^{+2.98}$& $8.69_{-0.27}^{+0.41}$& $0.39_{-0.25}^{+0.48}$& $0.31_{-0.15}^{+0.24}$\\
+\vspace{1.0 mm}
+GW170104& $30.45_{-4.56}^{+10.49}$& $22.82_{-7.00}^{+4.43}$& $22.64_{-1.89}^{+2.51}$& $0.76_{-0.37}^{+0.22}$& $0.19_{-0.14}^{+0.15}$\\
+\vspace{1.0 mm}
+GW170608& $15.53_{-5.25}^{+8.17}$& $5.58_{-1.57}^{+2.44}$& $7.89_{-0.18}^{+0.25}$& $0.36_{-0.19}^{+0.42}$& $0.24_{-0.18}^{+0.21}$\\
+\vspace{1.0 mm}
+GW170729& $48.51_{-9.62}^{+14.22}$& $34.80_{-9.01}^{+9.26}$& $35.34_{-4.89}^{+6.88}$& $0.73_{-0.27}^{+0.24}$& $0.48_{-0.24}^{+0.20}$\\
+\vspace{1.0 mm}
+GW170809& $34.57_{-5.12}^{+7.91}$& $25.23_{-5.47}^{+4.49}$& $25.42_{-1.62}^{+2.41}$& $0.73_{-0.26}^{+0.23}$& $0.20_{-0.13}^{+0.16}$\\
+\vspace{1.0 mm}
+GW170814& $31.53_{-3.73}^{+11.14}$& $24.87_{-6.49}^{+3.29}$& $24.25_{-1.31}^{+1.46}$& $0.79_{-0.36}^{+0.18}$& $0.15_{-0.10}^{+0.11}$\\
+\vspace{1.0 mm}
+GW170818& $34.57_{-5.52}^{+11.40}$& $26.94_{-7.67}^{+5.65}$& $26.21_{-2.82}^{+4.32}$& $0.80_{-0.36}^{+0.18}$& $0.25_{-0.17}^{+0.20}$\\
+\vspace{1.0 mm}
+GW170823& $40.66_{-6.67}^{+10.11}$& $30.91_{-7.44}^{+6.72}$& $30.52_{-3.59}^{+5.09}$& $0.77_{-0.27}^{+0.20}$& $0.28_{-0.18}^{+0.19}$\\
+\end{tabular}
+\end{ruledtabular}
+\end{table*}
+
+
+
+Our results are, in general, extremely similar to what published by the LVK Collaboration. 
+This is reassuring as it validates both the WF model hereby presented as well as the data analysis scheme and sampler implemented\footnote{However, a full validation of the algorithm is presented in ~\cite{}.}.
 We do note certain interesting aspects that are worth mention; for instance, MLGW tends to recover slightly larger chirp masses and slightly 
 smaller mass ratios compared to GWTC-1. At the same  time, the value of $\chi_{eff}$ also tends to be slightly larger. 
 These differences are, in general, negligible, but nevertheless indicative of the differences in the physics input in the approximant. 
