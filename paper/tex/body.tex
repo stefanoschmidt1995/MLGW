@@ -664,7 +664,8 @@ In table \ref{tab:profiling}, we compare the results for two values of $N_{grid}
 	\end{tabular}
 	\caption{
 Time taken by different stages of the generation of $100$ waveforms; data refers to two different values of $N_{grid}$.
-Generation of raw WF refers to the computation of the strain $h_{FIT}$ as produced by a ML model. Interpolation to user grid evaluates the WF on the grid chosen by the user. In the post-processing phase, the dependence on $d_L$, $\iota$ and $\varphi_0$ is included.
+Generation of raw WF refers to the computation of the strain $h_{FIT}$ as produced by a ML model. 
+Interpolation to user grid evaluates the WF on the grid chosen by the user. In the post-processing phase, the dependence on $d_L$, $\iota$ and $\varphi_0$ is included.
 }
 	\label{tab:profiling}
 \end{table}
@@ -679,20 +680,23 @@ If such an amount of datapoints is required, very little space is left for speed
 
 \section{Application to GWTC-1}
 \label{sec:GWTC1}
-
-We test the implementation of our MLGW-TEOBResumS and MLGW-SEOBNRv4 models on the 
-public data from GWTC-1, the first GW catalog~\cite{LIGOScientific:2018mvr}. We trained \texttt{mlgw} 
-in the range $\mathcal{P} = [1,20]\times[-0.8,0.95]\times[-0.8,0.95]$ and we set $\tau_{min} = \SI{4}{s/M_\odot}$.
-The GWTC-1 catalog consists of 10 BBH systems and a BNS system. Because of the training 
-of the WF model, we do not analyze GW170817, the BNS system, and concentrate exclusively 
-on the BBH signals. Our parameter estimation algorithm is \texttt{gwmodel}~\cite{} a publicly available infrastructure 
+We use the implementation of our MLGW-TEOBResumS and MLGW-SEOBNRv4 models 
+to provide a new, and independent, measure of the properties of the GW sources
+collected in GWTC-1, the first catalog of detected GW sources~\cite{LIGOScientific:2018mvr}.,
+corresponding to the first two observing runs of the LIGO and Virgo detectors.
+The GWTC-1 catalog consists of 10 BBH systems and a BNS system, GW170817. 
+Since the waveform models we considered for the training only concern spin-aligned
+BBH waveforms, we do not analyze GW170817 but we only focus on the 10 BBH systems.
+We trained \texttt{mlgw} in the range $\mathcal{P} = [1,20]\times[-0.8,0.95]\times[-0.8,0.95]$ 
+and we set $\tau_{min} = \SI{4}{s/M_\odot}$.
+Our parameter estimation algorithm is \texttt{gwmodel}~\cite{} a publicly available infrastructure 
 written in a mixture of \texttt{Python} and \texttt{cython} that serves as interface for the parallel nested 
 sampling implementation \texttt{cpnest}~\cite{}. 
 The analysis of each BBH system is set up as follows; we choose a total of 2000 Live Points, f
 our parallel MCMC chains with a maximum length of 5000 steps to ensure that each successive 
 sample is independent of the previous. These settings yield an average of $\sim$ 15000 posterior samples and 
-evidence calculations that are accurate to the first decimal digit. For each BBH system we choose prior 
-distributions as described in the GWTC-1 release paper~\cite{LIGOScientific:2018mvr}. Finally, 
+evidence calculations that are accurate to the first decimal digit. For each BBH system we choose 
+prior distributions as described in the GWTC-1 release paper~\cite{LIGOScientific:2018mvr}. Finally, 
 and critically, to ensure that our results can be compared fairly to published ones, 
 we employ the power spectral densities released as part of GWTC-1. No calibration uncertainty model is assumed for these runs. 
 %========================
