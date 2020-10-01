@@ -103,7 +103,7 @@ if __name__=="__main__":
     import matplotlib.lines as mlines
     
     colors = cm.rainbow(np.linspace(0, 1, len(events)))
-    colors = ['dodgerblue','olivedrab','goldenrod','yellowgreen','peru','magenta','mediumturquoise','acquamarine','skyblue','mediumpurple']
+    colors = ['dodgerblue','olivedrab','goldenrod','yellowgreen','peru','magenta','mediumturquoise','aquamarine','skyblue','mediumpurple']
     line_style = ['-','--', '-','-','--','-','-','--','--','--']
     from utils import McQ2Masses, chi_eff, final_mass, final_spin
 #    events = ['gw151226']
@@ -177,7 +177,7 @@ if __name__=="__main__":
 #    fig1.savefig('/Users/wdp/repositories/MLGW/paper/img/posterior_masses_source.pdf', bbox_inches='tight')
 #    fig2.savefig('/Users/wdp/repositories/MLGW/paper/img/spins.pdf', bbox_inches='tight')
     #fig1.savefig('../img/posterior_masses_final.pdf', bbox_inches='tight', pad_inches = .2)
-    fig1.savefig('posterior_masses_final.pdf', bbox_inches='tight', pad_inches = .2)
+    fig1.savefig('../img/posterior_masses_final.pdf', bbox_inches='tight', pad_inches = .2)
     fig2.savefig('../img/spins.pdf', bbox_inches='tight', pad_inches = .2)
     #fig3.savefig('../img/final_spin_mass.pdf', bbox_inches='tight', pad_inches = .2)
 
