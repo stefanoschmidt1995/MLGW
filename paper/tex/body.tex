@@ -675,7 +675,7 @@ Note that the inverse mass ratio, $1/q$, is not listed in Ref.~\cite{LIGOScienti
 \begin{tabular}{cccccccccc}
                               & \multicolumn{5}{c}{MLGW-{\tt TEOBResumS}}                                                   & \multicolumn{4}{c|}{GWTC-1}                                                \\ 
                               \hline
-Event    & $m_1/M_\odot$ & $m_2/M_\odot$ & $\mathcal{M}/M_\odot$ & $1/q$ & $\chi_{eff}$ & $m_1/M_\odot$ & $m_2/M_\odot$ & $\mathcal{M}/M_\odot$ & $\chi_{eff}$
+Event    & $m_1/M_\odot$ & $m_2/M_\odot$ & $\mathcal{M}/M_\odot$ & $1/q$ & $\chi_{eff}$ & $m_1/M_\odot$ & $m_2/M_\odot$ & $\mathcal{M}/M_\odot$ & $\chi_{\rm eff}$
 \\ \hline
 \vspace{1.0 mm}
 GW150914 & $36.36_{-2.64}^{+4.72}$& $32.64_{-4.44}^{+2.93}$& $29.87_{-1.50}^{+1.95}$& $0.91_{-0.21}^{+0.08}$& $0.14_{-0.10}^{+0.10}$&    $35.6_{-3.1}^{+4.7}$           &   $30.6_{-4.4}^{+3.0}$            & $28.6_{-1.5}^{+1.7}$                      & $-0.01_{-0.13}^{+0.12}$              \\
@@ -785,7 +785,7 @@ slightly larger than the published LVC ones obtained using different waveform mo
 \label{tab:summary_seob}
 \begin{ruledtabular}
 \begin{tabular}{cccccc}
-Event    & $m_1/M_\odot$ & $m_2/M_\odot$ & $\mathcal{M}/M_\odot$ & $1/q$ & $\chi_{eff}$ \\ \hline
+Event    & $m_1/M_\odot$ & $m_2/M_\odot$ & $\mathcal{M}/M_\odot$ & $1/q$ & $\chi_{\rm eff}$ \\ \hline
 \vspace{1.0 mm}
 GW150914& $36.09_{-2.58}^{+4.89}$& $32.55_{-4.37}^{+2.80}$& $29.70_{-1.36}^{+1.95}$& $0.91_{-0.21}^{+0.08}$& $0.10_{-0.08}^{+0.09}$ \\
 \vspace{1.0 mm}
@@ -819,15 +819,11 @@ GW170823& $40.66_{-6.67}^{+10.11}$& $30.91_{-7.44}^{+6.72}$& $30.52_{-3.59}^{+5.
 	The contours enclose the $90\%$ credible regions.}
 	\label{fig:gwtc1_eob_spins}
 \end{figure}
-
-
-
-
-
 Figure~\ref{fig:gwtc1-summary} and Table~\ref{tab:summary} summarize the results
 with {\tt TEOBResumS}: those obtained with {\tt SEOBNRv4} are in Fig.~\ref{fig:gwtc1-summary_seob}
-and in Table~\ref{tab:summary_seob}. In the tables we report exclusively summary statistic
-for the intrinsic parameters. All mass parameters quoted are in the source frame. 
+and in Table~\ref{tab:summary_seob}. In addition, posteriors for the individual dimensionless
+spin magnitudes are shown in Fig.~\ref{fig:gwtc1_eob_spins}. The tables exclusively report
+summary statistic for the intrinsic parameters. All mass parameters quoted are in the source frame. 
 The redshift of each BBH is estimated from its luminosity distance posterior and 
 converted into a redshift by assuming the cosmological parameters given in Ref.~\cite{}.
 The second part of Table~\ref{tab:summary} also lists, for convenience, the results
@@ -840,13 +836,17 @@ implemented\footnote{However, a full validation of the algorithm is presented in
 There are however differences that are worth mentioning. The most striking is that
 {\it both} MLGW models tend to recover slightly larger masses and effective 
 spin variable, $\chi_{\rm eff}$, than what published Ref.~\cite{LIGOScientific:2018mvr}.
-The reason for this is probably related to the fact that Ref.~\cite{LIGOScientific:2018mvr}
-does not use spin-aligned waveform models, but rather the precessing models
-SEOBNRv3 and IMRPhenomPv2. Although the differences are, in general, negligible,
-still they highlight the differences in the physical input of the waveform approximants.
-By contrast, it is remarkable the excellent agreement between the
+The reason for this discrepancy is probably related to the fact that Ref.~\cite{LIGOScientific:2018mvr}
+does not use spin-aligned waveform models, but rather relies the analysis on 
+the precessing models SEOBNRv3 and IMRPhenomPv2. Although the differences 
+are, in general, negligible, still they highlight the differences in the physical input of 
+the waveform approximants. By contrast, it is remarkable the excellent agreement between the
 two waveform models, although the physical input and the analytical structure of the
 two models is rather different, especially in the spin sector~\cite{Rettegno:2019tzh}.
+In this respect, we also note in passing that the spin posteriors of GW151012 have
+most of the support in the region when $s_1$ and $s_2$ are nonzero. This also
+reflects in the rather large value of $\chi_{\rm eff}\sim 0.53$, about one order of magnitude
+larger than the result of Ref.~\cite{LIGOScientific:2018mvr}.
 
 %%%%%%%%%%%%%%%%%%%
 \section{Final remarks and future prospects}
