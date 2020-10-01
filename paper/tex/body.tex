@@ -12,11 +12,15 @@ models~\cite{Khan:2015jqa,Pratten:2020ceb,Estelles:2020osj}; (iii) NR surrogates
 %
 EOB models are the models that incorporate the largest amount of analytical information.
 They compute the GW signal by solving Hamilton's equations  and accurately predict the 
-GW signal from early inspiral phase up to the final ringdown. The merger and ringdown part
-of the waveform are informed by NR simulations, although this is a priori not necessary
-in the theoretical construction of the model~\cite{Buonanno:2000ef,Damour:2007xr,Damour:2009wj}.
-Because of the numerical integrations involved, they tend to be accurate, but slow to generate, 
-see however~\cite{Nagar:2018gnk} for a more efficient approach to obtain the dynamics.
+GW signal from early inspiral phase up to the final ringdown. The underlying relative dynamics
+is informed by (or calibrated to) NR simulations via a few parameters that parametrized in
+an effective way yet uncalculated high-order corrections to the orbital or spin-orbit sector 
+of the Hamiltonian. Similarly, the merger and ringdown part of the waveform are also informed by NR 
+simulations\footnote{One should remember that this step is a priori not necessary in the theoretical 
+construction of the model~\cite{Buonanno:2000ef,Damour:2007xr,Damour:2009wj}.}.
+Because of the numerical integrations involved to solve Hamilton's equations, they tend to 
+be accurate, but slow to generate, see however~\cite{Nagar:2018gnk} for a more efficient 
+approach to obtain the dynamics.
 
 The phenomenological waveforms are based on the post-Newtonian formalism and then calibrated 
 to  EOB waveforms and numerical relativity. They tend to be faster than EOB models, but not as accurate.
@@ -99,16 +103,21 @@ inspirals from 5Hz, or to extreme mass ratio inspiral as LISA sources. In these 
 of WF fast generation will be more pressing and our approach, provided a suitable waveform model 
 for training,  might be essential for detection and parameter estimation. 
 
-The paper is organized as follows:
-in section \ref{sec:setup} we briefly set the notation and the core of the ML problem we solve; in section \ref{sec:model} we describe our model in details; section \ref{sec:performance} we validate the model and assess its accuracy and speed of execution; section \ref{sec:GWTC1} holds our analysis of the GWTC-1 transient catalog; finally in \ref{sec:end} we will report some final remarks and future prospects of our work.
+The paper is organized as follows. In Sec.~\ref{sec:setup} we briefly set the 
+notation and the core of the ML problem we solve; in Sec.~\ref{sec:model} we describe 
+our model in details. Section ~\ref{sec:performance} is devoted to validate the model 
+and to assess its accuracy and speed of execution; Sec.~\ref{sec:GWTC1} holds 
+our analysis of the GWTC-1 transient catalog, while  Sec.~\ref{sec:end} collects 
+some final remarks and future prospects of our work.
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %\section{Problem specification}
 \section{Conventions setup}
 \label{sec:setup}
 %--------------------------------------
-A binary black hole is parametrized by a vector $ \boldsymbol{\vartheta} = (m_1,m_2, \mathbf{s}_1,\mathbf{s}_2) $, where $m_i$ are the BHs masses and $\mathbf{s}_i = \frac{\mathbf{S}_i}{m_i^2} <1$ are the \textit{dimensionless} spin.
-We call them the \textit{orbital parameters}.
+A binary black hole system is parametrized by a vector $ \boldsymbol{\vartheta} = (m_1,m_2, \mathbf{s}_1,\mathbf{s}_2) $, where $m_i$ are the 
+BHs masses and $\mathbf{s}_i \equiv \mathbf{S}_i/m_i^2 \leq 1$ are the 
+\textit{dimensionless} spin. We call them the \textit{orbital parameters}.
 In what follows, we will focus on the case in which spins $\mathbf{s}_1$ and $\mathbf{s}_2$ are \textit{aligned} with the orbital angular momentum. 
 Let $d_L$ be the luminosity distance and $\iota$ and $\varphi_0$ the polar angle (inclination) and the azimuthal angle of the orbital plane.
 A GW is parametrized as:
