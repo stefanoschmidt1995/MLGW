@@ -719,11 +719,6 @@ we employ the power spectral densities released as part of GWTC-1. No calibratio
 	\label{fig:gwtc1-summary}
 \end{figure*}
 
-Figure~\ref{fig:gwtc1-summary} and Table~\ref{tab:summary} summarize our results. 
-In Table~\ref{tab:summary} we report exclusively  summary statistic for the intrinsic 
-parameters of the system. All mass parameters quoted are in the source frame. 
-The redshift of each BBH is estimated from its luminosity distance posterior and converted 
-into a redshift by assuming the cosmological parameters given in Ref.~\cite{}.
 %============
 % Table of results
 %============
@@ -774,14 +769,14 @@ GW170823 & $40.69_{-6.68}^{+10.21}$& $31.17_{-8.09}^{+7.13}$& $30.63_{-3.75}^{+5
     \includegraphics[width=\textwidth]{img/posterior_masses_final_seob.pdf}
 	\caption{
 	Posterior probability densities of the component masses and final masses and spins 
-	of all the BBH system in GWTC-1. The contours enclose the $90\%$ credible regions.
+	of all the BBH system in GWTC-1 obtained using MLGW trained with the {\tt SEOBNRv4}~\cite{Bohe:2016gbl}
+	waveform model. The contours enclose the $90\%$ credible regions.
 	Left panel: Source-frame component masses $m_1$ and $m_2$. We use the convention $m_1\geq m_2$ which 
 	produces the sharp cut in the two-dimensional $(m1,m2)$ distribution (shaded region). Lines of
 	constant mass ratio $q\equiv m_1/m_2$ are shown for $q=\{2,4,8\}$. Right panel: the mass $M_f$
-	and dimensionless spin magnitude $a_f$ of the final black holes. The figure is consistent with, though 
-	different from, Fig.~4 of Ref.~\cite{LIGOScientific:2018mvr}.
-}
-	\label{fig:gwtc1-summary}
+	and dimensionless spin magnitude $a_f$ of the final black holes. The differences with 
+	Fig.~\cite{fig:gwtc1-summary} above are practically negligible.}
+	\label{fig:gwtc1-summary_seob}
 \end{figure*}
 
 \begin{table*}[t]
@@ -818,16 +813,29 @@ GW170823& $40.66_{-6.67}^{+10.11}$& $30.91_{-7.44}^{+6.72}$& $30.52_{-3.59}^{+5.
 \end{ruledtabular}
 \end{table*}
 
-
-
-Our results are, in general, extremely similar to what published by the LVK Collaboration. 
-This is reassuring as it validates both the WF model hereby presented as well as the data analysis scheme and sampler implemented\footnote{However, a full validation of the algorithm is presented in ~\cite{}.}.
-We do note certain interesting aspects that are worth mention; for instance, MLGW tends to recover slightly larger chirp masses and slightly 
-smaller mass ratios compared to GWTC-1. At the same  time, the value of $\chi_{eff}$ also tends to be slightly larger. 
-These differences are, in general, negligible, but nevertheless indicative of the differences in the physics input in the approximant. 
-The results in Table~\ref{tab:summary} have been produced using the TEOBResumS MLGW model. 
-In light of our findings, we think that the resolution of the spin physics is paramount for an accurate and free from 
-systematics inference of astrophysical properties such as the BBH mass and spin distributions.
+Figure~\ref{fig:gwtc1-summary} and Table~\ref{tab:summary} summarize the results
+with {\tt TEOBResumS}: those obtained with {\tt SEOBNRv4} are in Fig.~\ref{fig:gwtc1-summary_seob}
+and in Table~\ref{tab:summary_seob}. In the tables we report exclusively summary statistic
+for the intrinsic parameters. All mass parameters quoted are in the source frame. 
+The redshift of each BBH is estimated from its luminosity distance posterior and 
+converted into a redshift by assuming the cosmological parameters given in Ref.~\cite{}.
+The second part of Table~\ref{tab:summary} also lists, for convenience, the results
+published in the GWTC-1 catalog paper~\cite{LIGOScientific:2018mvr}.
+A few observation are in order. First of all, our results, obtained with both models,
+are extremely similar to what published by the LVK Collaboration. 
+This is reassuring as it validates both the WF model hereby presented 
+as well as the data analysis scheme and sampler 
+implemented\footnote{However, a full validation of the algorithm is presented in ~\cite{}.}.
+There are however differences that are worth mentioning. The most striking is that
+{\it both} MLGW models tend to recover slightly larger masses and effective 
+spin variable, $\chi_{\rm eff}$, than what published Ref.~\cite{LIGOScientific:2018mvr}.
+The reason for this is probably related to the fact that Ref.~\cite{LIGOScientific:2018mvr}
+does not use spin-aligned waveform models, but rather the precessing models
+SEOBNRv3 and IMRPhenomPv2. Although the differences are, in general, negligible,
+still they highlight the differences in the physical input of the waveform approximants.
+By contrast, it is remarkable the excellent agreement between the
+two waveform models, although the physical input and the analytical structure of the
+two models is rather different, especially in the spin sector~\cite{Rettegno:2019tzh}.
 
 %%%%%%%%%%%%%%%%%%%
 \section{Final remarks and future prospects}
