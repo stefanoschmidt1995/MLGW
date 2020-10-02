@@ -65,6 +65,7 @@ spins).
   adiabatic inspirals from PN knowledge, informed in test-mass regime,
   defined for arbitrary length, etc...}
 \sschmidt{I wouldn't go too technical, because it is not the point of the paper...}
+\BS{[but it is not an extrapolation...]}
 %
 This is, for example, the case of the most  recent avatar of 
 the spin-aligned \texttt{TEOBResumS}~\cite{Nagar:2018zoe} model, 
@@ -84,7 +85,7 @@ At the same time it keeps the same accuracy of the underlying
 training model\footnote{Let us note, in passing, that the ML framework 
 is completely general and it works for any EOB model; indeed 
 a successful ML model was trained using also the \texttt{SEOBNRv2} 
-waveform model~\cite{Taracchini:2013rva}.}.
+waveform model~\cite{Taracchini:2013rva}. \BS{[would remove this, and say in the text we also construct MLGW for SEOB]}}.
 
 As a relevant physical application, we use the our ML model \texttt{mlgw} 
 to provide a completely new, and independent, analysis of the 10 BBHs 
@@ -636,6 +637,7 @@ a WF in FD, our model cannot be substantially faster, due to the
 limitation imposed by the FFT.\BS{[How about the interpolation to the
     uniform grid required before the FFT?]}
 \sschmidt{I don't get the point here...}
+\BS{[to do the FFT you need uniform time spacing, so I guess you need an interpolation before the FFT. in other models this is a significant fraction of the cost]}
 \par
 We note the the performances are quite similar to each other.
 If a lower sampling rate is employed, \texttt{mlgw} slighly improves its performances.
@@ -782,6 +784,7 @@ we employ the power spectral densities released as part of GWTC-1. No calibratio
 	constant mass ratio $q\equiv m_1/m_2$ are shown for $q=\{2,4,8\}$. Right panel: the mass $M_f$
 	and dimensionless spin magnitude $a_f$ of the final black holes. The differences with 
 	Fig.~\cite{fig:gwtc1-summary} above are practically negligible.}
+        \BS{Any chance to merger this table with the other? e.g. putting it horizontal?}
 	\label{fig:gwtc1-summary_seob}
 \end{figure*}
 
@@ -824,8 +827,9 @@ GW170823& $40.66_{-6.67}^{+10.11}$& $30.91_{-7.44}^{+6.72}$& $30.52_{-3.59}^{+5.
     \includegraphics[width=0.45\textwidth]{img/spins.pdf}\\
         \includegraphics[width=0.45\textwidth]{img/spins_seob.pdf}
 	\caption{Posterior probability densities of the component, dimensionless, spins for alla the BBH systems in GWTC-1 
-	obtained using MLGW trained to {\tt TEOBResumS} (top)~\cite{Nagar:2020pcj}  and to {\tt SEOBNRv4}. 
+	obtained using MLGW trained to {\tt TEOBResumS} (top)~\cite{Nagar:2020pcj}  and to {\tt SEOBNRv4} (bottom). 
 	The contours enclose the $90\%$ credible regions.}
+        \BS{can we have betetr legends in the plots and write in the panels TEOBResumS and SEOBNRv4?}
 	\label{fig:gwtc1_eob_spins}
 \end{figure}
 Figure~\ref{fig:gwtc1-summary} and Table~\ref{tab:summary} summarize the results
