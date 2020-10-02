@@ -22,6 +22,7 @@ import inspect
 sys.path.insert(1, os.path.dirname(__file__)) 	#adding to path folder where mlgw package is installed (ugly?)
 from EM_MoE import *			#MoE model
 from ML_routines import *		#PCA model
+import scipy.special.factorial as fact
 
 warnings.simplefilter("always", UserWarning) #always print a UserWarning message ??
 
@@ -268,6 +269,7 @@ GW_generator
 			D = 6	[m1, m2, spin1_z , spin2_z, D_L, inclination]
 			D = 7	[m1, m2, spin1_z , spin2_z, D_L, inclination, phi_0]
 			D = 14	[m1, m2, spin1 (3,), spin2 (3,), D_L, inclination, phi_0, long_asc_nodes, eccentricity, mean_per_ano]
+		In the D = 3 layout, the total mass is set to 20 M_sun by default.
 		Warning: last layout (D=14) is made only for compatibility with lalsuite software. The implemented variables are those in D=7 layout; the other are dummy variables and will not be considered.
 		Unit of measures:
 			[mass] = M_sun
@@ -351,7 +353,7 @@ GW_generator
 				# setting spherical harmonics: amp, ph, D_L,iota, phi_0
 			h_lm_real, h_lm_imag = self.__set_spherical_harmonics(mode.lm(), amp_lm, ph_lm, theta[:,4], theta[:,5], theta[:,6])
 			h_plus = h_plus + h_lm_real
-			h_cross = h_cross + h_lm_cross
+			h_cross = h_cross + h_lm_imag
 
 		return h_plus, h_cross
 
@@ -373,26 +375,46 @@ GW_generator
 		"""
 		l,m = mode
 			#computing the iota dependence of the WF
-		d_lm = self.__get_spherical_harmonics_amplitude((l,m),iota)
-		d_lmm = self.__get_spherical_harmonics_amplitude((l,-m),iota) 
+		d_lm = self.__get_Wigner_d_function((l,m),iota)
+		d_lmm = self.__get_Wigner_d_function((l,-m),iota) 
+		const = np.sqrt( (2.*l+1.)/(4.*np.pi) )
 
-		h_p = np.multiply(np.multiply(amp.T,np.cos(ph.T+m*phi_0)), (d_lm + d_lmm)/dist ).T
-		h_c = np.multiply(np.multiply(amp.T,np.sin(ph.T+m*phi_0)), (d_lm - d_lmm)/dist ).T
+		h_lm_real = np.multiply(np.multiply(amp.T,np.cos(ph.T+m*phi_0)), const*(d_lm + d_lmm)/dist ).T
+		h_lm_imag = np.multiply(np.multiply(amp.T,np.sin(ph.T+m*phi_0)), const*(d_lm - d_lmm)/dist ).T
 
+		return h_lm_real, h_lm_imag
 
-	def __get_spherical_harmonics_amplitude(self, mode, iota):
+	def __get_Wigner_d_function(self, mode, iota):
 		"""
-	__get_spherical_harmonics_amplitude
-	===================================
-		Return the inclination dependent part d_lm of the spherical harmonics Y_lm, according to:
+	__get_Wigner_d_function
+	=======================
+		Return Wigner d function. This encodes the inclination dependent part d_lm of the spherical harmonics Y_lm, according to:
 			Y_lm(iota, phi_0) = d_lm(iota) * exp(i*m*phi_0)
+		See https://arxiv.org/pdf/0709.0093.pdf for an explicit expression.
 		Input:
 			mode			(l,m) of the current mode
 			iota (N,)		inclination for to compute the amplitude at
+		Output:
+			d_lm (N,)		Amplitude of the spherical harmonics d_lm(iota)
 		"""
-		
-		
+		l,m = mode
+		s = 2
+		d_lm = np.zeros(iota.shape) #(N,)
+    
+		cos_i = np.cos(iota*0.5)
+		sin_i = np.sin(i*0.5)
+    
+			#starting computation (sloooow??)
+		ki = max(0, m-s)
+		kf = min(l+m, l-s)
+    	
+		for k in range(ki,kf):
+			norm = fact(k) * fact(l+m-k) * fact(l-s-k) * fact(s-m+k) #normalization constant
+			d_lm = d_lm +  (pow(-1.,k) * np.power(cos_1,2*l+m-s-2*k) * np.power(sin_i,2*k+s-m) ) / norm
 
+    	const = np.sqrt(fact(l+m) * fact(l-m) * fact(l+s) * fact(l-s))
+		return const*d_lm
+		
 
 
 class mode_generator(object):
