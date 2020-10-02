@@ -210,6 +210,190 @@ GW_generator
 		print(output)
 		return
 
+	def list_modes(self):
+		"""
+	list_modes
+	==========
+		Print to screen and returns a list of the available modes.
+		Output:
+			mode_list	list with the available modes
+		"""
+		mode_list = []
+		for mode in self.modes:
+			mode_list.append(mode.lm())
+		print(mode_list)
+		return mode_list
+
+
+	def __call__(self, t_grid, m1, m2, spin1_x, spin1_y, spin1_z, spin2_x, spin2_y, spin2_z, D_L, i, phi_0, long_asc_nodes, eccentricity, mean_per_ano):
+		"""
+	__call__
+	========
+		Generates a WF according to the model. It makes all the required preprocessing to include wave dependance on the full 14 parameters space of the GW forms. It outputs the plus cross polarization of the WF.
+		All the available modes are employed to build the WF.
+		The WF is shifted such that the peak of the 22 mode is placed at t=0. If the reference phase is 0, the phase of the 22 mode is 0 at t=0.
+		Note that the dependence on the longitudinal ascension node, the eccentricity, the mean periastron anomaly and the orthogonal spin components is not currently implemented and it is mainted for compatibility with lal.
+		Input:
+			t_grid	(N_grid,)		Grid of (physical) time points to evaluate the wave at
+			m1	()/(N,)				Mass of BH 1
+			m2	()/(N,)				Mass of BH 1
+			spin1_x/y/z	()/(N,)		Each variable represents a spin component of BH 1
+			spin2_x/y/z				Each variable represents a spin component of BH 1
+			D_L	()/(N,)				Luminosity distance
+			i ()/(N,)				Inclination
+			phi_0 ()/(N,)			Reference phase for the wave
+			long_asc_nodes ()/(N,)	Logitudinal ascentional nodes (currently not implemented)
+			eccentricity ()/(N,)	Eccentricity of the orbit (currently not implemented)
+			mean_per_ano ()/(N,)	Mean periastron anomaly (currently not implemented)
+			out_type (str)			The output to be returned ('h+x', 'ampph', 'h22')
+		Ouput:
+			h_plus, h_cross (1,D)/(N,D)		desidered polarizations (if it applies)
+		"""
+		theta = np.column_stack((m1, m2, spin1_x, spin1_y, spin1_z, spin2_x, spin2_y, spin2_z, D_L, i, phi_0, long_asc_nodes, eccentricity, mean_per_ano)) #(N,D)
+		return self.get_WF(theta, t_grid= t_grid, modes = None)
+
+
+	def get_WF(self, theta, t_grid, modes = None):
+		"""
+	get_WF
+	======
+		Generates a WF according to the model. It makes all the required preprocessing to include wave dependance on the full 14 parameters space of the GW forms. It outputs the plus cross polarization of the WF.
+		All the available modes are employed to build the WF.
+		The WF is shifted such that the peak of the 22 mode is placed at t=0. If the reference phase is 0, the phase of the 22 mode is 0 at t=0.
+		If no geometrical variables are given, it is set by default D_L = 1 Mpc, iota = phi_0 = 0.
+		It accepts data in one of the following layout of D features:
+			D = 3	[q, spin1_z, spin2_z]
+			D = 4	[m1, m2, spin1_z, spin2_z]
+			D = 5	[m1, m2, spin1_z , spin2_z, D_L]
+			D = 6	[m1, m2, spin1_z , spin2_z, D_L, inclination]
+			D = 7	[m1, m2, spin1_z , spin2_z, D_L, inclination, phi_0]
+			D = 14	[m1, m2, spin1 (3,), spin2 (3,), D_L, inclination, phi_0, long_asc_nodes, eccentricity, mean_per_ano]
+		Warning: last layout (D=14) is made only for compatibility with lalsuite software. The implemented variables are those in D=7 layout; the other are dummy variables and will not be considered.
+		Unit of measures:
+			[mass] = M_sun
+			[D_L] = Mpc
+			[spin] = adimensional
+		User might choose which modes are to be included in the WF.
+		Input:
+			theta (N,D)		source parameters to make prediction at
+			t_grid (D',)	a grid in (physical or reduced) time to evaluate the wave at (uses np.interp)
+			modes			list of modes employed for building the WF (if None, every mode available is employed)
+		Ouput:
+			h_plus, h_cross (D,)/(N,D)		desidered polarizations (if it applies)
+		"""
+		theta = np.array(theta) #to ensure user theta is copied into new array
+		if theta.ndim == 1:
+			to_reshape = True #whether return a one dimensional array
+			theta = theta[np.newaxis,:] #(1,D)
+		else:
+			to_reshape = False
+		
+		D= theta.shape[1] #number of features given
+		if D <3:
+			raise RuntimeError("Unable to generata WF. Too few parameters given!!")
+			return
+
+			#creating a standard theta vector for __get_WF
+		if D==3:
+			new_theta = np.zeros((theta.shape[0],7))
+			new_theta[:,4] = 1.
+			new_theta[:,[2,3]] = theta[:,[1,2]] #setting spins
+			new_theta[:,[0,1]] = [theta[:,0]*20./(1+theta[:,0]), 20./(1+theta[:,0])] #setting m1,m2 with M = 20
+
+		if D>3 and D!=7:
+			new_theta = np.zeros((theta.shape[0],7))
+			new_theta[:,4] = 1.
+			if D== 14:
+				if np.any(np.column_stack((theta[:,2:4], theta[:,5:7])) != 0):
+					warnings.warn("Given nonzero spin_x/spin_y components. Model currently supports only spin_z component. Other spin components are ignored")
+				indices = [0,1,4,7,8,9,10]
+				indices_new_theta = range(7)
+			else:
+				indices = [i for i in range(D)]
+				indices_new_theta = indices
+
+
+				#building vector to keep standard layout for __get_WF
+			new_theta[:, indices_new_theta] = theta[:,indices]
+			theta = new_theta #(N,7)
+
+			#generating waves and returning to user
+		h_plus, h_cross = self.__get_WF(theta, t_grid, modes) #(N,D)
+		if to_reshape:
+			return h_plus[0,:], h_cross[0,:] #(D,)
+		return h_plus, h_cross #(N,D)
+
+
+	def __get_WF(self, theta, t_grid, modes):
+		"""
+	__get_WF
+	========
+		Generates the waves in time domain, building it as a sum of modes weighted by spherical harminics. Called by get_WF.
+		Accepts only input features as [q,s1,s2] or [m1, m2, spin1_z , spin2_z, D_L, inclination, phi_0].
+		Input:
+			theta (N,D)		source parameters to make prediction at (D=3 or D=7)
+			t_grid (D',)	a grid in (physical or reduced) time to evaluate the wave at (uses np.interp)
+			modes			list of modes employed for building the WF (if None, every mode available is employed)
+		Ouput:
+			h_plus, h_cross (D,)/(N,D)		desidered polarizations (if it applies)
+		"""
+		D= theta.shape[1] #number of features given
+		assert D == 7
+
+		h_plus = np.zeros((theta.shape[0],t_grid.shape[0]))
+		h_cross = np.zeros((theta.shape[0],t_grid.shape[0]))
+
+		for mode in self.modes:	
+			if modes is not None:
+				if mode.lm() not in modes: #skipping a non-necessary mode
+					continue
+			amp_lm, ph_lm = mode.get_mode(theta[:,:4], t_grid, out_type = "ampph", align22 = True)
+				# setting spherical harmonics: amp, ph, D_L,iota, phi_0
+			h_lm_real, h_lm_imag = self.__set_spherical_harmonics(mode.lm(), amp_lm, ph_lm, theta[:,4], theta[:,5], theta[:,6])
+			h_plus = h_plus + h_lm_real
+			h_cross = h_cross + h_lm_cross
+
+		return h_plus, h_cross
+
+
+	def __set_spherical_harmonics(self, mode, amp, ph, dist, iota, phi_0):
+		"""
+	__set_spherical_harmonics
+	=========================
+		Given amplitude and phase of a mode, it returns the quantity [Y_lm*A*e^(i*ph)+ Y_l-m*A*e^(-i*ph)]. This amounts to the contribution to the WF given by the mode.
+		We parametrize: Y_lm(iota, phi_0) = d_lm(iota) * exp(i*m*phi_0)
+		Input:
+			mode			(l,m) of the current mode
+			amp, ph (N,D)	amplitude and phase of the WFs (as generated by the ML)
+			dist (N,)		luminosity distance
+			iota (N,)		inclination for each wave
+			phi_0 (N,)		reference phase for each wave
+		Output:
+			h_lm_real, h_lm_imag (N,D)	processed strain, with d, iota, phi_0 dependence included.
+		"""
+		l,m = mode
+			#computing the iota dependence of the WF
+		d_lm = self.__get_spherical_harmonics_amplitude((l,m),iota)
+		d_lmm = self.__get_spherical_harmonics_amplitude((l,-m),iota) 
+
+		h_p = np.multiply(np.multiply(amp.T,np.cos(ph.T+m*phi_0)), (d_lm + d_lmm)/dist ).T
+		h_c = np.multiply(np.multiply(amp.T,np.sin(ph.T+m*phi_0)), (d_lm - d_lmm)/dist ).T
+
+
+	def __get_spherical_harmonics_amplitude(self, mode, iota):
+		"""
+	__get_spherical_harmonics_amplitude
+	===================================
+		Return the inclination dependent part d_lm of the spherical harmonics Y_lm, according to:
+			Y_lm(iota, phi_0) = d_lm(iota) * exp(i*m*phi_0)
+		Input:
+			mode			(l,m) of the current mode
+			iota (N,)		inclination for to compute the amplitude at
+		"""
+		
+		
+
+
 
 class mode_generator(object):
 	"""
