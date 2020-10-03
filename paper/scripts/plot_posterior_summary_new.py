@@ -113,10 +113,12 @@ if __name__=="__main__":
     fig1 = plt.figure()
     ax1 = fig1.add_subplot(121)
     fig2 = plt.figure()
-    ax2 = fig2.add_subplot(111)
+    ax2 = fig2.add_subplot(121)
     #fig3 = plt.figure()
     ax3 = fig1.add_subplot(122)
-    fig1.subplots_adjust(bottom = 0.3, wspace = 0.2)  
+    ax4 = fig2.add_subplot(122)
+    fig1.subplots_adjust(bottom = 0.33, wspace = 0.2)  
+    fig2.subplots_adjust(bottom = 0.33, wspace = 0.2)  
 
     handles = []
     O = cs.CosmologicalParameters(0.68,0.31,0.69,-1.0,0.0)
@@ -127,6 +129,7 @@ if __name__=="__main__":
 #            BBH_file = '/Users/wdp/Desktop/GWTC-1_sample_release'+e.upper()+'_GWTC-1.hdf5'
 #            BBH = h5py.File(BBH_file, 'r')
             p = np.genfromtxt(os.path.join(path,e+'/Nested_sampler/posterior.dat'),names= True)
+                #ax1 - mass TEOB
             z = np.array([find_redshift(O, np.exp(d)) for d in p['logdistance']])
             m1 ,m2 = McQ2Masses(p['mc']/(1+z),p['q'])
             X,Y,PDF = twod_kde(m1,m2)
@@ -134,22 +137,29 @@ if __name__=="__main__":
             print(string)
             levs = np.sort(FindHeightForLevel(np.log(PDF),[0.9]))
             ax1.contour(X,Y,np.log(PDF),levs, linestyles = (ls,ls), colors=(c,c,),linewidths=1.5)
+                #ax2 - spins TEOB
             X,Y, PDF =  twod_kde(p['spin1'],p['spin2'])
             levs = np.sort(FindHeightForLevel(np.log(PDF),[0.9]))
             ax2.contour(X,Y,np.log(PDF),levs, linestyles = (ls,ls), colors=(c,c,),linewidths=1.5)
-                #fig3
+                #ax3 - final TEOB
             mass_f = final_mass(m1,m2, p['spin1'],p['spin2'])
             spin_f = final_spin(m1,m2, p['spin1'],p['spin2'])
             X,Y, PDF =  twod_kde(mass_f,spin_f)
             levs = np.sort(FindHeightForLevel(np.log(PDF),[0.9]))
             ax3.contour(X,Y,np.log(PDF),levs, linestyles = (ls,ls), colors=(c,c,),linewidths=1.5)
             handles.append(mlines.Line2D([], [], linestyle = ls, color=c, label=e.upper()))
+                #ax4 - spins SEOB
+            p_SEOB = np.genfromtxt(os.path.join(path+'/SEOB',e+'/Nested_sampler/posterior.dat'),names= True)
+            X,Y, PDF =  twod_kde(p_SEOB['spin1'],p_SEOB['spin2'])
+            levs = np.sort(FindHeightForLevel(np.log(PDF),[0.9]))
+            ax4.contour(X,Y,np.log(PDF),levs, linestyles = (ls,ls), colors=(c,c,),linewidths=1.5)
         except:
             print(e+' posterior not found')
 
     #fig1.legend(bbox_to_anchor=(.9, 0.5), loc='center left', borderaxespad=0.,fancybox=True,handles=handles)
     fig1.legend(bbox_to_anchor=(0.45, 0.2), loc='upper center', ncol=4, borderaxespad=0.,fancybox=True,handles=handles)
-    fig2.legend(bbox_to_anchor=(.9, 0.5), loc='center left', borderaxespad=0.,fancybox=True, handles=handles)
+    fig2.legend(bbox_to_anchor=(0.45, 0.2), loc='upper center', ncol=4, borderaxespad=0.,fancybox=True,handles=handles)
+    #fig2.legend(bbox_to_anchor=(.9, 0.5), loc='center left', borderaxespad=0.,fancybox=True, handles=handles)
     #fig3.legend(bbox_to_anchor=(.9, 0.5), loc='center left', borderaxespad=0.,fancybox=True,handles=handles)
     
     ax1.set_xlabel('$m_1/M_\odot$')
@@ -162,7 +172,11 @@ if __name__=="__main__":
     ax3.set_ylabel(r"$\mathit{a_f}$")
     ax3.set_xlim(0,110)
     ax3.set_ylim(0.4,1)
+    ax4.set_xlabel('$s_1$')
+    ax4.set_ylabel('$s_2$')
 
+    ax2.set_title("mlgw - TEOBResumS")
+    ax4.set_title("mlgw - SEOBNRv4")
 
     #filling ax1
     line_width = 0.3
@@ -178,7 +192,7 @@ if __name__=="__main__":
 #    fig2.savefig('/Users/wdp/repositories/MLGW/paper/img/spins.pdf', bbox_inches='tight')
     #fig1.savefig('../img/posterior_masses_final.pdf', bbox_inches='tight', pad_inches = .2)
     fig1.savefig('../img/posterior_masses_final.pdf', bbox_inches='tight', pad_inches = .2)
-    fig2.savefig('../img/spins.pdf', bbox_inches='tight', pad_inches = .2)
+    fig2.savefig('../img/spins_TEOB_SEOB.pdf', bbox_inches='tight', pad_inches = .2)
     #fig3.savefig('../img/final_spin_mass.pdf', bbox_inches='tight', pad_inches = .2)
 
 
