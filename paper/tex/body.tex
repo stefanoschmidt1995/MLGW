@@ -161,7 +161,7 @@ We choose the convention that $\phi_{\boldsymbol{\vartheta}} = 0$ when the ampli
 \par
 
 %======================
-\section{\texttt{mlgw}}
+\section{\MakeLowercase{\texttt{mlgw}}}
 \label{sec:model}
 %======================
 %
@@ -563,11 +563,10 @@ We are interested to make a comparison with both \texttt{TEOBResumS}
 When dealing with a real detection scenario, we are often interested in generating a WF which starts from a given frequency $f_{min}$, which is usually set by the detector's sensitivity window. Thus, it is crucial to measure the speed up that our model can provide in performing such task.
 We define the speed up $\mathcal{S}$ as the ratio between the runtime of benchmark model and the runtime of \texttt{mlgw} to produce the a waveform starting from a given $f_{min}$. Each waveform is produced with constant total mass $M = 100 M_{\odot}$ and random parameters; the WF is sampled at $f_{sam} = \SI{2048}{Hz}$.
 We consider the two cases with $f_{min} = \SI{5}{Hz}$ and $f_{min} = \SI{20}{Hz}$; the first choice refers to the hypotetical lower bound for the sentivity of the Einstein telescope (ET), while the second is close to that of Advanced-LIGO/Virgo.
-In figure~\ref{fig:time_performance_hist} we report the histogram of the measured speed up values for model \texttt{TEOBResumS}.
-\BS{[Have you tried to plot the speedup result as a function of the
-    parameter space, e.g. (q,s1+s2)? e.g. in a 2D scatter plot. Might help indicating which
-    waveform a slower/faster and identifying the original of the two
-    peaks (say, particolarly large q or values of spins)]}
+In figure~\ref{fig:time_performance_hist} we report the histogram of the measured speed up values for model \texttt{TEOBResumS}
+\footnote{
+In the figure, the histogram with $f_{min} = \SI{20}{Hz}$ (bottom), displays two peaks.
+This can be understood as follows: the WFs with high positive spins tends to be longer (at constant $f_{min}$), thus requiring more execution time for \texttt{TEOBResumS}; on the other hand in such cases \texttt{mlgw} requires approximately a constant time for the generation of such WFs. Then the two peaks measure indirectly the execution time of \texttt{TEOBResumS}.}.
   
 \newcommand{\factor}{.9}
 \begin{figure}
@@ -583,7 +582,6 @@ In figure~\ref{fig:time_performance_hist} we report the histogram of the measure
 Histogram for values of the speed up given by \texttt{mlgw}, as compared with \texttt{TEOBResumS} model, computed on $N=2000$ test waveforms. Each WF is generated with random physical parameters and has a minimum frequency of $\SI{5}{Hz}$ (top panel) and $\SI{20}{Hz}$ (bottom panel).
 We set a constant total mass $M=\SI{100}{M_\odot}$ and the sampling rate $f_{sam} = \SI{2048}{Hz}$.
 We report the median value $q_{50\%}$ as well as the positions $q_{5\%}$ and $q_{95\%}$ of the 5th and 95th percentile.
-\sschmidt{Are you really sure that two peaks are fine?? Understand this...}
 }
 	\label{fig:time_performance_hist}
 \end{figure}
