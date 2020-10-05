@@ -123,8 +123,8 @@ if __name__=="__main__":
     handles = []
     O = cs.CosmologicalParameters(0.68,0.31,0.69,-1.0,0.0)
     for c, ls,e in zip(colors,line_style, events):
-        try:
-#        if 1:
+#        try:
+        if 1:
             print(os.path.join(path,e+'/Nested_sampler/posterior.dat'),c)
 #            BBH_file = '/Users/wdp/Desktop/GWTC-1_sample_release'+e.upper()+'_GWTC-1.hdf5'
 #            BBH = h5py.File(BBH_file, 'r')
@@ -153,8 +153,8 @@ if __name__=="__main__":
             X,Y, PDF =  twod_kde(p_SEOB['spin1'],p_SEOB['spin2'])
             levs = np.sort(FindHeightForLevel(np.log(PDF),[0.9]))
             ax4.contour(X,Y,np.log(PDF),levs, linestyles = (ls,ls), colors=(c,c,),linewidths=1.5)
-        except:
-            print(e+' posterior not found')
+#        except:
+#            print(e+' posterior not found')
 
     #fig1.legend(bbox_to_anchor=(.9, 0.5), loc='center left', borderaxespad=0.,fancybox=True,handles=handles)
     fig1.legend(bbox_to_anchor=(0.45, 0.2), loc='upper center', ncol=4, borderaxespad=0.,fancybox=True,handles=handles)
