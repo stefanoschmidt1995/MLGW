@@ -804,9 +804,9 @@ Since the waveform models we considered for the training only concern spin-align
 BBH waveforms, we do not analyze GW170817 but we only focus on the 10 BBH systems.
 We trained \texttt{mlgw} in the range $\mathcal{P} = [1,20]\times[-0.8,0.95]\times[-0.8,0.95]$ 
 and we set $\tau_{min} = \SI{4}{s/M_\odot}$.
-Our parameter estimation algorithm is \texttt{gwmodel}~\cite{} a publicly available infrastructure 
+Our parameter estimation algorithm is \texttt{gwmodel}~\cite{gwmodel} a publicly available infrastructure 
 written in a mixture of \texttt{Python} and \texttt{cython} that serves as interface for the parallel nested 
-sampling implementation \texttt{cpnest}~\cite{}. 
+sampling implementation \texttt{cpnest}~\cite{cpnest}. 
 The analysis of each BBH system is set up as follows; we choose a total of 2000 Live Points, f
 our parallel MCMC chains with a maximum length of 5000 steps to ensure that each successive 
 sample is independent of the previous. These settings yield an average of $\sim$ 15000 posterior samples and 
@@ -829,7 +829,7 @@ we employ the power spectral densities released as part of GWTC-1. No calibratio
 	produces the sharp cut in the two-dimensional $(m1,m2)$ distribution (shaded region). Lines of
 	constant mass ratio $q\equiv m_1/m_2$ are shown for $q=\{2,4,8\}$. Right panel: the mass $M_f$
 	and dimensionless spin magnitude $a_f$ of the final black holes. The differences with 
-	Fig.~\cite{fig:gwtc1-summary} above are practically negligible.}
+	Fig.~\ref{fig:gwtc1-summary} above are practically negligible.}
 	\label{fig:gwtc1-summary_seob}
 \end{figure*}
 
@@ -921,7 +921,7 @@ A few observation are in order. First of all, our results, obtained with both mo
 are extremely similar to what published by the LVK Collaboration. 
 This is reassuring as it validates both the WF model hereby presented 
 as well as the data analysis scheme and sampler 
-implemented\footnote{However, a full validation of the algorithm is presented in ~\cite{}.}.
+implemented\footnote{However, a full validation of the algorithm is presented in ~\cite{gwmodel}.}.
 There are however differences that are worth mentioning. The most striking is that
 {\it both} MLGW models tend to recover slightly larger masses and effective 
 spin variable, $\chi_{\rm eff}$, than what published Ref.~\cite{LIGOScientific:2018mvr}.

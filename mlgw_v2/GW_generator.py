@@ -791,6 +791,8 @@ mode_generator
 		new_amp = np.zeros((amp.shape[0], t_grid.shape[1]))
 		new_ph = np.zeros((amp.shape[0], t_grid.shape[1]))
 
+		prefactor = 4.7864188273360336e-20 # G/c^2*(M_sun/Mpc)
+
 		for i in range(amp.shape[0]):
 				#computing the true red grid
 			if align22:
@@ -799,7 +801,7 @@ mode_generator
 				interp_grid = np.divide(t_grid[i,:], m_tot_us[i])
 
 				#putting the wave on the user grid
-			new_amp[i,:] = np.interp(interp_grid, self.times, amp[i,:]* m_tot_us[i]/m_tot_std ,left = 0, right = 0) #set to zero outside the domain
+			new_amp[i,:] = np.interp(interp_grid, self.times, amp[i,:]* m_tot_us[i] ,left = 0, right = 0) #set to zero outside the domain
 			new_ph[i,:]  = np.interp(interp_grid, self.times, ph[i,:])
 
 				#warning if the model extrapolates outiside the grid
@@ -807,8 +809,9 @@ mode_generator
 				warnings.warn("Warning: time grid given is too long for the fitted model. Set 0 amplitude outside the fitting domain.")
 
 			#amplitude and phase of 22 mode (maximum of amp at t=0)
-		amp = new_amp
-		ph = new_ph #phase is zero when h_22 peaks (i.e. at t =0) - this is a feature of the dataset!!!
+		amp = prefactor*new_amp
+		ph = new_ph - new_ph[:,0] #phase is zero at the beginning of the WF
+				#It should be: phase is zero when h_22 peaks (i.e. at t =0) - but this is not trivial to enforce and I'm not sure it is worth the effort
 
 			#### Dealing with distance, inclination and phi_0
 		if out_type == 'ampph':
