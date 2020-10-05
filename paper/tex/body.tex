@@ -705,7 +705,7 @@ Note that the inverse mass ratio, $1/q$, is not listed in Ref.~\cite{LIGOScienti
 \begin{ruledtabular}
 
 \begin{tabular}{c|ccccc|ccccc|cccc}
-                              & \multicolumn{5}{c}{MLGW-{\tt TEOBResumS}} & \multicolumn{5}{c}{MLGW-{\tt SEOBNRv4}}  & \multicolumn{4}{c|}{GWTC-1}                                                \\ 
+                              & \multicolumn{5}{c}{\texttt{mlgw}-{\tt TEOBResumS}} & \multicolumn{5}{c}{\texttt{mlgw}-{\tt SEOBNRv4}}  & \multicolumn{4}{c|}{GWTC-1}                                                \\ 
                               \hline
 Event    & $m_1/M_\odot$ & $m_2/M_\odot$ & $\mathcal{M}/M_\odot$ & $1/q$ & $\chi_{eff}$& $m_1/M_\odot$ & $m_2/M_\odot$ & $\mathcal{M}/M_\odot$ & $1/q$ & $\chi_{eff}$  & $m_1/M_\odot$ & $m_2/M_\odot$ & $\mathcal{M}/M_\odot$ & $\chi_{\rm eff}$
 \\ \hline
@@ -761,7 +761,7 @@ GW170823 & $40.69_{-6.68}^{+10.21}$& $31.17_{-8.09}^{+7.13}$& $30.63_{-3.75}^{+5
 
 \section{Application to GWTC-1}
 \label{sec:GWTC1}
-We use the implementation of our MLGW-TEOBResumS and MLGW-SEOBNRv4 models 
+We use the implementation of our \texttt{mlgw}-{\tt TEOBResumS} and \texttt{mlgw}-{\tt SEOBNRv4} models 
 to provide a new, and independent, measure of the properties of the GW sources
 collected in GWTC-1, the first catalog of detected GW sources~\cite{LIGOScientific:2018mvr}.,
 corresponding to the first two observing runs of the LIGO and Virgo detectors.
@@ -833,7 +833,7 @@ the precessing models SEOBNRv3 and IMRPhenomPv2. Although the differences
 are, in general, negligible, still they highlight the differences in the physical input of 
 the waveform approximants. By contrast, it is remarkable the excellent agreement between the
 two waveform models, although the physical input and the analytical structure of the
-two models is rather different, especially in the spin sector~\cite{Rettegno:2019tzh}.
+two models are rather different, especially in the spin sector~\cite{Rettegno:2019tzh}.
 In this respect, we also note in passing that the spin posteriors of GW151012 have
 most of the support in the region when $s_1$ and $s_2$ are nonzero. This also
 reflects in the rather large value of $\chi_{\rm eff}\sim 0.53$, about one order of magnitude
@@ -848,14 +848,14 @@ The model consists of a PCA model to reduce the dimensionality of the 22 mode (d
 \par
 It is important to stress that our model is very simple, i.e. it has a very little number of trainable paramters and it is not expensive to train, and flexible, i.e. it works for a large range of paramters and for long waveforms.
 In \cite{Chua_2019}, a ML model for GW generation is built, with similar performances. However, the reduced dimension space is considerably larger ($O(200)$) than ours ($O(10)$).
-In \cite{Khan:2020fso}, the low dimensional space has a similar dimension $O(30)$ and the ML model achieves a similar performance in the time execution (when computed on a CPU). They manage to achieve a better accuracy $O(2\cdot10^{-5})$ but they generate significantly shorter WFs ($f_{min} = \SI{15}{Hz}$ for $M = \SI{60}{M_{\odot}}$ against $f_{min} \simeq \SI{2.5}{Hz}$) and employ a larger training time ($O(\SI{6}{hours})$ against $O(\SI{6}{minutes})$).
+In \cite{Khan:2020fso}, the low dimensional space has a similar dimension $O(30)$ and the ML model achieves a similar performance in the time execution (when computed on a CPU). They manage to achieve a better accuracy $O(2\cdot10^{-5})$ but they generate significantly shorter WFs ($f_{min} = \SI{15}{Hz}$ for $M = \SI{60}{M_{\odot}}$ against $f_{min} \simeq \SI{2.5}{Hz}$ for \texttt{mlgw}) and employ a larger training time ($O(\SI{6}{hours})$ against $O(\SI{6}{minutes})$).
 \par
 Remarkably, we discovered that a PCA is able to reproduce a high dimensional wave using a few number of variables.
 On the other hand, the MoE model is currently it is the ``bottleneck" of the model accuracy. For this reason, we explored several alternative regression methods, including neural networks, but none of them showed dramaticaly better performance: perhaps much more computational power and a larger training set are required to improve the fit performances any better.
 \par
 Despite this, our model shows excellent agreement with the underlying training set. At test time, the median mismatch is $\bar{\mathcal{F}}\sim 5 \cdot 10^{-4}$.
 Furthermore, a single WF generations takes $\SI{0.1}{}-\SI{5}{ms}$ (depending mostly on the number of grid points required by the user), which is a factor of $\sim 40$ faster than the underlying training model.
-\texttt{mlgw} slightly outperforms a ROM, which is currently the state-of-the-art for quick generation.
+\texttt{mlgw} slightly outperforms a ROM, which is currently close to the state-of-the-art for quick generation.
 \par
 Our ML framework allows for several generalization, which might build a more accurate WF generator.
 First of all, it is quite straightforward to include higher order modes (HMs) in the WF computation. Different regressions, each for each mode, might be done as we already did for the 22 mode. A future update of \texttt{mlgw} is in program.
@@ -869,7 +869,7 @@ Unfortunately, at the moment there are too few NR waveforms ($O(10^2)$) availabl
 training\footnote{At least $O(5\cdot 10^3)$ waveforms are required.}
 and the improvement shall wait until enough NR waveforms are available.
 Moreover, NR waveforms are too short to be used as they are and probably, an extension (e.g. by hybridization with EOB waveforms)
-towards the early inspiral is needed to compute any kind of NR-based surrogate model.
+towards the early inspiral is needed to compute any kind of NR-based ML model.
 \par
 Lastly, we expect our ML approach to work for every kind of source for which a training set of 
 waveforms is available. Machine learning models to generate WFs might be crucial in 
@@ -882,7 +882,7 @@ Our work opens up interesting opportunities in GW data analysis (seaches and par
 
 Due to its speed, \texttt{mlgw} could be employed for a systematic comparison between different waveform models, directly on data.
 By training (and the training procedure is also quick) \texttt{mlgw} with different waveform models, it will be possible to compare their predictions on several observed events. This could allow to detect systematic biases or to prefer a model over another by means of Bayesian model selection (i.e. by comparing different model evidences).
-We started this program by analysing GWTC-1 with \texttt{mlgw} trained on \texttt{TEOBResumS} and highlited some differences in the predictions as compared to the published results (see section \ref{sec:GWTC1}). Future work might repeat such an analysis on other models or with more observations.
+We started this program by analysing GWTC-1 with \texttt{mlgw} trained on \texttt{TEOBResumS} and \texttt{SEOBNRv4} and highlited some differences in the predictions as compared to the published results (see section \ref{sec:GWTC1}). Future work might repeat such an analysis on other EOB models or with more observations.
 \par
 Furthermore, as shown in fig.~\ref{fig:time_performance_hist}, the model is most useful whenever a long waveform is required: in such case, the speed-up gets even more substantial.
 This is crucial for the detection of low frequency signals, as is the case for ET. The analysis of such signals can be performed in the same time required to deal with shorter signals: it will become feasible, even with a small amount of resourches, \textit{without any loss of WF quality}.
@@ -895,7 +895,7 @@ could give an advantage on the parameter estimation procedure by using the Hamil
 HM \cite{betancourt2017hamiltonianMC}~\cite{Porter2014Hamiltonian_MonteCarlo} is a variant of Markov chain Montecarlo, which employs gradients of the likelihood (which depends on the gradient of the waveform) to perform an effective sampling of the posterior distibution. The sampling chain conveges faster to the steady state by ``find quickly" the high density regions, thus offering a speed up of the PE.
 \par
 Another option, so far never explored, is to use the gradients of the WF for a fast exploration of the likelihood landscape. With any gradient based optimizer, it should be easy to jump to a \textit{local} maximum of the likelihood. Such information might be helpful to reliably locate a \textit{global} maximum of the likelihood.
-The ability to quickly locate a global maximum could speed up the searches and the parameter estimation.
+Such ability could speed up the searches and the parameter estimation.
 \par
 \sschmidt{Frase a effetto finale??}
 
