@@ -2,6 +2,7 @@
 The detection of Gravitational Waves (GW) from compact binary coalescences (CBC) has been possible thanks to the joint effort of a number of different fields of expertise, all joining together to achieve the sophisticated detection process. GW data analysis concerns the detection of a GW signal hidden in the raw detector output (\textit{matched filtering}) and subsequently the inference of its physical properties (\textit{parameter estimation}). In order to accomplish its goal, GW data analysis relies on the availability of waveform (WF) templates to compare with the detector output.
 To accurately explore the posterior distribution for the parameters defining a CBC, state-of-the-art parameter estimation (PE) algorithms~\cite{Aasi:2013jjl}~\cite{Veitch2014wba} can require the generation of as many as $10^7$ waveform templates. It is therefore paramount for the waveform generation to be as fast as possible. At the same time, because of the extreme sensitivity to phase differences in the likelihood  function, 
 the templates must retain a high degree of accuracy to avoid biases in the posterior exploration.
+\par
 Many efforts have been devoted to numerically solve Einstein equations for two coalescing objects and 
 to predict the gravitational radiation emitted~\cite{Boyle:2019kee,Healy:2019jyf,Healy:2020vre}.
 As solving the full equations is still extremely computationally challenging, the LIGO-Virgo Collaboration 
@@ -34,43 +35,40 @@ A Machine Learning model is a promising alternative to accelerate the
 waveforms generation of state-of-the-art models.
 Machine Learning (ML) is a branch of statistics that is devoted to reproduce patterns read from data. 
 A ML algorithm needs very little human input and, by automatically solving an optimization problem, 
-it is able to choose the best performing element among a large  class of parametric models for the solution. 
+it is able to choose the best performing element among a large class (i.e. the \textit{model}) of parametric solutions. 
 This is the so-called training procedure. 
 The ML flexibility in modeling data and reproducing trends is appealing: with a proper model choice 
 and with an appropriate training procedure, we can hope to have a reliable, fast to execute generator 
-of GW waveforms, while retaining the accuracy necessary for robust parameter estimation. 
-ML procedures have been applied so far to Numerical Relativity 
-waveform
-data~\cite{Gabbard:2017lja,George:2017pmj,George:2017vlv,Rebei:2018lzh,Khan:2020foe}.
-%
-\BS{[check
-    carefully  refs, I think there are more][also note the Gabbard
-    paper uses EOB not NR, I am not sure of the sentence ``ML is
-    applied so far to NR'']}
-%
-The construction of a NR-trained ML waveform model is currently missing except for a very 
-restricted region of the parameter space (nonspinning etc.). The main problem behind this is 
-because of the absence of a large set of NR simulations ($\simeq 10^{3}$) that would be 
-needed to train such an algorithm.
+of GW waveforms, while retaining the accuracy necessary for robust parameter estimation.
+ML procedures have already been succesfully exploited for speeding up the WF generation~\cite{Khan:2020fso, Chua_2019}
+and for signal detection and/or parameter estimation~\cite{Gabbard:2017lja,George:2017pmj,George:2017vlv,Rebei:2018lzh,Khan:2020foe}.
 
-By contrast, an EOB model, informed by NR simulations and test-mass regime, does not 
-have such drawback since it is designed to generate waveforms all over the BBH parameter space. 
-One has indeed to remember that, although NR-informed EOB models are {\it checked} 
-only on the part of the parameter space covered by NR simulations, 
-they are also typically able to robustly generate waveforms 
-outside this NR-information domain (e.g. large mass ratios and
-spins). 
-%
-This is, for example, the case of the most recent avatar of 
+%The construction of a NR-trained ML waveform model is currently missing except for a very restricted region of the parameter space (nonspinning etc.). The main problem behind this is because of the absence of a large set of NR simulations ($\simeq 10^{3}$) that would be needed to train such an algorithm.
+\par
+In this work, we explore the application of ML to WF generation and we build a ML model that allows to reproduce waveforms from any EOB model for BBH coalescence. We demonstrate that such ML-based model can generate 
+GW signals significantly faster than the original model, 
+matching the performances of a Reduced Order Modelling 
+(ROM)~\cite{Purrer:2015tud,Bohe:2016gbl,Purrer:2017str}.  
+At the same time it shows a good agreement with the train model, at the $10^{-3}$ level when averaged on the whole parameter space.
+For simplicity, we focus here only on the 
+dominant $\ell=m=2$ quadrupole waveform and we only consider the align spin case.
+
+EOB models are the ideal candidate for training our ML model: they are moderatly fast to run and, although they are {\it checked}
+(i.e. NR-informed) only on the part of the parameter space covered by NR simulations, 
+they are also typically able to robustly generate waveforms in a large set
+outside the NR-information domain (e.g. large mass ratios and
+spins).
+This is the case of the most recent avatar of 
 the spin-aligned \texttt{TEOBResumS}~\cite{Nagar:2018zoe} model, 
-that incorporates subdominant waveform modes,  \texttt{TEOBResumS\_SM}~\cite{Nagar:2019wds,Nagar:2020pcj}. 
+that incorporates subdominant waveform modes, \texttt{TEOBResumS\_SM}~\cite{Nagar:2019wds,Nagar:2020pcj}. 
 \footnote{This model used several hundreds of the available SXS simulations to inform a highly accurate description 
 of the postmerger-ringdown phase~\cite{Damour:2014yha}, but 
 only around 40 datasets to improve the behavior of the analytical EOB dynamics, 
 suitably modifying the analytical orbital and spin-orbit interaction.}
 Another important family of EOB models is the \texttt{SEOBNR} \cite{Taracchini:2013rva,Bohe:2016gbl} family, largely employed by the LIGO-Virgo collaborarion.
+We use both \texttt{TEOBResumS\_SM} and \texttt{SEOBNRv2}/\texttt{v4} to train different versions of the model.
 \par
-
+\iffalse
 Thus, EOB models are ideal for training a ML model, beacause, at moderate computational cost, they generate waveforms covering a large region of the parameter space.
 For simplicity, we focus here only on the 
 dominant $\ell=m=2$ quadrupole waveform. 
@@ -80,19 +78,22 @@ matching the performances of a Reduced Order Modelling
 (ROM)~\cite{Purrer:2015tud,Bohe:2016gbl,Purrer:2017str}.  
 At the same time it keeps the same accuracy of the underlying 
 training model.
-For the training purpose, we employed, in different versions of the model, both \texttt{TEOBResumS\_SM} and \texttt{SEOBNRv2}/\texttt{v4}.
+
 %\footnote{Let us note, in passing, that the ML framework 
 %is completely general and it works for any EOB model; indeed 
 %a successful ML model was trained using also the \texttt{SEOBNRv2} 
 %waveform model~\cite{Taracchini:2013rva}.}.
-
-As a relevant physical application, we use the our ML model \texttt{mlgw}, trained on \texttt{TEOBResumS} model, 
+\fi
+As a relevant physical application, we use the our model \texttt{mlgw}
 to provide a completely new, and independent, analysis of the 10 BBHs 
 coalescence events collected in the O1/O2 LIGO-Virgo observing 
 runs~\cite{LIGOScientific:2018mvr}.
-The physical parameters we find are 
+To asses any difference between \texttt{TEOBResumS} and \texttt{SEOBNRv4}, we perform two separate analysis of the catalog, using two different version of \texttt{mlgw}, trained on the two EOB models.
+The analysis does not show large disagreement between the two versions of \texttt{mlgw}.
+Furthermore, the physical parameters we find are 
 compatible with previous analyses obtained with different 
 models~\cite{LIGOScientific:2018mvr}.
+
 %
 On top of the specific application discussed here, our ML waveform model could also be used directly 
 to speed up GW data analysis.
@@ -240,7 +241,7 @@ where $X_{i:}$ denotes the i-th row of the dataset matrix.
 \par
 The dataset is filled with random values of parameters ${\tilde{\boldsymbol{\vartheta}}}_i \sim \textrm{Unif}(\mathcal{P})$
 \footnote{We denote by $\textrm{Unif}(\mathcal{P})$ a uniform probability distribution on the set $\mathcal{P}$.}.
-As stressed above, any time domain waveform model is suitable for such purpose. Indeed we employed succesfully both \texttt{TEOBResumS} and \texttt{SEOBNRv2}/\texttt{v4}.
+As stressed above, any time domain EOB waveform model is suitable for such purpose. Indeed we employed succesfully both \texttt{TEOBResumS} and \texttt{SEOBNRv2}/\texttt{v4}.
 The output of the training model must be interpolated to the chosen time grid.
 \par
 It is important to ensure that all waves have zero phase at a constant
@@ -341,7 +342,9 @@ Note that equation \ref{eq:model} can be used to compute a closed form expressio
 \section{Model performance}
 \label{sec:performance}
 We now discuss some tests on our model. We first study how its performance depends on the choice of hyperparameters. Furthermore, we assess the model accuracy and its limitations.
-Finally, we measure the speed up provided by our model as compared with training \texttt{TEOBResumS} model.
+Finally, we measure the speed up provided by our model as compared with training EOB model.
+For our tests, we train our model with \texttt{TEOBResumS}. Very similar results are obtained for a model trained on \texttt{SEOBNRv4}.
+\par
 As it is common, we measure the similarity between two waves by means of the \textit{optimal mismatch}:
 \begin{align}
 	\bar{\mathcal{F}}[h_1,h_2] &\equiv 1- \frac{\langle h_1, h_2 \rangle}{\sqrt{\langle h_1, h_1 \rangle \langle h_2, h_2 \rangle}}	\label{eq:mismatch_def}
@@ -482,7 +485,6 @@ To understand better model performances, it is interesting to display the accura
 We generate waves for randomly chosen values of $\vartheta = (q, M, s_1, s_2)$ and, for each wave, we measure test mismatch $\mathcal{F}$ and mse on the reconstruction of the first PC for the phase.
 The latter is useful to test the accuracy of the fit before wave reconstruction.
 The results are reported in the contour plots in figure \ref{fig:countour}.
-\sschmidt{Probably the comments below are not really interesting...}
 \par
 
 %%
@@ -541,22 +543,15 @@ Each wave starts $\SI{8}{s}$ before merger.
 }
 	\label{fig:countour}
 \end{figure}
-%\clearpage
 }
 %%%
-\par
+The model shows poor performances ($\mathcal{F} \sim 10^{-3}$) for ${q\simeq 1}$ and for high (positive) values of $s_1+s_2$.
 By looking at the top line of \ref{fig:countour}, we note that the mse does not depend on $M$. This was to be expected because the total mass dependence is inserted analytically within the model.
-We note also that both $\mathcal{F}$ and mse depend (quite strongly) on $q$: for $q\simeq 1$ the fit tends to be less reliable.
-\par
-In the center line of \ref{fig:countour}, we displayed the dependence on spins.
-As long as the $s_1$ dependence is considered, the most striking feature is the inverse correlation of mismatch and mse for the first phase PC.
+In the center line of \ref{fig:countour}, as long as the $s_1$ dependence is considered, the most striking feature is the inverse correlation of mismatch and mse for the first phase PC.
 This means that, being non-leading, spin contribution are not important for the first PC but become dominant at higher order of PCs.
-Indeed, the values of the first PC are well correlated with mismatch in the case of $q$. See~\cite{Ohme2013PCA_GW} for a closely related discussion on PCA components and its dependence on physical parameter.
-\par
-Apart from this feature, we note that the mismatch tends to grow much for large (positive) values of $s_1+s_2$: this is expected based on the features of the underlying model.
-\par
-In the third row of \ref{fig:countour}, we displayed the dependence on $q$ and $s_1$, the variables on which the error depends more.
-We note again the inverse correlation between the mismatch and mse, when considering the $s_1$ dependence.
+Indeed, the values of the first PC are well correlated with mismatch in the case of $q$
+\footnote{See~\cite{Ohme2013PCA_GW} for a closely related discussion on PCA components and its dependence on physical parameter.}.
+In the third row of \ref{fig:countour}, the inverse correlation between the mismatch and mse can be noted again.
 %%%%%%%%%%%%%%%%%%
 %%%%%%%%%%%%%%%
 \subsection{Runtime analysis} \label{sec:runtime}
@@ -708,35 +703,6 @@ slightly larger than the published LVC ones obtained using different waveform mo
 Note that the inverse mass ratio, $1/q$, is not listed in Ref.~\cite{LIGOScientific:2018mvr}.}
 \label{tab:summary}
 \begin{ruledtabular}
-	%old table
-\iffalse
-\begin{tabular}{cccccccccc}
-                              & \multicolumn{5}{c}{MLGW-{\tt TEOBResumS}}                                                   & \multicolumn{4}{c|}{GWTC-1}                                                \\ 
-                              \hline
-Event    & $m_1/M_\odot$ & $m_2/M_\odot$ & $\mathcal{M}/M_\odot$ & $1/q$ & $\chi_{eff}$ & $m_1/M_\odot$ & $m_2/M_\odot$ & $\mathcal{M}/M_\odot$ & $\chi_{\rm eff}$
-\\ \hline
-\vspace{1.0 mm}
-GW150914 & $36.36_{-2.64}^{+4.72}$& $32.64_{-4.44}^{+2.93}$& $29.87_{-1.50}^{+1.95}$& $0.91_{-0.21}^{+0.08}$& $0.14_{-0.10}^{+0.10}$& $35.6_{-3.1}^{+4.7}$&   $30.6_{-4.4}^{+3.0}$& $28.6_{-1.5}^{+1.7}$& $-0.01_{-0.13}^{+0.12}$\\
-\vspace{1.0 mm}
-GW151012 & $34.51_{-14.46}^{+21.37}$& $11.67_{-4.46}^{+6.92}$& $16.86_{-2.68}^{+3.01}$& $0.33_{-0.19}^{+0.56}$& $0.53_{-0.33}^{+0.20}$&   $23.2_{-5.5}^{+14.9}$            &   $13.6_{-4.8}^{+4.1}$            &  $15.2_{-1.2}^{+2.1}$                     &  $0.05_{-0.2}^{+0.32}$              \\
-\vspace{1.0 mm}
-GW151226 & $16.44_{-5.52}^{+12.15}$& $6.38_{-2.18}^{+2.86}$& $8.72_{-0.27}^{+0.45}$& $0.39_{-0.24}^{+0.45}$& $0.32_{-0.14}^{+0.24}$&   $13.7_{-3.2}^{+8.8}$            & $7.7_{-2.5}^{+2.2}$               &  $8.9_{-0.3}^{+0.3}$                     & $0.18_{-0.12}^{+0.20}$              \\
-\vspace{1.0 mm}
-GW170104 & $31.16_{-4.77}^{+10.55}$& $22.69_{-6.91}^{+4.70}$& $22.83_{-2.06}^{+2.64}$& $0.74_{-0.35}^{+0.23}$& $0.23_{-0.15}^{+0.15}$&  $30.8_{-5.6}^{+7.3}$             & $20.0_{-4.6}^{+4.9}$              & $21.4_{-1.8}^{2.2}$                       &  $-0.04_{-0.21}^{+0.17}$             \\
-\vspace{1.0 mm}
-GW170608 & $15.45_{-5.05}^{+7.60}$& $5.61_{-1.50}^{+2.32}$& $7.90_{-0.17}^{+0.25}$& $0.36_{-0.18}^{+0.40}$& $0.25_{-0.17}^{+0.20}$&  $11.0_{-1.7}^{+5.5}$             & $7.6_{-2.2}^{+1.4}$              &      $7.9_{-0.2}^{+0.2}$                  &    $0.03_{-0.07}^{+0.19}$           \\
-\vspace{1.0 mm}
-GW170729 & $50.04_{-9.98}^{+13.97}$& $34.78_{-9.73}^{+9.78}$& $35.73_{-5.08}^{+7.08}$& $0.71_{-0.28}^{+0.26}$& $0.51_{-0.23}^{+0.18}$&  $50.2_{-10.2}^{+16.2}$             &  $34.0_{-10.0}^{+9.1}$             & $35.4_{-4.8}^{6.5}$                      &  $0.37_{-0.25}^{+0.21}$              \\
-\vspace{1.0 mm}
-GW170809 & $35.35_{-5.43}^{+8.88}$& $25.17_{-5.91}^{+4.81}$& $25.69_{-1.74}^{+2.35}$& $0.72_{-0.27}^{+0.25}$& $0.24_{-0.14}^{+0.16}$&    $35.0_{-5.9}^{+8.3}$           &                 $23.8_{-5.2}^{+5.1}$                     &  $24.9_{-1.7}^{+2.1}$   & $0.08_{-0.17}^{+0.17}$             \\
-\vspace{1.0 mm}
-GW170814 & $31.35_{-3.48}^{+10.70}$& $25.24_{-6.40}^{+3.16}$& $24.40_{-1.29}^{+1.50}$& $0.81_{-0.36}^{+0.17}$& $0.19_{-0.11}^{+0.12}$&  $30.6_{-3.0}^{+5.6}$             &               $25.2_{-4.0}^{+2.8}$&   $24.1_{-1.1}^{+1.4}$                    &   $0.06_{-0.12}^{+0.12}$           \\
-\vspace{1.0 mm}
-GW170818 &$34.62_{-5.18}^{+11.61}$& $27.09_{-7.80}^{+5.59}$& $26.34_{-2.77}^{+4.03}$& $0.80_{-0.37}^{+0.18}$& $0.28_{-0.19}^{+0.20}$&   $35.4_{-4.7}^{+7.5}$            &               $26.7_{-5.2}^{+4.3}$& $26.5_{-1.7}^{+2.1}$                      &  $-0.09_{-0.21}^{+0.18}$            \\
-\vspace{1.0 mm}
-GW170823 & $40.69_{-6.68}^{+10.21}$& $31.17_{-8.09}^{+7.13}$& $30.63_{-3.75}^{+5.01}$& $0.78_{-0.30}^{+0.19}$& $0.31_{-0.20}^{+0.18}$&  $39.5_{-6.7}^{+11.2}$             &               $29.0_{-7.8}^{+6.7}$&   $29.2_{-3.6}^{+4.6}$                    &    $0.09_{-0.26}^{+0.22}$          \\
-\end{tabular}
-\fi
 
 \begin{tabular}{c|ccccc|ccccc|cccc}
                               & \multicolumn{5}{c}{MLGW-{\tt TEOBResumS}} & \multicolumn{5}{c}{MLGW-{\tt SEOBNRv4}}  & \multicolumn{4}{c|}{GWTC-1}                                                \\ 
@@ -804,9 +770,9 @@ Since the waveform models we considered for the training only concern spin-align
 BBH waveforms, we do not analyze GW170817 but we only focus on the 10 BBH systems.
 We trained \texttt{mlgw} in the range $\mathcal{P} = [1,20]\times[-0.8,0.95]\times[-0.8,0.95]$ 
 and we set $\tau_{min} = \SI{4}{s/M_\odot}$.
-Our parameter estimation algorithm is \texttt{gwmodel}~\cite{} a publicly available infrastructure 
+Our parameter estimation algorithm is \texttt{gwmodel}~\cite{gwmodel} a publicly available infrastructure 
 written in a mixture of \texttt{Python} and \texttt{cython} that serves as interface for the parallel nested 
-sampling implementation \texttt{cpnest}~\cite{}. 
+sampling implementation \texttt{cpnest}~\cite{cpnest}. 
 The analysis of each BBH system is set up as follows; we choose a total of 2000 Live Points, f
 our parallel MCMC chains with a maximum length of 5000 steps to ensure that each successive 
 sample is independent of the previous. These settings yield an average of $\sim$ 15000 posterior samples and 
@@ -829,77 +795,10 @@ we employ the power spectral densities released as part of GWTC-1. No calibratio
 	produces the sharp cut in the two-dimensional $(m1,m2)$ distribution (shaded region). Lines of
 	constant mass ratio $q\equiv m_1/m_2$ are shown for $q=\{2,4,8\}$. Right panel: the mass $M_f$
 	and dimensionless spin magnitude $a_f$ of the final black holes. The differences with 
-	Fig.~\cite{fig:gwtc1-summary} above are practically negligible.}
+	Fig.~\ref{fig:gwtc1-summary} above are practically negligible.}
 	\label{fig:gwtc1-summary_seob}
 \end{figure*}
 
-%%%%%%%%%OLD SEOB TABLE
-\iffalse
-\begin{table}[t]
-\centering
-\caption{Summary table for the inferred intrinsic parameters from a different MLGW model obtained using  {\tt SEOBNRv4} as training,
-spin-aligned, waveform model~\cite{Bohe:2016gbl} on the released GWTC-1 data. All mass parameters quoted are computed in the 
-source frame. The results are very consistent with those obtained using {\tt TEOBResumS} listed in Table~\ref{tab:summary} and similarly
-slightly larger than the published LVC ones obtained using different waveform models.
-\sschmidt{I removed the 1/q column so the table would fit in a single column. Is it ok? The old table is commented, just in case...}
-} 
-\label{tab:summary_seob}
-\begin{ruledtabular}
-
-\begin{tabular}{cccccc}
-Event    & $m_1/M_\odot$ & $m_2/M_\odot$ & $\mathcal{M}/M_\odot$ & $\chi_{\rm eff}$ \\ \hline
-\vspace{1.0 mm}
-GW150914& $36.09_{-2.58}^{+4.89}$& $32.55_{-4.37}^{+2.80}$& $29.70_{-1.36}^{+1.95}$& $0.10_{-0.08}^{+0.09}$ \\
-\vspace{1.0 mm}
-GW151012& $32.54_{-12.12}^{+20.08}$& $12.18_{-4.50}^{+6.44}$& $16.96_{-2.84}^{+2.67}$& $0.53_{-0.32}^{+0.19}$\\
-\vspace{1.0 mm}
-GW151226& $16.35_{-5.61}^{+12.60}$& $6.36_{-2.22}^{+2.98}$& $8.69_{-0.27}^{+0.41}$& $0.31_{-0.15}^{+0.24}$\\
-\vspace{1.0 mm}
-GW170104& $30.45_{-4.56}^{+10.49}$& $22.82_{-7.00}^{+4.43}$& $22.64_{-1.89}^{+2.51}$& $0.19_{-0.14}^{+0.15}$\\
-\vspace{1.0 mm}
-GW170608& $15.53_{-5.25}^{+8.17}$& $5.58_{-1.57}^{+2.44}$& $7.89_{-0.18}^{+0.25}$& $0.24_{-0.18}^{+0.21}$\\
-\vspace{1.0 mm}
-GW170729& $48.51_{-9.62}^{+14.22}$& $34.80_{-9.01}^{+9.26}$& $35.34_{-4.89}^{+6.88}$& $0.48_{-0.24}^{+0.20}$\\
-\vspace{1.0 mm}
-GW170809& $34.57_{-5.12}^{+7.91}$& $25.23_{-5.47}^{+4.49}$& $25.42_{-1.62}^{+2.41}$& $0.20_{-0.13}^{+0.16}$\\
-\vspace{1.0 mm}
-GW170814& $31.53_{-3.73}^{+11.14}$& $24.87_{-6.49}^{+3.29}$& $24.25_{-1.31}^{+1.46}$& $0.15_{-0.10}^{+0.11}$\\
-\vspace{1.0 mm}
-GW170818& $34.57_{-5.52}^{+11.40}$& $26.94_{-7.67}^{+5.65}$& $26.21_{-2.82}^{+4.32}$& $0.25_{-0.17}^{+0.20}$\\
-\vspace{1.0 mm}
-GW170823& $40.66_{-6.67}^{+10.11}$& $30.91_{-7.44}^{+6.72}$& $30.52_{-3.59}^{+5.09}$& $0.28_{-0.18}^{+0.19}$\\
-\end{tabular}
-
-%the old table commented
-\iffalse
-\begin{tabular}{cccccc}
-Event    & $m_1/M_\odot$ & $m_2/M_\odot$ & $\mathcal{M}/M_\odot$ & $1/q$ & $\chi_{\rm eff}$ \\ \hline
-\vspace{1.0 mm}
-GW150914& $36.09_{-2.58}^{+4.89}$& $32.55_{-4.37}^{+2.80}$& $29.70_{-1.36}^{+1.95}$& $0.91_{-0.21}^{+0.08}$& $0.10_{-0.08}^{+0.09}$ \\
-\vspace{1.0 mm}
-GW151012& $32.54_{-12.12}^{+20.08}$& $12.18_{-4.50}^{+6.44}$& $16.96_{-2.84}^{+2.67}$& $0.37_{-0.21}^{+0.50}$& $0.53_{-0.32}^{+0.19}$\\
-\vspace{1.0 mm}
-GW151226& $16.35_{-5.61}^{+12.60}$& $6.36_{-2.22}^{+2.98}$& $8.69_{-0.27}^{+0.41}$& $0.39_{-0.25}^{+0.48}$& $0.31_{-0.15}^{+0.24}$\\
-\vspace{1.0 mm}
-GW170104& $30.45_{-4.56}^{+10.49}$& $22.82_{-7.00}^{+4.43}$& $22.64_{-1.89}^{+2.51}$& $0.76_{-0.37}^{+0.22}$& $0.19_{-0.14}^{+0.15}$\\
-\vspace{1.0 mm}
-GW170608& $15.53_{-5.25}^{+8.17}$& $5.58_{-1.57}^{+2.44}$& $7.89_{-0.18}^{+0.25}$& $0.36_{-0.19}^{+0.42}$& $0.24_{-0.18}^{+0.21}$\\
-\vspace{1.0 mm}
-GW170729& $48.51_{-9.62}^{+14.22}$& $34.80_{-9.01}^{+9.26}$& $35.34_{-4.89}^{+6.88}$& $0.73_{-0.27}^{+0.24}$& $0.48_{-0.24}^{+0.20}$\\
-\vspace{1.0 mm}
-GW170809& $34.57_{-5.12}^{+7.91}$& $25.23_{-5.47}^{+4.49}$& $25.42_{-1.62}^{+2.41}$& $0.73_{-0.26}^{+0.23}$& $0.20_{-0.13}^{+0.16}$\\
-\vspace{1.0 mm}
-GW170814& $31.53_{-3.73}^{+11.14}$& $24.87_{-6.49}^{+3.29}$& $24.25_{-1.31}^{+1.46}$& $0.79_{-0.36}^{+0.18}$& $0.15_{-0.10}^{+0.11}$\\
-\vspace{1.0 mm}
-GW170818& $34.57_{-5.52}^{+11.40}$& $26.94_{-7.67}^{+5.65}$& $26.21_{-2.82}^{+4.32}$& $0.80_{-0.36}^{+0.18}$& $0.25_{-0.17}^{+0.20}$\\
-\vspace{1.0 mm}
-GW170823& $40.66_{-6.67}^{+10.11}$& $30.91_{-7.44}^{+6.72}$& $30.52_{-3.59}^{+5.09}$& $0.77_{-0.27}^{+0.20}$& $0.28_{-0.18}^{+0.19}$\\
-\end{tabular}
-\fi
-\end{ruledtabular}
-\end{table}
-\fi
-%%%%%%%OLD SEOB TABLE (REMOVED)
 
 \begin{figure*}[t]
 	\centering
@@ -909,19 +808,22 @@ GW170823& $40.66_{-6.67}^{+10.11}$& $30.91_{-7.44}^{+6.72}$& $30.52_{-3.59}^{+5.
 	The contours enclose the $90\%$ credible regions.}
 	\label{fig:gwtc1_eob_spins}
 \end{figure*}
-Figure~\ref{fig:gwtc1-summary}, \ref{fig:gwtc1-summary_seob} and Table~\ref{tab:summary} summarize the results
-with {\tt TEOBResumS} and with {\tt SEOBNRv4}. In addition, posteriors for the individual dimensionless
-spin magnitudes are shown in Fig.~\ref{fig:gwtc1_eob_spins}. The tables exclusively report
+Table~\ref{tab:summary} summarize the results with {\tt TEOBResumS} and with {\tt SEOBNRv4}.
+The tables exclusively report
 summary statistic for the intrinsic parameters. All mass parameters quoted are in the source frame. 
 The redshift of each BBH is estimated from its luminosity distance posterior and 
-converted into a redshift by assuming the cosmological parameters given in Ref.~\cite{}.
+converted into a redshift by assuming the cosmological parameters given in Ref.~\cite{Aghanim:2018eyx}.
 The second part of Table~\ref{tab:summary} also lists, for convenience, the results
 published in the GWTC-1 catalog paper~\cite{LIGOScientific:2018mvr}.
+In addition, posteriors for the individual masses, final masses and spins and dimensionless
+spin magnitudes are shown in Figs.~\ref{fig:gwtc1-summary}, \ref{fig:gwtc1-summary_seob} and \ref{fig:gwtc1_eob_spins}
+for both the models.
+\par 
 A few observation are in order. First of all, our results, obtained with both models,
 are extremely similar to what published by the LVK Collaboration. 
 This is reassuring as it validates both the WF model hereby presented 
 as well as the data analysis scheme and sampler 
-implemented\footnote{However, a full validation of the algorithm is presented in ~\cite{}.}.
+implemented\footnote{However, a full validation of the algorithm is presented in ~\cite{gwmodel}.}.
 There are however differences that are worth mentioning. The most striking is that
 {\it both} MLGW models tend to recover slightly larger masses and effective 
 spin variable, $\chi_{\rm eff}$, than what published Ref.~\cite{LIGOScientific:2018mvr}.
