@@ -21,11 +21,6 @@ import matplotlib.pyplot as plt #debug
 import warnings
 
 ################# Overlap related stuff
-def get_low_high_freq_index(flow, fhigh, df):
-	kmin = int(flow / df)
-	kmax = int(fhigh / df)
-	return kmin, kmax
-
 def overlap(amp_1, ph_1, amp_2, ph_2, df, low_freq = None, high_freq = None, PSD = None):
 		#it works only for input shapes (D,)
 	w1 = amp_1*np.exp(1j*ph_1)
@@ -146,13 +141,6 @@ compute_optimal_mismatch
 	overlap = np.divide(scalar(h1,(h2.T*np.exp(1j*phi_optimal)).T), norm_factor)
 	overlap = overlap.real
 
-		#debug
-	#plt.plot(np.linspace(0,h1.shape[1],h1.shape[1]),np.squeeze(h1))
-	#plt.plot(np.linspace(0,h1.shape[1],h1.shape[1]),np.squeeze(h2)*np.exp(1j*phi_optimal))
-	#print(1-overlap, overlap)
-	#plt.show()
-
-
 	if return_F:
 		return 1-overlap, phi_optimal
 	if not return_F:
@@ -162,7 +150,7 @@ compute_optimal_mismatch
 
 ################# Dataset related stuff
 
-def create_dataset_TD(N_data, N_grid, filename = None,  t_coal = 0.5, q_range = (1.,5.), m2_range = None, s1_range = (-0.8,0.8), s2_range = (-0.8,0.8), t_step = 1e-5, approximant = "SEOBNRv2_opt", alpha = 0.35, path_TEOBResumS = None):
+def create_dataset_TD_TEOBResumS(N_data, N_grid, mode = [(2,2)],filename = None,  t_coal = 0.5, q_range = (1.,5.), m2_range = None, s1_range = (-0.8,0.8), s2_range = (-0.8,0.8), t_step = 1e-5, alpha = 0.35, path_TEOBResumS = None):
 	"""
 create_dataset_TD
 =================
@@ -175,11 +163,12 @@ create_dataset_TD
 	This routine add N_data data to filename if one is specified (if file is not empty it must contain data with the same N_grid); otherwise the datasets are returned as np vectors. 
 	All the waves are evaluated at a constant distance of 1Mpc. Values of q and m2 as well as spins are drawn randomly in the range given by the user: it holds m1 = q *m2 M_sun.
 	The waveforms are computed with a time step t_step; starting from a frequency f_min (set by the routine according to t_coal and m_tot). Waves are given in a rescaled time grid (i.e. t/m_tot) with N_grid points: t=0 occurs when at time of maximum amplitude. A higher density of grid points is placed in the post merger phase.
-	Dataset can be generated either with a lal method (the approximant should be specified by the approximant keyword) either with an implementation of TEOBResumS (in this case a path to a local installation of TEOBResumS should be provided). If lal is used, lalsuite package shall be installed (note that lalsuite is not a prerequisite for mlgw)
+	Dataset is generated either with an implementation of TEOBResumS (a path to a local installation of TEOBResumS should be provided).
 	Dataset can be loaded with load_dataset.
 	Input:
 		N_data				size of dataset
 		N_grid				number of grid points to evaluate
+		mode (l,m)			mode to generate and fill the dataset with				
 		filename			name of the file to save dataset in (If is None, nothing is saved on a file)
 		t_coal				time to coalescence to start computation from (measured in reduced grid)
 		q_range				tuple with range for random q values. if single value, q is kept fixed at that value
@@ -232,9 +221,18 @@ create_dataset_TD
 	else:
 		D_theta = 3
 
+	if not isinstance(mode,tuple):
+		raise TypeError("Wrong kind of mode {} given. Expected a tuple (l,m)".format(mode))
+	modes = [mode]
+	modes_to_k = lambda modes:[int(x[0]*(x[0]-1)/2 + x[1]-2) for x in modes] # [(l,m)] -> [k]
+	k_modes = modes_to_k(modes)
+	print("Generating mode: "+str(modes[0]))
+
 		#creating time_grid
-	t_end = 5.2e-4 #estimated maximum time for ringdown: WF will be killed after that time
-	#t_end = 6e-5 #ONLY FOR mode = 3 (very ugly here...)
+	if modes == [(2,2)]:
+		t_end = 5.2e-4 #estimated maximum time for ringdown: WF will be killed after that time
+	else:
+		t_end = 1e-4 #only for HMs. You should find a better way to set this number...
 	time_grid = np.linspace(-np.power(np.abs(t_coal), alpha), np.power(t_end, alpha), N_grid)
 	time_grid = np.multiply( np.sign(time_grid) , np.power(np.abs(time_grid), 1./alpha))
 
@@ -297,34 +295,10 @@ create_dataset_TD
 		f_min = .9* ((151*(t_coal_freq)**(-3./8.) * (((1+q)**2)/q)**(3./8.))/(m1+m2))
 		 #in () there is the right scaling formula for frequency in order to get always the right reduced time
 		 #this should be multiplied by a prefactor (~1) for dealing with some small variation due to spins
+		#print(f_min, k_modes) #DEBUG
 
 			#getting the wave
-		if approximant != "TEOBResumS": #using lal to create WFs
-			hptilde, hctilde = lalsim.SimInspiralChooseTDWaveform( #where is its definition and documentation????
-				m1*lalsim.lal.MSUN_SI, #m1
-				m2*lalsim.lal.MSUN_SI, #m2
-				0., 0., spin1z, #spin vector 1
-				0., 0., spin2z, #spin vector 2
-				d*1e6*lalsim.lal.PC_SI, #distance to source
-				inclination, #inclination
-				0., #phi ref
-				0., #longAscNodes
-				0., #eccentricity
-				0., #meanPerAno
-				t_step, # time incremental step
-				f_min, # lowest value of time
-				f_min, #some reference value of time (??)
-				lal.CreateDict(), #some lal dictionary
-				approx #approx method for the model
-			)
-			#print(f_min, t_step)#debug
-			#print(m1,m2, spin1z,spin2z) #debug
-
-			h_p, h_c = np.array(hptilde.data.data), np.array(hctilde.data.data) #complex waveform
-			time_full = np.linspace(0.0, hptilde.data.length*t_step, hptilde.data.length) #time grid at which wave is computed
-
 		if approximant == "TEOBResumS": #using TEOBResumS
-			mode = 1
 			pars = {
 				'M'                  : m1+m2,
 				'q'                  : m1/m2,
@@ -333,29 +307,24 @@ create_dataset_TD
 				'chi1'               : spin1z,
 				'chi2'               : spin2z,
 				'domain'             : 0,      # TD
-				'arg_out'            : 0,      # Output hlm/hflm. Default = 0
-				'use_mode_lm'        : [mode],      # List of modes to use/output through EOBRunPy
+				'arg_out'            : 1,      # Output hlm/hflm. Default = 0
+				'use_mode_lm'        : k_modes,      # List of modes to use/output through EOBRunPy
 				'srate_interp'       : 1./t_step,  # srate at which to interpolate. Default = 4096.
 				'use_geometric_units': 0,      # Output quantities in geometric units. Default = 1
 				'initial_frequency'  : f_min,   # in Hz if use_geometric_units = 0, else in geometric units
-				'interp_uniform_grid': 2,      # Interpolate mode by mode on a uniform grid. Default = 0 (no interpolation)
+				'interp_uniform_grid': 0,      # Interpolate mode by mode on a uniform grid. Default = 0 (no interpolation)
 				'distance': d,
 				'inclination':inclination,
-				#'nqc':2, #{"no", "auto", "manual"}
-				#'nqc_coefs_flx': 2, # {"none", "nrfit_nospin20160209", "fit_spin_202002", "fromfile"}
-				#'nqc_coefs_hlm':0
 			}
-			if mode != 1:
-				warnings.warn("Using non dominant mode "+str(mode))
-			time_full, h_p, h_c = EOBRun_module.EOBRunPy(pars)
+			time_full, h_p, h_c, hlm = EOBRun_module.EOBRunPy(pars)
 			
 		if isinstance(m2_range, tuple):
 			temp_theta = [m1, m2, spin1z, spin2z]		
 		else:
 			temp_theta = [m1/m2, spin1z, spin2z]
 
-		temp_amp = np.sqrt(np.square(h_p)+np.square(h_c))
-		temp_ph = np.unwrap(np.arctan2(h_c,h_p))
+		temp_amp = hlm[str(k_modes[0])][0]
+		temp_ph = hlm[str(k_modes[0])][1]
 
 		time_full = (time_full - time_full[np.argmax(temp_amp)])/(m1+m2) #grid is scaled to standard grid
 			#setting waves to the chosen std grid
@@ -368,11 +337,11 @@ create_dataset_TD
 		temp_ph = temp_ph - temp_ph[id0] #all phases are shifted by a constant to make every wave start with 0 phase at t=0 (i.e. at maximum amplitude)
 
 			#removing spourious gaps (if present) (do I need it??)
-		(index,) = np.where(temp_amp/np.max(temp_amp) < 1e-10) #there should be a way to choose the right threshold...
-		if len(index) >0:
-			#print("Wave killed")
-			temp_amp[index] = 0#temp_amp[index[0]-1]
-			temp_ph[index] = temp_ph[index[0]-1]
+		#(index,) = np.where(temp_amp/np.max(temp_amp) < 1e-10) #there should be a way to choose the right threshold...
+		#if len(index) >0:
+		#	print("Wave killed")
+		#	temp_amp[index] = 0#temp_amp[index[0]-1]
+		#	temp_ph[index] = temp_ph[index[0]-1]
 
 		if filename is None:
 			amp_dataset[i,:] = temp_amp  #putting waveform in the dataset to return
@@ -421,7 +390,7 @@ create_shift_dataset
 		raise RuntimeError("No valid imput source for module 'EOBRun_module' for TEOBResumS. Unable to continue.")
 
 	#do some checks on modes... better!!!
-	modes_to_k = lambda modes:[int(x[0]*(x[0]-1)/2 + x[1]-2) for x in modes]
+	modes_to_k = lambda modes:[int(x[0]*(x[0]-1)/2 + x[1]-2) for x in modes] # [(l,m)] -> [k]
 	k_modes = modes_to_k(modes)
 	k_modes.append(1) #adding 22 mode
 	time_shifts = np.zeros((len(modes),)) #to save the shifts
@@ -495,16 +464,13 @@ create_shift_dataset
 				'interp_uniform_grid': 2,      # Interpolate mode by mode on a uniform grid. Default = 0 (no interpolation)
 				'distance': 1.,
 				'inclination':0.,
-				#'nqc':2, #{"no", "auto", "manual"}
-				#'nqc_coefs_flx': 2, # {"none", "nrfit_nospin20160209", "fit_spin_202002", "fromfile"}
-				#'nqc_coefs_hlm':0
 			}
 		time_full, h_p, h_c, hlm = EOBRun_module.EOBRunPy(pars)
 		#print(hlm.keys(), k_modes)
 		t_22 = time_full[np.argmax(hlm['1'][0])] #time at which peak of 22 mode happens
 		for j in range(len(modes)):
 			t_lm = time_full[np.argmax(np.abs(hlm[str(k_modes[j])][0]))] #time at which peak of lm mode happens
-			time_shifts[j] = t_lm-t_22
+			time_shifts[j] = (t_lm-t_22)/(m1+m2) #shifts are in reduced mass
 
 		"""import matplotlib.pyplot as plt
 		plt.plot(time_full,hlm['1'][0])
@@ -609,17 +575,19 @@ generate_waveform
 
 	return times[arg:], h_p[arg:], h_c[arg:]
 
-def generate_waveform_TEOBResumS(m1,m2, s1=0.,s2 = 0.,d=1., iota = 0., t_coal = 0.4, t_step = 5e-5, f_min = None, t_min = None, verbose = False, path_TEOBResumS = None):
+def generate_waveform_TEOBResumS(m1,m2, s1=0.,s2 = 0.,d=1., iota = 0., t_coal = 0.4, t_step = 5e-5, f_min = None, t_min = None,
+modes = [(2,2)], verbose = False, path_TEOBResumS = None):
 	"""
 generate_waveform
 =================
-	Wrapper to lalsimulation.SimInspiralChooseTDWaveform() to generate a single waveform. Wave is not preprocessed.
+	Wrapper to EOBRun_module.EOBRunPy() to generate a single waveform with TEOBResumS. Wave is not preprocessed.
 	Input:
 		m1,m2,s1,s2,d,iota,phi_0	orbital parameters
 		t_coal						approximate time to coalescence in reduced grid (ignored if f_min or t_min is set)
 		t_step						EOB integration time to be given to lal
 		f_min						starting frequency in Hz (if None, it will be determined by t_coal; ignored if t_min is set)
 		t_min						starting time in s (if None, t_coal will be returned)
+		modes 						list of modes to be included in the WFs
 		verbose						whether to print messages for each wave...
 	Output:
 		times (D,)	times at which wave is evaluated
@@ -627,6 +595,8 @@ generate_waveform
 		h_c (D,)	cross polarization of the wave
 		t_m 		time at which amplitude peaks
 	"""
+	modes_to_k = lambda modes:[int(x[0]*(x[0]-1)/2 + x[1]-2) for x in modes] # [(l,m)] -> [k]
+
 	if path_TEOBResumS is None: #very ugly but useful
 		path_TEOBResumS = '/home/stefano/Desktop/Stefano/scuola/uni/tesi_magistrale/code/TEOBResumS/Python'
 	import sys
@@ -650,7 +620,7 @@ generate_waveform
 	if verbose:
 		print("Generating wave @: ",m1,m2,s1,s2,d, iota)
 	
-	#print(f_min)
+	k_modes = modes_to_k(modes)
 
 	pars = {'M'                  : m1+m2,
 			'q'                  : m1/m2,
@@ -659,8 +629,8 @@ generate_waveform
 			'chi1'               : s1,
 			'chi2'               : s2,
 			'domain'             : 0,      # TD
-			'arg_out'            : 0,        'arg_out'            : 1,      #Output hlm/hflm. Default = 0      # Output hlm/hflm. Default = 0
-			'use_mode_lm'        : [1],      # List of modes to use/output through EOBRunPy
+			'arg_out'            : 1,     # Output hlm/hflm. Default = 0
+			'use_mode_lm'        : k_modes,      # List of modes to use/output through EOBRunPy
 			'srate_interp'       : 1./t_step,  # srate at which to interpolate. Default = 4096.
 			'use_geometric_units': 0,      # Output quantities in geometric units. Default = 1
 			'initial_frequency'  : f_min,   # in Hz if use_geometric_units = 0, else in geometric units
@@ -686,160 +656,6 @@ generate_waveform
 
 
 
-
-def create_dataset_FD(N_data, N_grid = None, filename = None, q_range = (1.,5.), m2_range = 20., s1_range = (-0.8,0.8), s2_range = (-0.8,0.8), log_space = True, f_high = 2000, f_step = 1e-2, f_max = None, f_min =None, approximant = "IMRPhenomPv2"):
-	"""
-	Create a dataset for training a ML model to fit GW waveforms in frequency domain.
-	The dataset consists in 3 parameters theta=(q, spin1z, spin2z) associated to the waveform computed in frequency domain for a grid of N_grid points in the range given by the user.
-	More specifically, data are stored in 3 vectors:
-		theta_vector	vector holding source parameters q, spin1, spin2
-		amp_vector		vector holding amplitudes for each source evaluated at some N_grid equally spaced points
-		ph_vector		vector holding phase for each source evaluated at some N_grid equally spaced points
-	This routine add N_data data to filename if one is specified (if file is not empty it must contain data with the same N_grid); otherwise the datasets are returned as np vectors. 
-	All the waves are evaluated at a constant distance of 1Mpc. Values of q and m2 are drawn randomly in the range given by the user: it holds m1 = q *m2 M_sun.
-	The waveforms are computed from f_low = 15 to f_high with a step f_step and then evaluated at some N_grid grid points equally spaced in range [f_min, f_max]
-	Dataset can be loaded with load_dataset
-	Input:
-		N_data			size of dataset
-		N_grid			number of points to be sampled in the grid (if None every point generated is saved)
-		filename		name of the file to save dataset in (If is None, nothing is saved on a file)
-		q_range			tuple with range for random q values. if single value, q is kept fixed at that value
-		m2_range		tuple with range for random m2 values. if single value, m2 is kept fixed at that value
-		spin_mag_max_1	tuple with range for random spin #1 values. if single value, s1 is kept fixed at that value
-		spin_mag_max_2	tuple with range for random spin #1 values. if single value, s2 is kept fixed at that value
-		log_space		whether grid should be computed in logspace
-		f_high			highest frequency to compute
-		f_step			step considered for computation of waveforms
-		f_max			maximum frequency returned to the user (if None is the same as f_max)
-		f_min			minimum frequency returned to the user (if None is the same as f_low = 15)
-		approximant	string for the approximant model to be used (in lal convention)
-	Output:
-		if filename is given
-			None
-		if filename is not given
-			theta_vector (N_data,3)		vector holding ordered set of parameters used to generate amp_dataset and ph_dataset
-			amp_dataset (N_data,N_grid)	dataset with amplitudes
-			ph_dataset (N_data,N_grid)	dataset with phases
-			frequencies (N_grid,)		vector holding frequencies at which waves are evaluated
-	"""
-	if f_max is None:
-		f_max = f_high
-	if f_min is None:
-		f_min = 1.
-	f_low = f_min
-	K = int((f_max-f_min)/f_step) #number of data points to be taken from the returned vector
-	if N_grid is None:
-		N_grid = K
-	full_freq = np.arange(f_low, f_max, f_step) #full frequency vector as returned by lal
-	d=1.
-	LALpars = lal.CreateDict()
-	approx = lalsim.SimInspiralGetApproximantFromString(approximant)
-
-		#allocating storage for temp vectors to save a single WF
-	temp_amp = np.zeros((N_grid,))
-	temp_ph = np.zeros((N_grid,))
-	temp_theta = np.zeros((3,))
-
-		#setting frequencies to be returned to user
-	if log_space:
-		frequencies = np.logspace(np.log10(f_min), np.log10(f_max), N_grid)
-	else:
-		frequencies = np.linspace(f_min, f_max, N_grid)
-		#freq_to_choose = np.arange(0, K, K/N_grid).astype(int) #choosing proper indices s.t. dataset holds N_grid points
-		#frequencies = full_freq[freq_to_choose] #setting only frequencies to be chosen
-
-	if filename is not None: #doing header if file is empty - nothing otherwise
-		if not os.path.isfile(filename): #file doesn't exist: must be created with proper header
-			filebuff = open(filename,'w')
-			print("New file ", filename, " created")
-			freq_header = np.concatenate((np.zeros((3,)), frequencies, frequencies) )
-			freq_header = np.reshape(freq_header, (1,len(freq_header)))
-			np.savetxt(filebuff, freq_header, header = "# row: theta 3 | amp "+str(frequencies.shape[0])+"| ph "+str(frequencies.shape[0])+"\n# N_grid = "+str(N_grid)+" | f_step ="+str(f_step)+" | q_range = "+str(q_range)+" | s1_range = "+str(s1_range)+" | s2_range = "+str(s2_range), newline = '\n')
-		else:
-			filebuff = open(filename,'a')
-
-	if filename is None:
-		amp_dataset = np.zeros((N_data,N_grid)) #allocating storage for returning data
-		ph_dataset = np.zeros((N_data,N_grid))
-		theta_vector = np.zeros((N_data,3))
-
-	for i in range(N_data): #loop on data to be created
-		if i%100 == 0 and i != 0:
-			print("Generated WF ", i)
-
-			#setting value for data
-		if isinstance(m2_range, tuple):
-			m2 = np.random.uniform(m2_range[0],m2_range[1])
-		else:
-			m2 = m2_range
-		if isinstance(q_range, tuple):
-			m1 = np.random.uniform(q_range[0],q_range[1]) * m2
-		else:
-			m1 = q_range * m2
-		if isinstance(s1_range, tuple):
-			spin1z = np.random.uniform(s1_range[0],s1_range[1])
-		else:
-			spin1z = s1_range
-		if isinstance(s2_range, tuple):
-			spin2z = np.random.uniform(s2_range[0],s2_range[1])
-		else:
-			spin2z = s2_range
-
-			#debug!!!
-		if m1/m2 >4.6 and (np.abs(spin1z) >0.8 or np.abs(spin2z) > 0.8):
-			continue
-
-			#getting the wave
-		hptilde, hctilde = lalsim.SimInspiralChooseFDWaveform( #where is its definition and documentation????
-			m1*lalsim.lal.MSUN_SI, #m1
-			m2*lalsim.lal.MSUN_SI, #m2
-			0., 0., spin1z, #spin vector 1
-			0., 0., spin2z, #spin vector 2
-			d*1e6*lalsim.lal.PC_SI, #distance to source
-			0., #inclination
-			0., #phi ref
-			0., #longAscNodes (for precession)
-			0., #eccentricity
-			0., #meanPerAno (for precession)
-			f_step, # frequency incremental step
-			f_low, # lowest value of frequency
-			f_high, # highest value of frequency
-			f_low, #some reference value of frequency (??)
-			LALpars, #some lal dictionary
-			approx #approx method for the model
-			)
-		h = np.array(hptilde.data.data)+1j*np.array(hctilde.data.data) #complex waveform
-		temp_theta = [m1/m2, spin1z, spin2z]
-		temp_amp = (np.abs(h)[int(f_min/f_step):int(f_max/f_step)].real)
-		temp_ph = (np.unwrap(np.angle(h))[int(f_min/f_step):int(f_max/f_step)].real)
-
-			#bringing waves on the chosen grid
-		temp_amp = np.interp(frequencies, full_freq, temp_amp)
-		temp_ph = np.interp(frequencies, full_freq, temp_ph)
-		#temp_ph = temp_ph[freq_to_choose]; temp_amp = temp_amp[freq_to_choose] #old version of code
-
-		temp_ph = temp_ph - temp_ph[0] #all frequencies are shifted by a constant to make the wave start at zero phase!!!! IMPORTANT
-
-			#removing spourious gaps (if present)
-		(index,) = np.where(temp_amp/temp_amp[0] < 5e-3) #there should be a way to choose right threshold...
-		if len(index) >0:
-			temp_ph[index] = temp_ph[index[0]-1]
-
-		if filename is None:
-			amp_dataset[i,:] = temp_amp  #putting waveform in the dataset to return
-			ph_dataset[i,:] =  temp_ph  #phase
-			theta_vector[i,:] = temp_theta
-
-		if filename is not None: #saving to file
-			to_save = np.concatenate((temp_theta,temp_amp, temp_ph))
-			to_save = np.reshape(to_save, (1,len(to_save)))
-			np.savetxt(filebuff, to_save)
-
-	if filename is None:
-		return theta_vector, amp_dataset.real, ph_dataset.real, frequencies
-	else:
-		filebuff.close()
-		return None
 
 def save_dataset(filename, theta_vector, dataset1, dataset, x_grid):
 	"""

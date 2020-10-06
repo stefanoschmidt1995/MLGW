@@ -1,5 +1,5 @@
 ###################
-#	Wuick routine to generate a dataset of WFs
+#	Quick routine to generate a dataset of WFs
 ###################
 
 from GW_helper import *
@@ -7,11 +7,18 @@ import matplotlib.pyplot as plt
 from ML_routines import *
 
 if True:
-	create_dataset_TD(20, N_grid = 2000, filename = "../datasets/GW_TD_mode_0/GW_dataset.dat",
-                t_coal = 1.2, q_range = (1.,10.), m2_range = None, s1_range = (-0.8,0.8), s2_range = (-0.8,0.8), #for full dataset
-                t_step = 1e-4, approximant = "TEOBResumS", alpha = 0.5,
+	create_dataset_TD_TEOBResumS(3000, N_grid = 2000, mode = (3,3), filename = "TD_datasets/33_dataset.dat",
+                t_coal = 2., q_range = (1.,10.), m2_range = None, s1_range = (-0.8,0.95), s2_range = (-0.8,0.95), #for full dataset
+                t_step = 1e-4, alpha = 0.5,
 				path_TEOBResumS = '/home/stefano/Desktop/Stefano/scuola/uni/tesi_magistrale/code/TEOBResumS/Python'
 				)
+
+if False:
+	create_shift_dataset(3000, [(3,2),(3,3)], filename = "TD_datasets/shift_dataset.dat",
+				q_range = (1.,10.), m2_range = None, s1_range = (-0.8,0.95), s2_range = (-0.8,0.95),
+				path_TEOBResumS = '/home/stefano/Desktop/Stefano/scuola/uni/tesi_magistrale/code/TEOBResumS/Python'
+				)
+
 #                t_coal = .05, q_range = (1.,5.), m2_range = None, s1_range = -0.3, s2_range = 0.2, #for s_const
 
 #create_dataset_FD(5000, N_grid = 2048, filename = "../datasets/GW_std_dataset.dat",
@@ -21,9 +28,9 @@ if True:
 
 
 
-#quit()
+quit()
 
-theta_vector, amp_dataset, ph_dataset, x_grid = load_dataset("../datasets/GW_TD_mode_3/GW_TD_dataset.dat", shuffle=False, N_data = None) #loading
+theta_vector, amp_dataset, ph_dataset, x_grid = load_dataset("dataset.dat", shuffle=False, N_data = None) #loading
 #print(theta_vector)
 
 cut_off = -1

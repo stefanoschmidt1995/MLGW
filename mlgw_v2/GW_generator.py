@@ -22,7 +22,7 @@ import inspect
 sys.path.insert(1, os.path.dirname(__file__)) 	#adding to path folder where mlgw package is installed (ugly?)
 from EM_MoE import *			#MoE model
 from ML_routines import *		#PCA model
-import scipy.special.factorial as fact
+from scipy.special import factorial as fact
 
 warnings.simplefilter("always", UserWarning) #always print a UserWarning message ??
 
@@ -118,13 +118,12 @@ GW_generator
 			self.load(folder)
 		return
 
-	def extract_mode(self, folder):
+	def __extract_mode(self, folder):
 		"""
-	extract_mode
+	__extract_mode
 	============
 		Given a folder, it extract (if present) the tuple of the mode the folder represent.
 		Each mode folder must start with "lm".
-		If folder is "shifts" return a tuple (0,0) as a placeholder.
 		Input:
 			folder		folder holding a mode
 		Output:
@@ -160,11 +159,11 @@ GW_generator
 		file_list = os.listdir(folder)
 		
 		for mode in file_list:
-			lm = self.extract_mode(mode)
+			lm = self.__extract_mode(folder+mode)
 			if lm is None:
 				continue
-			self.modes.append(mode_generator(lm, mode)) #loads mode_generator
-			print('Loaded mode {}'.format(lm))
+			self.modes.append(mode_generator(lm, folder+mode)) #loads mode_generator
+			print('    Loaded mode {}'.format(lm))
 
 
 		if 'README' in file_list:
@@ -333,7 +332,7 @@ GW_generator
 		Generates the waves in time domain, building it as a sum of modes weighted by spherical harminics. Called by get_WF.
 		Accepts only input features as [q,s1,s2] or [m1, m2, spin1_z , spin2_z, D_L, inclination, phi_0].
 		Input:
-			theta (N,D)		source parameters to make prediction at (D=3 or D=7)
+			theta (N,D)		source parameters to make prediction at (D=7)
 			t_grid (D',)	a grid in (physical or reduced) time to evaluate the wave at (uses np.interp)
 			modes			list of modes employed for building the WF (if None, every mode available is employed)
 		Ouput:
@@ -357,6 +356,48 @@ GW_generator
 
 		return h_plus, h_cross
 
+	def get_modes(self, theta, t_grid, modes = None, out_type = "ampph"):
+		"""
+	get_modes
+	=========
+		Return the modes in the model, evaluated in a given time grid.
+		It can return amplitude and phase or the real and imaginary part.
+		Each mode is aligned s.t. its peak is at t=0
+		Input:
+			theta (N,D)/(D,)	source parameters to make prediction at (D = 3,4)
+			t_grid (D',)		a grid in (physical or reduced) time to evaluate the wave at (uses np.interp)
+			modes				list of modes employed for building the WF (if None, every mode available is employed)
+			out_type			whether amplitude and phase ("ampph") or real and imaginary part ("realimag") shall be returned
+		Output:
+			amp, ph (N, D', K)		amplitude and phase of the K modes required by the user (if K =1, no third dimension)
+			real, imag (N, D', K)	real and imaginary part of the K modes required by the user (if K =1, no third dimension)
+		"""
+		try:
+			K = len(modes)
+		except:
+			K = len(self.modes)
+
+		i = 0
+		if theta.ndim == 1:
+			theta = theta[None,:]
+			dim_theta = 1
+		else:
+			dim_theta = 2
+		res1 = np.zeros((theta.shape[0],theta.shape[1],K))
+		res2 = np.zeros((theta.shape[0],theta.shape[1],K))
+
+		for mode in self.modes:	
+			if modes is not None:
+				if mode.lm() not in modes: #skipping a non-necessary mode
+					continue
+			res1[:,:,i], res2[:,:,i] = mode.get_mode(theta, t_grid, out_type = out_type, align22 = False)
+
+		res1, res2 = np.squeeze(res1), np.squeeze(res2)
+
+		if dim_theta == 1:
+			return res1, res2
+		if dim_theta == 2:
+			return res1[np.newaxis,...], res2[np.newaxis,...]
 
 	def __set_spherical_harmonics(self, mode, amp, ph, dist, iota, phi_0):
 		"""
@@ -412,7 +453,7 @@ GW_generator
 			norm = fact(k) * fact(l+m-k) * fact(l-s-k) * fact(s-m+k) #normalization constant
 			d_lm = d_lm +  (pow(-1.,k) * np.power(cos_1,2*l+m-s-2*k) * np.power(sin_i,2*k+s-m) ) / norm
 
-    	const = np.sqrt(fact(l+m) * fact(l-m) * fact(l+s) * fact(l-s))
+		const = np.sqrt(fact(l+m) * fact(l-m) * fact(l+s) * fact(l-s))
 		return const*d_lm
 		
 
@@ -459,9 +500,20 @@ mode_generator
 		"""
 	lm
 	==
-		Return the (l,m) index of the mode.
+		Returns the (l,m) index of the mode.
 		"""
 		return self.mode
+
+	def has_shift(self):
+		"""
+	has_shift
+	=========
+		Returns whether shift model is present.
+		"""
+		if self.shift is None:
+			return False
+		else:
+			return True
 
 	def __read_features(self, feat_file):	
 		"""
@@ -473,7 +525,7 @@ mode_generator
 		Output:
 			feat_list	list of features
 		"""
-		f = open(folder+"ph_feat", "r")
+		f = open(feat_file, "r")
 		feat_list = f.readlines()
 		for i in range(len(feat_list)):
 			feat_list[i] = feat_list[i].rstrip()
@@ -506,7 +558,7 @@ mode_generator
 
 		if not folder.endswith('/'):
 			folder = folder + "/"
-		verboseprint("Loading model for"+str(self.mode)+" from: ", folder)
+		verboseprint("Loading model for "+str(self.mode)+" from: ", folder)
 		file_list = os.listdir(folder)
 
 			#loading PCA
@@ -554,13 +606,13 @@ mode_generator
 			#loading shifts
 		shift_name = folder+"shifts"
 		
-		if shift_name in file_list:
-			if not shift.endswith('/'):
-				shift = shift + "/"
+		if "shifts" in file_list:
+			if not shift_name.endswith('/'):
+				shift_name = shift_name + "/"
 				#reading features
-			self.shift_features = self.__read_features(shift+"shift_feat")
-			self.shift = MoE_model(3+len(self.shift_feat),1)
-			self.shift.load(folder+"shift_exp",folder+"shift_gat")
+			self.shift_features = self.__read_features(shift_name+"shift_feat")
+			self.shift = MoE_model(3+len(self.shift_features),1)
+			self.shift.load(shift_name+"shift_exp",shift_name+"shift_gat")
 			verboseprint("    Loaded shift model")
 		else:
 			self.shift = None
@@ -796,7 +848,7 @@ mode_generator
 		for i in range(amp.shape[0]):
 				#computing the true red grid
 			if align22:
-				interp_grid = np.divide(t_grid[i,:] - shifts[i], m_tot_us[i])
+				interp_grid = np.divide(t_grid[i,:], m_tot_us[i]) - shifts[i]
 			else:
 				interp_grid = np.divide(t_grid[i,:], m_tot_us[i])
 

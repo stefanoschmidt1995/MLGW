@@ -43,10 +43,17 @@ create_PCA_dataset
 		out_folder		output folder which all output files will be saved to.
 		train_frac		fraction of data in WF datset to be included in training set (must be strictly less than 1)
 	"""
+	if not os.path.isdir(out_folder): #check if out_folder exists
+		try:
+			os.mkdir(out_folder)
+		except:
+			raise RuntimeError("Impossible to create output folder "+str(out_folder)+". Please, choose a valid folder.")
+			return
+
 	theta_vector, amp_dataset, ph_dataset, times = load_dataset(dataset_file, shuffle=True) #loading dataset
 	print("Loaded datataset with shape: "+ str(ph_dataset.shape))
 
-	train_theta, test_theta, train_amp, test_amp = make_set_split(theta_vector, amp_dataset, train_frac, 1e-21)
+	train_theta, test_theta, train_amp, test_amp = make_set_split(theta_vector, amp_dataset, train_frac, 1.)
 	train_theta, test_theta, train_ph, test_ph   = make_set_split(theta_vector, ph_dataset, train_frac, 1.)
 
 	print("Orbital parameters are in range: [%f,%f]x[%f,%f]x[%f,%f]"%(np.min(train_theta[:,0]), np.max(train_theta[:,0]), np.min(train_theta[:,1]), np.max(train_theta[:,1]), np.min(train_theta[:,2]), np.max(train_theta[:,2])))
@@ -124,6 +131,13 @@ fit_MoE
 		F, mse_list											average test mismatch with PCA reconstructed waves, list of mse for each of the fitted component
 		F_train, F_test, mse_train_list, mse_test_list		average train (test) mismatch (if relevant). Same format as above.
 	"""
+	if not os.path.isdir(out_folder): #check if out_folder exists
+		try:
+			os.mkdir(out_folder)
+		except:
+			raise RuntimeError("Impossible to create output folder "+str(out_folder)+". Please, choose a valid folder.")
+			return
+
 	if train_mismatch:
 		test_mismatch = True
 
@@ -264,7 +278,120 @@ fit_MoE
 		return np.mean(F_MoE_train), np.mean(F_MoE), mse_train_list, mse_test_list
 	return
 
+################# routine fit_shifts
+def fit_shifts(in_file, out_folder, experts, line_to_fit = 0, train_frac = 0.8, features = None, EM_threshold = 1e-2, args = None, N_train = None, verbose = True, train_mse = False, test_mse = True):
+	"""
+fit_MoE
+=======
+	Fit a MoE model to learn a shift dataset.
+	It loads a PCA dataset from in_folder and fits the regression
+		theta = (q,s1,s2) ---> shifts
+	Outputs the fitted models to out_folder
+		shift_exp		the expert model for shifts fit
+		shift_gat		the gating function for shifts fit
+		shift_feat		list of features to use for MoE shift models
+	Out folder will be a subfolder of a mode_generator model.
+	User can choose some fitting hyperparameters.
+	Input:
+		in_file				path to file in which the shift dataset is saved with the format of mlgw.GW_helper.create_shift_dataset
+		out_folder			path to folder to save the model to. This should be a subfolder of one used by mlgw.GW_generator.mode_generator
+		line_to_fit			Shift dataset can hold shifts for more than one mode. Here user can specify the number of mode within the dataset to fit (default 0)
+		train_frac			fraction of data to include in the training set
+		experts ()			experts to use for the MoE model.
+		features []			list of feature for basis function expansion. It must be in the format of mlgw.ML_routines.add_extra_features. If None, a default second degree polynomial in q, s1, s2 will be used.
+		EM_threshold ()		threshold of minumum change in LL before breaking from the EM algorithm.
+		args []				list of arguments for the softmax function fit routine mlgw.EM_MoE.softmax_regression.fit. They must be in the order [optimizator, validation set, reg. constant, verbose, threshold, # iteration, step for gradient]. If None, default values are used (recommended)
+		N_train				number of training points to use in the PCA dataset. If None, every point available will be used.
+		verbose				whether to display EM iteration messages
+		train_mismatch		whether to return mismatch and mse on train data (if True, test_mismatch = True)
+		test_mismatch		whether to return mismatch and mse on test data
+	Output:
+		mse_test				average test mse
+		mse_train, mse_test		average train and test mse
+	"""
+	if train_mse:
+		test_mse = True
 
+	if not os.path.isdir(out_folder): #check if out_folder exists
+		try:
+			os.mkdir(out_folder)
+		except:
+			raise RuntimeError("Impossible to create output folder "+str(out_folder)+". Please, choose a valid folder.")
+			return
+
+	if not out_folder.endswith('/'):
+		out_folder = out_folder + "/"
+
+	if not os.path.isfile(in_file):
+		raise RuntimeError("Input file {} not found.".format(in_file))
+		return
+
+	if features is None:
+		features = ["00", "11","22", "01", "02", "12"]
+	if type(features) is not list:
+		raise RuntimeError("Features to use for regression must be given as list. Type "+str(type(features))+" given instead")
+		return
+	
+	if type(N_train) is not int and N_train is not None:
+		raise RuntimeError("Nunmber of training point to use must be be an integer. Type "+str(type(N_train))+" given instead")
+		return
+
+	if type(experts) is not int:
+		raise RuntimeError("Nunmber of experts must be be an integer. Type "+str(type(experts))+" given instead")
+		return
+
+	if args is None:
+				#opt	val_set reg   verbose threshold	N_it step
+		args = ["adam", None,   1e-5, False,  1e-4,		150, 2e-3] #default arguments for sotmax fit routine
+
+		#loading data and building training and test set
+	data = np.loadtxt(in_file)
+	train_data = data[:int(train_frac*data.shape[0]),:]
+	test_data = data[int(train_frac*data.shape[0]):,:]
+
+	train_theta = train_data[:,:3]
+	train_shifts = train_data[:,3+line_to_fit]
+	test_theta = test_data[:,:3]
+	test_shifts = test_data[:,3+line_to_fit]
+
+	print("Using {} train data".format(train_theta.shape[0]))
+	
+		#adding new features for basis function expansion
+	train_theta = add_extra_features(train_theta, features, log_list = [0])
+	test_theta = add_extra_features(test_theta, features, log_list = [0])
+	D = train_theta.shape[1] #dimensionality of input space for MoE
+
+	model = MoE_model(D,experts)
+	model.fit(train_theta, train_shifts, threshold = EM_threshold, args = args, verbose = verbose, val_set = (test_theta, test_shifts))
+
+			#doing some test
+	if train_mse:
+		y_pred = model.predict(train_theta)
+		mse_train = np.sum(np.square(y_pred-train_shifts))/(y_pred.shape[0]) 
+
+	y_pred = model.predict(test_theta)
+	mse_test = np.sum(np.square(y_pred-test_shifts))/(y_pred.shape[0]) 
+	print("LL (train,val): ", (model.log_likelihood(train_theta,train_shifts), model.log_likelihood(test_theta,test_shifts)))
+
+		#saving everything to file
+		#saving feature list
+	outfile = open(out_folder+"shift_feat", "w+")
+	outfile.write("\n".join(features))
+	outfile.close()
+		#saving MoE model
+	model.save(out_folder+"shift_exp",out_folder+"shift_gat")
+
+	if test_mse:
+		print("Average MoE test mse: ",mse_test)
+	if train_mse:
+		print("Average MoE train mse: ",mse_train)
+
+
+	if test_mse and not train_mse:
+		return mse_test
+	if train_mse and train_mse:
+		return mse_train, mse_test
+	return
 
 
 
