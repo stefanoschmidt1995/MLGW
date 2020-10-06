@@ -348,7 +348,9 @@ GW_generator
 			if modes is not None:
 				if mode.lm() not in modes: #skipping a non-necessary mode
 					continue
+			print("got modes {}".format(mode.lm()))
 			amp_lm, ph_lm = mode.get_mode(theta[:,:4], t_grid, out_type = "ampph", align22 = True)
+			print(amp_lm)
 				# setting spherical harmonics: amp, ph, D_L,iota, phi_0
 			h_lm_real, h_lm_imag = self.__set_spherical_harmonics(mode.lm(), amp_lm, ph_lm, theta[:,4], theta[:,5], theta[:,6])
 			h_plus = h_plus + h_lm_real
@@ -420,6 +422,8 @@ GW_generator
 		d_lmm = self.__get_Wigner_d_function((l,-m),iota) 
 		const = np.sqrt( (2.*l+1.)/(4.*np.pi) )
 
+		#does not work here
+
 		h_lm_real = np.multiply(np.multiply(amp.T,np.cos(ph.T+m*phi_0)), const*(d_lm + d_lmm)/dist ).T
 		h_lm_imag = np.multiply(np.multiply(amp.T,np.sin(ph.T+m*phi_0)), const*(d_lm - d_lmm)/dist ).T
 
@@ -442,8 +446,8 @@ GW_generator
 		s = 2
 		d_lm = np.zeros(iota.shape) #(N,)
     
-		cos_i = np.cos(iota*0.5)
-		sin_i = np.sin(i*0.5)
+		cos_i = np.cos(iota*0.5) #(N,)
+		sin_i = np.sin(iota*0.5) #(N,)
     
 			#starting computation (sloooow??)
 		ki = max(0, m-s)
@@ -451,7 +455,7 @@ GW_generator
     	
 		for k in range(ki,kf):
 			norm = fact(k) * fact(l+m-k) * fact(l-s-k) * fact(s-m+k) #normalization constant
-			d_lm = d_lm +  (pow(-1.,k) * np.power(cos_1,2*l+m-s-2*k) * np.power(sin_i,2*k+s-m) ) / norm
+			d_lm = d_lm +  (pow(-1.,k) * np.power(cos_i,2*l+m-s-2*k) * np.power(sin_i,2*k+s-m) ) / norm
 
 		const = np.sqrt(fact(l+m) * fact(l-m) * fact(l+s) * fact(l-s))
 		return const*d_lm
@@ -794,7 +798,7 @@ mode_generator
 		return np.zeros((theta.shape[0],))
 
 	#@do_profile(follow=[])
-	def __get_mode(self, theta, t_grid, out_type):
+	def __get_mode(self, theta, t_grid, out_type, align22):
 		"""
 	__get_mode
 	==========
@@ -804,6 +808,7 @@ mode_generator
 			theta (N,D)			source parameters to make prediction at (D=3 or D=4)
 			t_grid (D',)		a grid in time to evaluate the wave at (uses np.interp)
 			out_type (str)		the output to be returned ('ampph', 'realimag')
+			align22				whether the 0 of the time grid should be placed at the peak of the 22 mode (otherwise is placed at the peak of the current mode)
 		Output:
 			amp, phase (1,D)/(N,D)			desidered amplitude and phase (if it applies)
 			hlm_real, hlm_im (1,D)/(N,D)	desidered h_22 components (if it applies)

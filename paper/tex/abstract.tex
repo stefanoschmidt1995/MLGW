@@ -12,7 +12,7 @@ We apply machine learning methods to build a time-domain model for
 gravitational waveforms from binary black hole mergers called \texttt{mlgw}.
 The dimensionality of the problem is handled by representing the 
 waveform's amplitude and phase using a principal component analysis.
-We train \texttt{mlgw} on about $\mathcal{O}(10^3)$ \texttt{TEOBResumS} effective-one-body
+We train \texttt{mlgw} on about $\mathcal{O}(10^3)$ \texttt{TEOBResumS} and \texttt{SEOBNRv4} effective-one-body
 waveforms with mass ratios $q\in[1,20]$ and aligned dimensionless
 spins $\chi\in[-0.80,0.95]$. The resulting model is faithful to the
 training set at the ${\sim}10^{-3}$ level (averaged on the parameter space), while speeding up the single waveform generation of a factor 10-50 (depending on the

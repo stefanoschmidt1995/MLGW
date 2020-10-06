@@ -132,7 +132,7 @@ Once written as a function of the dimensionless time $t/M$, the quantities $H_{\
 %We call $(m_1,m_2, \mathbf{s}_1,\mathbf{s}_2, d_L,\iota,\varphi_0)$ \textit{physical parameters} and they fully express the source 
 \par
 In this work, we consider only the dominant mode $\ell=|m|=2$.
-Since the dependence on the two angles, on the distance and total mass is known, we fix their value to ${\iota, \varphi_0 = 0}$, ${d_L = \SI{1}{Mpc}}$ and $M = \SI{20}{M_\odot}$ and we only work with waveforms ${h_{FIT}(t; \boldsymbol{\vartheta}) = h(t; d_L = \SI{1}{Mpc}, \iota = 0, \varphi_0 = 0, M = \SI{20}{M_\odot}, \boldsymbol{\tilde{\vartheta}}) }$:
+Since the dependence on the two angles, on the distance and total mass is known, we fix their value to ${\iota = \varphi_0 = 0}$, ${d_L = \SI{1}{Mpc}}$ and $M = \SI{20}{M_\odot}$ and we only work with waveforms ${h_{FIT}(t; \boldsymbol{\vartheta}) = h(t; d_L = \SI{1}{Mpc}, \iota = \varphi_0 = 0, M = \SI{20}{M_\odot}, \boldsymbol{\tilde{\vartheta}}) }$:
 \begin{align}  
 	h_{FIT}(t; \boldsymbol{\vartheta}) &\equiv 9.6 \cdot 10^{-19} \tensor[^{-2}]{Y}{_{2 2}}(0,0) \cdot H_{22}(t/\SI{20}{M_\odot}; \boldsymbol{\tilde{\vartheta}})  \nonumber \\
 	&= 6 \cdot 10^{-19} \cdot H_{22}(t/\SI{20}{M_\odot}; \boldsymbol{\tilde{\vartheta}}) \label{eq:h_std} \; .
@@ -161,7 +161,7 @@ We choose the convention that $\phi_{\boldsymbol{\vartheta}} = 0$ when the ampli
 \par
 
 %======================
-\section{\MakeLowercase{\texttt{mlgw}}}
+\section{\lowercase{\texttt{mlgw}}}
 \label{sec:model}
 %======================
 %
@@ -884,8 +884,6 @@ We started this program by analysing GWTC-1 with \texttt{mlgw} trained on \textt
 \par
 Furthermore, as shown in fig.~\ref{fig:time_performance_hist}, the model is most useful whenever a long waveform is required: in such case, the speed-up gets even more substantial.
 This is crucial for the detection of low frequency signals, as is the case for ET. The analysis of such signals can be performed in the same time required to deal with shorter signals: it will become feasible, even with a small amount of resourches, \textit{without any loss of WF quality}.
-%In \cite{} (\sschmidt{plot in email}), it was shown that training model TEOBResumS matches accurately the numerical relativity WFs, even in the case of ET noise curve is used (see plot in the email). Since our model closely reproduces TEOBResumS, it is likely to achieve the target accuracy for the employment in the ET data analysis.
-%\sschmidt{Here I wanted to include the plot sent by Nagar. Is it in a paper? Do we include it here? Or do we just skip it??}
 \par
 A closed form expression for the gradients of the waveform with respect to the orbital parameters $m_1,m_2, {s}_1,{s}_2$
 \footnote{The computation of gradient is already included in the \texttt{mlgw} package.}
@@ -895,7 +893,7 @@ HM \cite{betancourt2017hamiltonianMC}~\cite{Porter2014Hamiltonian_MonteCarlo} is
 Another option, so far never explored, is to use the gradients of the WF for a fast exploration of the likelihood landscape. With any gradient based optimizer, it should be easy to jump to a \textit{local} maximum of the likelihood. Such information might be helpful to reliably locate a \textit{global} maximum of the likelihood.
 Such ability could speed up the searches and the parameter estimation.
 \par
-\sschmidt{Frase a effetto finale??}
+In conclusion, we presented \texttt{mlgw}, an off-the-shelf ML model for gravitational waves signals from BBHs. We demostrated that \texttt{mlgw} is fast, accurate and easy to train and to use. We anticipate that \texttt{mlgw} will enable studies hitherto unfeasible due to the lack of fast and easy to use models.
 
 
 
