@@ -117,24 +117,26 @@ A GW is parametrized as \cite[eq. II.6]{ajith2011data}:
 \end{align}
 where $\tensor[^{-2}]{Y}{_{\ell m}}(\iota, \varphi_0)$ are the spin-2 spherical harmonics. 
 Once written as a function of the dimensionless time $t/M$, the quantities $H_{\ell m}$ 
-depends only on the variables $\tilde{\boldsymbol{\vartheta}} = (q, s_1, s_2)$.
-%We call $(m_1,m_2, \mathbf{s}_1,\mathbf{s}_2, d_L,\iota,\varphi_0)$ \textit{physical parameters} and they fully express the source 
-\par
-In this work, we consider only the dominant mode $\ell=|m|=2$.
-Since the dependence on the two angles, on the distance and total mass is known, we fix their value to ${\iota = \varphi_0 = 0}$, ${d_L = \SI{1}{Mpc}}$ and $M = \SI{20}{M_\odot}$ and we only work with waveforms ${h_{FIT}(t; \boldsymbol{\vartheta}) = h(t; d_L = \SI{1}{Mpc}, \iota = \varphi_0 = 0, M = \SI{20}{M_\odot}, \boldsymbol{\tilde{\vartheta}}) }$:
+depends only on the variables $\tilde{\boldsymbol{\vartheta}} = (q, s_1, s_2)$, and we
+are considering here only $\ell=|m|=2$.
+Since the dependence on the two angles, on the distance and total mass is known, 
+for convenience we fix their value to ${\iota = \varphi_0 = 0}$, ${d_L = \SI{1}{Mpc}}$ 
+and $M = 20M_\odot$ so to only work with waveforms ${h_{\rm FIT}(t; \boldsymbol{\vartheta}) = h(t; d_L = \SI{1}{Mpc}, \iota = \varphi_0 = 0, 
+M = 20M_\odot, \boldsymbol{\tilde{\vartheta}}) }$:
 \begin{align}  
-	h_{FIT}(t; \boldsymbol{\vartheta}) &\equiv 9.6 \cdot 10^{-19} \tensor[^{-2}]{Y}{_{2 2}}(0,0) \cdot H_{22}(t/\SI{20}{M_\odot}; \boldsymbol{\tilde{\vartheta}})  \nonumber \\
-	&= 6 \cdot 10^{-19} \cdot H_{22}(t/\SI{20}{M_\odot}; \boldsymbol{\tilde{\vartheta}}) \label{eq:h_std} \; .
+	h_{\rm FIT}(t; \boldsymbol{\vartheta}) &\equiv 9.6 \cdot 10^{-19} \tensor[^{-2}]{Y}{_{2 2}}(0,0) \cdot H_{22}(t/\SI{20}{M_\odot}; \boldsymbol{\tilde{\vartheta}})  \nonumber \\
+	&= 6 \cdot 10^{-19} \cdot H_{22}(t/(20M_\odot); \boldsymbol{\tilde{\vartheta}}) \label{eq:h_std} \; .
 \end{align}
 Finally, we express  $h_{FIT}$ in terms of its amplitude and phase
 \footnote{Note we adopt a nonstandard sign convention for the phase}:
 \begin{equation} \label{eq:h_ML}
-	h_{FIT}(t; \boldsymbol{\vartheta}) = A(t; \boldsymbol{\tilde{\vartheta}}) e^{i \phi(t; \boldsymbol{\tilde{\vartheta}})} \; . 
+	h_{\rm FIT}(t; \boldsymbol{\vartheta}) = A(t; \boldsymbol{\tilde{\vartheta}}) e^{i \phi(t; \boldsymbol{\tilde{\vartheta}})} \; . 
 \end{equation}
 %%%
-We may also write $f_{\boldsymbol{\tilde{\vartheta}}}(t)$ to denote a function $f(t;\boldsymbol{\tilde{\vartheta}})$ of time with parametric dependence on $\boldsymbol{\vartheta}$.
-In what follows, $f$ stands as a placeholder for any of the functions $A_{\tilde{\boldsymbol{\vartheta}}}(t)$ and ${\phi}_{\tilde{\boldsymbol{\vartheta}}}(t)$.
-\par
+We may also write $f_{\boldsymbol{\tilde{\vartheta}}}(t)$ to denote a 
+function $f(t;\boldsymbol{\tilde{\vartheta}})$ of time with parametric dependence on $\boldsymbol{\vartheta}$.
+In what follows, $f$ stands as a placeholder for any of the functions $A_{\tilde{\boldsymbol{\vartheta}}}(t)$ 
+and ${\phi}_{\tilde{\boldsymbol{\vartheta}}}(t)$.
 With this definition, the full waveform can be expressed as:
 \begin{align} 
 	h&(t, d_L,\iota,\varphi_0; \boldsymbol{\vartheta}) = \frac{M}{\SI{20}{M_\odot}} \frac{\SI{1}{Mpc}}{d_L} \times  \nonumber \\
@@ -144,10 +146,10 @@ With this definition, the full waveform can be expressed as:
 \label{eq:h_parametrization_simple}
 \end{align}
 where $t_M = t \cdot \frac{M}{\SI{20}{M_\odot}}$.
-Note that in the equation above, we split the real and the imaginary part of $h$ and we used the relation ${\tensor[^{-2}]{Y}{_{2 \pm 2}}(\iota, \varphi_0) = (1 \pm \cos \iota)^2 e^{\pm i 2 \varphi_0}}$.
-We choose the convention that $\phi_{\boldsymbol{\vartheta}} = 0$ when the amplitude $A_{\boldsymbol{\vartheta}}$ has a maximum
-\footnote{Indeed, a constant translation of $\phi_{\boldsymbol{\vartheta}}$ can be absorbed in the definition of $\varphi_0$ and does not affect the physics.}.
-\par
+Note that in the equation above, we split the real and the imaginary part of $h$ and we 
+used the relation ${\tensor[^{-2}]{Y}{_{2 \pm 2}}(\iota, \varphi_0) = (1 \pm \cos \iota)^2 e^{\pm i 2 \varphi_0}}$.
+We choose the convention that $\phi_{\boldsymbol{\vartheta}} = 0$ when the amplitude $A_{\boldsymbol{\vartheta}}$ 
+has a maximum~\footnote{Indeed, a constant translation of $\phi_{\boldsymbol{\vartheta}}$ can be absorbed in the definition of $\varphi_0$ and does not affect the physics.}.
 
 %======================
 \section{\lowercase{\texttt{mlgw}}}
