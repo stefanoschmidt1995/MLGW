@@ -216,12 +216,14 @@ A good solution is to build the $\tau$ grid ${\boldsymbol{\tau}}$ as:
 \end{equation}
 where $\boldsymbol{\tilde{\tau}}_i$ are D equally spaced points in the range of interest and we call $\alpha$ \textit{distortion parameter}.
 This choice ensures that more points are accumulated around the peak of amplitude.
-\par
+
 The length of the time grid determines the maximum lenght of the WFs that the model can generate.
-Let us define $\tau_{min} = -{\boldsymbol{\tau}}_0 > 0 $ the starting point of the grid; thus each WF start at a time $\tau_{min}\cdot M$ before the merger.
-Note that $\tau_{min}$ is an important hyperparameter, set by the user, which strongly impacts on the model applicability.
-\par
-The minimum frequency in the signal as a function of $M, q$ and $\tau_{min}$ is given approximately\footnote{The expression is approximate because it is obtained within a Newtonian framework and does not consider spin effects.
+Let us define $\tau_{min} = -{\boldsymbol{\tau}}_0 > 0 $ the starting point of the grid; thus each WF start 
+at a time $\tau_{min}\cdot M$ before the merger. Note that $\tau_{min}$ is an important hyperparameter, 
+set by the user, which strongly impacts on the model applicability.
+
+The minimum frequency in the signal as a function of $M, q$ and $\tau_{min}$ is given 
+approximately~\footnote{The expression is approximate because it is obtained within a Newtonian framework and does not consider spin effects.
 Nevertheless, it gives an useful estimation of the range of the applicability of the model.}
 by:
 \begin{align}\label{eq:f_min}
@@ -623,15 +625,15 @@ In Fig.~\ref{fig:time_performance_hist_ROM} we report the histogram of the measu
 values for model \texttt{SEOBNRv4\_ROM}, which is now the state of the art for the WF generation time.
 The comparison is made as above only for $f_{min} = 20$~Hz, since the minimum allowed frequency
 for the ROM is 10~Hz. As the ROM model yields WFs in frequency domain, in the time comparison 
-we included a fast Fourier trasform (FFT) of the time domain WF of \texttt{mlgw}. 
+we included a fast Fourier transform (FFT) of the time domain WF of \texttt{mlgw}. 
 This ensures that we are evaluating the two model at the same conditions.
 Interestingly, the time taken by the FFT (in the \texttt{numpy}
 implementation) is similar to that required to generate a WF. Thus for
 a WF in FD, our model cannot be substantially faster, due to the
-limitation imposed by the FFT
-\footnote{Actually, the operation for performing the FFT takes the most amount of time. In fact, 
-before the FFT the waveform shall be evaluated on a dense equally spaced grid: as can be seen in 
-Table~\ref{tab:profiling}, such operation can be very expensive.}
+limitation imposed by the FFT~\footnote{Actually, the operation for performing 
+the FFT takes the most amount of time. In fact,  before the FFT the waveform shall be 
+evaluated on a dense equally spaced grid: as can be seen in 
+Table~\ref{tab:profiling}, such operation can be very expensive.}.
 
 We note the the performances are quite similar to each other.
 If a lower sampling rate is employed, \texttt{mlgw-TEOBResumS} slighly improves 
@@ -648,12 +650,12 @@ required.
 \paragraph{Profiling}
 It is interesting to have a knowledge of the time spent by \texttt{mlgw} in each stage of the WF generation procedure.
 We generate $100$ waves with random physical parameters and we measure the CPU time spent to execute each basic task.
-In table \ref{tab:profiling}, we compare the results for two values of $N_{grid}$.
+In Table~\ref{tab:profiling}, we compare the results for two values of $N_{grid}$.
 \begin{table}
 	\def\arraystretch{1.5}
 	\begin{tabular}{ l c c }
 		\multirow{2}{*}{Task (for 100 WFs)}& \multicolumn{2}{c}{CPU time (ms)}\\
-			&$N_{grid} = 10^3$	& $N_{grid} = 10^5$\\
+			&$N_{grid} = 10^3$	& $N_{\rm grid} = 10^5$\\
 	\hline \hline
 		 Generation of raw WF 			& $6.9 \; (46.9\%)$	& $7 \; (1.6\%)$ \\ 
 	\hline
@@ -665,7 +667,7 @@ In table \ref{tab:profiling}, we compare the results for two values of $N_{grid}
 	\hline \hline
 	\end{tabular}
 	\caption{
-Time taken by different stages of the generation of $100$ waveforms; data refers to two different values of $N_{grid}$.
+Time taken by different stages of the generation of $100$ waveforms; data refers to two different values of $N_{\rm grid}$.
 Generation of raw WF refers to the computation of the strain $h_{FIT}$ as produced by a ML model. 
 Interpolation to user grid evaluates the WF on the grid chosen by the user. In the post-processing phase, the dependence on $d_L$, $\iota$ and $\varphi_0$ is included.
 }
