@@ -775,7 +775,7 @@ GW170823 & $40.69_{-6.68}^{+10.21}$& $31.17_{-8.09}^{+7.13}$& $30.63_{-3.75}^{+5
 \label{sec:GWTC1}
 We use the implementation of our \texttt{mlgw}-{\tt TEOBResumS} and \texttt{mlgw}-{\tt SEOBNRv4} models 
 to provide a new, and independent, measure of the properties of the GW sources
-collected in GWTC-1, the first catalog of detected GW sources~\cite{LIGOScientific:2018mvr}.,
+collected in GWTC-1, the first catalog of detected GW sources~\cite{LIGOScientific:2018mvr},
 corresponding to the first two observing runs of the LIGO and Virgo detectors.
 The GWTC-1 catalog consists of 10 BBH systems and a BNS system, GW170817. 
 Since the waveform models we considered for the training only concern spin-aligned
@@ -785,8 +785,8 @@ and we set $\tau_{min} = \SI{4}{s/M_\odot}$.
 Our parameter estimation algorithm is \texttt{gwmodel}~\cite{gwmodel} a publicly available infrastructure 
 written in a mixture of \texttt{Python} and \texttt{cython} that serves as interface for the parallel nested 
 sampling implementation \texttt{cpnest}~\cite{cpnest}. 
-The analysis of each BBH system is set up as follows; we choose a total of 2000 Live Points, f
-our parallel MCMC chains with a maximum length of 5000 steps to ensure that each successive 
+The analysis of each BBH system is set up as follows; we choose a total of 2000 Live Points, 
+four parallel MCMC chains with a maximum length of 5000 steps to ensure that each successive 
 sample is independent of the previous. These settings yield an average of $\sim$ 15000 posterior samples and 
 evidence calculations that are accurate to the first decimal digit. For each BBH system we choose 
 prior distributions as described in the GWTC-1 release paper~\cite{LIGOScientific:2018mvr}. Finally, 
