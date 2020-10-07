@@ -63,10 +63,19 @@ model, that incorporates subdominant waveform modes, \texttt{TEOBResumS\_SM}~\ci
 accurate description of the postmerger-ringdown phase~\cite{Damour:2014yha}, but 
 only around 40 datasets to improve the behavior of the analytical EOB dynamics, 
 suitably modifying the analytical orbital and spin-orbit interaction.}.
-Another EOB-based model in use is the~\texttt{SEOBNR}~\cite{Taracchini:2013rva,Bohe:2016gbl} one, 
+We recall that Ref.~\cite{Nagar:2020pci} showed that \texttt{TEOBResumS\_SM} 
+is NR-faithful over the largest set of spin-aligned NR waveforms available today (595 datasets),
+with maximum unfaithfulness always below $0.5\%$. Here, for technical reasons related to
+performance in generating the training set, and to be more conservative, we slightly downgrade
+the performance of \texttt{TEOBResumS} considering its version {\it without} iteration on
+the next-to-quasi-circular parameters~\cite{Nagar:2020pcj}. This slightly worsens the EOB/NR performance that in
+any case remains below $1\%$ except for about 20 outliers that still do not exceed the $3\%$ level.
+Related details will be given elsewhere. 
+
+The other EOB-based model in use is the~\texttt{SEOBNR}~\cite{Taracchini:2013rva,Bohe:2016gbl} one, 
 largely employed by the LIGO-Virgo collaboration. We use both 
-\texttt{TEOBResumS\_SM} (that will be simply called \texttt{TEOBResumS} for simplicity in the following) 
-and \texttt{SEOBNRv2}/\texttt{v4} to train different versions of the model,
+\texttt{TEOBResumS\_SM} (that will be simply called \texttt{TEOBResumS} in the following) 
+and \texttt{SEOBNRv2}/\texttt{v4} to train different two different versions of the model,
 \texttt{mlgw-TEOBResumS} and \texttt{mlgw-SEOBNRv4}.
 As a relevant physical application, we use both 
 \texttt{mlgw-TEOBResumS} and \texttt{mlgw-SEOBNRv4}.
@@ -350,7 +359,7 @@ In what follows, we always use a flat noise curve (i.e. constant power spectral 
 %%%%%%%
 
 \subsection{Validation}
-Wherever relevant, we will employ a dataset with $5800$ waveforms generated in the domain $\mathcal{P} = [1,20]\times[-0.8,0.95]\times[-0.8,0.95]$, with $\tau_{min} = \SI{1.0}{s/M_\odot}$. The dataset was generated with TEOBResumS model.
+Wherever relevant, we will employ a dataset with $5800$ waveforms generated in the domain $\mathcal{P} = [1,20]\times[-0.8,0.95]\times[-0.8,0.95]$, with $\tau_{min} = \SI{1.0}{s/M_\odot}$. Results here refer to \texttt{mlgw-TEOBResumS}.
 \paragraph{Dataset generation parameters}
 We first evaluate the impact of number of grid points $N_{grid}$ and distortion parameter $\alpha$.
 Let $\mathbf{f}_{N_{grid}, \alpha}$ the wave stored in a dataset where $\tau_{min}$ and $\mathcal{P}$ are fixed as above. We compare it with the output of the EOB model $\mathbf{f}_{EOB}$.
@@ -550,13 +559,20 @@ We are interested to make a comparison with both \texttt{TEOBResumS}
 (the training model) and \texttt{SEOBNRv4\_ROM} \cite{Bohe:2016gbl}.
 %
 \paragraph{Comparison with \texttt{TEOBResumS}}
-When dealing with a real detection scenario, we are often interested in generating a WF which starts from a given frequency $f_{min}$, which is usually set by the detector's sensitivity window. Thus, it is crucial to measure the speed up that our model can provide in performing such task.
-We define the speed up $\mathcal{S}$ as the ratio between the runtime of benchmark model and the runtime of \texttt{mlgw} to produce the a waveform starting from a given $f_{min}$. Each waveform is produced with constant total mass $M = 100 M_{\odot}$ and random parameters; the WF is sampled at $f_{sam} = \SI{2048}{Hz}$.
-We consider the two cases with $f_{min} = \SI{5}{Hz}$ and $f_{min} = \SI{20}{Hz}$; the first choice refers to the hypotetical lower bound for the sentivity of the Einstein telescope (ET), while the second is close to that of Advanced-LIGO/Virgo.
-In figure~\ref{fig:time_performance_hist} we report the histogram of the measured speed up values for model \texttt{TEOBResumS}
+When dealing with a real detection scenario, we are often interested in generating a WF which starts from a given frequency 
+$f_{\rm min}$, which is usually set by the detector sensitivity window. Thus, it is crucial to measure the speed up that 
+our model can provide in performing such task. We define the speed up $\mathcal{S}$ as the ratio between the runtime 
+of the benchmark model and the runtime of \texttt{mlgw} to produce the a waveform starting from a given $f_{\rm min}$. 
+Each waveform is produced with constant total mass $M = 100 M_{\odot}$ and random parameters; the WF is sampled 
+at $f_{\rm sam} = \SI{2048}{Hz}$. We consider the two cases with $f_{\rm min} = \SI{5}{Hz}$ and $f_{\rm min} = \SI{20}{Hz}$. 
+The first choice refers to the hypothetical lower bound for the sensitivity of the Einstein telescope (ET), while the second 
+is close to that of Advanced-LIGO/Virgo. In Fig.~\ref{fig:time_performance_hist} we report the histogram of the 
+measured speed up values for model \texttt{TEOBResumS}
 \footnote{
-In the figure, the histogram with $f_{min} = \SI{20}{Hz}$ (bottom), displays two peaks.
-This can be understood as follows: the WFs with high positive spins tends to be longer (at constant $f_{min}$), thus requiring more execution time for \texttt{TEOBResumS}; on the other hand in such cases \texttt{mlgw} requires approximately a constant time for the generation of such WFs. Then the two peaks measure indirectly the execution time of \texttt{TEOBResumS}.}.
+In the figure, the histogram with $f_{\rm min} = 20$~Hz (bottom), displays two peaks. This can be understood as follows: 
+the WFs with high positive spins tends to be longer (keeping $f_{\rm min}$ the same), thus requiring more execution 
+time for \texttt{TEOBResumS}; on the other hand in such cases \texttt{mlgw} requires approximately the same time 
+for the generation of such WFs. Then the two peaks measure indirectly the execution time of \texttt{TEOBResumS}.}.
   
 \newcommand{\factor}{.9}
 \begin{figure}
@@ -569,8 +585,10 @@ This can be understood as follows: the WFs with high positive spins tends to be 
 	\end{minipage}
 
 	\caption{
-Histogram for values of the speed up given by \texttt{mlgw}, as compared with \texttt{TEOBResumS} model, computed on $N=2000$ test waveforms. Each WF is generated with random physical parameters and has a minimum frequency of $\SI{5}{Hz}$ (top panel) and $\SI{20}{Hz}$ (bottom panel).
-We set a constant total mass $M=\SI{100}{M_\odot}$ and the sampling rate $f_{sam} = \SI{2048}{Hz}$.
+Histogram for values of the speed up given by \texttt{mlgw-TEOBResumS}, as compared with the native implementation of 
+the \texttt{TEOBResumS} model, computed on $N=2000$ test waveforms. Each WF is generated with random physical 
+parameters and has a minimum frequency of $\SI{5}{Hz}$ (top panel) and $\SI{20}{Hz}$ (bottom panel).
+We set a constant total mass $M=\SI{100}{M_\odot}$ and the sampling rate $f_{\rm sam} = \SI{2048}{Hz}$.
 We report the median value $q_{50\%}$ as well as the positions $q_{5\%}$ and $q_{95\%}$ of the 5th and 95th percentile.
 }
 	\label{fig:time_performance_hist}
@@ -586,7 +604,8 @@ We report the median value $q_{50\%}$ as well as the positions $q_{5\%}$ and $q_
 	\end{minipage}
 
 	\caption{
-Histograms for values of the speed up given by \texttt{mlgw}, as compared with ROM model \texttt{SEOBNRv4\_ROM}, computed on $N=2000$ test waveforms.
+Histograms for values of the speed up given by \texttt{mlgw}, as compared with ROM model \texttt{SEOBNRv4\_ROM}, 
+computed on $N=2000$ test waveforms.
 Each WF is generated with random physical parameters and has a sampling frequency $f_{sam}$ of $\SI{1024}{Hz}$ (top panel) and $\SI{2048}{Hz}$ (bottom panel).
 We set a constant total mass $M=\SI{100}{M_\odot}$ and the same starting frequency $f_{min} = \SI{20}{Hz}$.
 We report the median value $q_{50\%}$ as well as the positions $q_{5\%}$ and $q_{95\%}$ of the 5th and 95th percentile.
@@ -596,31 +615,37 @@ We report the median value $q_{50\%}$ as well as the positions $q_{5\%}$ and $q_
 
 %%%%%%%%%%
 We see that in both cases a substantial speed up is achieved. The speed up is higher for longer WFs
-\footnote{This is clearly understood: a longer WF requires more computation for a EOB model, while roughly the same amount of work is done by \texttt{mlgw}}, 
-making our model particulary convenient for advanced detectors, with a larger sensitivity window.
-\par
+\footnote{This is clearly understood: a longer WF requires more computation for a EOB model, while 
+roughly the same amount of work is done by \texttt{mlgw}}, making our model particularly convenient 
+for advanced detectors, with a larger sensitivity window.
+
 \paragraph{Comparison with \texttt{SEOBNRv4\_ROM}}
-In figure~\ref{fig:time_performance_hist_ROM} we report the histogram of the measured speed up values for model \texttt{SEOBNRv4\_ROM}, which is now the state of the art for the WF generation time.
-The comparison is made as above only for $f_{min} = \SI{20}{Hz}$; the ROM has not been built for $f_{min} = \SI{5}{Hz}$.
-As the ROM model yields WFs in frequency domain, in the time comparison we included a fast Fourier trasform (FFT) of the time domain WF of \texttt{mlgw}. This is to ensure that we evaluate the two model at the same conditions.
+In Fig.~\ref{fig:time_performance_hist_ROM} we report the histogram of the measured speed up 
+values for model \texttt{SEOBNRv4\_ROM}, which is now the state of the art for the WF generation time.
+The comparison is made as above only for $f_{min} = 20$~Hz, since the minimum allowed frequency
+for the ROM is 10~Hz. As the ROM model yields WFs in frequency domain, in the time comparison 
+we included a fast Fourier trasform (FFT) of the time domain WF of \texttt{mlgw}. 
+This ensures that we are evaluating the two model at the same conditions.
 Interestingly, the time taken by the FFT (in the \texttt{numpy}
 implementation) is similar to that required to generate a WF. Thus for
 a WF in FD, our model cannot be substantially faster, due to the
 limitation imposed by the FFT
-\footnote{Actually, the operation for performing the FFT takes the most amount of time. In fact, before the FFT the waveform shall be evaluated on a dense equally spaced grid: as can be seen in Tab.~\ref{tab:profiling}, such operation can be very expensive.}
-\par
+\footnote{Actually, the operation for performing the FFT takes the most amount of time. In fact, 
+before the FFT the waveform shall be evaluated on a dense equally spaced grid: as can be seen in 
+Table~\ref{tab:profiling}, such operation can be very expensive.}
+
 We note the the performances are quite similar to each other.
-If a lower sampling rate is employed, \texttt{mlgw} slighly improves its performances.
-\par
-It is important to stress that \texttt{mlgw} is written in pure
-Python, while \texttt{SEOBNRv4\_ROM} is coded in C.
-In fact, a python code could be easily accelerated (i.e. parellelized, run on GPUs, etc...) with dedicated libraries, thus allowing to push the code performance further.
+If a lower sampling rate is employed, \texttt{mlgw-TEOBResumS} slighly improves 
+its performances. It is important to stress that \texttt{mlgw-TEOBResumS} 
+is written in pure Python, while \texttt{SEOBNRv4\_ROM} is coded in $C$.
+In fact, a python code could be easily accelerated (i.e. parellelized, run on GPUs, etc...) 
+with dedicated libraries, thus allowing to push the code performance further.
 %
-Furthermore, \texttt{mlgw} is more efficient in reconstructing the
-waveforms: it requires only $O(5\cdot 10^3)$ WFs for the training,
+Furthermore, \texttt{mlgw-TEOBREsumS} is more efficient in reconstructing 
+the waveforms: it requires only $O(5\cdot 10^3)$ WFs for the training,
 while in order to build a ROM as many as $O(5\cdot 10^5)$ WFs are
 required. 
-\par
+
 \paragraph{Profiling}
 It is interesting to have a knowledge of the time spent by \texttt{mlgw} in each stage of the WF generation procedure.
 We generate $100$ waves with random physical parameters and we measure the CPU time spent to execute each basic task.
