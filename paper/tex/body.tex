@@ -44,55 +44,41 @@ ML procedures have already been succesfully exploited for speeding up the WF gen
 and for signal detection and/or parameter estimation~\cite{Gabbard:2017lja,George:2017pmj,George:2017vlv,Rebei:2018lzh,Khan:2020foe}.
 
 %The construction of a NR-trained ML waveform model is currently missing except for a very restricted region of the parameter space (nonspinning etc.). The main problem behind this is because of the absence of a large set of NR simulations ($\simeq 10^{3}$) that would be needed to train such an algorithm.
-\par
-In this work, we explore the application of ML to WF generation and we build a ML model that allows to reproduce waveforms from any EOB model for BBH coalescence. We demonstrate that such ML-based model can generate 
+In this work, we explore the application of ML to WF generation and we build a ML model that allows to reproduce 
+waveforms from any EOB model for BBH coalescence. We demonstrate that such ML-based model can generate 
 GW signals significantly faster than the original model, 
 matching the performances of a Reduced Order Modelling 
 (ROM)~\cite{Purrer:2015tud,Bohe:2016gbl,Purrer:2017str}.  
-At the same time it shows a good agreement with the train model, at the $10^{-3}$ level when averaged on the whole parameter space.
-For simplicity, we focus here only on the 
-dominant $\ell=m=2$ quadrupole waveform and we only consider the align spin case.
-
-EOB models are the ideal candidate for training our ML model: they are moderatly fast to run and, although they are {\it checked}
-(i.e. NR-informed) only on the part of the parameter space covered by NR simulations, 
-they are also typically able to robustly generate waveforms in a large set
-outside the NR-information domain (e.g. large mass ratios and
+At the same time it shows a good agreement with the train model, at the $10^{-3}$ level when 
+averaged on the whole parameter space. For simplicity, we focus here only on the 
+dominant $\ell=m=2$ quadrupole waveform and we only consider the aligned spin case.
+EOB models are the ideal candidate for training our ML model: they are moderately fast to run 
+and, although they are {\it checked} (i.e. NR-informed) only on the part of the parameter space 
+covered by NR simulations,  they are also typically able to robustly generate waveforms 
+for a large set of parameters outside the NR-information domain (e.g. large mass ratios and
 spins).
-This is the case of the most recent avatar of 
-the spin-aligned \texttt{TEOBResumS}~\cite{Nagar:2018zoe} model, 
-that incorporates subdominant waveform modes, \texttt{TEOBResumS\_SM}~\cite{Nagar:2019wds,Nagar:2020pcj}. 
-\footnote{This model used several hundreds of the available SXS simulations to inform a highly accurate description 
-of the postmerger-ringdown phase~\cite{Damour:2014yha}, but 
+This is the case of the most recent avatar of the spin-aligned \texttt{TEOBResumS}~\cite{Nagar:2018zoe} 
+model, that incorporates subdominant waveform modes, \texttt{TEOBResumS\_SM}~\cite{Nagar:2019wds,Nagar:2020pcj}
+\footnote{This model used several hundreds of the available SXS simulations to inform a highly 
+accurate description of the postmerger-ringdown phase~\cite{Damour:2014yha}, but 
 only around 40 datasets to improve the behavior of the analytical EOB dynamics, 
-suitably modifying the analytical orbital and spin-orbit interaction.}
-Another important family of EOB models is the \texttt{SEOBNR} \cite{Taracchini:2013rva,Bohe:2016gbl} family, largely employed by the LIGO-Virgo collaborarion.
-We use both \texttt{TEOBResumS\_SM} and \texttt{SEOBNRv2}/\texttt{v4} to train different versions of the model.
-\par
-\iffalse
-Thus, EOB models are ideal for training a ML model, beacause, at moderate computational cost, they generate waveforms covering a large region of the parameter space.
-For simplicity, we focus here only on the 
-dominant $\ell=m=2$ quadrupole waveform. 
-We we build a ML model that allows to reproduce waveforms from any EOB model for BBH coalescence and we demonstrate that such ML-based model can generate 
-GW signals significantly faster than the training model, 
-matching the performances of a Reduced Order Modelling 
-(ROM)~\cite{Purrer:2015tud,Bohe:2016gbl,Purrer:2017str}.  
-At the same time it keeps the same accuracy of the underlying 
-training model.
-
-%\footnote{Let us note, in passing, that the ML framework 
-%is completely general and it works for any EOB model; indeed 
-%a successful ML model was trained using also the \texttt{SEOBNRv2} 
-%waveform model~\cite{Taracchini:2013rva}.}.
-\fi
-As a relevant physical application, we use the our model \texttt{mlgw}
-to provide a completely new, and independent, analysis of the 10 BBHs 
+suitably modifying the analytical orbital and spin-orbit interaction.}.
+Another EOB-based model in use is the~\texttt{SEOBNR}~\cite{Taracchini:2013rva,Bohe:2016gbl} one, 
+largely employed by the LIGO-Virgo collaboration. We use both 
+\texttt{TEOBResumS\_SM} (that will be simply called \texttt{TEOBResumS} for simplicity in the following) 
+and \texttt{SEOBNRv2}/\texttt{v4} to train different versions of the model,
+\texttt{mlgw-TEOBResumS} and \texttt{mlgw-SEOBNRv4}.
+As a relevant physical application, we use both 
+\texttt{mlgw-TEOBResumS} and \texttt{mlgw-SEOBNRv4}.
+to provide two new, and independent, analyses of the 10 BBHs 
 coalescence events collected in the O1/O2 LIGO-Virgo observing 
-runs~\cite{LIGOScientific:2018mvr}.
-To asses any difference between \texttt{TEOBResumS} and \texttt{SEOBNRv4}, we perform two separate analysis of the catalog, using two different version of \texttt{mlgw}, trained on the two EOB models.
-The analysis does not show large disagreement between the two versions of \texttt{mlgw}.
-Furthermore, the physical parameters we find are 
-compatible with previous analyses obtained with different 
-models~\cite{LIGOScientific:2018mvr}.
+runs~\cite{LIGOScientific:2018mvr}. The outcome of the analyses 
+using \texttt{mlgw-TEOBResumS} and \texttt{mlgw-SEOBNRv4} are 
+largely consistent among themselves.
+In addition,  the so-obtained physical properties of the 10 BBHs
+systems are compatible with previous analyses published in
+Ref.~\cite{LIGOScientific:2018mvr}, though obtained using
+different, notably spin-precessing, waveform models.
 
 %
 On top of the specific application discussed here, our ML waveform model could also be used directly 
@@ -101,7 +87,7 @@ Furthermore, since the time required to generate a WF does not depend
 on the signal time length but only only on the number of grid points which the WF is evaluated at,
 the applicability of our approach goes far beyond the LIGO/Virgo physics scenario. In particular,
 we think about the forthcoming Einstein Telescope, that will be sensitive to very long stellar-mass 
-inspirals from 5Hz, or to extreme mass ratio inspiral as LISA sources. In this context the problem
+inspirals from 5Hz, or to extreme mass ratio inspirals as LISA sources. In this context the problem
 of WF fast generation will be more pressing and our approach, provided a suitable waveform model 
 for training,  might be essential for detection and parameter estimation. 
 
