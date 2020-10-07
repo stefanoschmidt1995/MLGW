@@ -232,7 +232,7 @@ create_dataset_TD
 	if modes == [(2,2)]:
 		t_end = 5.2e-4 #estimated maximum time for ringdown: WF will be killed after that time
 	else:
-		t_end = 1e-4 #only for HMs. You should find a better way to set this number...
+		t_end = 0. #only for HMs. You should find a better way to set this number...
 	time_grid = np.linspace(-np.power(np.abs(t_coal), alpha), np.power(t_end, alpha), N_grid)
 	time_grid = np.multiply( np.sign(time_grid) , np.power(np.abs(time_grid), 1./alpha))
 
@@ -326,7 +326,7 @@ create_dataset_TD
 		temp_amp = hlm[str(k_modes[0])][0]
 		temp_ph = hlm[str(k_modes[0])][1]
 
-		time_full = (time_full - time_full[np.argmax(temp_amp)])/(m1+m2) #grid is scaled to standard grid
+		time_full = (time_full - time_full[np.argmax(np.abs(temp_amp))])/(m1+m2) #grid is scaled to standard grid
 			#setting waves to the chosen std grid
 		temp_amp = np.interp(time_grid, time_full, temp_amp)
 		temp_ph = np.interp(time_grid, time_full, temp_ph)

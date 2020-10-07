@@ -282,6 +282,8 @@ GW_generator
 		Ouput:
 			h_plus, h_cross (D,)/(N,D)		desidered polarizations (if it applies)
 		"""
+		if isinstance(modes,tuple):
+			modes = [modes]
 		theta = np.array(theta) #to ensure user theta is copied into new array
 		if theta.ndim == 1:
 			to_reshape = True #whether return a one dimensional array
@@ -348,9 +350,9 @@ GW_generator
 			if modes is not None:
 				if mode.lm() not in modes: #skipping a non-necessary mode
 					continue
-			print("got modes {}".format(mode.lm()))
+			#print("got modes {}".format(mode.lm()))
 			amp_lm, ph_lm = mode.get_mode(theta[:,:4], t_grid, out_type = "ampph", align22 = True)
-			print(amp_lm)
+			#print(amp_lm) #DEBUG
 				# setting spherical harmonics: amp, ph, D_L,iota, phi_0
 			h_lm_real, h_lm_imag = self.__set_spherical_harmonics(mode.lm(), amp_lm, ph_lm, theta[:,4], theta[:,5], theta[:,6])
 			h_plus = h_plus + h_lm_real
@@ -374,6 +376,8 @@ GW_generator
 			amp, ph (N, D', K)		amplitude and phase of the K modes required by the user (if K =1, no third dimension)
 			real, imag (N, D', K)	real and imaginary part of the K modes required by the user (if K =1, no third dimension)
 		"""
+		if isinstance(modes,tuple):
+			modes = [modes]
 		try:
 			K = len(modes)
 		except:
@@ -385,13 +389,16 @@ GW_generator
 			dim_theta = 1
 		else:
 			dim_theta = 2
-		res1 = np.zeros((theta.shape[0],theta.shape[1],K))
-		res2 = np.zeros((theta.shape[0],theta.shape[1],K))
+		if theta.shape[1] == 7:
+			theta = theta[:,:4]
+		res1 = np.zeros((theta.shape[0],t_grid.shape[0],K))
+		res2 = np.zeros((theta.shape[0],t_grid.shape[0],K))
 
 		for mode in self.modes:	
 			if modes is not None:
 				if mode.lm() not in modes: #skipping a non-necessary mode
 					continue
+			print("got modes {}".format(mode.lm()))
 			res1[:,:,i], res2[:,:,i] = mode.get_mode(theta, t_grid, out_type = out_type, align22 = False)
 
 		res1, res2 = np.squeeze(res1), np.squeeze(res2)
@@ -452,8 +459,9 @@ GW_generator
 			#starting computation (sloooow??)
 		ki = max(0, m-s)
 		kf = min(l+m, l-s)
+		#print(ki,kf)
     	
-		for k in range(ki,kf):
+		for k in range(ki,kf+1):
 			norm = fact(k) * fact(l+m-k) * fact(l-s-k) * fact(s-m+k) #normalization constant
 			d_lm = d_lm +  (pow(-1.,k) * np.power(cos_i,2*l+m-s-2*k) * np.power(sin_i,2*k+s-m) ) / norm
 
@@ -838,7 +846,8 @@ mode_generator
 		amp, ph =  self.get_raw_mode(theta_std) #raw WF (N, N_grid)
 
 			#getting_shifts
-		shifts = self.__get_shifts(theta_std) #(N,)
+		if align22:
+			shifts = self.__get_shifts(theta_std) #(N,)
 
 			#doing interpolations
 		m_tot_std = 20.

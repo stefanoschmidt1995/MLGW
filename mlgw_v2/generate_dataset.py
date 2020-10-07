@@ -28,9 +28,9 @@ if False:
 
 
 
-quit()
+#quit()
 
-theta_vector, amp_dataset, ph_dataset, x_grid = load_dataset("dataset.dat", shuffle=False, N_data = None) #loading
+theta_vector, amp_dataset, ph_dataset, x_grid = load_dataset("TD_datasets/33_dataset.dat", shuffle=False, N_data = None) #loading
 #print(theta_vector)
 
 cut_off = -1

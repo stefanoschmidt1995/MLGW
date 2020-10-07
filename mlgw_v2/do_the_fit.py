@@ -8,8 +8,8 @@ PCA_dataset_folder = "TD_datasets/{}".format(lm)
 model_folder = "TD_models/model_0/{}".format(lm)
 shift_folder = "TD_models/model_0/{}/shifts".format(lm)
 
-fit_PCA = False
-fit_MoE_model = False
+fit_PCA = True
+fit_MoE_model = True
 fit_shifts_ = False
 
 fifth_order = ["00", "11","22", "01", "02", "12","000", "001", "002", "011", "012", "022", "111", "112", "122", "222", #2nd/3rd order
@@ -29,6 +29,6 @@ if fit_MoE_model:
 	fit_MoE("amp", PCA_dataset_folder, model_folder, experts = 4, comp_to_fit = None, features = fifth_order, EM_threshold = 1e-2, args = 	None, N_train = 6000, verbose = False, test_mismatch = True)
 
 if fit_shifts_:
-	fit_shifts(shift_file, shift_folder, experts = 4, line_to_fit = 1, train_frac = 0.8, features = fourth_order, EM_threshold = 1e-2, args = None, N_train = None, verbose = True, train_mse = True, test_mse = True)
+	fit_shifts(shift_file, shift_folder, experts = 4, line_to_fit = 0, train_frac = 0.8, features = fourth_order, EM_threshold = 1e-2, args = None, N_train = None, verbose = True, train_mse = True, test_mse = True)
 
 quit()
