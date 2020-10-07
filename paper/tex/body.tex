@@ -652,10 +652,18 @@ It is interesting to have a knowledge of the time spent by \texttt{mlgw} in each
 We generate $100$ waves with random physical parameters and we measure the CPU time spent to execute each basic task.
 In Table~\ref{tab:profiling}, we compare the results for two values of $N_{grid}$.
 \begin{table}
+	\caption{
+Time taken by different stages of the generation of $100$ waveforms; data refers to two different values of $N_{\rm grid}$.
+Generation of raw WF refers to the computation of the strain $h_{\rm FIT}$ as produced by a ML model. 
+Interpolation to user grid evaluates the WF on the grid chosen by the user. 
+In the post-processing phase, the dependence on $d_L$, $\iota$ and $\varphi_0$ is included.
+}
+	\label{tab:profiling}
 	\def\arraystretch{1.5}
+	\begin{ruledtabular}
 	\begin{tabular}{ l c c }
 		\multirow{2}{*}{Task (for 100 WFs)}& \multicolumn{2}{c}{CPU time (ms)}\\
-			&$N_{grid} = 10^3$	& $N_{\rm grid} = 10^5$\\
+			&$N_{\rm grid} = 10^3$	& $N_{\rm grid} = 10^5$\\
 	\hline \hline
 		 Generation of raw WF 			& $6.9 \; (46.9\%)$	& $7 \; (1.6\%)$ \\ 
 	\hline
@@ -664,14 +672,8 @@ In Table~\ref{tab:profiling}, we compare the results for two values of $N_{grid}
 		 Post processing 				& $1.7 \; (11.6\%)$	& $206 \; (48.1\%)$ \\
 	\hline
 		 Total							& $14.7 \; (100\%)$ &  $428 \; (100.0\%)$ \\
-	\hline \hline
 	\end{tabular}
-	\caption{
-Time taken by different stages of the generation of $100$ waveforms; data refers to two different values of $N_{\rm grid}$.
-Generation of raw WF refers to the computation of the strain $h_{FIT}$ as produced by a ML model. 
-Interpolation to user grid evaluates the WF on the grid chosen by the user. In the post-processing phase, the dependence on $d_L$, $\iota$ and $\varphi_0$ is included.
-}
-	\label{tab:profiling}
+	\end{ruledtabular}
 \end{table}
 \par
 We see that the cost of generating the raw WF does not depend on the number of grid points. 
