@@ -1,20 +1,11 @@
 \begin{abstract}
-%We apply Machine Learning methods to build a model designed to generate a gravitational waveform in the time domain as produced by a binary black hole coalescence. 
-%Our model matches the accuracy of the state-of-the-art EOB models and has a tiny generation cost, equivalent to those of a fast Reduced Order Model.
-%As the generation time does not depend on the lenght of the signal, the model is particularly suitable for long observation surveys, such as ET.
-%Furthermore, it provides a closed form expression for the waveform and its gradient with respect to the orbital parameters. This could lead to a further improvement of the sampling algorithms employed for the parameter estimation.
-%We train our model on a number of waveforms computed by \texttt{TEOBResumS} and we infer a relation between the waveform and the masses $m_1$, $m_2$ and (aligned) spins $s_1$, $s_2$ of the two BHs. 
-%Our implementation is publicly available as a Python package \texttt{mlgw} as \url{https://pypi.org/project/mlgw/}.
-%\texttt{mlgw} has all the features required for performing a full parameter estimation (including the waveform dependence on geometrical parameters). 
-%We employ \texttt{mlgw} to analyse the public data from GWTC-1, the first GW transient catalog. Our results are largely compatible with those published by the LIGO-Virgo collaboration.
-
 We apply machine learning methods to build a time-domain model for
-gravitational waveforms from binary black hole mergers called \texttt{mlgw}.
+gravitational waveforms from binary black hole mergers, called \texttt{mlgw}.
 The dimensionality of the problem is handled by representing the 
 waveform's amplitude and phase using a principal component analysis.
 We train \texttt{mlgw} on about $\mathcal{O}(10^3)$ \texttt{TEOBResumS} and \texttt{SEOBNRv4} effective-one-body
 waveforms with mass ratios $q\in[1,20]$ and aligned dimensionless
-spins $\chi\in[-0.80,0.95]$. The resulting models are faithful to the
+spins $s\in[-0.80,0.95]$. The resulting models are faithful to the
 training sets at the ${\sim}10^{-3}$ level (averaged on the parameter space).
 The speed up for a single waveform generation is  a factor 10 to 50 (depending 
 on the binary mass and initial frequency) for \texttt{TEOBResumS} and
