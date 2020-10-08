@@ -11,7 +11,7 @@ These can be broadly categorized in  three families; (i) effective-one-body (EOB
 waveform models~\cite{Damour:2009kr,Nagar:2020pcj,Chiaramello:2020ehz,Ossokine:2020kjp}; (ii) phenomenological 
 models~\cite{Khan:2015jqa,Pratten:2020ceb,Estelles:2020osj}; (iii) NR surrogates~\cite{Varma:2018mmi,Williams:2019vub,Varma:2019csw,Rifat:2019ltp,Khan:2020fso}.
 %
-EOB models are the models that incorporate the largest amount of analytical information.
+EOB models are the waveform approximants that incorporate the largest amount of analytical information.
 They compute the GW signal by solving Hamilton's equations  and accurately predict the 
 GW signal from early inspiral phase up to the final ringdown. The underlying relative dynamics
 is informed by (or calibrated to) NR simulations via a few parameters that take into account 
@@ -20,8 +20,8 @@ of the Hamiltonian. Similarly, the merger and ringdown parts of the waveform are
 simulations\footnote{One should remember that this step is a priori not necessary in the theoretical 
 construction of the model~\cite{Buonanno:2000ef,Damour:2007xr,Damour:2009wj}.}.
 Because of the numerical integrations involved to solve Hamilton's equations, they tend to 
-be accurate, but slow to generate, see however~\cite{Nagar:2018gnk} for a more efficient 
-approach to obtain the dynamics.
+be accurate, but sometimes slow to generate, see however~\cite{Nagar:2018gnk} for a 
+more efficient approach to obtain the dynamics.
 
 The phenomenological waveforms are based on the post-Newtonian formalism and then calibrated 
 to  EOB waveforms and numerical relativity. They tend to be faster than EOB models, but not as accurate.
@@ -54,26 +54,26 @@ averaged on the whole parameter space. For simplicity, we focus here only on the
 dominant $\ell=m=2$ quadrupole waveform and we only consider the aligned spin case.
 
 EOB models are the ideal candidate for training our model: they are moderately fast to run 
-and, although they are {\it checked} (i.e. NR-informed) only on the part of the parameter space 
-covered by NR simulations,  they are also typically able to robustly generate waveforms 
-for a large set of parameters outside the NR-information domain (e.g. large mass ratios and
-spins).
+and, although they are {\it checked} (and NR-informed) only on the limited part of the 
+parameter space covered by NR simulations,  they are also typically able to robustly 
+generate waveforms for a large set of parameters outside the NR-information 
+domain (e.g. large mass ratios and spins).
 This is the case of the most recent avatar of the spin-aligned \texttt{TEOBResumS}~\cite{Nagar:2018zoe} 
 model, that incorporates subdominant waveform modes, \texttt{TEOBResumS\_SM}~\cite{Nagar:2019wds,Nagar:2020pcj}
 \footnote{This model used several hundreds of the available SXS simulations to inform a highly 
 accurate description of the postmerger-ringdown phase~\cite{Damour:2014yha}, but 
-only around 40 datasets to improve the behavior of the analytical EOB dynamics, 
-suitably modifying the analytical orbital and spin-orbit interaction.}.
-We recall that Ref.~\cite{Nagar:2020pci} showed that \texttt{TEOBResumS\_SM} 
-is NR-faithful over the largest set of spin-aligned NR waveforms available today (595 datasets),
-with maximum unfaithfulness always below $0.5\%$. Here, for technical reasons related to
-performance in generating the training set, and to be more conservative, we slightly downgrade
-the performance of \texttt{TEOBResumS} considering its version {\it without} iteration on
-the next-to-quasi-circular parameters~\cite{Nagar:2020pcj}\footnote{This slightly worsens the EOB/NR performance that in
+only around 40 datasets to improve the behavior of the analytical EOB dynamics.}.
+\texttt{TEOBResumS\_SM}   NR-faithful over the largest set of spin-aligned NR waveforms 
+available today (595 datasets)~\cite{Nagar:2020pci}, with maximum EOB/NR unfaithfulness 
+always below $0.5\%$. Here, to reduce the generation time of the training set, and to be more 
+conservative, we slightly downgrade the performance of \texttt{TEOBResumS} considering 
+its version {\it without} iteration on the next-to-quasi-circular 
+parameters~\cite{Nagar:2020pcj}~\footnote{This slightly worsens the EOB/NR performance that in
 any case remains below $1\%$ except for about 40 outliers that still do not exceed the $3\%$ threshold
 and are mostly below the $2\%$ level~\cite{Riemenschneider:2020} }.
 The other EOB-based model in use is the~\texttt{SEOBNRv4}~\cite{Taracchini:2013rva,Bohe:2016gbl} one, 
-largely employed by the LIGO-Virgo collaboration.
+largely employed by the LIGO-Virgo collaboration. This model was calibrated to NR so as to get  
+maximum EOB/NR unfaithfulness at most of $1\%$. 
 
 We use both 
 \texttt{TEOBResumS\_SM} (in the following simply \texttt{TEOBResumS}) 
