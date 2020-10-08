@@ -74,7 +74,7 @@ and are mostly below the $2\%$ level~\cite{Riemenschneider:2020}.
 The other EOB-based model in use is the~\texttt{SEOBNR}~\cite{Taracchini:2013rva,Bohe:2016gbl} one, 
 largely employed by the LIGO-Virgo collaboration. We use both 
 \texttt{TEOBResumS\_SM} (that will be simply called \texttt{TEOBResumS} in the following) 
-and \texttt{SEOBNRv4} to train different two different versions of the model,
+and \texttt{SEOBNRv4} to train different two different versions of the,
 \texttt{mlgw-TEOBResumS} and \texttt{mlgw-SEOBNRv4}.
 As a relevant physical application, we use both 
 \texttt{mlgw-TEOBResumS} and \texttt{mlgw-SEOBNRv4}.
@@ -242,8 +242,11 @@ where $X_{i:}$ denotes the i-th row of the dataset matrix.
 \par
 The dataset is filled with random values of parameters ${\tilde{\boldsymbol{\vartheta}}}_i \sim \textrm{Unif}(\mathcal{P})$
 \footnote{We denote by $\textrm{Unif}(\mathcal{P})$ a uniform probability distribution on the set $\mathcal{P}$.}.
-As stressed above, any time domain EOB waveform model is suitable for such purpose. Indeed we employed successfully 
-both \texttt{TEOBResumS} and \texttt{SEOBNRv4}.
+As stressed above, any time domain EOB waveform model is suitable for such purpose. Indeed we employed 
+successfully both\footnote{For completeness, we have also computed a {\tt mlgw} 
+mode using \texttt{SEOBNRv2\_opt}~\cite{Devine:2016ovp}  a spin-aligned model that, though being 
+outdated nowadays, was optimized with respect to the original \texttt{SEOBNRv2}~\cite{Taracchini:2013rva} 
+so to improve its computational efficiency.} \texttt{TEOBResumS} and \texttt{SEOBNRv4}.
 The output of the training model must be interpolated to the chosen time grid.
 
 It is important to ensure that all waves have zero phase at a constant
@@ -913,7 +916,7 @@ both because of its speed and of the closed form expression for the WF.
 
 Due to its speed, \texttt{mlgw} could be employed for a systematic comparison between different waveform models, directly on data.
 By training (and the training procedure is also quick) \texttt{mlgw} with different waveform models, it will be possible to compare their predictions on several observed events. This could allow to detect systematic biases or to prefer a model over another by means of Bayesian model selection (i.e. by comparing different model evidences).
-We started this program by analysing GWTC-1 with \texttt{mlgw-TEOBResumS} and \texttt{mlgw-SEOBNRv4} and 
+We started this program by analyzing GWTC-1 with \texttt{mlgw-TEOBResumS} and \texttt{mlgw-SEOBNRv4} and 
 highlighted some differences in the predictions as compared to the published results (see Sec.~\ref{sec:GWTC1}). 
 Future work might repeat such an analysis on other EOB models or with more observations.
 
