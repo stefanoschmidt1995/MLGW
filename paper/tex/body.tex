@@ -67,16 +67,18 @@ only around 40 datasets to improve the behavior of the analytical EOB dynamics.}
 available today (595 datasets)~\cite{Nagar:2020pci}, with maximum EOB/NR unfaithfulness 
 always below $0.5\%$. Here, to reduce the generation time of the training set, and to be more 
 conservative, we slightly downgrade the performance of \texttt{TEOBResumS} considering 
-its version {\it without} iteration on the next-to-quasi-circular 
-parameters~\cite{Nagar:2020pcj}~\footnote{This slightly worsens the EOB/NR performance that in
-any case remains below $1\%$ except for about 40 outliers that still do not exceed the $3\%$ threshold
-and are mostly below the $2\%$ level~\cite{Riemenschneider:2020} }.
-The other EOB-based model in use is the~\texttt{SEOBNRv4}~\cite{Taracchini:2013rva,Bohe:2016gbl} one, 
-largely employed by the LIGO-Virgo collaboration. This model was calibrated to NR so as to get  
-maximum EOB/NR unfaithfulness at most of $1\%$. 
+its version {\it without} iteration~\footnote{This slightly worsens the EOB/NR performance that in
+any case remains below $1\%$ except for $\sim 40$ outliers that still do not exceed the $3\%$ 
+threshold and are mostly below the $2\%$ level~\cite{Riemenschneider:2020}.} on 
+the next-to-quasi-circular parameters~\cite{Nagar:2020pcj}.bThe other EOB-based model in 
+use is the~\texttt{SEOBNRv4}~\cite{Taracchini:2013rva,Bohe:2016gbl} one, largely employed 
+by the LIGO-Virgo collaboration. This model was calibrated to NR so as to get  
+maximum EOB/NR unfaithfulness at most of $1\%$. However, differently from 
+TEOB~\cite{Nagar:2018zoe} this model in its native implementation is computationally 
+too slow for parameter estimation purposes and it is absolutely necessary 
+to use its ROM version, ~\texttt{SEOBNRv4\_ROM}~\cite{Bohe:2016gbl}.
 
-We use both 
-\texttt{TEOBResumS\_SM} (in the following simply \texttt{TEOBResumS}) 
+We use both \texttt{TEOBResumS\_SM} (in the following simply \texttt{TEOBResumS}) 
 and \texttt{SEOBNRv4} to train different two different versions of \texttt{mlgw}, respectively
 \texttt{mlgw-TEOBResumS} and \texttt{mlgw-SEOBNRv4}.
 As a relevant physical application, we use both 
@@ -550,13 +552,13 @@ In the center line of \ref{fig:countour}, as long as the $s_1$ dependence is con
 This means that, being non-leading, spin contribution are not important for the first PC but become dominant at higher order of PCs.
 Indeed, the values of the first PC are well correlated with mismatch in the case of $q$
 \footnote{See~\cite{Ohme2013PCA_GW} for a closely related discussion on PCA components and its dependence on physical parameter.}.
-In the third row of \ref{fig:countour}, the inverse correlation between the mismatch and mse can be noted again.
+In the third row of Fig.~\ref{fig:countour}, the inverse correlation between the mismatch and mse can be noted again.
 %%%%%%%%%%%%%%%%%%
 %%%%%%%%%%%%%%%
 \subsection{Runtime analysis} \label{sec:runtime}
 We now asses the time performances of our model.
 We are interested to make a comparison with both
-the training model (\texttt{TEOBResumS}) and \texttt{SEOBNRv4\_ROM} \cite{Bohe:2016gbl}.
+the training model (\texttt{TEOBResumS}) and \texttt{SEOBNRv4\_ROM}~\cite{Bohe:2016gbl}.
 %
 \paragraph{Comparison with \texttt{TEOBResumS}}
 When dealing with a real detection scenario, we are often interested in generating a WF which starts from a given frequency 
