@@ -74,7 +74,7 @@ and are mostly below the $2\%$ level~\cite{Riemenschneider:2020}.
 The other EOB-based model in use is the~\texttt{SEOBNR}~\cite{Taracchini:2013rva,Bohe:2016gbl} one, 
 largely employed by the LIGO-Virgo collaboration. We use both 
 \texttt{TEOBResumS\_SM} (that will be simply called \texttt{TEOBResumS} in the following) 
-and \texttt{SEOBNRv2}/\texttt{v4} to train different two different versions of the model,
+and \texttt{SEOBNRv4} to train different two different versions of the model,
 \texttt{mlgw-TEOBResumS} and \texttt{mlgw-SEOBNRv4}.
 As a relevant physical application, we use both 
 \texttt{mlgw-TEOBResumS} and \texttt{mlgw-SEOBNRv4}.
@@ -242,16 +242,18 @@ where $X_{i:}$ denotes the i-th row of the dataset matrix.
 \par
 The dataset is filled with random values of parameters ${\tilde{\boldsymbol{\vartheta}}}_i \sim \textrm{Unif}(\mathcal{P})$
 \footnote{We denote by $\textrm{Unif}(\mathcal{P})$ a uniform probability distribution on the set $\mathcal{P}$.}.
-As stressed above, any time domain EOB waveform model is suitable for such purpose. Indeed we employed succesfully both \texttt{TEOBResumS} and \texttt{SEOBNRv2}/\texttt{v4}.
+As stressed above, any time domain EOB waveform model is suitable for such purpose. Indeed we employed successfully 
+both \texttt{TEOBResumS} and \texttt{SEOBNRv4}.
 The output of the training model must be interpolated to the chosen time grid.
-\par
+
 It is important to ensure that all waves have zero phase at a constant
 time point $\bar{t}$: this is crucial to obtain a continuous
 dependence of the phase components on the orbital parameters. As model
 performances are not seen to depend on the choice of
-$\bar{t}$, we arbitrarly set $\bar{t} = 0$.
-\par
-The range $\mathcal{P}$ of masses and spins covered by the model, as well as the starting point of the grid $\tau_{min}$, can be freely choose by the user, depending on their needs.
+$\bar{t}$, we arbitrarily set $\bar{t} = 0$.
+The range $\mathcal{P}$ of masses and spins covered by the model, as 
+well as the starting point of the grid $\tau_{\rm min}$, can be freely choose 
+by the user, depending on their needs.
 
 
 %%%%%%%%%%%%%
