@@ -11,7 +11,7 @@ theta = np.array([20,10,0.5,-0.3, 1, .34, 0]) #list of parameters to be given to
 times = np.linspace(-8,0.02, 100000) #time grid: peak of 22 mode at t=0
 h_p, h_c = gen.get_WF(theta, times, modes = [(2,2),(3,3),(3,2)]) #returns amplitude and phase of the wave
 
-amp_22, ph_22 = gen.get_modes(theta, times, modes = [(3,3)]) #(D,2)
+amp_22, ph_22 = gen.get_modes(theta, times, modes = [(3,2)]) #(D,2)
 
 	#plotting the wave
 plt.figure(figsize=(15,8))

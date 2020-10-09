@@ -142,7 +142,7 @@ fit_MoE
 		test_mismatch = True
 
 	if not fit_type in ["amp","ph"]:
-		raise RuntimeError("Data type for fit_type not understood. Required (\"amp\"/\"ph\") but "+str(fit_type)+" given.")
+		raise RuntimeError("Data type for fit_type not understood. Required (\"amp\"/\"ph\") but \""+str(fit_type)+"\" given.")
 		return
 
 	if not os.path.isdir(out_folder): #check if out_folder exists

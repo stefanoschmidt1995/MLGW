@@ -642,17 +642,21 @@ generate_waveform
 			#'nqc_coefs_hlm':0
 		}
 	times, h_p, h_c, hlm = EOBRun_module.EOBRunPy(pars)
-	amp = np.sqrt(h_p**2+h_c**2)
 
-	t_m =  times[np.argmax(amp)]
-	times = times - t_m
+	try:
+		t_m =  times[np.argmax(hlm['1'][0])]
+		times = times - t_m
+	except:
+		amp = np.sqrt(h_p**2+h_c**2)
+		t_m =  times[np.argmax(amp)]
+		times = times - t_m
 
 	if t_min is not None:
 		arg = np.argmin(np.abs(times+t_min))
 	else:
 		arg=0
 
-	return times[arg:], h_p[arg:], h_c[arg:], t_m
+	return times[arg:], h_p[arg:], h_c[arg:], hlm, t_m
 
 
 

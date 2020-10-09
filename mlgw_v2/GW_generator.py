@@ -340,8 +340,11 @@ GW_generator
 		Ouput:
 			h_plus, h_cross (D,)/(N,D)		desidered polarizations (if it applies)
 		"""
+		prefactor = 4.7864188273360336e-20 # G/c^2*(M_sun/Mpc)
 		D= theta.shape[1] #number of features given
 		assert D == 7
+
+		m_tot_us = theta[:,0] + theta[:,1]	#total mass in solar masses for the user  (N,) 
 
 		h_plus = np.zeros((theta.shape[0],t_grid.shape[0]))
 		h_cross = np.zeros((theta.shape[0],t_grid.shape[0]))
@@ -352,6 +355,7 @@ GW_generator
 					continue
 			#print("got modes {}".format(mode.lm()))
 			amp_lm, ph_lm = mode.get_mode(theta[:,:4], t_grid, out_type = "ampph", align22 = True)
+			amp_lm =  np.multiply(amp_lm, prefactor*m_tot_us)
 			#print(amp_lm) #DEBUG
 				# setting spherical harmonics: amp, ph, D_L,iota, phi_0
 			h_lm_real, h_lm_imag = self.__set_spherical_harmonics(mode.lm(), amp_lm, ph_lm, theta[:,4], theta[:,5], theta[:,6])
@@ -360,7 +364,7 @@ GW_generator
 
 		return h_plus, h_cross
 
-	def get_modes(self, theta, t_grid, modes = None, out_type = "ampph"):
+	def get_modes(self, theta, t_grid, modes = None, out_type = "ampph", align22 = False):
 		"""
 	get_modes
 	=========
@@ -372,18 +376,21 @@ GW_generator
 			t_grid (D',)		a grid in (physical or reduced) time to evaluate the wave at (uses np.interp)
 			modes				list of modes employed for building the WF (if None, every mode available is employed)
 			out_type			whether amplitude and phase ("ampph") or real and imaginary part ("realimag") shall be returned
+			align22				whether the 0 of the time grid should be placed at the peak of the 22 mode (otherwise is placed at the peak of the current mode)
 		Output:
 			amp, ph (N, D', K)		amplitude and phase of the K modes required by the user (if K =1, no third dimension)
 			real, imag (N, D', K)	real and imaginary part of the K modes required by the user (if K =1, no third dimension)
 		"""
 		if isinstance(modes,tuple):
 			modes = [modes]
+
 		try:
 			K = len(modes)
 		except:
 			K = len(self.modes)
+		if modes is None:
+			modes = self.modes
 
-		i = 0
 		if theta.ndim == 1:
 			theta = theta[None,:]
 			dim_theta = 1
@@ -391,14 +398,16 @@ GW_generator
 			dim_theta = 2
 		if theta.shape[1] == 7:
 			theta = theta[:,:4]
+
 		res1 = np.zeros((theta.shape[0],t_grid.shape[0],K))
 		res2 = np.zeros((theta.shape[0],t_grid.shape[0],K))
 
 		for mode in self.modes:	
-			if modes is not None:
-				if mode.lm() not in modes: #skipping a non-necessary mode
-					continue
-			print("got modes {}".format(mode.lm()))
+			if mode.lm() not in modes: #skipping a non-necessary mode
+				continue
+			else: #computing index to save the mode at
+				i = modes.index(mode.lm())
+			#print("got modes {}".format(mode.lm()))
 			res1[:,:,i], res2[:,:,i] = mode.get_mode(theta, t_grid, out_type = out_type, align22 = False)
 
 		res1, res2 = np.squeeze(res1), np.squeeze(res2)
@@ -467,7 +476,64 @@ GW_generator
 
 		const = np.sqrt(fact(l+m) * fact(l-m) * fact(l+s) * fact(l-s))
 		return const*d_lm
-		
+	
+	def get_shifts(self, theta, modes):
+		"""
+	get_shifts
+	==========
+		Returns the time shifts for the given paramters and for the given modes.
+		Input:
+			theta (N,D)/(D,)	source parameters to make prediction at (D = 3,4)
+			modes []			list of K modes employed for computing the shifts (if None, every mode available is employed)
+		Outputs:
+			shifts (N,K)/(K,)	shifts for the given modes
+		"""
+		theta = np.array(theta)
+		if theta.ndim == 1:
+			theta = theta[None,:]
+			dim_theta = 1
+		else:
+			dim_theta = 2
+		if theta.shape[1] == 7:
+			theta = theta[:,:4]
+		D = theta.shape[1]		
+
+		if D != 3:
+			q = np.divide(theta[:,0],theta[:,1]) #theta[:,0]/theta[:,1] #mass ratio (general) (N,)
+			m_tot_us = theta[:,0] + theta[:,1]	#total mass in solar masses for the user
+			theta_std = np.column_stack((q,theta[:,2],theta[:,3])) #(N,3)
+
+			to_switch = np.where(theta_std[:,0] < 1.) #holds the indices of the events to swap
+
+					#switching masses (where relevant)
+			theta_std[to_switch,0] = np.power(theta_std[to_switch,0], -1)
+			theta_std[to_switch,1], theta_std[to_switch,2] = theta_std[to_switch,2], theta_std[to_switch,1]	
+			theta = theta_std
+
+		try:
+			K = len(modes)
+		except:
+			K = len(self.modes)
+		if modes is None:
+			modes = self.modes
+
+		shifts = np.zeros((theta.shape[0],K))
+			
+		for mode in self.modes:	
+			if mode.lm() not in modes: #skipping a non-necessary mode
+				continue
+			else: #computing index to save the mode at
+				k = modes.index(mode.lm())
+			#print("got modes {}".format(mode.lm()))
+			shifts[:,k] = mode.get_shifts(theta)
+
+		shifts = np.squeeze(shifts)
+
+		if dim_theta == 1:
+			return shifts
+		if dim_theta == 2:
+			return shifts[np.newaxis,...]
+
 
 
 class mode_generator(object):
@@ -789,10 +855,10 @@ mode_generator
 			return res1[0,:], res2[0,:] #(D,)
 		return res1, res2 #(N,D)
 
-	def __get_shifts(self, theta):
+	def get_shifts(self, theta):
 		"""
-	__get_shifts
-	============
+	get_shifts
+	==========
 		Computes the time shifts for a given theta.
 		Input:
 			theta (N,3)		input vector (q,s1,s2)
@@ -847,17 +913,15 @@ mode_generator
 
 			#getting_shifts
 		if align22:
-			shifts = self.__get_shifts(theta_std) #(N,)
+			m_tot_std = 20.
+			shifts = self.get_shifts(theta_std) #(N,)
 
 			#doing interpolations
-		m_tot_std = 20.
 		if t_grid.ndim ==1: #if not (N,D)
 			t_grid = t_grid[None,:] #(1,D')
 			############
 		new_amp = np.zeros((amp.shape[0], t_grid.shape[1]))
 		new_ph = np.zeros((amp.shape[0], t_grid.shape[1]))
-
-		prefactor = 4.7864188273360336e-20 # G/c^2*(M_sun/Mpc)
 
 		for i in range(amp.shape[0]):
 				#computing the true red grid
@@ -867,7 +931,7 @@ mode_generator
 				interp_grid = np.divide(t_grid[i,:], m_tot_us[i])
 
 				#putting the wave on the user grid
-			new_amp[i,:] = np.interp(interp_grid, self.times, amp[i,:]* m_tot_us[i] ,left = 0, right = 0) #set to zero outside the domain
+			new_amp[i,:] = np.interp(interp_grid, self.times, amp[i,:], left = 0, right = 0) #set to zero outside the domain
 			new_ph[i,:]  = np.interp(interp_grid, self.times, ph[i,:])
 
 				#warning if the model extrapolates outiside the grid
@@ -875,9 +939,15 @@ mode_generator
 				warnings.warn("Warning: time grid given is too long for the fitted model. Set 0 amplitude outside the fitting domain.")
 
 			#amplitude and phase of 22 mode (maximum of amp at t=0)
-		amp = prefactor*new_amp
+		amp = new_amp
 		ph = new_ph - new_ph[:,0] #phase is zero at the beginning of the WF
 				#It should be: phase is zero when h_22 peaks (i.e. at t =0) - but this is not trivial to enforce and I'm not sure it is worth the effort
+
+			#DEBUG
+		#import matplotlib.pyplot as plt
+		#plt.title(str(self.lm()))
+		#plt.plot(interp_grid, amp[0,:])
+		#plt.show()
 
 			#### Dealing with distance, inclination and phi_0
 		if out_type == 'ampph':
@@ -1036,7 +1106,7 @@ mode_generator
 				grad_ph[i,:,j]  = np.interp(t_grid, self.times * m_tot_us[i], grad_q_ph[i,:,j-1]) #(D,)
 
 		#dealing with gradients w.r.t. M
-		amp, ph = self.get_WF(theta, t_grid, out_type = "ampph", red_grid = False) #true wave evaluated at t_grid #(N,D)
+		amp, ph = self.get_mode(theta, t_grid, out_type = "ampph", red_grid = False) #true wave evaluated at t_grid #(N,D)
 		for i in range(theta_std.shape[0]):
 			grad_M_amp = np.gradient(amp[i,:], t_grid) #(D,)
 			grad_M_ph = np.gradient(ph[i,:], t_grid) #(D,)
