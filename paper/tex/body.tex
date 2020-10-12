@@ -203,7 +203,7 @@ We discuss these points in detail in what follows.
 %
 \subsection{The time grid}
 Each function $f(t)$ to fit (i.e. amplitude and phase) must be represented by its values $\mathbf{f} \in \R^D$ on a discrete grid of $D$ points $\mathbf{t} \in \R^D$.
-It is convenient to work in a grid of (dimensionless) reduced time $\boldsymbol{\tau} = \frac{\mathbf{t}}{M}$.
+It is convenient to work in a grid of (dimensionless) reduced time $\boldsymbol{\tau} \equiv \mathbf{t}/M$.
 The time grid is chosen with the convention that at $\tau=0$ the function $A(t;\boldsymbol{\vartheta})$ (i.e. the amplitude of the ${22}$ mode) has a peak.
 Once a time grid is set, the vector $\mathbf{f}$ is defined as follows:
 \begin{equation}
@@ -269,8 +269,8 @@ Once we are able to represent waveforms, a regressions ${\tilde{\boldsymbol{\var
 A number of ML techniques to perform such a task are available. Among them, Principal Component Analysis (PCA) \cite[ch. 12]{murphy2012machine} was found to be particularly effective.
 
 The basic idea behind PCA is to seek a \textit{linear relation} between high dimensional and low dimensional data: high dimensional data ($\in \R^D$) are projected onto a $K$ dimensional subspace, by means of an orthogonal projection.
-A theorem \cite[sec. 12.2.1]{murphy2012machine} guarantees that, for zero mean data, the generators of subspace are the (orthonormal) first $K$ eigenvectors of the empirical covariance matrix $\Sigma \in \mathbf{Mat}(D,D)$. The eigenvectors are also called Principal Components (PCs) of the data.
-Thus, the projection matrix $H\in \mathbf{Mat}(K,D)$ holds in each row the PCs and each high-dimensional point can be effectively expressed as a linear combination of the $K$ PCs\footnote{For this reason, PCA can also be seen as a perturbative expansion of a high dimensional observation. A more reliable reconstruction can be achieved by adding more and more PCs, each of which is less important than its previous.}.
+A theorem~\cite[Sec. 12.2.1]{murphy2012machine} guarantees that, for zero mean data, the generators of subspace are the (orthonormal) first $K$ eigenvectors of the empirical covariance matrix $\Sigma \in \mathbf{Mat}(D,D)$. The eigenvectors are also called Principal Components (PCs) of the data.
+Thus, the projection matrix $H\in \mathbf{Mat}(K,D)$ holds in each row the PCs and each high-dimensional point can be effectively expressed as a linear combination of the $K$ PCs~\footnote{For this reason, PCA can also be seen as a perturbative expansion of a high dimensional observation. A more reliable reconstruction can be achieved by adding more and more PCs, each of which is less important than its previous.}.
 
 A PCA model is trained with the dataset eq.~\eqref{eq:dataset}: it represents an (approximate) bijective map between the high dimensional WF $\mathbf{f} = \boldsymbol{A}_{\tilde{\boldsymbol{\vartheta}}}, \boldsymbol{\phi}_{\tilde{\boldsymbol{\vartheta}}} \in \R^D$ and the low-dimensional representation $\mathbf{g} = \mathbf{g}_A , \mathbf{g}_\phi \in \R^K$.
 %In what follows, $\mathbf{g}$ will be the PCA reduced lower order representation of $\mathbf{f}$ (i.e. of amplitude and phase).
@@ -363,8 +363,8 @@ In what follows, we always use a flat noise curve (i.e. constant power spectral 
 Wherever relevant, we will employ a dataset with $5800$ waveforms generated in the domain $\mathcal{P} = [1,20]\times[-0.8,0.95]\times[-0.8,0.95]$, with $\tau_{\rm min} = \SI{1.0}{s/M_\odot}$. Results here refer to \texttt{mlgw-TEOBResumS}, similar results are obtained for \texttt{mlgw-SEOBNRv4}.
 \paragraph{Dataset generation parameters}
 We first evaluate the impact of number of grid points $N_{\rm grid}$ and distortion parameter $\alpha$ (see eq.~\eqref{eq:tau_grid}).
-Let $\mathbf{f}_{N_{\rm grid}, \alpha}$ the wave stored in a dataset where $\tau_{\rm min}$ and $\mathcal{P}$ are fixed as above. We compare it with the output of the EOB model $\mathbf{f}_{EOB}$.
-We then vary $N_{\rm grid}$ and $\alpha$ and report the resulting mismatch $\mathcal{F}[\mathbf{f}_{EOB}, \mathbf{f}_{N_{\rm grid}, \alpha}]$ in Fig.~\ref{fig:N_grid}.
+Let $\mathbf{f}_{N_{\rm grid}, \alpha}$ the wave stored in a dataset where $\tau_{\rm min}$ and $\mathcal{P}$ are fixed as above. We compare it with the output of the EOB model $\mathbf{f}_{\rm EOB}$.
+We then vary $N_{\rm grid}$ and $\alpha$ and report the resulting mismatch $\mathcal{F}[\mathbf{f}_{\rm EOB}, \mathbf{f}_{N_{\rm grid}, \alpha}]$ in Fig.~\ref{fig:N_grid}.
 %%
 \begin{figure}[!t]
 	\centering
@@ -389,7 +389,7 @@ A good setting for dataset hyperparameters might be: $N_{\rm grid} \simeq 3 \tim
         \centering
         \includegraphics[width=\linewidth]{MoE_mismatch_ph}
     \end{minipage}
-	\caption{Validation results for fit of MoE model. Each point corresponds to a MoE regressions for the amplitude (left) and phase (right), with a different values of expert number $N_{exp}$ and order of polynomial basis function.
+	\caption{Validation results for fit of MoE model. Each point corresponds to a MoE regressions for the amplitude (left) and phase (right), with a different values of expert number $N_{\rm exp}$ and order of polynomial basis function.
 The amplitude and phase are represented with 5 and 4 PCs respectively.
 In the colorbar, we represent the mismatch on test waves: it is obtained by reconstructing test waves with fitted amplitude (phase) and test phase (amplitude).
 A model with 4 experts and with a 4th order polynomial provides good balance between simplicity and accuracy.
@@ -399,12 +399,13 @@ A model with 4 experts and with a 4th order polynomial provides good balance bet
 
 
 \paragraph{MoE parameters}
-We only focus on setting the number of experts $N_{exp}$ for each component model and the basis functions $\xi_i(\boldsymbol{\tilde{\vartheta}})$ to use in the regression. Other parameters, related to the details of the training procedure, will not be considered here.
+We only focus on setting the number of experts $N_{\rm exp}$ for each component model and the basis functions $\xi_i(\boldsymbol{\tilde{\vartheta}})$ to use in the regression. Other parameters, related to the details of the training procedure, will not be considered here.
 
 Figure~\ref{fig:MoE_test} presents our results.
-We fitted a model for amplitude (or phase) for different configurations of expert number $N_{exp}$ and polynomial basis function.
-By label ``n-th order", we mean that in the basis function expansion, every monomial up to n-th order is used.
-We report with a colorbar the value of the mismatch $F$ between test and reconstructed WFs. The MoE models for each component share the same number of experts $N_{exp}$.
+We fitted a model for amplitude (or phase) for different configurations of expert number $N_{\rm exp}$ and polynomial basis function.
+By label ``n-th order", we mean that in the basis function expansion, every monomial up to $n$-th order is used.
+We report with a colorbar the value of the mismatch $F$ between test and reconstructed WFs. The MoE models for each 
+component share the same number of experts $N_{\rm exp}$.
 The test mismatch for the fitted amplitude (phase) is computed by using the test phase (amplitude) in the reconstructed wave.
 
 As a general trend, fit performance improves whenever the model complexity (i.e. number of fittable parameters) increases.
@@ -436,7 +437,7 @@ However in practice, due to errors in the MoE regression, one cannot reduce the 
 arbitrarily. Indeed, at high PC order the relations to fit become noisy and the regression becomes less accurate, eventually washing out any improvement brought by a higher number of PCs.
 For this reason one should choose the number of PCs while checking MoE performance.
 
-In Figure~\ref{fig:mismatch_MoE_vs_PCA} we report a numerical study of this. We plot the reconstruction mismatch as a function of the number of PCs considered. We consider separately the amplitude and the phase. In one series, we reconstruct the wave using true values of PCs: the mismatch is a measure of PCA accuracy. In the other, we reconstruct a wave using values for PCs as guessed by MoE regression: this is a measure of accuracy of both PCA and regression.
+In Fig.~\ref{fig:mismatch_MoE_vs_PCA} we report a numerical study of this. We plot the reconstruction mismatch as a function of the number of PCs considered. We consider separately the amplitude and the phase. In one series, we reconstruct the wave using true values of PCs: the mismatch is a measure of PCA accuracy. In the other, we reconstruct a wave using values for PCs as guessed by MoE regression: this is a measure of accuracy of both PCA and regression.
 For the first two PCs, the regression is accurate enough for reproducing the PCA accuracy.
 On the other hand, any regression beyond the 3rd or 4th PCA component does not give any improvement to the MoE mismatch: the noise in the relation of high order PCs is too high for a regression to be performed.
 
