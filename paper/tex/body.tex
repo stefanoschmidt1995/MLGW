@@ -492,7 +492,7 @@ The results are reported in the contour plots in figure \ref{fig:countour}.
 
 %%
 \afterpage{
-\begin{figure}[!ht]
+\begin{figure}[t]
 	\newcommand{\minipagesize}{.5}
 	\newcommand{\titlefontsize}{7}
 	\centering 
@@ -537,11 +537,11 @@ The results are reported in the contour plots in figure \ref{fig:countour}.
 		    \includegraphics[width=\linewidth]{mse_countour_q_s1}
 		\end{minipage}
     \end{minipage}
-	\caption{We report test mismatch and mse for the first PC of the phase, as a function of the orbital parameters $\vartheta = (q, M, s_1, s_2)$. The histograms holds $145061$ waveforms, with randomly drawn parameters.
-In the left column, the color mesh refers to test mismatch; in the right column, we report test mse on the first PC.
-On the x-y we display values of two physical quantities, each discretized in $35$ bins.
-On top row, we display $q$ vs $M$ dependence. On central row, we present spins dependence $s_1$ vs $s_2$. On bottom row, we show $q$ vs $s_1$ dependence.
-Each wave starts $\SI{8}{s}$ before merger.
+	\caption{Test mismatch and mean squared errors (MSE) for the first PC of the phase, as a function of the 
+	orbital parameters $\vartheta = (q, M, s_1, s_2)$. The histograms hold $145061$ waveforms, with randomly 
+	drawn parameters. In the left column, the color mesh refers to test mismatch; in the right column, we report 
+	test MSE on the first PC. Each physical quantity $(M,s_1,s_2,q)$ is discretized in $35$ bins. Each wave 
+	starts $\SI{8}{s}$ before merger.
 }
 	\label{fig:countour}
 \end{figure}
