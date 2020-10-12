@@ -11,6 +11,7 @@ superscriptaddress,10pt]{revtex4-1}
 \usepackage{afterpage}
 \usepackage{graphicx}
 \usepackage{psfrag}
+\usepackage{mathtools}
 \usepackage{tensor}
 \usepackage{layouts}
 \usepackage{DejaVuSans}
@@ -36,11 +37,6 @@ superscriptaddress,10pt]{revtex4-1}
 \DeclareMathOperator*{\argmax}{arg\,max}
 \DeclareMathOperator*{\argmin}{arg\,min}
 
-%small matrix
-\newenvironment{psmallmatrix}
-{\left(\begin{smallmatrix}}
-	{\end{smallmatrix}\right)}
-
 % comments command
 \newcommand{\an}[1]{{\textcolor{orange}{\texttt{AN: #1}} }}
 \newcommand{\pr}[1]{{\textcolor{cyan}{\texttt{PR: #1}} }}
@@ -55,8 +51,8 @@ superscriptaddress,10pt]{revtex4-1}
 	\title{Machine Learning Gravitational Waves
             from Binary Black Hole Mergers}
 	\author{Stefano \surname{Schmidt}}
-        \affiliation{Dipartimento di Fisica  Universit\`a di Pisa, and INFN Sezione di Pisa, Pisa I-56127,Italy}        
 		\email{stefanoschmidt1995@gmail.com}
+        \affiliation{Dipartimento di Fisica  Universit\`a di Pisa, and INFN Sezione di Pisa, Pisa I-56127,Italy}        
         %
 	\author{Matteo \surname{Breschi}}
         \affiliation{Theoretisch-Physikalisches Institut, Friedrich-Schiller-Universit{\"a}t Jena, 07743, Jena, Germany}
