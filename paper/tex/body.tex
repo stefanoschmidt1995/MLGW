@@ -448,25 +448,32 @@ Of course, this strongly depends on the regression model: the more precise the m
 However, every model cannot increase its accuracy indefinitely beacause every training set has an intrinsic noise level, due to numerical error and to the approximations in the underlying physical model.
 %%%%%%%%%%%%%
 \paragraph{Choosing the number of training points}
-The choice of the number of training points $N_{train}$ must trade between accuracy and speed of execution. Too many training points will make the training slow, while too few training points will yield a poor model, which does not generalize the data (underfitting).
-In the choice of number of training points, the comparison between train and test error will provide important information on how the model is able to generalize the trend.
-
-In figure \ref{fig:N_train} we report train and test value of mismatch and mse of first 3 PCs as a function of the number of training points. Data refers to a MoE model fitted for 4 PCs of the phase dataset. The models has ${N_{exp} = 4}$ and performs basis function expansion with a 4th degree polynomial.
+The choice of the number of training points $N_{\rm train}$ must trade between accuracy and speed of execution. 
+Too many training points will make the training slow, while too few training points will yield a poor model, which does 
+not generalize the data (underfitting). In the choice of number of training points, the comparison between train and 
+test error will provide important information on how the model is able to generalize the trend.
+In Fig.~\ref{fig:N_train} we report train and test value of mismatch and mean squared error (MSE) of the 
+first 3 PCs as a function of the number of training points. Data refers to a MoE model fitted for 4 PCs of the phase dataset. 
+The models has ${N_{\rm exp} = 4}$ and performs basis function expansion with a 4th degree polynomial.
 \begin{figure}
 	\centering
     \includegraphics[width=\linewidth]{N_train}
-	\caption{Train and test error for MoE fit of 4 PCs of phase, as a function of the number of training points. We report train and test reconstruction mismatch (top) and mse for the first 3 PCs (below).
-    MoE model employs 4 experts and a fourth order polynomial for a basis function expansion.
-	Test mismatch are obtained using test amplitude to reconstruct the waveform; this is not a great limitation as any error in phase reconstruction dominates the overall mismatch.
+	\caption{Train and test error for MoE fit of 4 PCs of phase, as a function of the number of training points. 
+	We report train and test reconstruction mismatch (top) and mean squared error (MSE) for the first 3 PCs (below). 
+	MoE model employs 4 experts and a fourth order polynomial for a basis function expansion. Test mismatch are obtained using 
+	test amplitude to reconstruct the waveform; this is not a great limitation as any error in phase reconstruction dominates the overall mismatch.
     }
 	\label{fig:N_train}
 \end{figure}
-
-As $N_{train}$ increases, we see a steady decrease of the errors, until a plateau is reached.
-Since for a reasonably high number of training points ($N_{train} \gtrapprox 50$) train and test error are close to each other, we note that overfitting is not a problem.
-For $N_{train} \gtrapprox 800$, the trend stabilizes and increasing training points does not affect much model performance.
-In the present model, setting $N_{train} \simeq \SI{3000}{}$ is a good choice
-\footnote{As compared with standard neural networks, which routinely employ $O(10^5)$ points datasets, this is an incredibly low amount of data. This is due to the fact that MoE is a simple model with a few number of parameters: few data are enough for learning a reliable relation.}.
+%
+As $N_{\rm train}$ increases, we see a steady decrease of the errors, until a plateau is reached.
+Since for a reasonably high number of training points ($N_{\rm train} \gtrapprox 50$) train and test error 
+are close to each other, we note that overfitting is not a problem.
+For $N_{train} \gtrapprox 800$, the trend stabilizes and increasing training points 
+does not affect much model performance. In the present model, setting $N_{\rm train} \simeq \SI{3000}{}$ 
+is a good choice~\footnote{As compared with standard neural networks, which routinely employ $O(10^5)$ 
+points datasets, this is an incredibly low amount of data. This is due to the fact that MoE is a simple 
+model with a few number of parameters: few data are enough for learning a reliable relation.}.
 %%%%%%%%%%%%%%%%%%%%%%
 \subsection{Accuracy}
 %%%%
@@ -482,15 +489,16 @@ The $95\%$ of the test waves have a mismatch lower than $7.5 \cdot 10^{-3}$.
 \end{figure}
 %%%%
 We compute mismatch value on a number of WFs with random values of the physical parameters for each wave.
-We report our results in the histogram in figure~\ref{fig:F_hist}.
-We report a median value of the distribution $\mathcal{F}_m = 5.5 \cdot {10^{-4}}$. Such results are similar to the discrepancies with NR waveforms of state-of-the-art models \cite{Bohe:2016gbl, Nagar:2018zoe, Nagar:2020pcj}.
+We report our results in the histogram in Fig.~\ref{fig:F_hist}. We report a median value of the 
+distribution $\mathcal{F}_m = 5.5 \cdot {10^{-4}}$. Such results are similar to the discrepancies 
+between state-of-the-art EOB waveforms and NR waveforms~\cite{Bohe:2016gbl, Nagar:2018zoe, Nagar:2020pcj}.
 
-To understand better model performances, it is interesting to display the accuracy as a function of the orbital parameters $\boldsymbol{\vartheta} = (q,M,s_1,s_2)$.
-We generate waves for randomly chosen values of $\vartheta = (q, M, s_1, s_2)$ and, for each wave, we measure test mismatch $\mathcal{F}$ and mse on the reconstruction of the first PC for the phase.
-The latter is useful to test the accuracy of the fit before wave reconstruction.
-The results are reported in the contour plots in figure \ref{fig:countour}.
-
-
+To understand better model performances, it is interesting to display the accuracy as a function of the 
+orbital parameters $\boldsymbol{\vartheta} = (q,M,s_1,s_2)$.
+We generate waves for randomly chosen values of $\vartheta = (q, M, s_1, s_2)$ and, for each wave, 
+we measure test mismatch $\mathcal{F}$ and MSE on the reconstruction of the first PC for the phase.
+The latter is useful to test the accuracy of the fit before wave reconstruction. The results are reported 
+in Fig.~\ref{fig:countour}.
 %%
 \afterpage{
 \begin{figure}[t]
@@ -549,18 +557,22 @@ The results are reported in the contour plots in figure \ref{fig:countour}.
 }
 %%%
 The model shows poor performances ($\mathcal{F} \sim 10^{-3}$) for ${q\simeq 1}$ and for high (positive) values of $s_1+s_2$.
-By looking at the top line of \ref{fig:countour}, we note that the mse does not depend on $M$. This was to be expected because the total mass dependence is inserted analytically within the model.
-In the center line of \ref{fig:countour}, as long as the $s_1$ dependence is considered, the most striking feature is the inverse correlation of mismatch and mse for the first phase PC.
-This means that, being non-leading, spin contribution are not important for the first PC but become dominant at higher order of PCs.
-Indeed, the values of the first PC are well correlated with mismatch in the case of $q$
-\footnote{See~\cite{Ohme2013PCA_GW} for a closely related discussion on PCA components and its dependence on physical parameter.}.
-In the third row of Fig.~\ref{fig:countour}, the inverse correlation between the mismatch and mse can be noted again.
+By looking at the top line of Fig.~\ref{fig:countour}, we note that the MSE does not depend on $M$,
+as expected since the dependence on $M$ is inserted analytically in the model. In the center line of Fig.~\ref{fig:countour}, 
+as long as the $s_1$ dependence is considered, the most striking feature is the inverse correlation of mismatch and MSE 
+for the first phase PC. This means that, being non-leading, spin contributions are not important for the first PC, 
+but become dominant at higher order of PCs. Indeed, the values of the first PC are well correlated with mismatch 
+in the case of $q$~\footnote{See~\cite{Ohme2013PCA_GW} for a closely related discussion on PCA components 
+and its dependence on physical parameter.}. In the third row of Fig.~\ref{fig:countour}, the inverse correlation between 
+the mismatch and MSE can be noted again.
 %%%%%%%%%%%%%%%%%%
 %%%%%%%%%%%%%%%
-\subsection{Runtime analysis} \label{sec:runtime}
+\subsection{Runtime analysis} 
+\label{sec:runtime}
 We now asses the time performances of our model.
-We are interested to make a comparison with both
-the training models and \texttt{SEOBNRv4\_ROM}.
+We are interested to make comparisons between
+{\tt mlgw} and both training models as well as 
+with \texttt{SEOBNRv4\_ROM}.
 %
 \paragraph{Comparison with \texttt{TEOBResumS} and \texttt{SEOBNRv4}}
 When dealing with a real detection scenario, we are often interested in generating a WF which starts from a given frequency 
@@ -589,10 +601,13 @@ for the generation of such WFs. Then the two peaks measure indirectly the execut
 	\end{minipage}
 
 	\caption{
-Histogram for values of the speed up given by \texttt{mlgw-TEOBResumS} (left peak) and \texttt{mlgw-SEOBNRv4} (right peak), as compared with their respective native implementation, computed on $N=500$ test waveforms for \texttt{SEOBNRv4} model at $\SI{5}{Hz}$ and $N=2000$ test waveforms for the other histograms. The x-scale is logarithmic. Each WF is generated with random physical 
+Speed up given by \texttt{mlgw-TEOBResumS} (blue online) and \texttt{mlgw-SEOBNRv4} (dark-yellow online), 
+as compared with their respective native implementation. 
+Due to the computational cost, we use $N=500$ test waveforms for \texttt{SEOBNRv4} 
+and $N=2000$ waveforms for~\texttt{TEOBResumS}. Each WF is generated with random physical 
 parameters and has a minimum frequency of $\SI{5}{Hz}$ (top panel) and $\SI{20}{Hz}$ (bottom panel).
 We set a constant total mass $M=\SI{100}{M_\odot}$ and the sampling rate $f_{\rm sam} = \SI{2048}{Hz}$.
-We report the median values $q^{\rm TEOB}_{50\%}$ and $q^{\rm SEOB}_{50\%}$ for the two models.
+Median values $q^{\rm TEOB}_{50\%}$ and $q^{\rm SEOB}_{50\%}$ for the two models are also reported.
 }
 	\label{fig:time_performance_hist}
 \end{figure}
@@ -607,7 +622,7 @@ We report the median values $q^{\rm TEOB}_{50\%}$ and $q^{\rm SEOB}_{50\%}$ for 
 	\end{minipage}
 
 	\caption{
-	Speed up of \texttt{mlgw-TEOBResumS} with respect to \texttt{SEOBNRv4\_ROM}.
+	Speed up of \texttt{mlgw} with respect to \texttt{SEOBNRv4\_ROM}.
 	The plot refers to  $N=2000$ test waveforms, each one generated with random physical 
 	parameters at sampling frequency $ f_{\rm sam}=\SI{1024}{Hz}$ (top panel) 
 	and $f_{\rm sam}=\SI{2048}{Hz}$ (bottom panel). The total mass is set $M=\SI{100}{M_\odot}$ 
@@ -620,17 +635,24 @@ We report the median values $q^{\rm TEOB}_{50\%}$ and $q^{\rm SEOB}_{50\%}$ for 
 %%%%%%%%%%
 We see that in both cases a substantial speed up is achieved. The speed up is higher for longer WFs
 \footnote{This is clearly understood: a longer WF requires more computation for a EOB model, while 
-roughly the same amount of work is done by \texttt{mlgw}}, making our model particularly convenient 
+roughly the same amount of work is done by \texttt{mlgw}.}, making our model particularly convenient 
 for advanced detectors, with a larger sensitivity window.
-Furthermore, we note that the speed-up with \texttt{mlgw-SEOBNRv4} is around ten times higher than that of \texttt{mlgw-TEOBResumS}.
+Furthermore, we note that the speed-up with \texttt{mlgw-SEOBNRv4} is around ten times 
+higher than that of \texttt{mlgw-TEOBResumS}. 
 
 \paragraph{Comparison with \texttt{SEOBNRv4\_ROM}}
-In Fig.~\ref{fig:time_performance_hist_ROM} we report the histogram of the measured speed up 
-values for model \texttt{SEOBNRv4\_ROM}, which is now the state of the art for the WF generation time.
+Let us turn now to discuss a performance comparison with \texttt{SEOBNRv4\_ROM}, that
+is currently considered state of the art for the WF generation time.
+We note that  \texttt{mlgw-SEOBNRv4}  and \texttt{mlgw-TEOBResumS} are completely
+equivalent from this point of view, so that we simply refer to the model as {\tt mlgw} here 
+and below.
+The measured speed up of {\tt mlgw} with respect to \texttt{SEOBNRv4\_ROM} 
+is illustrated in Fig.~\ref{fig:time_performance_hist_ROM}.
 The comparison is made as above only for $f_{\rm min} = 20$~Hz, since the minimum allowed frequency
-for the ROM is 10~Hz. As the ROM model yields WFs in frequency domain, in the time comparison 
-we included a fast Fourier transform (FFT) of the time domain WF of \texttt{mlgw-TEOBResumS}. 
-This ensures that we are evaluating the two model at the same conditions.
+for the ROM is 10~Hz. As the ROM model yields WFs in frequency domain, 
+in the run-time evaluation we also included a fast Fourier transform (FFT) of the time 
+domain WF of \texttt{mlgw}.  This ensures that we are evaluating 
+the two model at the same conditions.
 Interestingly, the time taken by the FFT (in the \texttt{numpy}
 implementation) is similar to that required to generate a WF. Thus for
 a WF in FD, our model cannot be substantially faster, due to the
@@ -640,27 +662,27 @@ is evaluated on a dense equally spaced grid: as can be seen in
 Table~\ref{tab:profiling}, such operation can be very expensive.}.
 
 We note the the performances are quite similar to each other.
-If a lower sampling rate is employed, \texttt{mlgw-TEOBResumS} 
+If a lower sampling rate is employed, \texttt{mlgw} 
 slightly improves its performances. It is important to stress 
-that \texttt{mlgw-TEOBResumS}  is written in pure Python, 
+that \texttt{mlgw}  is written in pure Python, 
 while \texttt{SEOBNRv4\_ROM} is coded in $C$.
 In fact, a python code could be easily accelerated (i.e. parallelized, run on GPUs, etc...) 
 with dedicated libraries, thus allowing to push the code performance further.
 %
-Furthermore, \texttt{mlgw-TEOBResumS} is more efficient in reconstructing 
+Furthermore, \texttt{mlgw} is more efficient in reconstructing 
 the waveforms: it requires only $O(5\cdot 10^3)$ WFs for the training,
 while in order to build a ROM as many as $O(5\cdot 10^5)$ WFs are
 required. 
 
 \paragraph{Profiling}
-It is interesting to have a knowledge of the time spent by \texttt{mlgw-TEOBResumS} 
+It is interesting to have a knowledge of the time spent by \texttt{mlgw} 
 in each stage of the WF generation procedure. We generate $100$ waves with random 
 physical parameters and we measure the CPU time spent to execute each basic task.
 In Table~\ref{tab:profiling}, we compare the results for two values of $N_{\rm grid}$.
 \begin{table}
 	\caption{
 Time taken by different stages of the generation of $100$ waveforms; data refers to two different values of $N_{\rm grid}$.
-``Generation of raw WF" refers to the computation of the strain $h_{\rm FIT}$ as produced by \texttt{mlgw-TEOBResumS}. 
+``Generation of raw WF" refers to the computation of the strain $h_{\rm FIT}$ as produced by \texttt{mlgw}. 
 ``Interpolation to the user grid" evaluates the WF on the grid chosen by the user. 
 The ``Post-processing" labels the computation performed to include the dependence on $d_L$, $\iota$ and $\varphi_0$.
 }
@@ -845,7 +867,7 @@ are extremely similar to what published by the LVK Collaboration.
 This is reassuring as it validates both the WF model hereby presented 
 as well as the data analysis scheme and sampler 
 implemented\footnote{However, a full validation of the algorithm is presented in ~\cite{gwmodel}.}.
-There are however differences that are worth mentioning. The most striking is that
+There are however differences that are worth mentioning. The most striking one is that
 {\it both} \texttt{mlgw} models tend to recover slightly larger masses and effective 
 spin variable, $\chi_{\rm eff}$, than what published Ref.~\cite{LIGOScientific:2018mvr}.
 The reason for this discrepancy is probably related to the fact that Ref.~\cite{LIGOScientific:2018mvr}
