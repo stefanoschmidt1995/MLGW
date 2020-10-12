@@ -360,7 +360,8 @@ where, as usual, we defined the \textit{Wiener product} as:
 	 {\langle h_1, h_2 \rangle} = 4 \int_0^\infty \d{f} \; \frac{\tilde{h}_1^*(f) \tilde{h}_2(f)}{S_n(f)}
 	\label{ew:Wiener}
 \end{equation}
-In the equation above, $S_n(f)$ is the detector's noise curve, the $\tilde{h}$ denotes the Fourier transoform of the strain $h$ and the $*$ denotes complex conjugate.
+In the equation above, $S_n(f)$ is the detector noise curve, the $\tilde{h}$ denotes the Fourier transform of the 
+strain $h$ and the $*$ denotes complex conjugation.
 In what follows, we always use a flat noise curve (i.e. constant power spectral density for the detector noise).
 %%%%%%%
 
@@ -448,7 +449,7 @@ On the other hand, any regression beyond the 3rd or 4th PCA component does not g
 
 In the PCA, we include every PC which yields improvement in MoE mismatch. For our model, $K = 5(4)$ is a good choice for amplitude (phase).
 Of course, this strongly depends on the regression model: the more precise the model is, the more PCs can be included.
-However, every model cannot increase its accuracy indefinitely beacause every training set has an intrinsic noise level, due to numerical error and to the approximations in the underlying physical model.
+However, every model cannot increase its accuracy indefinitely because every training set has an intrinsic noise level, due to numerical error and to the approximations in the underlying physical model.
 %%%%%%%%%%%%%
 \paragraph{Choosing the number of training points}
 The choice of the number of training points $N_{\rm train}$ must trade between accuracy and speed of execution. 
