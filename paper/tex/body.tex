@@ -606,11 +606,12 @@ We report the median values $q^{\rm TEOB}_{50\%}$ and $q^{\rm SEOB}_{50\%}$ for 
 	\end{minipage}
 
 	\caption{
-Histograms for values of the speed up given by \texttt{mlgw}, as compared with ROM model \texttt{SEOBNRv4\_ROM}, 
-computed on $N=2000$ test waveforms.
-Each WF is generated with random physical parameters and has a sampling frequency $f_{\rm sam}$ of $\SI{1024}{Hz}$ (top panel) and $\SI{2048}{Hz}$ (bottom panel).
-We set a constant total mass $M=\SI{100}{M_\odot}$ and the same starting frequency $f_{\rm min} = \SI{20}{Hz}$.
-We report the median value $q_{50\%}$ as well as the positions $q_{5\%}$ and $q_{95\%}$ of the 5th and 95th percentile.
+	Speed up of \texttt{mlgw-TEOBResumS} with respect to \texttt{SEOBNRv4\_ROM}.
+	The plot refers to  $N=2000$ test waveforms, each one generated with random physical 
+	parameters at sampling frequency $ f_{\rm sam}=\SI{1024}{Hz}$ (top panel) 
+	and $f_{\rm sam}=\SI{2048}{Hz}$ (bottom panel). The total mass is set $M=\SI{100}{M_\odot}$ 
+	and each waveform starts at $f_{\rm min} = \SI{20}{Hz}$. We report the median value 
+	$q_{50\%}$ as well as the positions $q_{5\%}$ and $q_{95\%}$ of the 5th and 95th percentile.
 }
 	\label{fig:time_performance_hist_ROM}
 \end{figure}
@@ -627,36 +628,38 @@ In Fig.~\ref{fig:time_performance_hist_ROM} we report the histogram of the measu
 values for model \texttt{SEOBNRv4\_ROM}, which is now the state of the art for the WF generation time.
 The comparison is made as above only for $f_{\rm min} = 20$~Hz, since the minimum allowed frequency
 for the ROM is 10~Hz. As the ROM model yields WFs in frequency domain, in the time comparison 
-we included a fast Fourier transform (FFT) of the time domain WF of \texttt{mlgw}. 
+we included a fast Fourier transform (FFT) of the time domain WF of \texttt{mlgw-TEOBResumS}. 
 This ensures that we are evaluating the two model at the same conditions.
 Interestingly, the time taken by the FFT (in the \texttt{numpy}
 implementation) is similar to that required to generate a WF. Thus for
 a WF in FD, our model cannot be substantially faster, due to the
 limitation imposed by the FFT~\footnote{Actually, the operation for performing 
-the FFT takes the most amount of time. In fact,  before the FFT the waveform shall be 
-evaluated on a dense equally spaced grid: as can be seen in 
+the FFT takes the most of the time. In fact,  before the FFT the waveform 
+is evaluated on a dense equally spaced grid: as can be seen in 
 Table~\ref{tab:profiling}, such operation can be very expensive.}.
 
 We note the the performances are quite similar to each other.
-If a lower sampling rate is employed, \texttt{mlgw} slightly improves 
-its performances. It is important to stress that \texttt{mlgw} 
-is written in pure Python, while \texttt{SEOBNRv4\_ROM} is coded in $C$.
+If a lower sampling rate is employed, \texttt{mlgw-TEOBResumS} 
+slightly improves its performances. It is important to stress 
+that \texttt{mlgw-TEOBResumS}  is written in pure Python, 
+while \texttt{SEOBNRv4\_ROM} is coded in $C$.
 In fact, a python code could be easily accelerated (i.e. parallelized, run on GPUs, etc...) 
 with dedicated libraries, thus allowing to push the code performance further.
 %
-Furthermore, \texttt{mlgw} is more efficient in reconstructing 
+Furthermore, \texttt{mlgw-TEOBResumS} is more efficient in reconstructing 
 the waveforms: it requires only $O(5\cdot 10^3)$ WFs for the training,
 while in order to build a ROM as many as $O(5\cdot 10^5)$ WFs are
 required. 
 
 \paragraph{Profiling}
-It is interesting to have a knowledge of the time spent by \texttt{mlgw} in each stage of the WF generation procedure.
-We generate $100$ waves with random physical parameters and we measure the CPU time spent to execute each basic task.
+It is interesting to have a knowledge of the time spent by \texttt{mlgw-TEOBResumS} 
+in each stage of the WF generation procedure. We generate $100$ waves with random 
+physical parameters and we measure the CPU time spent to execute each basic task.
 In Table~\ref{tab:profiling}, we compare the results for two values of $N_{\rm grid}$.
 \begin{table}
 	\caption{
 Time taken by different stages of the generation of $100$ waveforms; data refers to two different values of $N_{\rm grid}$.
-``Generation of raw WF" refers to the computation of the strain $h_{\rm FIT}$ as produced by \texttt{mlgw}. 
+``Generation of raw WF" refers to the computation of the strain $h_{\rm FIT}$ as produced by \texttt{mlgw-TEOBResumS}. 
 ``Interpolation to the user grid" evaluates the WF on the grid chosen by the user. 
 The ``Post-processing" labels the computation performed to include the dependence on $d_L$, $\iota$ and $\varphi_0$.
 }
@@ -677,7 +680,6 @@ The ``Post-processing" labels the computation performed to include the dependenc
 	\end{tabular}
 	\end{ruledtabular}
 \end{table}
-
 We see that the cost of generating the raw WF does not depend on the number of grid points. 
 On the other hand, the interpolation and the post processing depends on $N_{\rm grid}$ and their 
 cost grows dramatically as the user requires more and more points. It is important to stress that 
