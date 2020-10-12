@@ -888,14 +888,14 @@ larger than the result of Ref.~\cite{LIGOScientific:2018mvr}.
 We built a ready-to-use Machine Learning model which generates the (dominant quadrupole) time-domain gravitational wave 
 signal from a binary Black Hole coalescence in the non precessing case. The code is released as the package \texttt{mlgw}, which is publicly available at 
 \href{https://pypi.org/project/mlgw/}{pypi.org/project/mlgw/} and can be installed with the command \texttt{pip install mlgw}.
-The model consists of a PCA model to reduce the dimensionality of the 22 mode (decomposed in amplitude and phase). 
+The model consists of a PCA model to reduce the dimensionality of the $\ell=m=2$ mode (decomposed in amplitude and phase). 
 A regression (a MoE model) is performed to infer a relation from the orbital parameters to the low dimensional representation of the WF.
 
 It is important to stress that our model is very simple, i.e. it has a very little number of trainable parameters and 
 it is not expensive to train, and flexible, i.e. it works for a large range of parameters and for long waveforms. In~\cite{Chua_2019}, 
 a ML model for GW generation is built, with similar performances. However, the reduced dimension space is considerably 
 larger ($O(200)$) than ours ($O(10)$).
-In~\cite{Khan:2020fso}, the low dimensional space has a similar dimension $O(30)$ and the ML model achieves a similar performance in the time execution (when computed on a CPU). They manage to achieve a better accuracy $O(2\cdot10^{-5})$ but they generate significantly shorter WFs ($f_{\rm min} = \SI{15}{Hz}$ for $M = \SI{60}{M_{\odot}}$ against $f_{\rm min} \simeq \SI{2.5}{Hz}$ for \texttt{mlgw}) and need a larger training time ($O(\SI{6}{hours})$ against $O(\SI{6}{minutes})$).
+In~\cite{Khan:2020fso}, the low dimensional space has a similar dimension $O(30)$ and the ML model achieves a similar performance in the time execution (when computed on a CPU). They manage to achieve a better accuracy $O(2\times10^{-5})$ but they generate significantly shorter WFs ($f_{\rm min} = \SI{15}{Hz}$ for $M = \SI{60}{M_{\odot}}$ against $f_{\rm min} \simeq \SI{2.5}{Hz}$ for \texttt{mlgw}) and need a larger training time ($O(\SI{6}{hours})$ against $O(\SI{6}{minutes})$).
 
 Remarkably, we discovered that a PCA is able to reproduce a high dimensional wave using a small number of variables.
 On the other hand, the MoE model is currently the ``bottleneck" of the model accuracy. For this reason, we explored 
@@ -904,15 +904,15 @@ performances: perhaps much more computational power and a larger training set ar
 fit performances any better.
 
 Despite this, our model shows excellent agreement with the underlying training set. At test time, 
-the median mismatch is $\bar{\mathcal{F}}\sim 5 \cdot 10^{-4}$.
+the median mismatch is $\bar{\mathcal{F}}\sim 5 \times 10^{-4}$.
 Furthermore, a single WF generations takes $\SI{0.1}{}-\SI{5}{ms}$ (depending mostly on the 
 number of grid points required by the user), which is a factor of $\sim 40$ faster than the underlying training model.
-\texttt{mlgw} slightly outperforms a ROM, which is currently close to the state-of-the-art for quick generation
-of waveforms.
+Interestingly, \texttt{mlgw} slightly outperforms a ROM, which is currently close to the state-of-the-art 
+for quick generation of waveforms.
 
 Our ML framework allows for several generalization, which might build a more accurate WF generator.
 First of all, it is quite straightforward to include higher order modes (HMs) in the WF computation. 
-Different regressions, each for each mode, might be done as we already did for the 22 mode. 
+Different regressions, each for each mode, might be done as we already did for the $\ell=m=2$ mode. 
 A future update of \texttt{mlgw} along this direction is currently under way.
 Second, also the precession effects might be included in the model.
 The precession dynamics could be inserted as a single spin parameter $s_P$ \cite{Schmidt2015Precession} 
