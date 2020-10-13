@@ -1,0 +1,64 @@
+This is BibTeX, Version 0.99d (TeX Live 2017/Debian)
+Capacity: max_strings=100000, hash_size=100000, hash_prime=85009
+The top-level auxiliary file: mlgw.aux
+The style file: ieeetr.bst
+Database file #1: mlgwNotes.bib
+Database file #2: biblio.bib.bib
+Warning--entry type for "cpnest" isn't style-file defined
+--line 662 of file biblio.bib.bib
+Warning--empty journal in Aasi:2013jjl
+Warning--empty journal in Healy:2020vre
+Warning--empty journal in Nagar:2020pcj
+Warning--empty journal in Pratten:2020ceb
+Warning--empty journal in Estelles:2020osj
+Warning--empty journal in Williams:2019vub
+Warning--empty journal in Khan:2020fso
+Warning--empty journal in Wong:2020wvd
+Warning--empty journal in Nagar:2019wds
+Warning--empty title in Riemenschneider:2020
+Warning--empty journal in Riemenschneider:2020
+Warning--empty journal in gwmodel
+Warning--empty year in gwmodel
+Warning--empty journal in Rettegno:2019tzh
+You've used 54 entries,
+            1876 wiz_defined-function locations,
+            793 strings with 14326 characters,
+and the built_in function-call counts, 14085 in all, are:
+= -- 1340
+> -- 690
+< -- 0
++ -- 249
+- -- 195
+* -- 911
+:= -- 1981
+add.period$ -- 54
+call.type$ -- 54
+change.case$ -- 52
+chr.to.int$ -- 0
+cite$ -- 68
+duplicate$ -- 853
+empty$ -- 1179
+format.name$ -- 195
+if$ -- 3496
+int.to.chr$ -- 0
+int.to.str$ -- 54
+missing$ -- 52
+newline$ -- 166
+num.names$ -- 54
+pop$ -- 188
+preamble$ -- 1
+purify$ -- 0
+quote$ -- 0
+skip$ -- 678
+stack$ -- 0
+substring$ -- 476
+swap$ -- 423
+text.length$ -- 0
+text.prefix$ -- 0
+top$ -- 0
+type$ -- 0
+warning$ -- 14
+while$ -- 95
+width$ -- 56
+write$ -- 511
+(There were 15 warnings)
