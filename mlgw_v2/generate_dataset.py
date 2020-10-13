@@ -7,14 +7,14 @@ import matplotlib.pyplot as plt
 from ML_routines import *
 
 if False:
-	create_dataset_TD_TEOBResumS(3000, N_grid = 2000, mode = (4,4), filename = "TD_datasets/44_dataset.dat",
-                t_coal = 2., q_range = (1.,10.), m2_range = None, s1_range = (-0.8,0.95), s2_range = (-0.8,0.95), #for full dataset
+	create_dataset_TD_TEOBResumS(4000, N_grid = 2000, mode = (4,4), filename = "TD_datasets/44_dataset.dat",
+                t_coal = 2., q_range = (1.,10.), m2_range = None, s1_range = (-0.8,0.8), s2_range = (-0.8,0.8), #for full dataset
                 t_step = 1e-4, alpha = 0.5,
 				path_TEOBResumS = '/home/stefano/Desktop/Stefano/scuola/uni/tesi_magistrale/code/TEOBResumS/Python'
 				)
 
-if True:
-	create_shift_dataset(3000, [(3,2),(3,3),(4,4)], filename = "TD_datasets/shift_dataset.dat",
+if False:
+	create_shift_dataset(4000, [(3,2),(3,3),(4,4)], filename = "TD_datasets/shift_dataset.dat",
 				q_range = (1.,10.), m2_range = None, s1_range = (-0.8,0.95), s2_range = (-0.8,0.95),
 				path_TEOBResumS = '/home/stefano/Desktop/Stefano/scuola/uni/tesi_magistrale/code/TEOBResumS/Python'
 				)
@@ -30,14 +30,8 @@ if True:
 
 quit()
 
-theta_vector, amp_dataset, ph_dataset, x_grid = load_dataset("TD_datasets/32_dataset.dat", shuffle=False, N_data = None) #loading
+theta_vector, amp_dataset, ph_dataset, x_grid = load_dataset("TD_datasets/33_dataset_ugly.dat", shuffle=False, N_data = None) #loading
 #print(theta_vector)
-
-cut_off = -1
-theta_vector= theta_vector[:, :cut_off]
-amp_dataset = amp_dataset[:, :cut_off]
-ph_dataset= ph_dataset[:, :cut_off]
-x_grid=x_grid[:cut_off]
 
 	#putting everything on a huge grid
 #x_grid_huge = np.linspace(x_grid[0],x_grid[-1], 100000)
@@ -48,21 +42,23 @@ x_grid=x_grid[:cut_off]
 #	amp_huge[i,:] = np.interp(x_grid_huge, x_grid, amp_dataset[i,:])
 #	ph_huge[i,:] = np.interp(x_grid_huge, x_grid, ph_dataset[i,:])
 
+N_plots = 50
+
 plt.figure(0)
 plt.title("Phase of dataset")
-for i in range(20):
+for i in range(N_plots):
 	plt.plot(x_grid, (ph_dataset[i,:]), label = str(i)+' '+str(theta_vector[i,0]))
 
 
 plt.figure(1)
 plt.title("Amplitude of dataset")
-for i in range(20):
+for i in range(N_plots):
 	plt.plot(x_grid, amp_dataset[i,:], label = str(i)+' '+str(theta_vector[i,0]))
 #plt.legend()
 
 plt.figure(2)
 plt.title("Wave")
-for i in range(20):
+for i in range(N_plots):
 	plt.plot(x_grid, amp_dataset[i,:]*np.exp(1j*ph_dataset[i,:]).real, label = str(i)+' '+str(theta_vector[i,0]))
 
 plt.show()

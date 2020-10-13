@@ -19,6 +19,7 @@ import numpy as np
 import os.path
 import matplotlib.pyplot as plt #debug
 import warnings
+import scipy.signal
 
 ################# Overlap related stuff
 def overlap(amp_1, ph_1, amp_2, ph_2, df, low_freq = None, high_freq = None, PSD = None):
@@ -232,7 +233,7 @@ create_dataset_TD
 	if modes == [(2,2)]:
 		t_end = 5.2e-4 #estimated maximum time for ringdown: WF will be killed after that time
 	else:
-		t_end = 0. #only for HMs. You should find a better way to set this number...
+		t_end = 3e-5 #only for HMs. You should find a better way to set this number...
 	time_grid = np.linspace(-np.power(np.abs(t_coal), alpha), np.power(t_end, alpha), N_grid)
 	time_grid = np.multiply( np.sign(time_grid) , np.power(np.abs(time_grid), 1./alpha))
 
@@ -326,7 +327,10 @@ create_dataset_TD
 		temp_amp = hlm[str(k_modes[0])][0]
 		temp_ph = hlm[str(k_modes[0])][1]
 
-		time_full = (time_full - time_full[np.argmax(np.abs(temp_amp))])/(m1+m2) #grid is scaled to standard grid
+		extrema = scipy.signal.argrelextrema(np.abs(temp_amp), np.greater)
+		t_peak = time_full[extrema[0][0]]
+		#t_peak = time_full[np.argmax(np.abs(temp_amp))] #old and safe...
+		time_full = (time_full - t_peak)/(m1+m2) #grid is scaled to standard grid
 			#setting waves to the chosen std grid
 		temp_amp = np.interp(time_grid, time_full, temp_amp)
 		temp_ph = np.interp(time_grid, time_full, temp_ph)
@@ -442,7 +446,7 @@ create_shift_dataset
 			m1 = q* m2
 
 			#computing f_min
-		t_coal_freq = .05
+		t_coal_freq = .1
 		f_min = .9* ((151*(t_coal_freq)**(-3./8.) * (((1+q)**2)/q)**(3./8.))/(m1+m2))
 		 #in () there is the right scaling formula for frequency in order to get always the right reduced time
 		 #this should be multiplied by a prefactor (~1) for dealing with some small variation due to spins
@@ -469,7 +473,9 @@ create_shift_dataset
 		#print(hlm.keys(), k_modes)
 		t_22 = time_full[np.argmax(hlm['1'][0])] #time at which peak of 22 mode happens
 		for j in range(len(modes)):
-			t_lm = time_full[np.argmax(np.abs(hlm[str(k_modes[j])][0]))] #time at which peak of lm mode happens
+			amp_lm = hlm[str(k_modes[j])][0]
+			extrema = scipy.signal.argrelextrema(np.abs(amp_lm), np.greater)
+			t_lm = time_full[extrema[0][0]]
 			time_shifts[j] = (t_lm-t_22)/(m1+m2) #shifts are in reduced mass
 
 		"""import matplotlib.pyplot as plt
