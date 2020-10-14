@@ -28,9 +28,9 @@ if False:
 
 
 
-quit()
+#quit()
 
-theta_vector, amp_dataset, ph_dataset, x_grid = load_dataset("TD_datasets/33_dataset_ugly.dat", shuffle=False, N_data = None) #loading
+theta_vector, amp_dataset, ph_dataset, x_grid = load_dataset("TD_datasets/44_dataset.dat", shuffle=False, N_data = None) #loading
 #print(theta_vector)
 
 	#putting everything on a huge grid

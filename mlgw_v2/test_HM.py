@@ -6,6 +6,7 @@ import sys
 import time
 import os
 import scipy.optimize
+import scipy.stats
 
 from mpl_toolkits.axes_grid.inset_locator import (inset_axes, InsetPosition,
                                                   mark_inset)	
@@ -26,8 +27,8 @@ modes_to_k = lambda modes:[int(x[0]*(x[0]-1)/2 + x[1]-2) for x in modes] # [(l,m
 
 ###############################
 
-load = True
-plot = False
+load = False
+plot = True
 
 N_waves = 1500
 filename = "accuracy/mismatch_hist_TEOBResumS.dat"
@@ -37,7 +38,7 @@ f_min = 10
 
 np.random.seed(23)
 
-modes = [(2,2), (3,3), (3,2), (4,4)]
+modes = [(2,2)]#, (3,3), (3,2), (4,4)]
 
 if not load:
 
@@ -92,39 +93,44 @@ if not load:
 		
 
 			#computing modes mismatch
-		amp_aligned, ph_aligned = generator.get_modes(theta[i,:],times, out_type = "ampph", modes = modes, align22 = True)
+		amp_aligned, ph_aligned = generator.get_modes(theta[i,:], times, out_type = "ampph", modes = modes, align22 = True)
 		shifts = generator.get_shifts(theta[i,:], modes)
 
 		for j in range(len(modes)):
 			k = modes_to_k([modes[j]])
 
 				#time aligning by hand... Really Ugly!!
-			amp_lm = hlm[str(k[0])][0]
-			extrema = scipy.signal.argrelextrema(np.abs(amp_lm), np.greater)
-			t_lm = times - times[extrema[0][0]] #aligned grid
+			argpeak = locate_peak(hlm[str(k[0])][0])
+			t_lm = times - times[argpeak] #aligned grid
 
 			amp, ph = generator.get_modes(theta[i,:], t_lm, out_type = "ampph", modes = modes[j], align22 = False)
 
 			h = amp * np.exp(1j*ph)
 			h_TEOB = hlm[str(k[0])][0] * np.exp(1j * hlm[str(k[0])][1])
-			F_temp, phi_0 = compute_optimal_mismatch(h,h_TEOB) #things are aligned up to merger...
-			print("\t",modes[j],F_temp)
+				#mismatch with WFs aligned by hand
+			F_temp, phi_0 = compute_optimal_mismatch(h,h_TEOB)
+				#mismatch with WFs aligned authomatically
+			#F_aligned, phi_0 = compute_optimal_mismatch(amp_aligned[:,j] * np.exp(1j*ph_aligned[:,j]), h_TEOB) 
+			
+			print("\t",modes[j],F_temp)#, F_aligned)
 			F[i,j+1] = F_temp
 
+			#print("\t shift true vs rec: {} / {} ".format(shifts[j]*(theta[i,0]+theta[i,1]),times[argpeak]))
+
 			#plotting
-			if plot:			
+			if plot and False:			
 				plt.figure()
 				plt.title("Amp mode {}".format(str(modes[j])))
-				plt.plot(t_lm, amp, label = "mlgw")
-				plt.plot(t_lm, amp_aligned[:,j], label = "mlgw - aligned")	
-				plt.plot(t_lm, hlm[str(k[0])][0], label = "TEOB")
+				#plt.plot(t_lm, amp, label = "mlgw")
+				plt.plot(times, amp_aligned[:,j], label = "mlgw - aligned")	
+				plt.plot(times, hlm[str(k[0])][0], label = "TEOB")
 				plt.legend(loc = 'upper left')
 			
 				plt.figure()
 				plt.title("Ph mode {}".format(str(modes[j])))
-				plt.plot(t_lm, ph, label = "mlgw")
-				plt.plot(t_lm, ph_aligned[:,j], label = "mlgw - aligned")	
-				plt.plot(t_lm, hlm[str(k[0])][1], label = "TEOB")
+				#plt.plot(t_lm, ph, label = "mlgw")
+				plt.plot(times, ph_aligned[:,j], label = "mlgw - aligned")	
+				plt.plot(times, hlm[str(k[0])][1], label = "TEOB")
 				plt.legend(loc = 'upper left')
 
 		plt.show()
@@ -172,9 +178,6 @@ for i in range(len(modes)):
 
 
 plt.savefig("accuracy/mismatch_HMs.pdf", format = 'pdf')
-
-
-import scipy.stats
 
 
 fig, ax_list = plt.subplots(figsize = (6.4,6.4), nrows = 2, ncols = 2)

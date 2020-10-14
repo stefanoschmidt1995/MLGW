@@ -327,8 +327,8 @@ create_dataset_TD
 		temp_amp = hlm[str(k_modes[0])][0]
 		temp_ph = hlm[str(k_modes[0])][1]
 
-		extrema = scipy.signal.argrelextrema(np.abs(temp_amp), np.greater)
-		t_peak = time_full[extrema[0][0]]
+		argpeak = locate_peak(temp_amp)
+		t_peak = time_full[argpeak]
 		#t_peak = time_full[np.argmax(np.abs(temp_amp))] #old and safe...
 		time_full = (time_full - t_peak)/(m1+m2) #grid is scaled to standard grid
 			#setting waves to the chosen std grid
@@ -473,9 +473,8 @@ create_shift_dataset
 		#print(hlm.keys(), k_modes)
 		t_22 = time_full[np.argmax(hlm['1'][0])] #time at which peak of 22 mode happens
 		for j in range(len(modes)):
-			amp_lm = hlm[str(k_modes[j])][0]
-			extrema = scipy.signal.argrelextrema(np.abs(amp_lm), np.greater)
-			t_lm = time_full[extrema[0][0]]
+			argpeak = locate_peak(hlm[str(modes[j])][0])
+			t_lm = time_full[argpeak]
 			time_shifts[j] = (t_lm-t_22)/(m1+m2) #shifts are in reduced mass
 
 		"""import matplotlib.pyplot as plt
@@ -664,6 +663,24 @@ generate_waveform
 
 	return times[arg:], h_p[arg:], h_c[arg:], hlm, t_m
 
+
+def locate_peak(amp, start = 0.1):
+	"""
+	Given a time grid and an amplitude of the mode, it returns the peak of the amplitude.
+	Input:
+		amp (D,)		amplitude
+		start			points to be skipped at begining of the amplitude (in fraction of total points)
+	Output:
+		argpeak			index at which the amplitude has a peak
+	"""
+	assert amp.ndim == 1
+	id_start = int(len(amp)*start)
+	extrema = scipy.signal.argrelextrema(np.abs(amp[id_start:]), np.greater)
+	argpeak = extrema[0][0]+id_start
+	#plt.figure()
+	#plt.plot(np.linspace(0,1,len(amp)),amp)
+	#plt.axvline(np.linspace(0,1,len(amp))[argpeak])
+	return argpeak
 
 
 

@@ -407,7 +407,7 @@ GW_generator
 			else: #computing index to save the mode at
 				i = modes.index(mode.lm())
 			#print("got modes {}".format(mode.lm()))
-			res1[:,:,i], res2[:,:,i] = mode.get_mode(theta, t_grid, out_type = out_type, align22 = False)
+			res1[:,:,i], res2[:,:,i] = mode.get_mode(theta, t_grid, out_type = out_type, align22 = align22)
 
 		res1, res2 = np.squeeze(res1), np.squeeze(res2)
 
@@ -434,7 +434,7 @@ GW_generator
 			#computing the iota dependence of the WF
 		d_lm = self.__get_Wigner_d_function((l,m),iota)
 		d_lmm = self.__get_Wigner_d_function((l,-m),iota) 
-		const = np.sqrt( (2.*l+1.)/(4.*np.pi) )
+		const = np.sqrt( (2.*l+1.)/(4.*np.pi) ) #/ np.sqrt((l+2)*(l+1)*l*(l-1)) #apparently this part helps...
 
 		h_lm_real = np.multiply(np.multiply(amp.T,np.cos(ph.T+m*phi_0)), const*(d_lm + d_lmm) ).T
 		h_lm_imag = np.multiply(np.multiply(amp.T,np.sin(ph.T+m*phi_0)), const*(d_lm - d_lmm) ).T
@@ -920,7 +920,7 @@ mode_generator
 		for i in range(amp.shape[0]):
 				#computing the true red grid
 			if align22:
-				interp_grid = np.divide(t_grid, m_tot_us[i]) + shifts[i]
+				interp_grid = np.divide(t_grid, m_tot_us[i]) - shifts[i]
 			else:
 				interp_grid = np.divide(t_grid, m_tot_us[i])
 
