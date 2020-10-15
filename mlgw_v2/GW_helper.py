@@ -153,8 +153,8 @@ compute_optimal_mismatch
 
 def create_dataset_TD_TEOBResumS(N_data, N_grid, mode = [(2,2)],filename = None,  t_coal = 0.5, q_range = (1.,5.), m2_range = None, s1_range = (-0.8,0.8), s2_range = (-0.8,0.8), t_step = 1e-5, alpha = 0.35, path_TEOBResumS = None):
 	"""
-create_dataset_TD
-=================
+create_dataset_TD_TEOBResumS
+============================
 	Create a dataset for training a ML model to fit GW waveforms in time domain.
 	The dataset consists in 3 parameters theta=(q, spin1z, spin2z) associated to the waveform computed in frequency domain for a grid of N_grid points in the range given by the user.
 	More specifically, data are stored in 3 vectors:
@@ -340,13 +340,6 @@ create_dataset_TD
 		id0 = np.where(time_grid == 0)[0]
 		temp_ph = temp_ph - temp_ph[id0] #all phases are shifted by a constant to make every wave start with 0 phase at t=0 (i.e. at maximum amplitude)
 
-			#removing spourious gaps (if present) (do I need it??)
-		#(index,) = np.where(temp_amp/np.max(temp_amp) < 1e-10) #there should be a way to choose the right threshold...
-		#if len(index) >0:
-		#	print("Wave killed")
-		#	temp_amp[index] = 0#temp_amp[index[0]-1]
-		#	temp_ph[index] = temp_ph[index[0]-1]
-
 		if filename is None:
 			amp_dataset[i,:] = temp_amp  #putting waveform in the dataset to return
 			ph_dataset[i,:] =  temp_ph  #phase
@@ -446,7 +439,7 @@ create_shift_dataset
 			m1 = q* m2
 
 			#computing f_min
-		t_coal_freq = .1
+		t_coal_freq = .05
 		f_min = .9* ((151*(t_coal_freq)**(-3./8.) * (((1+q)**2)/q)**(3./8.))/(m1+m2))
 		 #in () there is the right scaling formula for frequency in order to get always the right reduced time
 		 #this should be multiplied by a prefactor (~1) for dealing with some small variation due to spins
@@ -473,20 +466,23 @@ create_shift_dataset
 		#print(hlm.keys(), k_modes)
 		t_22 = time_full[np.argmax(hlm['1'][0])] #time at which peak of 22 mode happens
 		for j in range(len(modes)):
-			argpeak = locate_peak(hlm[str(modes[j])][0])
+			argpeak = locate_peak(hlm[str(k_modes[j])][0])
 			t_lm = time_full[argpeak]
+			#print(m1+m2)
 			time_shifts[j] = (t_lm-t_22)/(m1+m2) #shifts are in reduced mass
 
-		"""import matplotlib.pyplot as plt
-		plt.plot(time_full,hlm['1'][0])
-		for j in range(len(modes)):	
-			print("plotting", k_modes[j])
-			plt.plot(time_full,hlm[str(k_modes[j])][0])
-			plt.axvline(t_22, c = 'r')
-			plt.axvline(time_full[np.argmax(np.abs(hlm[str(k_modes[j])][0]))], c = 'g')
-			
-		#plt.show()
 		"""
+		import matplotlib.pyplot as plt
+		#plt.plot(time_full,hlm['1'][0])
+		for j in range(len(modes)):
+			plt.figure()	
+			plt.title(str(modes[j]))
+			plt.plot(time_full,hlm[str(k_modes[j])][0])
+			#plt.axvline(t_22, c = 'r')
+			plt.axvline(t_lm, c = 'g')
+			
+		plt.show()
+		#"""
 
 
 		#saving to file
@@ -649,12 +645,12 @@ generate_waveform
 	times, h_p, h_c, hlm = EOBRun_module.EOBRunPy(pars)
 
 	try:
-		t_m =  times[np.argmax(hlm['1'][0])]
-		times = times - t_m
+		argpeak = locate_peak(hlm['1'][0])
 	except:
 		amp = np.sqrt(h_p**2+h_c**2)
-		t_m =  times[np.argmax(amp)]
-		times = times - t_m
+		argpeak = locate_peak(amp)
+	t_m =  times[argpeak]
+	times = times - t_m
 
 	if t_min is not None:
 		arg = np.argmin(np.abs(times+t_min))
@@ -678,8 +674,8 @@ def locate_peak(amp, start = 0.1):
 	extrema = scipy.signal.argrelextrema(np.abs(amp[id_start:]), np.greater)
 	argpeak = extrema[0][0]+id_start
 	#plt.figure()
-	#plt.plot(np.linspace(0,1,len(amp)),amp)
-	#plt.axvline(np.linspace(0,1,len(amp))[argpeak])
+	#plt.plot(np.linspace(0,1,len(amp)),amp, c= 'purple' )
+	#plt.axvline(np.linspace(0,1,len(amp))[argpeak], c = 'red')
 	return argpeak
 
 

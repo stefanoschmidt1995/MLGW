@@ -27,8 +27,8 @@ modes_to_k = lambda modes:[int(x[0]*(x[0]-1)/2 + x[1]-2) for x in modes] # [(l,m
 
 ###############################
 
-load = False
-plot = True
+load = True
+plot = False
 
 N_waves = 1500
 filename = "accuracy/mismatch_hist_TEOBResumS.dat"
@@ -38,11 +38,11 @@ f_min = 10
 
 np.random.seed(23)
 
-modes = [(2,2)]#, (3,3), (3,2), (4,4)]
+modes = [(2,2), (3,3), (3,2), (4,4)]
 
 if not load:
 
-	F = np.zeros((N_waves,len(modes)+1))  #[F_tot, [F_modes]]
+	F = np.zeros((N_waves,2*len(modes)+1))  #[F_tot, [F_modes], [F_modes_auto]]
 	generator = GW_generator("TD_models/model_0")
 
 		#getting random theta
@@ -90,7 +90,6 @@ if not load:
 			plt.plot(times, h_c_mlgw, label = "mlgw")
 			plt.plot(times, h_c_TEOB, label = "TEOB")
 			plt.legend(loc = 'upper left')
-		
 
 			#computing modes mismatch
 		amp_aligned, ph_aligned = generator.get_modes(theta[i,:], times, out_type = "ampph", modes = modes, align22 = True)
@@ -110,25 +109,26 @@ if not load:
 				#mismatch with WFs aligned by hand
 			F_temp, phi_0 = compute_optimal_mismatch(h,h_TEOB)
 				#mismatch with WFs aligned authomatically
-			#F_aligned, phi_0 = compute_optimal_mismatch(amp_aligned[:,j] * np.exp(1j*ph_aligned[:,j]), h_TEOB) 
+			F_aligned, phi_0 = compute_optimal_mismatch(amp_aligned[:,j] * np.exp(1j*ph_aligned[:,j]), h_TEOB) 
 			
-			print("\t",modes[j],F_temp)#, F_aligned)
+			print("\t",modes[j],F_temp, F_aligned)
 			F[i,j+1] = F_temp
+			F[i,j+1+len(modes)] = F_aligned
 
-			#print("\t shift true vs rec: {} / {} ".format(shifts[j]*(theta[i,0]+theta[i,1]),times[argpeak]))
+			print("\t shift true vs rec: {} / {} ".format(shifts[j]*(theta[i,0]+theta[i,1]),times[argpeak]))
 
 			#plotting
 			if plot and False:			
 				plt.figure()
 				plt.title("Amp mode {}".format(str(modes[j])))
-				#plt.plot(t_lm, amp, label = "mlgw")
+				plt.plot(times, amp, label = "mlgw")
 				plt.plot(times, amp_aligned[:,j], label = "mlgw - aligned")	
 				plt.plot(times, hlm[str(k[0])][0], label = "TEOB")
 				plt.legend(loc = 'upper left')
 			
 				plt.figure()
 				plt.title("Ph mode {}".format(str(modes[j])))
-				#plt.plot(t_lm, ph, label = "mlgw")
+				plt.plot(times, ph, label = "mlgw")
 				plt.plot(times, ph_aligned[:,j], label = "mlgw - aligned")	
 				plt.plot(times, hlm[str(k[0])][1], label = "TEOB")
 				plt.legend(loc = 'upper left')
@@ -152,15 +152,20 @@ if not load:
 
 
 theta = np.loadtxt(filename_theta) #(N,7)
-F = np.loadtxt(filename) #(N, len(modes)+1)
+F = np.loadtxt(filename) #(N, 2*len(modes)+1)
 print("Loading histogram from: {}\n\t{} datapoints".format(filename, F.shape[0]))
 
+#Plotting
+
+	#overall mismatch
 plt.figure(figsize = (6.4, 4.8/2.))
 plt.title("Overall mismatch", fontsize = 15)
-plt.hist(np.log10(F[:,0]+1e-22), bins = 70, color = 'k', density = True)
+plt.hist(np.log10(F[:,0]), bins = 70, color = 'k', density = True)
 plt.xlabel(r"$\log \; \bar{\mathcal{F}}$")
 plt.savefig("accuracy/mismatch_overall.pdf", format = 'pdf')
+plt.xlim([-6,0])
 
+	#optimal mismatch
 fig, ax_list = plt.subplots(nrows = len(modes), ncols = 1, sharex = True)
 plt.subplots_adjust(hspace = .8)
 plt.suptitle("HMs mismatch", fontsize = 15)
@@ -170,16 +175,22 @@ for i in range(len(modes)):
 	ax_list[i].hist(np.log10(F[:,i+1]), bins = 70, color = 'k', density = True)
 	ax_list[i].set_title("Mode {}".format(modes[i]), fontsize = 12)
 
-#for i in range(len(modes)-1):
-#	ax_list[i].set_xticks(ax_list[-1].get_xticks())
-#	ax_list[i].set_xticklabels(ax_list[-1].get_xticklabels())
-#	for tk in ax_list[i].get_xticklabels():
-#		tk.set_visible(True)
-
 
 plt.savefig("accuracy/mismatch_HMs.pdf", format = 'pdf')
 
+	#auto mismatch
+fig, ax_list = plt.subplots(nrows = len(modes), ncols = 1, sharex = True)
+plt.subplots_adjust(hspace = .8)
+plt.suptitle("HMs mismatch - auto aligned", fontsize = 15)
+ax_list[-1].set_xlabel(r"$\log \; \bar{\mathcal{F}}$")
 
+for i in range(len(modes)):
+	ax_list[i].hist(np.log10(F[:,i+1+len(modes)]), bins = 70, color = 'k', density = True)
+	ax_list[i].set_title("Mode {}".format(modes[i]), fontsize = 12)
+
+plt.savefig("accuracy/mismatch_HMs_auto.pdf", format = 'pdf')
+
+	#contour plots
 fig, ax_list = plt.subplots(figsize = (6.4,6.4), nrows = 2, ncols = 2)
 plt.subplots_adjust(hspace = .8, wspace = 0.7)
 plt.suptitle("HMs contour plots", fontsize = 15)

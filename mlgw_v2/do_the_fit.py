@@ -1,7 +1,7 @@
 from fit_model import *
 
-lm = "44"
-line = 2
+lm = "33"
+line = 1
 
 dataset_file = "TD_datasets/{}_dataset.dat".format(lm)
 shift_file = "TD_datasets/shift_dataset.dat".format(lm)
@@ -35,6 +35,6 @@ if fit_MoE_model:
 	fit_MoE("amp", PCA_dataset_folder, model_folder, experts = 4, comp_to_fit = None, features = fifth_order, EM_threshold = 1e-2, args = 	None, N_train = 6000, verbose = False, test_mismatch = True)
 
 if fit_shifts_:
-	fit_shifts(shift_file, shift_folder, experts = 4, line_to_fit = line, train_frac = 0.8, features = fourth_order, EM_threshold = 1e-2, args = None, N_train = None, verbose = True, train_mse = True, test_mse = True)
+	fit_shifts(shift_file, shift_folder, experts = 6, line_to_fit = line, train_frac = 0.8, features = fourth_order, EM_threshold = 1e-2, args = None, N_train = None, verbose = True, train_mse = True, test_mse = True)
 
 quit()

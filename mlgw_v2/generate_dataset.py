@@ -14,21 +14,42 @@ if False:
 				)
 
 if False:
-	create_shift_dataset(4000, [(3,2),(3,3),(4,4)], filename = "TD_datasets/shift_dataset.dat",
-				q_range = (1.,10.), m2_range = None, s1_range = (-0.8,0.95), s2_range = (-0.8,0.95),
+	create_shift_dataset(6000, [(3,2),(3,3),(4,4)], filename = "TD_datasets/shift_dataset.dat",
+				q_range = (1.,10.), m2_range = None, s1_range = (-0.8,0.8), s2_range = (-0.8,0.8),
 				path_TEOBResumS = '/home/stefano/Desktop/Stefano/scuola/uni/tesi_magistrale/code/TEOBResumS/Python'
 				)
 
 #                t_coal = .05, q_range = (1.,5.), m2_range = None, s1_range = -0.3, s2_range = 0.2, #for s_const
 
-#create_dataset_FD(5000, N_grid = 2048, filename = "../datasets/GW_std_dataset.dat",
-#                q_range = (1.,5.), m2_range = 20., s1_range = (-0.85,0.85), s2_range = (-0.85,0.85),
-#				log_space = True,
-#                f_high = 200, f_step = .1/1600., f_max = None, f_min = 1, lal_approximant = "IMRPhenomPv2")
+quit()
+
+#########Dealing with shifts
+line_to_fit = 0
+train_frac = 0.8
+
+data = np.loadtxt("TD_datasets/shift_dataset.dat")
+
+	#removing high spins
+#ids = np.where(np.logical_and(data[:,1] < 0.8,data[:,2] < 0.8) )
+#np.savetxt("TD_datasets/shift_dataset_ok.dat", data[ids], header = "# row: theta (3) | shifts (3) for modes [(3, 2), (3, 3), (4, 4)] \n # | q_range = (1.0, 10.0) | m2_range = None | s1_range = (-0.8, 0.8) | s2_range = (-0.8, 0.8) ")
+
+train_data = data[:int(train_frac*data.shape[0]),:]
+test_data = data[int(train_frac*data.shape[0]):,:]
+
+train_theta = train_data[:,:3]
+train_shifts = train_data[:,3+line_to_fit]
+test_theta = test_data[:,:3]
+test_shifts = test_data[:,3+line_to_fit]
+
+plt.figure()
+plt.scatter(train_theta[:,1], train_shifts, s = 1)
+
+plt.show()
 
 
+quit()
+############ Plotting dataset
 
-#quit()
 
 theta_vector, amp_dataset, ph_dataset, x_grid = load_dataset("TD_datasets/44_dataset.dat", shuffle=False, N_data = None) #loading
 #print(theta_vector)
@@ -64,22 +85,6 @@ for i in range(N_plots):
 plt.show()
 quit()
 
-plt.figure(3)
-plt.title("Feature vs q")
-id_merger = np.where(x_grid ==0)[0]
-print(id_merger)
-plt.plot(theta_vector[:,0], ph_dataset[:,0], 'o', ms = 1)
-plt.plot(theta_vector[:,0], ph_dataset[:,100], 'o', ms = 1)
-plt.plot(theta_vector[:,0], ph_dataset[:,500], 'o', ms = 1)
-plt.plot(theta_vector[:,0], ph_dataset[:,1000], 'o', ms = 1)
-#plt.plot(theta_vector[:,0], ph_dataset[:,2500], 'o', ms = 1)
-plt.plot(theta_vector[:,0], ph_dataset[:,id_merger-100], 'o', ms = 1)
-plt.plot(theta_vector[:,0], ph_dataset[:,id_merger], 'o', ms = 1)
-plt.plot(theta_vector[:,0], ph_dataset[:,-1], 'o', ms = 1)
 
-plt.show()
-
-
-quit()
 
 

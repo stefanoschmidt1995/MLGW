@@ -340,11 +340,15 @@ GW_generator
 		Ouput:
 			h_plus, h_cross (D,)/(N,D)		desidered polarizations (if it applies)
 		"""
-		prefactor = 4.7864188273360336e-20 # G/c^2*(M_sun/Mpc)
 		D= theta.shape[1] #number of features given
 		assert D == 7
 
-		m_tot_us = theta[:,0] + theta[:,1]	#total mass in solar masses for the user  (N,) 
+			#computing amplitude prefactor
+		prefactor = 4.7864188273360336e-20 # G/c^2*(M_sun/Mpc)
+		m_tot_us = theta[:,0] + theta[:,1]	#total mass in solar masses for the user  (N,)
+		nu_us = theta[:,0]/ theta[:,1] #q
+		nu_us = np.divide(nu_us, np.square(1+nu_us)) #nu = q/(1+q)**2
+		amp_prefactor = prefactor*nu_us*m_tot_us/theta[:,4] # G/c^2 (nu * M / d_L) apparently nu is there??? Whyyyy?
 
 		h_plus = np.zeros((theta.shape[0],t_grid.shape[0]))
 		h_cross = np.zeros((theta.shape[0],t_grid.shape[0]))
@@ -355,7 +359,7 @@ GW_generator
 					continue
 			#print("got modes {}".format(mode.lm()))
 			amp_lm, ph_lm = mode.get_mode(theta[:,:4], t_grid, out_type = "ampph", align22 = True)
-			amp_lm =  np.multiply(amp_lm.T, prefactor*m_tot_us/theta[:,4]).T #G/c^2*(M_sun/Mpc) (M/M_sun)/(d_L/Mpc)
+			amp_lm =  np.multiply(amp_lm.T, amp_prefactor).T #G/c^2*(M_sun/Mpc) nu *(M/M_sun)/(d_L/Mpc)
 				# setting spherical harmonics: amp, ph, D_L,iota, phi_0
 			h_lm_real, h_lm_imag = self.__set_spherical_harmonics(mode.lm(), amp_lm, ph_lm, theta[:,5], theta[:,6])
 			h_plus = h_plus + h_lm_real
@@ -380,8 +384,11 @@ GW_generator
 			amp, ph (N, D', K)		amplitude and phase of the K modes required by the user (if K =1, no third dimension)
 			real, imag (N, D', K)	real and imaginary part of the K modes required by the user (if K =1, no third dimension)
 		"""
-		if isinstance(modes,tuple):
+		if isinstance(modes,tuple): #it means that the last dimension should be deleted
 			modes = [modes]
+			remove_last_dim = True
+		else:
+			remove_last_dim = False
 
 		try:
 			K = len(modes)
@@ -392,9 +399,9 @@ GW_generator
 
 		if theta.ndim == 1:
 			theta = theta[None,:]
-			dim_theta = 1
+			remove_first_dim = True
 		else:
-			dim_theta = 2
+			remove_first_dim = False
 		if theta.shape[1] == 7:
 			theta = theta[:,:4]
 
@@ -409,12 +416,12 @@ GW_generator
 			#print("got modes {}".format(mode.lm()))
 			res1[:,:,i], res2[:,:,i] = mode.get_mode(theta, t_grid, out_type = out_type, align22 = align22)
 
-		res1, res2 = np.squeeze(res1), np.squeeze(res2)
-
-		if dim_theta == 1:
-			return res1, res2
-		if dim_theta == 2:
-			return res1[np.newaxis,...], res2[np.newaxis,...]
+		if remove_last_dim:
+			res1, res2 = res1[...,0], res2[...,0] #(N,D)
+		if remove_first_dim:
+			res1, res2 = res1[0,...], res2[0,...] #(D,)/(D,K)
+		return res1, res2
+		
 
 	def __set_spherical_harmonics(self, mode, amp, ph, iota, phi_0):
 		"""
@@ -861,6 +868,7 @@ mode_generator
 		Output:
 			shifts (N,)		shifts
 		"""
+		assert theta.shape[1] == 3
 		if self.shift is not None:
 			theta = np.array(theta)
 			shift_theta = add_extra_features(theta, self.shift_features, log_list = [0])
@@ -911,6 +919,8 @@ mode_generator
 		if align22:
 			m_tot_std = 20.
 			shifts = self.get_shifts(theta_std) #(N,)
+		else:
+			shifts = np.zeros((theta_std.shape[0],))
 
 			#doing interpolations
 			############
@@ -919,14 +929,11 @@ mode_generator
 
 		for i in range(amp.shape[0]):
 				#computing the true red grid
-			if align22:
-				interp_grid = np.divide(t_grid, m_tot_us[i]) - shifts[i]
-			else:
-				interp_grid = np.divide(t_grid, m_tot_us[i])
+			interp_grid = np.divide(t_grid, m_tot_us[i])
 
 				#putting the wave on the user grid
-			new_amp[i,:] = np.interp(interp_grid, self.times, amp[i,:], left = 0, right = 0) #set to zero outside the domain
-			new_ph[i,:]  = np.interp(interp_grid, self.times, ph[i,:])
+			new_amp[i,:] = np.interp(interp_grid, self.times + shifts[i], amp[i,:], left = 0, right = 0) #set to zero outside the domain
+			new_ph[i,:]  = np.interp(interp_grid, self.times + shifts[i], ph[i,:])
 
 				#warning if the model extrapolates outiside the grid
 			if (interp_grid[0] < self.times[0]):
