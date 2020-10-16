@@ -1,0 +1,7 @@
+{
+"train model": "SEOBNRv2_opt",
+"description": "Model used in the thesis work",
+"q range": "[1,10]",
+"s1 range": "[-0.8, 0.8]",
+"s2 range": "[-0.8, 0.8]"
+}

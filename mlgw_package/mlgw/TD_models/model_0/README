@@ -1,0 +1,7 @@
+{
+"train model": "TEOBResumS",
+"description": "Large parameter range and high accuracy (no NQC)",
+"q range": "[1,20]",
+"s1 range": "[-0.8, 0.95]",
+"s2 range": "[-0.8, 0.95]"
+}
