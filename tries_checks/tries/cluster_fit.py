@@ -1,7 +1,5 @@
-###################
-#	Some tries of fitting GW generation model using PCA+ logistic regression
-#	Apparently it works quite well
-###################
+import sys
+sys.path.insert(1, '../mlgw_v1')
 
 from GW_helper import *
 from ML_routines import *

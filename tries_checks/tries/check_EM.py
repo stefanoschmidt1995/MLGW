@@ -3,7 +3,7 @@
 ###################
 
 import sys
-sys.path.insert(1, '/home/stefano/Desktop/Stefano/scuola/uni/tesi_magistrale/code/routines')
+sys.path.insert(1, '../mlgw_v1')
 from GW_helper import *
 import matplotlib.pyplot as plt
 from ML_routines import *
