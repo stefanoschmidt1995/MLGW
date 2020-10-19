@@ -17,7 +17,7 @@ The repository is organised in the following folders:
 - **mlgw_v1**: first version of the model (only 22 mode is fitted)
 - **mlgw_v2**: second version of the model (higher modes are included) - not released yet
 - **tries_checks**: it holds some tests and checks performed to develop the code - the cose here is not guarenteed to work
-- **MLGW_package**: it holds code relevant to the package [``mlgw``](https://pypi.org/project/mlgw/ "mlgw package at PyPI").
+- **mlgw_package**: it holds code relevant to the package [``mlgw``](https://pypi.org/project/mlgw/ "mlgw package at PyPI").
 - **paper**: it holds the documents for the paper``mlgw``.
 
 For more information, you can contact me at [stefanoschmidt1995@gmail.com](mailto:stefanoschmidt1995@gmail.com)
