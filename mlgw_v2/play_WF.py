@@ -1,11 +1,19 @@
+###################
+#	Interactive plot to display in real time the WF dependence on the physical parameters.
+###################
+
 import numpy as np
 import matplotlib.pyplot as plt
 from matplotlib.widgets import Slider, Button, CheckButtons
 
-import GW_generator
+try:
+	import GW_generator
+except:
+	import mlgw.GW_generator
 
-gen = GW_generator.GW_generator()
+gen = GW_generator.GW_generator() #loading the generator
 
+	#initializing the plot
 fig, ax = plt.subplots(figsize = (6.4*1.3,4.8), nrows = 2, ncols = 1)
 plt.subplots_adjust(left=0.2, bottom=0.25, hspace = 0.4)
 all_modes = [str(mode) for mode in gen.list_modes()]
@@ -29,6 +37,7 @@ ax[1].set_ylim([-10**(scale_0),10**(scale_0)])
 ax[0].set_xlim([-10**(t_0),0.01])
 ax[1].set_xlim([-10**(t_0),0.01])
 
+	#setting the interactive sliders
 axcolor = 'lightgoldenrodyellow'
 ax_m1 = plt.axes([0.25, 0.15, 0.25, 0.03], facecolor=axcolor)
 ax_m2 = plt.axes([0.25, 0.1, 0.25, 0.03], facecolor=axcolor)
@@ -44,7 +53,6 @@ s_s2 = Slider(ax_s2, r'$s_2$', -0.8, 0.8, valinit=s2_0, valstep = 0.01)
 s_dist = Slider(ax_dist, r'$d_L/Mpc$', 0.1, 10, valinit=dist_0, valstep=0.01)
 s_iota = Slider(ax_iota, r'$\iota$', 0., np.pi, valinit=iota_0, valstep = 0.01)
 
-	#controllers
 ax_scale = plt.axes([0.058, .47, 0.03, 0.2], facecolor=axcolor)
 s_scale = Slider(ax_scale, 'Scale', -20,-17, valinit= scale_0, valstep = 0.01, orientation = "vertical")
 
@@ -55,6 +63,7 @@ ax_buttons = plt.axes([0.025, 0.75, 0.1, 0.15], facecolor=axcolor)
 buttons = CheckButtons(ax_buttons, [mode for mode in all_modes], actives = [True for i in range(len(all_modes))])
 
 def update(val):
+	"Updates the plots with the values of physical paramters set by the sliders"
 	m1 = s_m1.val
 	m2 = s_m2.val
 	s1 = s_s1.val
@@ -70,6 +79,7 @@ def update(val):
 
 
 def update_modes(label):
+	"Changes the modes to be included in the WFs"
 	if buttons.get_status()[all_modes.index(label)]:
 		modes.append(gen.list_modes()[all_modes.index(label)])
 	else:
@@ -78,12 +88,14 @@ def update_modes(label):
 	return
 
 def update_view(val):
+	"Changes the y scale of the plot"
 	scale = s_scale.val
 	ax[0].set_ylim([-10**(scale),10**(scale)])
 	ax[1].set_ylim([-10**(scale),10**(scale)])
 	return
 
 def update_time(val):
+	"Changes the starting point of the time grid and updates the plot"
 	global t
 	t_min = -10**(s_time.val)
 	t = np.linspace(t_min, 0.01, int(np.abs(t_min*1000.)))
@@ -94,6 +106,7 @@ def update_time(val):
 	update(0.)
 	return
 
+	#activating the sliders
 s_m1.on_changed(update)
 s_m2.on_changed(update)
 s_s1.on_changed(update)

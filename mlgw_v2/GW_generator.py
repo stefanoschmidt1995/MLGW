@@ -1,5 +1,3 @@
-############################ SHIFTS MUST BE PUT IN REDUCED GRID!!!!!!!!!!
-
 """
 Module GW_generator.py
 ======================
