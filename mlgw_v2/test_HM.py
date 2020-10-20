@@ -27,7 +27,7 @@ modes_to_k = lambda modes:[int(x[0]*(x[0]-1)/2 + x[1]-2) for x in modes] # [(l,m
 
 ###############################
 
-load = True
+load = False
 plot = False
 
 N_waves = 1500
@@ -36,9 +36,9 @@ filename_theta = "accuracy/theta_hist_TEOBResumS.dat"
 
 f_min = 10
 
-np.random.seed(23)
+np.random.seed(3424)
 
-modes = [(2,2), (3,3), (3,2), (4,4)]
+modes = [(2,2), (3,3), (3,2), (4,4), (5,5)]
 
 if not load:
 

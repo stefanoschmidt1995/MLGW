@@ -6,15 +6,15 @@ from GW_helper import *
 import matplotlib.pyplot as plt
 from ML_routines import *
 
-if False:
-	create_dataset_TD_TEOBResumS(4000, N_grid = 2000, mode = (4,4), filename = "TD_datasets/44_dataset.dat",
+if True:
+	create_dataset_TD_TEOBResumS(5000, N_grid = 2000, mode = (5,5), filename = "TD_datasets/55_dataset.dat",
                 t_coal = 2., q_range = (1.,10.), m2_range = None, s1_range = (-0.8,0.8), s2_range = (-0.8,0.8), #for full dataset
                 t_step = 1e-4, alpha = 0.5,
 				path_TEOBResumS = '/home/stefano/Desktop/Stefano/scuola/uni/tesi_magistrale/code/TEOBResumS/Python'
 				)
 
-if False:
-	create_shift_dataset(6000, [(3,2),(3,3),(4,4)], filename = "TD_datasets/shift_dataset.dat",
+if True:
+	create_shift_dataset(6000, [(3,2),(3,3),(4,4), (5,5)], filename = "TD_datasets/shift_dataset.dat",
 				q_range = (1.,10.), m2_range = None, s1_range = (-0.8,0.8), s2_range = (-0.8,0.8),
 				path_TEOBResumS = '/home/stefano/Desktop/Stefano/scuola/uni/tesi_magistrale/code/TEOBResumS/Python'
 				)

@@ -1,7 +1,7 @@
 from fit_model import *
 
-lm = "33"
-line = 1
+lm = "55"
+line = 3
 
 dataset_file = "TD_datasets/{}_dataset.dat".format(lm)
 shift_file = "TD_datasets/shift_dataset.dat".format(lm)
@@ -9,8 +9,8 @@ PCA_dataset_folder = "TD_datasets/{}".format(lm)
 model_folder = "TD_models/model_0/{}".format(lm)
 shift_folder = "TD_models/model_0/{}/shifts".format(lm)
 
-fit_PCA = False
-fit_MoE_model = False
+fit_PCA = True
+fit_MoE_model = True
 fit_shifts_ = True
 
 fifth_order = ["00", "11","22", "01", "02", "12","000", "001", "002", "011", "012", "022", "111", "112", "122", "222", #2nd/3rd order
