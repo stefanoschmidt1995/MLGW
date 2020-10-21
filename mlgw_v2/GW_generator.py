@@ -134,7 +134,7 @@ GW_generator
 			lm = (int(l), int(m))
 			assert l>=m
 		except:
-			raise warnings.warn('Folder {}: name not recognized as a valid mode'.format(name))
+			warnings.warn('Folder {}: name not recognized as a valid mode - skipping its content'.format(name))
 			return None
 		return lm
 
@@ -156,14 +156,6 @@ GW_generator
 		print("Loading model from: ", folder)
 		file_list = os.listdir(folder)
 		
-		for mode in file_list:
-			lm = self.__extract_mode(folder+mode)
-			if lm is None:
-				continue
-			self.modes.append(mode_generator(lm, folder+mode)) #loads mode_generator
-			print('    Loaded mode {}'.format(lm))
-
-
 		if 'README' in file_list:
 			with open(folder+"README") as f:
 				contents = f.read()
@@ -174,8 +166,16 @@ GW_generator
 			except:
 				warnings.warn("README file is not a valid dictionary: entry ignored")
 				self.readme = None
+			file_list.remove('README')
 		else:
 			self.readme = None
+
+		for mode in file_list:
+			lm = self.__extract_mode(folder+mode)
+			if lm is None:
+				continue
+			self.modes.append(mode_generator(lm, folder+mode)) #loads mode_generator
+			print('    Loaded mode {}'.format(lm))
 
 
 		return
@@ -300,6 +300,7 @@ GW_generator
 			new_theta[:,4] = 1.
 			new_theta[:,[2,3]] = theta[:,[1,2]] #setting spins
 			new_theta[:,[0,1]] = [theta[:,0]*20./(1+theta[:,0]), 20./(1+theta[:,0])] #setting m1,m2 with M = 20
+			theta = new_theta #(N,7)
 
 		if D>3 and D!=7:
 			new_theta = np.zeros((theta.shape[0],7))
@@ -317,6 +318,9 @@ GW_generator
 				#building vector to keep standard layout for __get_WF
 			new_theta[:, indices_new_theta] = theta[:,indices]
 			theta = new_theta #(N,7)
+
+		if np.any(np.logical_and(theta[:,[2,3]]>=1,theta[:,[2,3]]<=-1)):
+			raise ValueError("Wrong value for spins, please set a value in range [-1,1]")
 
 			#generating waves and returning to user
 		h_plus, h_cross = self.__get_WF(theta, t_grid, modes) #(N,D)

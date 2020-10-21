@@ -40,9 +40,9 @@ filename_theta = "accuracy/theta_hist_TEOBResumS.dat"	#file to save the orbital 
 
 f_min = 10	#starting frequency for the WFs
 
-np.random.seed(3424) #optional, setting a random seed for reproducibility
+np.random.seed(1424) #optional, setting a random seed for reproducibility
 
-modes = [(2,2), (3,3), (3,2), (4,4), (5,5)]	#modes to inspect
+modes = [(2,2), (3,3), (3,2), (3,1),(4,4),(5,5)]	#modes to inspect
 
 if not load:
 
