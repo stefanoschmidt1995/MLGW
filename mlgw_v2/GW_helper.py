@@ -264,7 +264,7 @@ create_dataset_TD_TEOBResumS
 		theta_vector = np.zeros((N_data,D_theta))
 
 	for i in range(N_data): #loop on data to be created
-		if i%50 == 0 and i != 0:
+		if i%100 == 0 and i != 0:
 		#if i%1 == 0 and i != 0: #debug
 			print("Generated WF ", i)
 
@@ -410,7 +410,7 @@ create_shift_dataset
 		theta_vector = np.zeros((N_data,D_theta))
 
 	for i in range(N_data): #loop on data to be created
-		if i%50 == 0 and i != 0:
+		if i%100 == 0 and i != 0:
 		#if i%1 == 0 and i != 0: #debug
 			print("Generated WF ", i)
 

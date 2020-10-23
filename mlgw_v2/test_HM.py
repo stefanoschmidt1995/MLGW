@@ -40,9 +40,9 @@ filename_theta = "accuracy/theta_hist_TEOBResumS.dat"	#file to save the orbital 
 
 f_min = 10	#starting frequency for the WFs
 
-np.random.seed(1424) #optional, setting a random seed for reproducibility
+np.random.seed(424) #optional, setting a random seed for reproducibility
 
-modes = [(2,2), (3,3), (3,2), (3,1),(4,4),(5,5)]	#modes to inspect
+modes = [(2,2), (2,1), (3,3), (3,2), (3,1), (4,4), (4,3), (4,2), (4,1), (5,5)]	#modes to inspect
 
 if not load:
 
@@ -186,7 +186,7 @@ for i in range(len(modes)):
 plt.savefig("accuracy/mismatch_HMs.pdf", format = 'pdf')
 
 	#auto-aligned mismatch
-fig, ax_list = plt.subplots(nrows = len(modes), ncols = 1, sharex = True)
+fig, ax_list = plt.subplots(figsize = (6.4,1.5*6.4),nrows = len(modes), ncols = 1, sharex = True)
 plt.subplots_adjust(hspace = .8)
 plt.suptitle("HMs mismatch - auto aligned", fontsize = 15)
 ax_list[-1].set_xlabel(r"$\log \; \bar{\mathcal{F}}$")
@@ -198,13 +198,13 @@ for i in range(len(modes)):
 plt.savefig("accuracy/mismatch_HMs_auto.pdf", format = 'pdf')
 
 	#contour plots
-fig, ax_list = plt.subplots(figsize = (6.4,6.4), nrows = 3, ncols = 2)
+fig, ax_list = plt.subplots(figsize = (1.5*6.4,1.5*6.4), nrows = 4, ncols = 3)
 plt.subplots_adjust(hspace = .8, wspace = 0.7)
 plt.suptitle("HMs contour plots", fontsize = 15)
 
-for i in range(3):
-	for j in range(2):
-		k = 2*i +j
+for i in range(ax_list.shape[0]):
+	for j in range(ax_list.shape[1]):
+		k = ax_list.shape[1]*i +j
 		if k >= len(modes):
 			ax_list[i,j].cla()
 			ax_list[i,j].axis('off')

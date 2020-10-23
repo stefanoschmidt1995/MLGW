@@ -9,7 +9,7 @@ except:
 	from mlgw.GW_helper import *
 	from mlgw.ML_routines import *
 
-if True:
+if False:
 	#With create_dataset_TD_TEOBResumS a dataset of WF is created. The user must provide
 	#	-the number of WFs to be generated
 	#	-the number of grid points
@@ -22,30 +22,30 @@ if True:
 	#	-path to a local installation of TEOBResumS: it must have the module 'EOBRun_module'
 	#The dataset is saved to a file, one file for each mode. The WF is time aligned s.t. the peak of each mode happens at t = 0
 
-	create_dataset_TD_TEOBResumS(5000, N_grid = 2000, mode = (4,3), filename = "TD_datasets/43_dataset.dat",
+	create_dataset_TD_TEOBResumS(6000, N_grid = 2000, mode = (2,1), filename = "TD_datasets/21_dataset.dat",
                 t_coal = 2., q_range = (1.,10.), m2_range = None, s1_range = (-0.8,0.8), s2_range = (-0.8,0.8), #for full dataset
                 t_step = 1e-4, alpha = 0.5,
 				path_TEOBResumS = '/home/stefano/Desktop/Stefano/scuola/uni/tesi_magistrale/code/TEOBResumS/Python'
 				)
 
-if False:
+if True:
 	#This is to build a 'shift dataset' crucial for the correct alignments of the modes.
 	#Each mode is stored in the dataset s.t. its peak happens at t=0. This requires the ability of shifting properly each mode in order to have it aligned with the others.
 	#Here shift refers to the difference (in reduced grid) between the peak of the lm mode and the peak of the 22 mode, with the same parameters.
 	#Knowing the shifts ensures that the WF can be faithfuly reconstructed with all the modes correctly aligned.
 
-	create_shift_dataset(6000, [(3,1),(3,2),(3,3),(4,1),(4,2),(4,3),(4,4), (5,5)], filename = "TD_datasets/shift_dataset.dat",
+	create_shift_dataset(7000, [(2,1), (3,1), (3,2), (3,3),(4,1),(4,2),(4,3),(4,4), (5,5)], filename = "TD_datasets/shift_dataset.dat",
 				q_range = (1.,10.), m2_range = None, s1_range = (-0.8,0.8), s2_range = (-0.8,0.8),
 				path_TEOBResumS = '/home/stefano/Desktop/Stefano/scuola/uni/tesi_magistrale/code/TEOBResumS/Python'
 				)
 
 
-#quit() #comment here to plot the dataset
+quit() #comment here to plot the dataset
 
 ############ Plotting dataset
 import matplotlib.pyplot as plt
 
-theta_vector, amp_dataset, ph_dataset, x_grid = load_dataset("TD_datasets/43_dataset.dat", shuffle=False, N_data = None) #loading the dataset
+theta_vector, amp_dataset, ph_dataset, x_grid = load_dataset("TD_datasets/21_dataset.dat", shuffle=False, N_data = None) #loading the dataset
 
 N_plots = 50 #number of WFs to be plotted
 

@@ -32,8 +32,8 @@ try:
 except:
 	from mlgw.fit_model import *
 
-lm = "43" 	#mode to fit
-line = 5	#column in the shift dataset to consider	
+lm = "21" 	#mode to fit
+line = 0	#column in the shift dataset to consider	
 
 dataset_file = "TD_datasets/{}_dataset.dat".format(lm)	#input file for WF dataset of the mode
 shift_dataset = "TD_datasets/shift_dataset.dat".format(lm)	#input file for the shift dataset (can be also one for all the modes)
@@ -42,8 +42,8 @@ model_folder = "TD_models/model_0/{}".format(lm)		#folder in which the model for
 shift_folder = "TD_models/model_0/{}/shifts".format(lm)	#folder in which the model for the shifts must be stored
 
 	#control what to do
-fit_PCA = True
-fit_MoE_model = True
+fit_PCA = False
+fit_MoE_model = False
 fit_shifts_ = True
 
 	#features to use for the basis function expansion
