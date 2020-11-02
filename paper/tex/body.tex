@@ -42,13 +42,13 @@ The ML flexibility in modeling data and reproducing trends is appealing: with a 
 and with an appropriate training procedure, we can hope to have a reliable, fast to execute generator 
 of GW waveforms, while retaining the accuracy necessary for robust parameter estimation.
 ML procedures have already been successfully exploited for speeding up the WF generation~\cite{Khan:2020fso, Chua_2019}
-and for signal detection and/or parameter estimation~\cite{Gabbard:2017lja,George:2017pmj,George:2017vlv,Rebei:2018lzh,Chatterjee:2019gqr,Wong:2020wvd, Khan:2020foe}.
+and for signal detection and/or parameter estimation~\cite{Gabbard:2017lja,George:2017pmj,George:2017vlv,Rebei:2018lzh,Chatterjee:2019gqr,Wong:2020wvd, Khan:2020foe}. A comparative study of different regression methods for the task of generating WFs is performed in \cite{Setyawati:2019xzw}.
 
 In this work, we explore the application of ML to WF generation and we build a ML model, called \texttt{mlgw}, that allows to reproduce 
 waveforms from any EOB model for BBH coalescence. We demonstrate that such ML-based model can generate 
 GW signals significantly faster than the original model, 
 matching the performances of a Reduced Order Modelling 
-(ROM)~\cite{Purrer:2015tud,Bohe:2016gbl,Purrer:2017str}.  
+(ROM)~\cite{Purrer:2015tud,Bohe:2016gbl,Purrer:2017str, Field:2013cfa}.  
 At the same time it shows a good agreement with the train model, at the $10^{-3}$ level when 
 averaged on the whole parameter space. For simplicity, we focus here only on the 
 dominant $\ell=m=2$ quadrupole waveform and we only consider the aligned spin case.
@@ -614,18 +614,17 @@ Median values $q^{\rm TEOB}_{50\%}$ and $q^{\rm SEOB}_{50\%}$ for the two models
 \begin{figure}
 	\centering
 	\begin{minipage}{\factor\linewidth}
-	    \includegraphics[width=\linewidth]{time_performance_hist_ROM_20_1024}
+	    \includegraphics[width=\linewidth]{time_performance_hist_ROM_5_2048}
 	\end{minipage}\hfill
 	\begin{minipage}{\factor\linewidth}
 	    \includegraphics[width=\linewidth]{time_performance_hist_ROM_20_2048}
 	\end{minipage}
 
 	\caption{
-	Speed up of \texttt{mlgw} with respect to \texttt{SEOBNRv4\_ROM}.
-	The plot refers to  $N=2000$ test waveforms, each one generated with random physical 
-	parameters at sampling frequency $ f_{\rm sam}=\SI{1024}{Hz}$ (top panel) 
-	and $f_{\rm sam}=\SI{2048}{Hz}$ (bottom panel). The total mass is set $M=\SI{100}{M_\odot}$ 
-	and each waveform starts at $f_{\rm min} = \SI{20}{Hz}$.
+	Speed up of \texttt{mlgw} with respect to \texttt{SEOBNRv4\_ROM}, computed on $N=2000$ test waveforms.
+	Each WF is generated with random physical 
+	parameters and has a minimum frequency of $\SI{5}{Hz}$ (top panel) and $\SI{20}{Hz}$ (bottom panel).
+	We set a constant total mass $M=\SI{100}{M_\odot}$ and the sampling rate $f_{\rm sam} = \SI{2048}{Hz}$.
 	The median value $q_{50\%}$ and the positions $q_{5\%}$ and $q_{95\%}$ of the 5th and 95th percentile are reported.
 }
 	\label{fig:time_performance_hist_ROM}
@@ -648,8 +647,9 @@ equivalent from the point of view of the generation time for a WF,
 so that we simply refer to the model as {\tt mlgw} here and below.
 The measured speed up of {\tt mlgw} with respect to \texttt{SEOBNRv4\_ROM} 
 is illustrated in Fig.~\ref{fig:time_performance_hist_ROM}.
-The comparison is made as above only for $f_{\rm min} = 20$~Hz, since the minimum allowed frequency
-for the ROM is 10~Hz. As the ROM model yields WFs in frequency domain, 
+The comparison is made as above with a sampling rate $f_{\rm sam}=\SI{2048}{Hz}$ for two 
+different starting frequency $f_{\rm min} = \SI{5}{Hz}$ and $f_{\rm min} = \SI{20}{Hz}$.
+As the ROM model yields WFs in frequency domain, 
 in the run-time evaluation we also included a fast Fourier transform (FFT) of the time 
 domain WF of \texttt{mlgw}.  This ensures that we are evaluating 
 the two model at the same conditions.
@@ -662,17 +662,15 @@ is evaluated on a dense equally spaced grid: as can be seen in
 Table~\ref{tab:profiling}, such operation can be very expensive.}.
 
 We note the the performances are quite similar to each other.
-If a lower sampling rate is employed, \texttt{mlgw} 
-slightly improves its performances. It is important to stress 
-that \texttt{mlgw}  is written in pure Python, 
+If a lower starting frequency is chosen, \texttt{mlgw} 
+is slightly outperformed. Perhaps, this can be cured by fitting a model in frequency domain: 
+in this case, the FFT would not be required anymore, resulting in a large speed-up in the execution time.
+It is important to stress that \texttt{mlgw}  is written in pure Python, 
 while \texttt{SEOBNRv4\_ROM} is coded in $C$.
 In fact, a python code could be easily accelerated (i.e. parallelized, run on GPUs, etc...) 
 with dedicated libraries, thus allowing to push the code performance further.
 %
-Furthermore, \texttt{mlgw} is more efficient in reconstructing 
-the waveforms: it requires only $O(5\times 10^3)$ WFs for the training,
-while in order to build a ROM as many as $O(5\times 10^5)$ WFs are
-required. 
+%Furthermore, \texttt{mlgw} is more efficient in reconstructing the waveforms: it requires only $O(5\times 10^3)$ WFs for the training, while in order to build a ROM as many as $O(5\times 10^5)$ WFs are required. 
 
 \paragraph{Profiling}
 It is interesting to have a knowledge of the time spent by \texttt{mlgw} 

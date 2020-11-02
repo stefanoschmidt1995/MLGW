@@ -129,5 +129,3 @@ For more advanced use or for more information, please refer to the code document
 For full source code (and much more) see: https://github.com/stefanoschmidt1995/MLGW
 
 
-
-
