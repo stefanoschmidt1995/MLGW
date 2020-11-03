@@ -1,8 +1,8 @@
 all: mlgw.pdf
 
-mlgw.pdf: mlgw.tex tex/*.tex mlgw.bbl mlgw.aux
+mlgw.pdf: mlgw.tex mlgw.bbl mlgw.aux
 	pdflatex -synctex=1 -interaction=nonstopmode "mlgw".tex
-	
+
 mlgw.aux:
 	pdflatex -synctex=1 -interaction=nonstopmode "mlgw".tex
 
