@@ -24,7 +24,6 @@ superscriptaddress,10pt]{revtex4-1}
 \usepackage{ragged2e}
 \usepackage{blindtext}
 \usepackage{graphicx}
-	\graphicspath{{./img/}} %per mettere tutti gli indirizzi di includegraphics nella stessa cartella
 \usepackage{siunitx}
 	\sisetup{output-decimal-marker={.}}
 	
@@ -487,8 +486,9 @@ We then vary $N_{\rm grid}$ and $\alpha$ and report the resulting mismatch $\mat
 %%
 \begin{figure}[!t]
 	\centering
-	\includegraphics[width=\linewidth,keepaspectratio]{N_grid}
-	\caption{Average mismatch between waves $\mathbf{f}_{N_{\rm grid}, \alpha}$, as saved in the training dataset, and raw waves from EOB model, as a function of time grid size $N_{\rm grid}$. Each series refers to a different values of $\alpha$.
+	\includegraphics[width=\linewidth,keepaspectratio]{img/N_grid.pdf}
+	\caption{Average mismatch between waves $\mathbf{f}_{N_{\rm grid}, \alpha}$, as saved in the training dataset, and raw waves 
+	from EOB model, as a function of time grid size $N_{\rm grid}$. Each series refers to a different values of $\alpha$.
 	Clearly, $N_{\rm grid} \simeq 3 \times 10^{3}$ and $\alpha \in (0.3,0.5)$ is a good choice for the dataset hyperparameters.
 }
 	\label{fig:N_grid}
@@ -502,11 +502,11 @@ A good setting for dataset hyperparameters might be: $N_{\rm grid} \simeq 3 \tim
 	\centering
     \begin{minipage}{.5\linewidth}
         \centering
-        \includegraphics[width=\linewidth]{MoE_mismatch_amp}
+        \includegraphics[width=\linewidth]{img/MoE_mismatch_amp.pdf}
     \end{minipage}\hfill
     \begin{minipage}{.5\linewidth}
         \centering
-        \includegraphics[width=\linewidth]{MoE_mismatch_ph}
+        \includegraphics[width=\linewidth]{img/MoE_mismatch_ph.pdf}
     \end{minipage}
 	\caption{Validation results for fit of MoE model. Each point corresponds to a MoE regressions for the amplitude (left) and phase (right), with a different values of expert number $N_{\rm exp}$ and order of polynomial basis function.
 The amplitude and phase are represented with 5 and 4 PCs respectively.
@@ -536,11 +536,11 @@ A model with 4 experts and 4th order polynomial regression is the ``simplest" of
 	\centering 
     \begin{minipage}{.5\linewidth}
 		\centering
-	    \includegraphics[width=\linewidth]{mismatch_MoE_vs_PCA_amp}
+	    \includegraphics[width=\linewidth]{img/mismatch_MoE_vs_PCA_amp.pdf}
 	\end{minipage}\hfill
     \begin{minipage}{.5\linewidth}
 		\centering
-	    \includegraphics[width=\linewidth]{mismatch_MoE_vs_PCA_ph}
+	    \includegraphics[width=\linewidth]{img/mismatch_MoE_vs_PCA_ph.pdf}
 	\end{minipage}
 	\caption{Test mismatch as a function of the number of PCs used in the low dimensional representation.
 Label ``PCA" refers to waves reconstructed with PCA only; points with label ``MoE" are reconstructed after a MoE regression.
@@ -574,7 +574,7 @@ In Fig.~\ref{fig:N_train} we report train and test value of mismatch and mean sq
 first 3 PCs as a function of the number of training points. Data refers to a MoE model fitted for 4 PCs of the phase dataset, with $4$ experts and a 4th order polynomial. 
 \begin{figure}
 	\centering
-    \includegraphics[width=\linewidth]{N_train}
+    \includegraphics[width=\linewidth]{img/N_train.pdf}
 	\caption{Train and test error for MoE fit of 4 PCs of phase, as a function of the number of training points. 
 	We report train and test reconstruction mismatch (top) and mean squared error (MSE) for the first 3 PCs (below). 
 	MoE model employs 4 experts and a fourth order polynomial for a basis function expansion. Test mismatch are obtained using 
@@ -596,7 +596,7 @@ model with a few number of parameters: few data are enough for learning a reliab
 %%%%
 \begin{figure}
 	\centering
-    \includegraphics[width=\linewidth]{F_hist}
+    \includegraphics[width=\linewidth]{img/F_hist.pdf}
 	\caption{Logarithm of mismatch between \texttt{TEOBResumS} and \texttt{mlgw-TEOBREsumS}, computed on $N=4000$ test waveforms. 
 	Each WF is generated with random masses and spins and with a starting frequency of $\SI{10}{Hz}$.
 	The median value $q_{50\%}$ and the positions $q_{5\%}$ and $q_{95\%}$ of the 5th and 95th percentile are reported.
@@ -629,7 +629,7 @@ in Fig.~\ref{fig:countour}.
 			Mismatch%
 			} \\
 			\vskip0.3em
-		    \includegraphics[width=\linewidth]{F_countour_mass}
+		    \includegraphics[width=\linewidth]{img/F_countour_mass.pdf}
 		\end{minipage}\hfill
 		\begin{minipage}{\minipagesize\linewidth}
 		    \centering
@@ -637,29 +637,29 @@ in Fig.~\ref{fig:countour}.
 			Mean Squared Error%
 			} \\
 			\vskip0.3em
-		    \includegraphics[width=\linewidth]{mse_countour_mass}
+		    \includegraphics[width=\linewidth]{img/mse_countour_mass.pdf}
 		\end{minipage}
     \end{minipage}\hfill
     \begin{minipage}{\linewidth}
         \centering
 	 	\begin{minipage}{\minipagesize\linewidth}
 		    \centering
-		    \includegraphics[width=\linewidth]{F_countour_spins}
+		    \includegraphics[width=\linewidth]{img/F_countour_spins.pdf}
 		\end{minipage}\hfill
 		\begin{minipage}{\minipagesize\linewidth}
 		    \centering
-		    \includegraphics[width=\linewidth]{mse_countour_spins}
+		    \includegraphics[width=\linewidth]{img/mse_countour_spins.pdf}
 		\end{minipage}
     \end{minipage}\hfill
     \begin{minipage}{\linewidth}
         \centering
 	 	\begin{minipage}{\minipagesize\linewidth}
 		    \centering
-		    \includegraphics[width=\linewidth]{F_countour_q_s1}
+		    \includegraphics[width=\linewidth]{img/F_countour_q_s1.pdf}
 		\end{minipage}\hfill
 		\begin{minipage}{\minipagesize\linewidth}
 		    \centering
-		    \includegraphics[width=\linewidth]{mse_countour_q_s1}
+		    \includegraphics[width=\linewidth]{img/mse_countour_q_s1.pdf}
 		\end{minipage}
     \end{minipage}
 	\caption{To compare \texttt{TEOBResumS} and \texttt{mlgw-TEOBREsumS}, we report test mismatch (left column) and mean squared errors (MSE) (right column) for the first PC of the phase, as a function of masses and spins. The histograms hold $145061$ waveforms, with randomly drawn parameters.
@@ -707,10 +707,10 @@ measured speed up values for both \texttt{TEOBResumS} and \texttt{SEOBNRv4}.
 \begin{figure}
 	\centering
 	\begin{minipage}{\factor\linewidth}
-	    \includegraphics[width=\linewidth]{compare_time_hist_5}
+	    \includegraphics[width=\linewidth]{img/compare_time_hist_5.pdf}
 	\end{minipage}\hfill
 	\begin{minipage}{\factor\linewidth}
-	    \includegraphics[width=\linewidth]{compare_time_hist_20}
+	    \includegraphics[width=\linewidth]{img/compare_time_hist_20.pdf}
 	\end{minipage}
 
 	\caption{
@@ -728,10 +728,10 @@ Median values $q^{\rm TEOB}_{50\%}$ and $q^{\rm SEOB}_{50\%}$ for the two models
 \begin{figure}
 	\centering
 	\begin{minipage}{\factor\linewidth}
-	    \includegraphics[width=\linewidth]{time_performance_hist_ROM_5_2048}
+	    \includegraphics[width=\linewidth]{img/time_performance_hist_ROM_5_2048.pdf}
 	\end{minipage}\hfill
 	\begin{minipage}{\factor\linewidth}
-	    \includegraphics[width=\linewidth]{time_performance_hist_ROM_20_2048}
+	    \includegraphics[width=\linewidth]{img/time_performance_hist_ROM_20_2048.pdf}
 	\end{minipage}
 
 	\caption{
