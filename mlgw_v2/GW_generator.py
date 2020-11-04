@@ -441,12 +441,12 @@ GW_generator
 		"""
 		l,m = mode
 			#computing the iota dependence of the WF
-		d_lm = self.__get_Wigner_d_function((l,m),iota)
-		d_lmm = self.__get_Wigner_d_function((l,-m),iota) 
+		d_lm = self.__get_Wigner_d_function((l,m),iota) #(N,)
+		d_lmm = self.__get_Wigner_d_function((l,-m),iota) #(N,)
 		const = np.sqrt( (2.*l+1.)/(4.*np.pi) ) #/ np.sqrt((l+2)*(l+1)*l*(l-1)) #apparently this part helps...
 
-		h_lm_real = np.multiply(np.multiply(amp.T,np.cos(ph.T+m*phi_0)), const*(d_lm + d_lmm) ).T
-		h_lm_imag = np.multiply(np.multiply(amp.T,np.sin(ph.T+m*phi_0)), const*(d_lm - d_lmm) ).T
+		h_lm_real = np.multiply(np.multiply(amp.T,np.cos(ph.T+m*phi_0)), const*(d_lm + d_lmm) ).T #(N,D)
+		h_lm_imag = np.multiply(np.multiply(amp.T,np.sin(ph.T+m*phi_0)), const*(d_lm - d_lmm) ).T #(N,D)
 
 		return h_lm_real, h_lm_imag
 
@@ -495,7 +495,7 @@ GW_generator
 		"""
 		theta = np.array(theta)
 		if theta.ndim == 1:
-			theta = theta[None,:]
+			theta = theta[None,:] #(1,D)
 			dim_theta = 1
 		else:
 			dim_theta = 2
@@ -532,12 +532,13 @@ GW_generator
 			#print("got modes {}".format(mode.lm()))
 			shifts[:,k] = mode.get_shifts(theta)
 
-		shifts = np.squeeze(shifts)
-
 		if dim_theta == 1:
-			return shifts
+			return np.squeeze(shifts)
 		if dim_theta == 2:
-			return shifts[np.newaxis,...]
+			if K == 1:
+				return np.squeeze(shifts)[np.newaxis,...]
+			else:
+				return shifts
 
 
 

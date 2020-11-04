@@ -31,7 +31,7 @@ modes_to_k = lambda modes:[int(x[0]*(x[0]-1)/2 + x[1]-2) for x in modes] # [(l,m
 ###################
 #	computing mismatch
 
-load = True		#whether to load the saved data
+load = True	#whether to load the saved data
 plot = False	#whether to plot the comparison between the WFs
 
 N_waves = 1500 #WFs to generate
@@ -40,7 +40,7 @@ filename_theta = "accuracy/theta_hist_TEOBResumS.dat"	#file to save the orbital 
 
 f_min = 10	#starting frequency for the WFs
 
-np.random.seed(424) #optional, setting a random seed for reproducibility
+np.random.seed(24) #optional, setting a random seed for reproducibility
 
 modes = [(2,2), (2,1), (3,3), (3,2), (3,1), (4,4), (4,3), (4,2), (4,1), (5,5)]	#modes to inspect
 
@@ -64,6 +64,10 @@ if not load:
 	theta = np.random.uniform(low = low_list, high = high_list, size = (N_waves, 7))
 
 	for i in range(N_waves):
+		if np.maximum(theta[i,0]/theta[i,1], theta[i,1]/theta[i,0]) < 2:
+			plot = True
+		else:
+			plot = False
 			#computing test WFs
 		times, h_p_TEOB, h_c_TEOB, hlm, t_m = generate_waveform_TEOBResumS(*theta[i,:-1], f_min = f_min,
 								verbose = False, t_step = 1e-4, modes = modes)
@@ -117,7 +121,7 @@ if not load:
 
 				#printing and saving results
 			print("\t",modes[j],F_temp, F_aligned)
-			print("\t shift true vs rec: {} / {} ".format(shifts[j]*(theta[i,0]+theta[i,1]),times[argpeak]))
+			print("\t shift rec vs true: {} / {} ".format(shifts[j]*(theta[i,0]+theta[i,1]),times[argpeak]))
 			F[i,j+1] = F_temp
 			F[i,j+1+len(modes)] = F_aligned
 
@@ -135,6 +139,11 @@ if not load:
 				plt.plot(times, ph, label = "mlgw")
 				plt.plot(times, ph_aligned[:,j], label = "mlgw - aligned")	
 				plt.plot(times, hlm[str(k[0])][1], label = "TEOB")
+				plt.legend(loc = 'upper left')
+
+				plt.figure()
+				plt.title("Ph difference mode {}".format(str(modes[j])))
+				plt.plot(times, ph - hlm[str(k[0])][1], label = "mlgw - TEOB")
 				plt.legend(loc = 'upper left')
 
 		plt.show()
@@ -160,6 +169,12 @@ if not load:
 	#loading from file
 theta = np.loadtxt(filename_theta) #(N,7)
 F = np.loadtxt(filename) #(N, 2*len(modes)+1)
+
+	#removing eventual zeros from the histograms
+zeros = np.where(F[:,0]!=0)[0]
+F = F[zeros,:]
+theta = theta[zeros,:]
+
 print("Loading histogram from: {}\n\t{} datapoints".format(filename, F.shape[0]))
 
 #Plotting
@@ -173,7 +188,7 @@ plt.savefig("accuracy/mismatch_overall.pdf", format = 'pdf')
 plt.xlim([-6,0])
 
 	#optimal mismatch
-fig, ax_list = plt.subplots(nrows = len(modes), ncols = 1, sharex = True)
+fig, ax_list = plt.subplots(figsize = (6.4,1.5*6.4), nrows = len(modes), ncols = 1, sharex = True)
 plt.subplots_adjust(hspace = .8)
 plt.suptitle("HMs mismatch", fontsize = 15)
 ax_list[-1].set_xlabel(r"$\log \; \bar{\mathcal{F}}$")

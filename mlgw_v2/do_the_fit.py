@@ -32,8 +32,8 @@ try:
 except:
 	from mlgw.fit_model import *
 
-lm = "21" 	#mode to fit
-line = 0	#column in the shift dataset to consider	
+lm = "33" 	#mode to fit
+line = 0	#column in the shift dataset to consider
 
 dataset_file = "TD_datasets/{}_dataset.dat".format(lm)	#input file for WF dataset of the mode
 shift_dataset = "TD_datasets/shift_dataset.dat".format(lm)	#input file for the shift dataset (can be also one for all the modes)
@@ -42,9 +42,9 @@ model_folder = "TD_models/model_0/{}".format(lm)		#folder in which the model for
 shift_folder = "TD_models/model_0/{}/shifts".format(lm)	#folder in which the model for the shifts must be stored
 
 	#control what to do
-fit_PCA = False
-fit_MoE_model = False
-fit_shifts_ = True
+fit_PCA = True
+fit_MoE_model = True
+fit_shifts_ = False
 
 	#features to use for the basis function expansion
 fifth_order = ["00", "11","22", "01", "02", "12","000", "001", "002", "011", "012", "022", "111", "112", "122", "222", #2nd/3rd order
@@ -55,6 +55,7 @@ fifth_order = ["00", "11","22", "01", "02", "12","000", "001", "002", "011", "01
 fourth_order = ["00", "11","22", "01", "02", "12","000", "001", "002", "011", "012", "022", "111", "112", "122", "222",
 "0000", "0001","0002", "0011", "0022","0012","0111","0112", "0122", "0222","1111", "1112", "1122", "1222", "2222"]
 
+no_spins = ["00", "000", "0000", "00000"]
 
 print("Dealing with {} mode".format(lm))
 
@@ -75,5 +76,5 @@ if fit_MoE_model:
 
 if fit_shifts_:
 	#Here a MoE fit is performed on the required mode, based on the dataset shift_dataset. The model is saved to the folder shift_folder
-	fit_shifts(shift_dataset, shift_folder, experts = 6, line_to_fit = line, train_frac = 0.8, features = fourth_order, EM_threshold = 1e-2, args = None, N_train = None, verbose = True, train_mse = True, test_mse = True)
+	fit_shifts(shift_dataset, shift_folder, experts = 6, line_to_fit = line, train_frac = 0.8, features = fifth_order, EM_threshold = 1e-2, args = None, N_train = None, verbose = True, train_mse = True, test_mse = True)
 

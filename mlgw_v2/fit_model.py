@@ -95,7 +95,7 @@ create_PCA_dataset
 	np.savetxt(out_folder+"PCA_test_ph.dat", red_test_ph)		#saving test reduced phases
 	np.savetxt(out_folder+"times", times)						#saving times
 
-	F_PCA = compute_mismatch(test_amp, test_ph, rec_test_amp, rec_test_ph)
+	F_PCA = compute_mismatch((test_amp), test_ph, (rec_test_amp), rec_test_ph) 
 	print("Average PCA mismatch: ",np.mean(F_PCA))
 	
 	return
@@ -243,7 +243,7 @@ fit_MoE
 		rec_amp=PCA_amp.reconstruct_data(PCA_test_amp)
 		rec_ph=PCA.reconstruct_data(PCA_test)
 		rec_ph_pred=PCA.reconstruct_data(PCA_test_pred)
-		F_MoE = compute_mismatch(rec_amp, rec_ph, rec_amp, rec_ph_pred)
+		F_MoE = compute_mismatch(rec_amp, rec_ph, rec_amp, rec_ph_pred) 
 		
 	if test_mismatch and fit_type is "amp": #testing for amplitude
 		PCA_test_ph = np.loadtxt(in_folder+"PCA_test_ph.dat")
@@ -251,7 +251,7 @@ fit_MoE
 		rec_ph=PCA_ph.reconstruct_data(PCA_test_ph)
 		rec_amp=PCA.reconstruct_data(PCA_test)
 		rec_amp_pred=PCA.reconstruct_data(PCA_test_pred)
-		F_MoE = compute_mismatch(rec_amp, rec_ph, rec_amp_pred, rec_ph)
+		F_MoE = compute_mismatch(rec_amp, rec_ph, rec_amp_pred, rec_ph) 
 
 	if train_mismatch and fit_type is "ph": #testing for phase
 		PCA_train_amp = np.loadtxt(in_folder+"PCA_train_amp.dat")[:N_train,:]
@@ -259,7 +259,7 @@ fit_MoE
 		rec_amp=PCA_amp.reconstruct_data(PCA_train_amp)
 		rec_ph=PCA.reconstruct_data(PCA_train)
 		rec_ph_pred=PCA.reconstruct_data(PCA_train_pred)
-		F_MoE_train = compute_mismatch(rec_amp, rec_ph, rec_amp, rec_ph_pred)
+		F_MoE_train = compute_mismatch(rec_amp, rec_ph, rec_amp, rec_ph_pred) 
 
 	if train_mismatch and fit_type is "amp": #testing for amplitude
 		PCA_train_ph = np.loadtxt(in_folder+"PCA_train_ph.dat")[:N_train,:]
@@ -267,7 +267,7 @@ fit_MoE
 		rec_ph=PCA_ph.reconstruct_data(PCA_train_ph)
 		rec_amp=PCA.reconstruct_data(PCA_train)
 		rec_amp_pred=PCA.reconstruct_data(PCA_train_pred)
-		F_MoE_train = compute_mismatch(rec_amp, rec_ph, rec_amp_pred, rec_ph)
+		F_MoE_train = compute_mismatch(rec_amp, rec_ph, rec_amp_pred, rec_ph) 
 
 	if test_mismatch:
 		print("Average MoE mismatch: ",np.mean(F_MoE))

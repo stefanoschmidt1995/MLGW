@@ -229,7 +229,7 @@ MoE_model
 			next_cl_arg = np.random.choice(range(data.shape[0]), p = distances) #chosen argument for the next cluster center
 			centroids[k,:] = data[next_cl_arg,:]
 
-		var = np.var(X, axis = 0) #(D,)
+		var = np.var(X, axis = 0) + 1e-10 #(D,)
 
 			#computing initial responsibilities
 		r_0 = np.zeros((X.shape[0],self.K))
@@ -256,7 +256,7 @@ MoE_model
 		indices = np.random.choice(range(X.shape[0]), size = self.K, replace = False)
 		centroids = X[indices,:] #(K,D) #K centroids are chosen
 			#getting variances
-		var = np.var(X, axis = 0) #(D,)
+		var = np.var(X, axis = 0) + 1e-10 #(D,)
 
 			#computing initial responsibilities
 		r_0 = np.zeros((X.shape[0],self.K))
