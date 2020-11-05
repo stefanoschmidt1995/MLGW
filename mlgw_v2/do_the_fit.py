@@ -32,8 +32,17 @@ try:
 except:
 	from mlgw.fit_model import *
 
-lm = "33" 	#mode to fit
-line = 0	#column in the shift dataset to consider
+try:
+	import sys
+	lm = sys.argv[1]
+except:
+	lm = "33" 	#mode to fit
+try:
+	import sys
+	line = int(sys.argv[2])
+except:
+	line = 0	#column in the shift dataset to consider
+
 
 dataset_file = "TD_datasets/{}_dataset.dat".format(lm)	#input file for WF dataset of the mode
 shift_dataset = "TD_datasets/shift_dataset.dat".format(lm)	#input file for the shift dataset (can be also one for all the modes)
@@ -62,7 +71,7 @@ print("Dealing with {} mode".format(lm))
 if fit_PCA:
 	#Here a PCA model is fitted and saved to PCA_dataset_folder. At the same time, a reduced version of the WF dataset is saved to PCA_dataset_folder
 	print("Saving PCA dataset to: ", PCA_dataset_folder)
-	create_PCA_dataset((4,5), dataset_file, PCA_dataset_folder, train_frac = 0.8)
+	create_PCA_dataset((4,5), dataset_file, PCA_dataset_folder, train_frac = 0.8, clean_dataset = False)
 
 if fit_MoE_model:
 	#Here many MoE models are fitted from the reduced dataset, built on PCA.
@@ -72,9 +81,9 @@ if fit_MoE_model:
 	print("Fitting phase")
 	fit_MoE("ph", PCA_dataset_folder, model_folder, experts = 4, comp_to_fit = None, features = fifth_order, EM_threshold = 1e-2, args = None, N_train = 6000, verbose = False, test_mismatch = True)
 	print("Fitting amplitude")
-	fit_MoE("amp", PCA_dataset_folder, model_folder, experts = 4, comp_to_fit = None, features = fifth_order, EM_threshold = 1e-2, args = 	None, N_train = 6000, verbose = False, test_mismatch = True)
+	#fit_MoE("amp", PCA_dataset_folder, model_folder, experts = 4, comp_to_fit = None, features = fifth_order, EM_threshold = 1e-2, args = 	None, N_train = 6000, verbose = False, test_mismatch = True)
 
 if fit_shifts_:
 	#Here a MoE fit is performed on the required mode, based on the dataset shift_dataset. The model is saved to the folder shift_folder
-	fit_shifts(shift_dataset, shift_folder, experts = 6, line_to_fit = line, train_frac = 0.8, features = fifth_order, EM_threshold = 1e-2, args = None, N_train = None, verbose = True, train_mse = True, test_mse = True)
+	fit_shifts(shift_dataset, shift_folder, experts = 6, line_to_fit = line, train_frac = 0.8, features = fourth_order, EM_threshold = 1e-2, args = None, N_train = None, verbose = True, train_mse = True, test_mse = True)
 

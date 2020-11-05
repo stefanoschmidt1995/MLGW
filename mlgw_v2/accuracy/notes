@@ -1,0 +1,8 @@
+Thresholds for bad q values:
+
+21: q> 1.7
+31: q> 1.05
+33: q> 1.05
+41: q> 1.8
+43: q> 1.8
+

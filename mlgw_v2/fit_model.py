@@ -20,7 +20,7 @@ from ML_routines import *	#PCA model
 from EM_MoE import *		#MoE model
 
 ################# routine create_PCA_dataset
-def create_PCA_dataset(K, dataset_file, out_folder, train_frac = 0.75):
+def create_PCA_dataset(K, dataset_file, out_folder, train_frac = 0.75, clean_dataset = False):
 	"""
 create_PCA_dataset
 ==================
@@ -42,6 +42,7 @@ create_PCA_dataset
 		dataset_file	path to file holding input waveform dataset
 		out_folder		output folder which all output files will be saved to.
 		train_frac		fraction of data in WF datset to be included in training set (must be strictly less than 1)
+		clean_dataset	whether to remove outliers at low q in the dataset (advised for odd m modes)
 	"""
 	if not os.path.isdir(out_folder): #check if out_folder exists
 		try:
@@ -65,6 +66,30 @@ create_PCA_dataset
 
 		#DOING PCA
 
+
+		#phase
+	PCA_ph = PCA_model()
+
+	if clean_dataset:
+		PCA_ph.fit_model(train_ph, K[1], scale_PC=True)
+		y = PCA_ph.reduce_data(train_ph)
+		low_q = np.where(train_theta[:,0]<2.)[0]
+		q = np.quantile(y[low_q,:], q = [0.25,0.5,0.75], axis = 0)
+		z_score = np.divide(y[low_q,:]-q[1,:], np.abs(q[0,:]-q[2,:])) #IQR
+		where_bad = np.where(np.abs(z_score[:,:3])>2.)[0] #arbitrary threshold for removing points
+		where_bad = np.unique(where_bad) #indices in the array y[low_q,:]
+		where_bad = np.array( [(i in low_q[where_bad]) for i in range(y.shape[0])] ) #bool indices in the start array
+			#removing from dataset
+		train_ph = train_ph[~where_bad,:]
+		train_amp = train_amp[~where_bad,:]
+		train_theta = train_theta[~where_bad,:]	
+
+	E_ph = PCA_ph.fit_model(train_ph, K[1], scale_PC=True)
+	print("PCA eigenvalues for phase: ", E_ph)
+	red_train_ph = PCA_ph.reduce_data(train_ph)			#(N,K) to save in train dataset 
+	red_test_ph = PCA_ph.reduce_data(test_ph)			#(N,K) to save in test dataset
+	rec_test_ph = PCA_ph.reconstruct_data(red_test_ph) 	#(N,D) for computing mismatch
+
 		#amplitude
 	PCA_amp = PCA_model()
 	E_amp = PCA_amp.fit_model(train_amp, K[0], scale_PC=True)
@@ -72,14 +97,6 @@ create_PCA_dataset
 	red_train_amp = PCA_amp.reduce_data(train_amp)			#(N,K) to save in train dataset 
 	red_test_amp = PCA_amp.reduce_data(test_amp)			#(N,K) to save in test dataset
 	rec_test_amp = PCA_amp.reconstruct_data(red_test_amp) 	#(N,D) for computing mismatch
-
-		#phase
-	PCA_ph = PCA_model()
-	E_ph = PCA_ph.fit_model(train_ph, K[1], scale_PC=True)
-	print("PCA eigenvalues for phase: ", E_ph)
-	red_train_ph = PCA_ph.reduce_data(train_ph)			#(N,K) to save in train dataset 
-	red_test_ph = PCA_ph.reduce_data(test_ph)			#(N,K) to save in test dataset
-	rec_test_ph = PCA_ph.reconstruct_data(red_test_ph) 	#(N,D) for computing mismatch
 
 	if not out_folder.endswith('/'):
 		out_folder = out_folder + "/"
@@ -95,6 +112,7 @@ create_PCA_dataset
 	np.savetxt(out_folder+"PCA_test_ph.dat", red_test_ph)		#saving test reduced phases
 	np.savetxt(out_folder+"times", times)						#saving times
 
+		#computing mismatch
 	F_PCA = compute_mismatch((test_amp), test_ph, (rec_test_amp), rec_test_ph) 
 	print("Average PCA mismatch: ",np.mean(F_PCA))
 	

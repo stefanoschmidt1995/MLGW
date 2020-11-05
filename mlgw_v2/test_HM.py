@@ -31,8 +31,8 @@ modes_to_k = lambda modes:[int(x[0]*(x[0]-1)/2 + x[1]-2) for x in modes] # [(l,m
 ###################
 #	computing mismatch
 
-load = True	#whether to load the saved data
-plot = False	#whether to plot the comparison between the WFs
+load = False	#whether to load the saved data
+plot = False		#whether to plot the comparison between the WFs
 
 N_waves = 1500 #WFs to generate
 filename = "accuracy/mismatch_hist_TEOBResumS.dat"		#file to save the accuracy data to
@@ -42,7 +42,7 @@ f_min = 10	#starting frequency for the WFs
 
 np.random.seed(24) #optional, setting a random seed for reproducibility
 
-modes = [(2,2), (2,1), (3,3), (3,2), (3,1), (4,4), (4,3), (4,2), (4,1), (5,5)]	#modes to inspect
+modes = [(2,2), (3,1), (3,3)]#, (3,2), (3,1), (4,4), (4,3), (4,2), (4,1), (5,5)]	#modes to inspect
 
 if not load:
 
@@ -50,8 +50,8 @@ if not load:
 	generator = GW_generator("TD_models/model_0")	#initializing the generator
 
 		#getting random theta
-	m1_range = (10.,100.)
-	m2_range = (10.,100.)
+	m1_range = (10.,10.1)
+	m2_range = (10.,10.1)
 	s1_range = (-0.8,0.8)
 	s2_range = (-0.8,0.8)
 	d_range = (.5,10.)
@@ -64,17 +64,14 @@ if not load:
 	theta = np.random.uniform(low = low_list, high = high_list, size = (N_waves, 7))
 
 	for i in range(N_waves):
-		if np.maximum(theta[i,0]/theta[i,1], theta[i,1]/theta[i,0]) < 2:
-			plot = True
-		else:
-			plot = False
 			#computing test WFs
 		times, h_p_TEOB, h_c_TEOB, hlm, t_m = generate_waveform_TEOBResumS(*theta[i,:-1], f_min = f_min,
 								verbose = False, t_step = 1e-4, modes = modes)
 		h_TEOB = h_p_TEOB + 1j*h_c_TEOB
 
 			#computing overall mismatch
-		print("it: {} \t Theta: ".format(i), theta[i,:])
+		print("it: {} \n  Theta: {}\n   q: {}".format(i, theta[i,:],np.maximum(theta[i,0]/theta[i,1],theta[i,1]/theta[i,0])))
+#		print("\tq = {}".format(np.maximum(theta[i,0]/theta[i,1],theta[i,1]/theta[i,0])))
 		res = scipy.optimize.minimize_scalar(compute_mismatch, bounds = [0.,2*np.pi],
 						args = (h_TEOB, theta[i,:], times, generator, modes), method = "Brent")	
 		F[i,0] = res['fun']
@@ -86,17 +83,17 @@ if not load:
 			h_p_mlgw, h_c_mlgw = generator.get_WF(temp_theta, times, modes)
 			temp_theta = np.concatenate((np.round(temp_theta[:5],1), np.round(temp_theta[5:],2)))
 
-			plt.figure()
-			plt.title(r"$h_{+} \;\;\; \theta =$"+"{}".format(temp_theta))
-			plt.plot(times, h_p_mlgw, label = "mlgw")
-			plt.plot(times, h_p_TEOB, label = "TEOB")
-			plt.legend(loc = 'upper left')
+			fig, ax_list = plt.subplots(num=0, nrows = 2, ncols = 1, sharex = True)
+			plt.suptitle(r"$\theta =$"+"{}".format(temp_theta))
+			ax_list[0].set_title(r"$h_{+}$")
+			ax_list[0].plot(times, h_p_mlgw, label = "mlgw")
+			ax_list[0].plot(times, h_p_TEOB, label = "TEOB")
+			ax_list[0].legend(loc = 'upper left')
 
-			plt.figure()
-			plt.title(r"$h_{\times} \;\;\; \theta =$"+"{}".format(temp_theta))
-			plt.plot(times, h_c_mlgw, label = "mlgw")
-			plt.plot(times, h_c_TEOB, label = "TEOB")
-			plt.legend(loc = 'upper left')
+			ax_list[1].set_title(r"$h_{\times}$")
+			ax_list[1].plot(times, h_c_mlgw, label = "mlgw")
+			ax_list[1].plot(times, h_c_TEOB, label = "TEOB")
+			ax_list[1].legend(loc = 'upper left')
 
 			#computing mismatch for each mode
 		amp_aligned, ph_aligned = generator.get_modes(theta[i,:], times, 
@@ -125,26 +122,29 @@ if not load:
 			F[i,j+1] = F_temp
 			F[i,j+1+len(modes)] = F_aligned
 
-				#plotting if it is the case
+				#plotting (if it's the case)
 			if plot:
-				plt.figure()
+				l, m = modes[j]
+				lm = str(l)+str(m)
+
+				plt.figure(int(lm+'0'))
 				plt.title("Amp mode {}".format(str(modes[j])))
 				plt.plot(times, amp, label = "mlgw")
 				plt.plot(times, amp_aligned[:,j], label = "mlgw - aligned")	
 				plt.plot(times, hlm[str(k[0])][0], label = "TEOB")
 				plt.legend(loc = 'upper left')
-			
-				plt.figure()
-				plt.title("Ph mode {}".format(str(modes[j])))
-				plt.plot(times, ph, label = "mlgw")
-				plt.plot(times, ph_aligned[:,j], label = "mlgw - aligned")	
-				plt.plot(times, hlm[str(k[0])][1], label = "TEOB")
-				plt.legend(loc = 'upper left')
 
-				plt.figure()
-				plt.title("Ph difference mode {}".format(str(modes[j])))
-				plt.plot(times, ph - hlm[str(k[0])][1], label = "mlgw - TEOB")
-				plt.legend(loc = 'upper left')
+				where_amp_0 = np.nonzero(amp)[0]
+			
+				fig, ax_list = plt.subplots(num=int(lm+'1'), nrows = 2, ncols = 1, sharex = True)
+				ax_list[0].set_title("Ph mode {}".format(str(modes[j])))
+				ax_list[0].plot(times, ph, label = "mlgw")
+				ax_list[0].plot(times, ph_aligned[:,j], label = "mlgw - aligned")	
+				ax_list[0].plot(times, hlm[str(k[0])][1], label = "TEOB")
+				ax_list[0].legend(loc = 'upper left')
+
+				ax_list[1].set_title("Ph difference mode {}".format(str(modes[j])))
+				ax_list[1].plot(times[where_amp_0], ph[where_amp_0] - hlm[str(k[0])][1][where_amp_0], label = "mlgw - TEOB")
 
 		plt.show()
 
