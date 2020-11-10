@@ -5,23 +5,24 @@ import scipy.stats
 y = np.loadtxt("TD_datasets/31/PCA_train_ph.dat")
 x = np.loadtxt("TD_datasets/31/PCA_train_theta.dat")
 
-low_q = np.where(x[:,0]<2.)[0]
+	#for shifts
+s_data = np.loadtxt("TD_datasets/shift_dataset.dat")
+x = s_data[:,:3]
+y = s_data[:,3+0, None]
+
+low_q = np.where(x[:,0]<4.)[0]
 
 q = np.quantile(y[low_q,:], q = [0.25,0.5,0.75], axis = 0)
-print(q,q.shape)
 
 z_score = np.divide(y[low_q,:]-q[1,:], np.abs(q[0,:]-q[2,:])) #IQR
 
 #z_score = scipy.stats.zscore(y[low_q,:], axis =0) #true z score (worse apparently)
 
-where_bad = np.where(np.abs(z_score[:,:4])>2.)[0]
+where_bad = np.where(np.abs(z_score[:,:4])>3.)[0]
 where_bad = np.unique(where_bad) #indices in the array y[low_q,:]
-print(z_score[:,:4].shape)
+#print(z_score[:,:4].shape)
 
 where_bad = np.array( [(i in low_q[where_bad]) for i in range(x.shape[0])] ) #indices in the start array
-
-print(where_bad)
-
 
 for PC in range(y.shape[1]):
 	plt.figure()

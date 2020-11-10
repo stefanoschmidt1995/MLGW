@@ -9,7 +9,7 @@ except:
 	from mlgw.GW_helper import *
 	from mlgw.ML_routines import *
 
-if True:
+if False:
 	#With create_dataset_TD_TEOBResumS a dataset of WF is created. The user must provide
 	#	-the number of WFs to be generated
 	#	-the number of grid points
@@ -41,12 +41,12 @@ if False:
 				)
 
 
-quit() #comment here to plot the dataset
+#quit() #comment here to plot the dataset
 
 ############ Plotting dataset
 import matplotlib.pyplot as plt
 
-theta_vector, amp_dataset, ph_dataset, x_grid = load_dataset("TD_datasets/33_dataset_lowq.dat", shuffle=False, N_data = None) #loading the dataset
+theta_vector, amp_dataset, ph_dataset, x_grid = load_dataset("TD_datasets/21_dataset.dat", shuffle=False, N_data = None) #loading the dataset
 
 N_plots = 50 #number of WFs to be plotted
 

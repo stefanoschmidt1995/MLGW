@@ -20,7 +20,7 @@ from ML_routines import *	#PCA model
 from EM_MoE import *		#MoE model
 
 ################# routine create_PCA_dataset
-def create_PCA_dataset(K, dataset_file, out_folder, train_frac = 0.75, clean_dataset = False):
+def create_PCA_dataset(K, dataset_file, out_folder, train_frac = 0.75, clean_dataset = False, lowq_cutoff = False):
 	"""
 create_PCA_dataset
 ==================
@@ -43,6 +43,7 @@ create_PCA_dataset
 		out_folder		output folder which all output files will be saved to.
 		train_frac		fraction of data in WF datset to be included in training set (must be strictly less than 1)
 		clean_dataset	whether to remove outliers at low q in the dataset (advised for odd m modes)
+		lowq_cutoff		threshold at which to remove from the dataset the WFs with low q (if None, no removal is performed)
 	"""
 	if not os.path.isdir(out_folder): #check if out_folder exists
 		try:
@@ -57,8 +58,6 @@ create_PCA_dataset
 	train_theta, test_theta, train_amp, test_amp = make_set_split(theta_vector, amp_dataset, train_frac, 1.)
 	train_theta, test_theta, train_ph, test_ph   = make_set_split(theta_vector, ph_dataset, train_frac, 1.)
 
-	print("Orbital parameters are in range: [%f,%f]x[%f,%f]x[%f,%f]"%(np.min(train_theta[:,0]), np.max(train_theta[:,0]), np.min(train_theta[:,1]), np.max(train_theta[:,1]), np.min(train_theta[:,2]), np.max(train_theta[:,2])))
-
 	if type(K) is int:
 		K = (K,K)
 	if type(K) is not tuple:
@@ -69,6 +68,12 @@ create_PCA_dataset
 
 		#phase
 	PCA_ph = PCA_model()
+
+	if lowq_cutoff is not None:
+		where_ok = np.where(train_theta[:,0]>lowq_cutoff)[0]
+		train_ph = train_ph[where_ok,:]
+		train_amp = train_amp[where_ok,:]
+		train_theta = train_theta[where_ok,:]
 
 	if clean_dataset:
 		PCA_ph.fit_model(train_ph, K[1], scale_PC=True)
@@ -83,6 +88,8 @@ create_PCA_dataset
 		train_ph = train_ph[~where_bad,:]
 		train_amp = train_amp[~where_bad,:]
 		train_theta = train_theta[~where_bad,:]	
+
+	print("Orbital parameters are in range: [%f,%f]x[%f,%f]x[%f,%f]"%(np.min(train_theta[:,0]), np.max(train_theta[:,0]), np.min(train_theta[:,1]), np.max(train_theta[:,1]), np.min(train_theta[:,2]), np.max(train_theta[:,2])))
 
 	E_ph = PCA_ph.fit_model(train_ph, K[1], scale_PC=True)
 	print("PCA eigenvalues for phase: ", E_ph)
@@ -297,7 +304,7 @@ fit_MoE
 	return
 
 ################# routine fit_shifts
-def fit_shifts(in_file, out_folder, experts, line_to_fit = 0, train_frac = 0.8, features = None, EM_threshold = 1e-2, args = None, N_train = None, verbose = True, train_mse = False, test_mse = True):
+def fit_shifts(in_file, out_folder, experts, line_to_fit = 0, train_frac = 0.8, features = None, EM_threshold = 1e-2, args = None, N_train = None, verbose = True, train_mse = False, test_mse = True, clean_dataset = False, lowq_cutoff = None):
 	"""
 fit_MoE
 =======
@@ -323,6 +330,8 @@ fit_MoE
 		verbose				whether to display EM iteration messages
 		train_mismatch		whether to return mismatch and mse on train data (if True, test_mismatch = True)
 		test_mismatch		whether to return mismatch and mse on test data
+		clean_dataset		whether to remove outliers at low q in the dataset (advised for odd m modes)
+		lowq_cutoff			threshold at which to remove from the dataset the WFs with low q (if None, no removal is performed)
 	Output:
 		mse_test				average test mse
 		mse_train, mse_test		average train and test mse
@@ -371,6 +380,26 @@ fit_MoE
 	train_shifts = train_data[:,3+line_to_fit]
 	test_theta = test_data[:,:3]
 	test_shifts = test_data[:,3+line_to_fit]
+
+	if lowq_cutoff is not None:
+		where_ok = np.where(train_theta[:,0]>lowq_cutoff)[0]
+		train_theta = train_theta[where_ok,:]
+		train_shifts = train_shifts[where_ok]
+		where_ok = np.where(test_theta[:,0]>lowq_cutoff)[0]
+		test_theta = test_theta[where_ok,:]
+		test_shifts = test_shifts[where_ok]
+
+	if clean_dataset:
+		low_q = np.where(train_theta[:,0]<2.)[0]
+		q = np.quantile(train_shifts[low_q], q = [0.25,0.5,0.75], axis = 0) #(3,)
+		z_score = np.divide(train_shifts[low_q]-q[1], np.abs(q[0]-q[2])) #IQR #(N',)
+		where_bad = np.where(np.abs(z_score)>2.)[0] #arbitrary threshold for removing points
+		where_bad = np.unique(where_bad) #indices in the array y[low_q,:]
+		where_bad = np.array( [(i in low_q[where_bad]) for i in range(train_shifts.shape[0])] ) #bool indices in the start array
+			#removing from dataset
+		train_shifts = train_shifts[~where_bad]
+		train_theta = train_theta[~where_bad,:]	
+
 
 	print("Using {} train data".format(train_theta.shape[0]))
 	

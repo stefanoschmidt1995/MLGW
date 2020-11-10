@@ -34,15 +34,15 @@ modes_to_k = lambda modes:[int(x[0]*(x[0]-1)/2 + x[1]-2) for x in modes] # [(l,m
 load = False	#whether to load the saved data
 plot = False		#whether to plot the comparison between the WFs
 
-N_waves = 1500 #WFs to generate
-filename = "accuracy/mismatch_hist_TEOBResumS.dat"		#file to save the accuracy data to
-filename_theta = "accuracy/theta_hist_TEOBResumS.dat"	#file to save the orbital paramters the hist refers to
+N_waves = 1000 #WFs to generate
+filename = "accuracy/mismatch_hist_TEOBResumS_qsmall.dat"		#file to save the accuracy data to
+filename_theta = "accuracy/theta_hist_TEOBResumS_qsmall.dat"	#file to save the orbital paramters the hist refers to
 
 f_min = 10	#starting frequency for the WFs
 
-np.random.seed(24) #optional, setting a random seed for reproducibility
+np.random.seed(490834) #optional, setting a random seed for reproducibility
 
-modes = [(2,2), (3,1), (3,3)]#, (3,2), (3,1), (4,4), (4,3), (4,2), (4,1), (5,5)]	#modes to inspect
+modes = [(2,2), (3,3), (3,2), (3,1), (4,4), (4,3), (4,2), (4,1), (5,5)]	#modes to inspect
 
 if not load:
 
@@ -50,8 +50,8 @@ if not load:
 	generator = GW_generator("TD_models/model_0")	#initializing the generator
 
 		#getting random theta
-	m1_range = (10.,10.1)
-	m2_range = (10.,10.1)
+	m1_range = (10.,20.)
+	m2_range = (10.,20.)
 	s1_range = (-0.8,0.8)
 	s2_range = (-0.8,0.8)
 	d_range = (.5,10.)
@@ -64,6 +64,10 @@ if not load:
 	theta = np.random.uniform(low = low_list, high = high_list, size = (N_waves, 7))
 
 	for i in range(N_waves):
+
+		#if np.maximum(theta[i,0]/theta[i,1],theta[i,1]/theta[i,0])<1.05:
+		#	continue
+
 			#computing test WFs
 		times, h_p_TEOB, h_c_TEOB, hlm, t_m = generate_waveform_TEOBResumS(*theta[i,:-1], f_min = f_min,
 								verbose = False, t_step = 1e-4, modes = modes)

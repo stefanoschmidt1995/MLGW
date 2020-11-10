@@ -36,7 +36,7 @@ try:
 	import sys
 	lm = sys.argv[1]
 except:
-	lm = "33" 	#mode to fit
+	lm = "21" 	#mode to fit
 try:
 	import sys
 	line = int(sys.argv[2])
@@ -51,9 +51,9 @@ model_folder = "TD_models/model_0/{}".format(lm)		#folder in which the model for
 shift_folder = "TD_models/model_0/{}/shifts".format(lm)	#folder in which the model for the shifts must be stored
 
 	#control what to do
-fit_PCA = True
-fit_MoE_model = True
-fit_shifts_ = False
+fit_PCA = False
+fit_MoE_model = False
+fit_shifts_ = True
 
 	#features to use for the basis function expansion
 fifth_order = ["00", "11","22", "01", "02", "12","000", "001", "002", "011", "012", "022", "111", "112", "122", "222", #2nd/3rd order
@@ -71,7 +71,7 @@ print("Dealing with {} mode".format(lm))
 if fit_PCA:
 	#Here a PCA model is fitted and saved to PCA_dataset_folder. At the same time, a reduced version of the WF dataset is saved to PCA_dataset_folder
 	print("Saving PCA dataset to: ", PCA_dataset_folder)
-	create_PCA_dataset((4,5), dataset_file, PCA_dataset_folder, train_frac = 0.8, clean_dataset = False)
+	create_PCA_dataset((4,5), dataset_file, PCA_dataset_folder, train_frac = 0.8, clean_dataset = True, lowq_cutoff = 1.05)
 
 if fit_MoE_model:
 	#Here many MoE models are fitted from the reduced dataset, built on PCA.
@@ -81,9 +81,9 @@ if fit_MoE_model:
 	print("Fitting phase")
 	fit_MoE("ph", PCA_dataset_folder, model_folder, experts = 4, comp_to_fit = None, features = fifth_order, EM_threshold = 1e-2, args = None, N_train = 6000, verbose = False, test_mismatch = True)
 	print("Fitting amplitude")
-	#fit_MoE("amp", PCA_dataset_folder, model_folder, experts = 4, comp_to_fit = None, features = fifth_order, EM_threshold = 1e-2, args = 	None, N_train = 6000, verbose = False, test_mismatch = True)
+	fit_MoE("amp", PCA_dataset_folder, model_folder, experts = 4, comp_to_fit = None, features = fifth_order, EM_threshold = 1e-2, args = 	None, N_train = 6000, verbose = False, test_mismatch = True)
 
 if fit_shifts_:
 	#Here a MoE fit is performed on the required mode, based on the dataset shift_dataset. The model is saved to the folder shift_folder
-	fit_shifts(shift_dataset, shift_folder, experts = 6, line_to_fit = line, train_frac = 0.8, features = fourth_order, EM_threshold = 1e-2, args = None, N_train = None, verbose = True, train_mse = True, test_mse = True)
+	fit_shifts(shift_dataset, shift_folder, experts = 6, line_to_fit = line, train_frac = 0.8, features = fourth_order, EM_threshold = 1e-2, args = None, N_train = None, verbose = True, train_mse = True, test_mse = True, clean_dataset = True, lowq_cutoff = 1.05)
 
