@@ -51,9 +51,9 @@ model_folder = "TD_models/model_0/{}".format(lm)		#folder in which the model for
 shift_folder = "TD_models/model_0/{}/shifts".format(lm)	#folder in which the model for the shifts must be stored
 
 	#control what to do
-fit_PCA = False
-fit_MoE_model = False
-fit_shifts_ = True
+fit_PCA = True
+fit_MoE_model = True
+fit_shifts_ = False
 
 	#features to use for the basis function expansion
 fifth_order = ["00", "11","22", "01", "02", "12","000", "001", "002", "011", "012", "022", "111", "112", "122", "222", #2nd/3rd order
@@ -71,7 +71,7 @@ print("Dealing with {} mode".format(lm))
 if fit_PCA:
 	#Here a PCA model is fitted and saved to PCA_dataset_folder. At the same time, a reduced version of the WF dataset is saved to PCA_dataset_folder
 	print("Saving PCA dataset to: ", PCA_dataset_folder)
-	create_PCA_dataset((4,5), dataset_file, PCA_dataset_folder, train_frac = 0.8, clean_dataset = True, lowq_cutoff = 1.05)
+	create_PCA_dataset((4,5), dataset_file, PCA_dataset_folder, train_frac = 0.8, clean_dataset = True, lowq_cutoff = 1.0)
 
 if fit_MoE_model:
 	#Here many MoE models are fitted from the reduced dataset, built on PCA.

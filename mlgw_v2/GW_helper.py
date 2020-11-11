@@ -151,7 +151,7 @@ compute_optimal_mismatch
 
 ################# Dataset related stuff
 
-def create_dataset_TD_TEOBResumS(N_data, N_grid, mode = [(2,2)],filename = None,  t_coal = 0.5, q_range = (1.,5.), m2_range = None, s1_range = (-0.8,0.8), s2_range = (-0.8,0.8), t_step = 1e-5, alpha = 0.35, path_TEOBResumS = None):
+def create_dataset_TD_TEOBResumS(N_data, N_grid, mode = (2,2),filename = None,  t_coal = 0.5, q_range = (1.,5.), m2_range = None, s1_range = (-0.8,0.8), s2_range = (-0.8,0.8), t_step = 1e-5, alpha = 0.35, path_TEOBResumS = None):
 	"""
 create_dataset_TD_TEOBResumS
 ============================
@@ -227,6 +227,8 @@ create_dataset_TD_TEOBResumS
 	modes = [mode]
 	modes_to_k = lambda modes:[int(x[0]*(x[0]-1)/2 + x[1]-2) for x in modes] # [(l,m)] -> [k]
 	k_modes = modes_to_k(modes)
+	if modes != [(2,2)]:
+		k_modes.append(1) #22 modes is always computed
 	print("Generating mode: "+str(modes[0]))
 
 		#creating time_grid
@@ -327,18 +329,21 @@ create_dataset_TD_TEOBResumS
 		temp_amp = hlm[str(k_modes[0])][0]
 		temp_ph = hlm[str(k_modes[0])][1]
 
+		if modes != [(2,2)]:
+			ph_22 = hlm['1'][1] #phase of the 22 mode
+			temp_ph = temp_ph - float(modes[0][1]/2.) *ph_22 #fitting the difference between lm phase and 22 phase
+
 		argpeak = locate_peak(temp_amp)
 		t_peak = time_full[argpeak]
-		#t_peak = time_full[np.argmax(np.abs(temp_amp))] #old and safe...
 		time_full = (time_full - t_peak)/(m1+m2) #grid is scaled to standard grid
 			#setting waves to the chosen std grid
 		temp_amp = np.interp(time_grid, time_full, temp_amp)
 		temp_ph = np.interp(time_grid, time_full, temp_ph)
 
 			#here you need to decide what is better
-		#temp_ph = temp_ph - temp_ph[0] #all phases are shifted by a constant to make every wave start with 0 phase
-		id0 = np.where(time_grid == 0)[0]
-		temp_ph = temp_ph - temp_ph[id0] #all phases are shifted by a constant to make every wave start with 0 phase at t=0 (i.e. at maximum amplitude)
+		temp_ph = temp_ph - temp_ph[0] #all phases are shifted by a constant to make sure every wave has 0 phase at beginning of grid
+		#id0 = np.where(time_grid == 0)[0]
+		#temp_ph = temp_ph - temp_ph[id0] #all phases are shifted by a constant to make every wave start with 0 phase at t=0 (i.e. at maximum amplitude)
 
 		if filename is None:
 			amp_dataset[i,:] = temp_amp  #putting waveform in the dataset to return

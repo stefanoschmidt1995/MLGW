@@ -32,17 +32,17 @@ modes_to_k = lambda modes:[int(x[0]*(x[0]-1)/2 + x[1]-2) for x in modes] # [(l,m
 #	computing mismatch
 
 load = False	#whether to load the saved data
-plot = False		#whether to plot the comparison between the WFs
+plot = True		#whether to plot the comparison between the WFs
 
 N_waves = 1000 #WFs to generate
-filename = "accuracy/mismatch_hist_TEOBResumS_qsmall.dat"		#file to save the accuracy data to
-filename_theta = "accuracy/theta_hist_TEOBResumS_qsmall.dat"	#file to save the orbital paramters the hist refers to
+filename = "accuracy/mismatch_hist_TEOBResumS_phdiff.dat"		#file to save the accuracy data to
+filename_theta = "accuracy/theta_hist_TEOBResumS_phdiff.dat"	#file to save the orbital paramters the hist refers to
 
 f_min = 10	#starting frequency for the WFs
 
-np.random.seed(490834) #optional, setting a random seed for reproducibility
+np.random.seed(4904) #optional, setting a random seed for reproducibility
 
-modes = [(2,2), (3,3), (3,2), (3,1), (4,4), (4,3), (4,2), (4,1), (5,5)]	#modes to inspect
+modes = [(2,2), (2,1), (3,3), (3,2), (3,1), (4,4), (4,3), (4,2), (4,1), (5,5)]	#modes to inspect
 
 if not load:
 
@@ -50,8 +50,8 @@ if not load:
 	generator = GW_generator("TD_models/model_0")	#initializing the generator
 
 		#getting random theta
-	m1_range = (10.,20.)
-	m2_range = (10.,20.)
+	m1_range = (20.,50.)
+	m2_range = (20.,50.)
 	s1_range = (-0.8,0.8)
 	s2_range = (-0.8,0.8)
 	d_range = (.5,10.)
@@ -148,7 +148,8 @@ if not load:
 				ax_list[0].legend(loc = 'upper left')
 
 				ax_list[1].set_title("Ph difference mode {}".format(str(modes[j])))
-				ax_list[1].plot(times[where_amp_0], ph[where_amp_0] - hlm[str(k[0])][1][where_amp_0], label = "mlgw - TEOB")
+				ax_list[1].plot(times[where_amp_0],
+	 ph[where_amp_0] - hlm[str(k[0])][1][where_amp_0]- (ph[where_amp_0[0]] - hlm[str(k[0])][1][where_amp_0[0]]), label = "mlgw - TEOB")
 
 		plt.show()
 

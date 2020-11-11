@@ -2,13 +2,13 @@ import numpy as np
 import matplotlib.pyplot as plt
 import scipy.stats
 
-y = np.loadtxt("TD_datasets/31/PCA_train_ph.dat")
-x = np.loadtxt("TD_datasets/31/PCA_train_theta.dat")
+y = np.loadtxt("TD_datasets/21/PCA_train_ph.dat")
+x = np.loadtxt("TD_datasets/21/PCA_train_theta.dat")
 
 	#for shifts
 s_data = np.loadtxt("TD_datasets/shift_dataset.dat")
-x = s_data[:,:3]
-y = s_data[:,3+0, None]
+#x = s_data[:,:3]
+#y = s_data[:,3+0, None]
 
 low_q = np.where(x[:,0]<4.)[0]
 
