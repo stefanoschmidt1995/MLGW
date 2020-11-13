@@ -120,7 +120,7 @@ GW_generator
 		"""
 	__extract_mode
 	============
-		Given a folder, it extract (if present) the tuple of the mode the folder represent.
+		Given a folder name, it extract (if present) the tuple of the mode the folder contains.
 		Each mode folder must start with "lm".
 		Input:
 			folder		folder holding a mode
@@ -142,7 +142,7 @@ GW_generator
 		"""
 	load
 	====
-		Loads the GW generator by loading the different mode_generator classes as well as the shift fits.
+		Loads the GW generator by loading the different mode_generator classes.
 		Each mode is loaded from a dedicated folder in the given folder of the model.
 		An optional README files holds some information about the model.
 		Input:
@@ -170,25 +170,13 @@ GW_generator
 		else:
 			self.readme = None
 
-		#looking for 22 mode
+		#loading modes
 		for mode in file_list:
 			lm = self.__extract_mode(folder+mode)
-			print(lm, (2,2))
-			if lm == (2,2):
-				self.modes.append(mode_generator(lm, folder+mode, None)) #loads mode_generator
-				print('    Loaded mode {}'.format(lm))
-				break
-		if self.modes == []:
-			raise RuntimeError("Unable to load (2,2) mode: impossible to continue")
-
-		#loading other modes
-		for mode in file_list:
-			lm = self.__extract_mode(folder+mode)
-			if lm is None or lm == (2,2):
+			if lm is None:
 				continue
-			self.modes.append(mode_generator(lm, folder+mode, self.modes[0])) #loads mode_generator
+			self.modes.append(mode_generator(lm, folder+mode)) #loads mode_generator
 			print('    Loaded mode {}'.format(lm))
-
 
 		return
 
@@ -220,18 +208,19 @@ GW_generator
 		print(output)
 		return
 
-	def list_modes(self):
+	def list_modes(self, print_screen = False):
 		"""
 	list_modes
 	==========
-		Print to screen and returns a list of the available modes.
+		Returns a list of the available modes.
+		If print_screen is True, it also prints to screen
 		Output:
 			mode_list	list with the available modes
 		"""
 		mode_list = []
 		for mode in self.modes:
 			mode_list.append(mode.lm())
-		print(mode_list)
+		if print_screen: print(mode_list)
 		return mode_list
 
 
@@ -241,7 +230,7 @@ GW_generator
 	========
 		Generates a WF according to the model. It makes all the required preprocessing to include wave dependance on the full 14 parameters space of the GW forms. It outputs the plus cross polarization of the WF.
 		All the available modes are employed to build the WF.
-		The WF is shifted such that the peak of the 22 mode is placed at t=0. If the reference phase is 0, the phase of the 22 mode is 0 at t=0.
+		The WF is shifted such that the peak of the 22 mode is placed at t=0. If the reference phase is 0, the phase of the 22 mode is 0 at the beginning of the time grid.
 		Note that the dependence on the longitudinal ascension node, the eccentricity, the mean periastron anomaly and the orthogonal spin components is not currently implemented and it is mainted for compatibility with lal.
 		Input:
 			t_grid	(N_grid,)		Grid of (physical) time points to evaluate the wave at
@@ -255,9 +244,8 @@ GW_generator
 			long_asc_nodes ()/(N,)	Logitudinal ascentional nodes (currently not implemented)
 			eccentricity ()/(N,)	Eccentricity of the orbit (currently not implemented)
 			mean_per_ano ()/(N,)	Mean periastron anomaly (currently not implemented)
-			out_type (str)			The output to be returned ('h+x', 'ampph', 'h22')
 		Ouput:
-			h_plus, h_cross (1,D)/(N,D)		desidered polarizations (if it applies)
+			h_plus, h_cross (1,D)/(N,D)		desidered polarizations
 		"""
 		theta = np.column_stack((m1, m2, spin1_x, spin1_y, spin1_z, spin2_x, spin2_y, spin2_z, D_L, i, phi_0, long_asc_nodes, eccentricity, mean_per_ano)) #(N,D)
 		return self.get_WF(theta, t_grid= t_grid, modes = None)
@@ -269,7 +257,7 @@ GW_generator
 	======
 		Generates a WF according to the model. It makes all the required preprocessing to include wave dependance on the full 14 parameters space of the GW forms. It outputs the plus cross polarization of the WF.
 		All the available modes are employed to build the WF.
-		The WF is shifted such that the peak of the 22 mode is placed at t=0. If the reference phase is 0, the phase of the 22 mode is 0 at t=0.
+		The WF is shifted such that the peak of the 22 mode is placed at t=0. If the reference phase is 0, the phase of the 22 mode is 0 at the beginning of the time grid.
 		If no geometrical variables are given, it is set by default D_L = 1 Mpc, iota = phi_0 = 0.
 		It accepts data in one of the following layout of D features:
 			D = 3	[q, spin1_z, spin2_z]
@@ -372,7 +360,7 @@ GW_generator
 				if mode.lm() not in modes: #skipping a non-necessary mode
 					continue
 			#print("got modes {}".format(mode.lm()))
-			amp_lm, ph_lm = mode.get_mode(theta[:,:4], t_grid, out_type = "ampph", align22 = True)
+			amp_lm, ph_lm = mode.get_mode(theta[:,:4], t_grid, out_type = "ampph")
 			amp_lm =  np.multiply(amp_lm.T, amp_prefactor).T #G/c^2*(M_sun/Mpc) nu *(M/M_sun)/(d_L/Mpc)
 				# setting spherical harmonics: amp, ph, D_L,iota, phi_0
 			h_lm_real, h_lm_imag = self.__set_spherical_harmonics(mode.lm(), amp_lm, ph_lm, theta[:,5], theta[:,6])
@@ -381,7 +369,7 @@ GW_generator
 
 		return h_plus, h_cross
 
-	def get_modes(self, theta, t_grid, modes = None, out_type = "ampph", align22 = False):
+	def get_modes(self, theta, t_grid, modes = None, out_type = "ampph"):
 		"""
 	get_modes
 	=========
@@ -393,7 +381,6 @@ GW_generator
 			t_grid (D',)		a grid in (physical or reduced) time to evaluate the wave at (uses np.interp)
 			modes				list of modes employed for building the WF (if None, every mode available is employed)
 			out_type			whether amplitude and phase ("ampph") or real and imaginary part ("realimag") shall be returned
-			align22				whether the 0 of the time grid should be placed at the peak of the 22 mode (otherwise is placed at the peak of the current mode)
 		Output:
 			amp, ph (N, D', K)		amplitude and phase of the K modes required by the user (if K =1, no third dimension)
 			real, imag (N, D', K)	real and imaginary part of the K modes required by the user (if K =1, no third dimension)
@@ -429,7 +416,7 @@ GW_generator
 			else: #computing index to save the mode at
 				i = modes.index(mode.lm())
 			#print("got modes {}".format(mode.lm()))
-			res1[:,:,i], res2[:,:,i] = mode.get_mode(theta, t_grid, out_type = out_type, align22 = align22)
+			res1[:,:,i], res2[:,:,i] = mode.get_mode(theta, t_grid, out_type = out_type)
 
 		if remove_last_dim:
 			res1, res2 = res1[...,0], res2[...,0] #(N,D)
@@ -497,65 +484,20 @@ GW_generator
 		const = np.sqrt(fact(l+m) * fact(l-m) * fact(l+s) * fact(l-s))
 		return const*d_lm
 	
-	def get_shifts(self, theta, modes):
+	def get_mode_obj(self, mode):
 		"""
-	get_shifts
-	==========
-		Returns the time shifts for the given paramters and for the given modes.
+	get_mode_obj
+	============
+		Returns an instance of class mode_generator which hold the ML model for the required mode.
 		Input:
-			theta (N,D)/(D,)	source parameters to make prediction at (D = 3,4)
-			modes []			list of K modes employed for computing the shifts (if None, every mode available is employed)
-		Outputs:
-			shifts (N,K)/(K,)	shifts for the given modes
+			mode		(l,m) of the required mode
+		Output:
+			mode_obj	istance of mode_generator
 		"""
-		theta = np.array(theta)
-		if theta.ndim == 1:
-			theta = theta[None,:] #(1,D)
-			dim_theta = 1
-		else:
-			dim_theta = 2
-		if theta.shape[1] == 7:
-			theta = theta[:,:4]
-		D = theta.shape[1]		
-
-		if D != 3:
-			q = np.divide(theta[:,0],theta[:,1]) #theta[:,0]/theta[:,1] #mass ratio (general) (N,)
-			m_tot_us = theta[:,0] + theta[:,1]	#total mass in solar masses for the user
-			theta_std = np.column_stack((q,theta[:,2],theta[:,3])) #(N,3)
-
-			to_switch = np.where(theta_std[:,0] < 1.) #holds the indices of the events to swap
-
-					#switching masses (where relevant)
-			theta_std[to_switch,0] = np.power(theta_std[to_switch,0], -1)
-			theta_std[to_switch,1], theta_std[to_switch,2] = theta_std[to_switch,2], theta_std[to_switch,1]	
-			theta = theta_std
-
-		try:
-			K = len(modes)
-		except:
-			K = len(self.modes)
-		if modes is None:
-			modes = self.modes
-
-		shifts = np.zeros((theta.shape[0],K))
-			
 		for mode in self.modes:	
-			if mode.lm() not in modes: #skipping a non-necessary mode
-				continue
-			else: #computing index to save the mode at
-				k = modes.index(mode.lm())
-			#print("got modes {}".format(mode.lm()))
-			shifts[:,k] = mode.get_shifts(theta)
-
-		if dim_theta == 1:
-			return np.squeeze(shifts)
-		if dim_theta == 2:
-			if K == 1:
-				return np.squeeze(shifts)[np.newaxis,...]
-			else:
-				return shifts
-
-
+			if mode.lm() in modes: #check if it is the correct mode
+				return mode
+		return None
 
 class mode_generator(object):
 	"""
@@ -571,7 +513,7 @@ mode_generator
 	No suffixes shall be given to files.
 	The class doesn't implement methods for fitting: it only provides a useful tool to gather them.
 	"""
-	def __init__(self, mode, folder = None, mode_22 = None):
+	def __init__(self, mode, folder = None):
 		"""
 	__init__
 	========
@@ -580,21 +522,17 @@ mode_generator
 			{amp(ph)_exp_# ; amp(ph)_gat_#	; amp(ph)_feat ; amp(ph)_PCA_model; times/frequencies}
 		There can be an arbitrary number of exp and gating functions as long as they match with each other and they are less than PCA components.
 		A compulsory file times must hold a list of grid points at which the generated ML wave is evaluated.
-		An optional shift file holds a MoE regression for the shift of the peak of the mode w.r.t. to the peak of the 22 mode.
 		An optional README file holds more information about the model (in the format of a dictionary).
 		Input:
 			mode		tuple (l,m) of the mode which the model refers to
 			folder		address to the folder in which everything is kept (if None, models must be loaded manually with load())
-			mode_22		istance of mode_generator holding a valid fit of the 22 mode (only if lm != (2,2))
 		"""
 		self.times = None
-		self.mode = mode
+		self.mode = mode #(l,m) tuple
 		self.readme = None	
-		self.shift = None
-		self.mode_22 = None
 
 		if folder is not None:
-			self.load(folder, mode_22, verbose = False)
+			self.load(folder, verbose = False)
 		return
 	
 	def lm(self):
@@ -622,7 +560,7 @@ mode_generator
 		f.close()
 		return feat_list
 
-	def load(self, folder, mode_22, verbose = False):
+	def load(self, folder, verbose = False):
 		"""
 	load
 	====
@@ -631,20 +569,11 @@ mode_generator
 			{amp(ph)_exp_# ; amp(ph)_gat_#	; amp(ph)_feat ; amp(ph)_PCA_model}
 		There can be an arbitrary number of exp and gating functions as long as they match with each other and they are less than PCA components.
 		It loads time vector.
-		If the shift folder is given, it loads the MoE model for the shift fit: folder includes shift_gat, shift_exp, shift_feat.
 		If given, it loads as a dictionary the README file. Dictionary should include entries (all optional): 'description', 'mode', 'train model', 'q range', 's1 range', 's2 range'.
 		Input:
 			folder		address to folder in which everything is kept
-			mode_22		istance of mode_generator holding a valid fit of the 22 mode (only if lm != (2,2))
 			verbose		whether to print output
 		"""
-		if self.lm() == (2,2):
-			self.mode_22 = None
-		elif isinstance(mode_22,type(self)): #checking that mode 22 is valid
-			self.mode_22 = mode_22
-		else:
-			raise RuntimeError("Unable to load the model: no valid model for 22 mode given")
-
 		if not os.path.isdir(folder):
 			raise RuntimeError("Unable to load folder "+folder+": no such directory!")
 
@@ -700,23 +629,6 @@ mode_generator
 			self.times = np.loadtxt(folder+"times")
 		else:
 			raise RuntimeError("Unable to load model: no time vector given!")
-
-			#loading shifts
-		shift_name = folder+"shifts"
-		
-			#loading shifts
-		if self.lm() == (2,2):
-			self.shift = None
-		elif "shifts" in file_list:
-			if not shift_name.endswith('/'):
-				shift_name = shift_name + "/"
-				#reading features
-			self.shift_features = self.__read_features(shift_name+"shift_feat")
-			self.shift = MoE_model(3+len(self.shift_features),1)
-			self.shift.load(shift_name+"shift_exp",shift_name+"shift_gat")
-			verboseprint("    Loaded shift model")
-		else:
-			raise RuntimeError("Unable to find a shift model: unable to load the model")
 
 		if 'README' in file_list:
 			with open(folder+"README") as f:
@@ -828,13 +740,13 @@ mode_generator
 		return self.times
 
 
-	def get_mode(self, theta, t_grid, out_type = "ampph", align22 = True):
+	def get_mode(self, theta, t_grid, out_type = "ampph"):
 		"""
 	get_mode
 	========
 		Generates the mode according to the MLGW model.
 		hlm(t; theta) = A(t) * exp(1j*phi(t)) 
-		If align22 is True, the mode is shifted such that zero of time is where the 22 mode has a peak. Otherwise, the peak of the mode is placed at t=0.
+		The mode is time-shifted such that zero of time is where the 22 mode has a peak.
 		It accepts data in one of the following layout of D features:
 			D = 3	[q, spin1_z, spin2_z]
 			D = 4	[m1, m2, spin1_z, spin2_z]
@@ -846,7 +758,6 @@ mode_generator
 		Input:
 			theta (N,D)			source parameters to make prediction at
 			t_grid (D',)		grid in time to evaluate the wave at (uses np.interp)
-			align22				whether the 0 of the time grid should be placed at the peak of the 22 mode (otherwise is placed at the peak of the current mode)
 			out_type (str)		the output to be returned ('ampph', 'realimag')
 		Ouput:
 			amp, phase (1,D)/(N,D)			desidered amplitude and phase (if it applies)
@@ -873,30 +784,13 @@ mode_generator
 			return
 
 			#generating waves and returning to user
-		res1, res2 = self.__get_mode(theta, t_grid, out_type, align22) #(N,D)
+		res1, res2 = self.__get_mode(theta, t_grid, out_type) #(N,D)
 		if to_reshape:
 			return res1[0,:], res2[0,:] #(D,)
 		return res1, res2 #(N,D)
 
-	def get_shifts(self, theta):
-		"""
-	get_shifts
-	==========
-		Computes the time shifts for a given theta.
-		Input:
-			theta (N,3)		input vector (q,s1,s2)
-		Output:
-			shifts (N,)		shifts
-		"""
-		assert theta.shape[1] == 3
-		if self.shift is not None:
-			theta = np.array(theta)
-			shift_theta = add_extra_features(theta, self.shift_features, log_list = [0])
-			return self.shift.predict(shift_theta)
-		return np.zeros((theta.shape[0],))
-
 	#@do_profile(follow=[])
-	def __get_mode(self, theta, t_grid, out_type, align22):
+	def __get_mode(self, theta, t_grid, out_type):
 		"""
 	__get_mode
 	==========
@@ -906,7 +800,6 @@ mode_generator
 			theta (N,D)			source parameters to make prediction at (D=3 or D=4)
 			t_grid (D',)		a grid in time to evaluate the wave at (uses np.interp)
 			out_type (str)		the output to be returned ('ampph', 'realimag')
-			align22				whether the 0 of the time grid should be placed at the peak of the 22 mode (otherwise is placed at the peak of the current mode)
 		Output:
 			amp, phase (1,D)/(N,D)			desidered amplitude and phase (if it applies)
 			hlm_real, hlm_im (1,D)/(N,D)	desidered h_22 components (if it applies)
@@ -930,16 +823,6 @@ mode_generator
 			theta_std[to_switch,1], theta_std[to_switch,2] = theta_std[to_switch,2], theta_std[to_switch,1]
 
 		amp, ph =  self.get_raw_mode(theta_std) #raw WF (N, N_grid)
-		if self.lm() != (2,2):
-			amp_22, ph_22 = self.mode_22.get_raw_mode(theta_std) #raw 22 mode
-
-			#getting_shifts
-		if align22: #very dangerous... check carefully
-			shifts = self.get_shifts(theta_std) #(N,)
-			shifts_22 = np.zeros((theta_std.shape[0],))
-		else:
-			shifts_22 = self.get_shifts(theta_std) #(N,)
-			shifts = np.zeros((theta_std.shape[0],))
 
 			#doing interpolations
 			############
@@ -951,10 +834,8 @@ mode_generator
 			interp_grid = np.divide(t_grid, m_tot_us[i])
 
 				#putting the wave on the user grid
-			new_amp[i,:] = np.interp(interp_grid, self.times + shifts[i], amp[i,:], left = 0, right = 0) #set to zero outside the domain
-			new_ph[i,:]  = np.interp(interp_grid, self.times + shifts[i], ph[i,:])
-			if self.lm() != (2,2):
-				new_ph[i,:]  = new_ph[i,:] + (self.lm()[1] /2.) * np.interp(interp_grid, self.mode_22.times - shifts_22[i], ph_22[i,:])
+			new_amp[i,:] = np.interp(interp_grid, self.times, amp[i,:], left = 0, right = 0) #set to zero outside the domain
+			new_ph[i,:]  = np.interp(interp_grid, self.times, ph[i,:])
 
 				#warning if the model extrapolates outiside the grid
 			if (interp_grid[0] < self.times[0]):
@@ -963,13 +844,6 @@ mode_generator
 			#amplitude and phase of the mode (maximum of amp at t=0)
 		amp = new_amp
 		ph = (new_ph.T - new_ph[:,0]).T #phase is zero at the beginning of the WF
-				#It should be: phase is zero when h_22 peaks (i.e. at t =0) - but this is not trivial to enforce and I'm not sure it is worth the effort
-
-			#DEBUG
-		#import matplotlib.pyplot as plt
-		#plt.title(str(self.lm()))
-		#plt.plot(interp_grid, amp[0,:])
-		#plt.show()
 
 		if out_type == 'ampph':
 			return amp, ph

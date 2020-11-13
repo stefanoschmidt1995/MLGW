@@ -31,27 +31,28 @@ modes_to_k = lambda modes:[int(x[0]*(x[0]-1)/2 + x[1]-2) for x in modes] # [(l,m
 ###################
 #	computing mismatch
 
-load = False	#whether to load the saved data
-plot = True		#whether to plot the comparison between the WFs
 
-N_waves = 1000 #WFs to generate
-filename = "accuracy/mismatch_hist_TEOBResumS_phdiff.dat"		#file to save the accuracy data to
-filename_theta = "accuracy/theta_hist_TEOBResumS_phdiff.dat"	#file to save the orbital paramters the hist refers to
+load = False		#whether to load the saved data
+plot = False		#whether to plot the comparison between the WFs
+
+N_waves = 1500 #WFs to generate
+filename = "accuracy/mismatch_hist_TEOBResumS.dat"		#file to save the accuracy data to
+filename_theta = "accuracy/theta_hist_TEOBResumS.dat"	#file to save the orbital paramters the hist refers to
 
 f_min = 10	#starting frequency for the WFs
 
-np.random.seed(4904) #optional, setting a random seed for reproducibility
+np.random.seed(4423) #optional, setting a random seed for reproducibility
 
 modes = [(2,2), (2,1), (3,3), (3,2), (3,1), (4,4), (4,3), (4,2), (4,1), (5,5)]	#modes to inspect
 
 if not load:
 
-	F = np.zeros((N_waves,2*len(modes)+1))  #[F_tot, [F_modes], [F_modes_auto]]
+	F = np.zeros((N_waves,len(modes)+1))  #[F_tot, [F_modes], [F_modes_auto]]
 	generator = GW_generator("TD_models/model_0")	#initializing the generator
 
 		#getting random theta
-	m1_range = (20.,50.)
-	m2_range = (20.,50.)
+	m1_range = (10.,100.)
+	m2_range = (10.,100.)
 	s1_range = (-0.8,0.8)
 	s2_range = (-0.8,0.8)
 	d_range = (.5,10.)
@@ -64,10 +65,6 @@ if not load:
 	theta = np.random.uniform(low = low_list, high = high_list, size = (N_waves, 7))
 
 	for i in range(N_waves):
-
-		#if np.maximum(theta[i,0]/theta[i,1],theta[i,1]/theta[i,0])<1.05:
-		#	continue
-
 			#computing test WFs
 		times, h_p_TEOB, h_c_TEOB, hlm, t_m = generate_waveform_TEOBResumS(*theta[i,:-1], f_min = f_min,
 								verbose = False, t_step = 1e-4, modes = modes)
@@ -75,9 +72,10 @@ if not load:
 
 			#computing overall mismatch
 		print("it: {} \n  Theta: {}\n   q: {}".format(i, theta[i,:],np.maximum(theta[i,0]/theta[i,1],theta[i,1]/theta[i,0])))
-#		print("\tq = {}".format(np.maximum(theta[i,0]/theta[i,1],theta[i,1]/theta[i,0])))
+
+		ids = np.where(times < 1e-4)[0] #cutting TEOB WFs beacause they have problems...
 		res = scipy.optimize.minimize_scalar(compute_mismatch, bounds = [0.,2*np.pi],
-						args = (h_TEOB, theta[i,:], times, generator, modes), method = "Brent")	
+						args = (h_TEOB[ids], theta[i,:], times[ids], generator, modes), method = "Brent")	
 		F[i,0] = res['fun']
 		print("\tOverall mismatch: ", F[i,0])
 
@@ -100,56 +98,44 @@ if not load:
 			ax_list[1].legend(loc = 'upper left')
 
 			#computing mismatch for each mode
-		amp_aligned, ph_aligned = generator.get_modes(theta[i,:], times, 
-					out_type = "ampph", modes = modes, align22 = True) #getting single modes from the GW_generator
-		shifts = generator.get_shifts(theta[i,:], modes) #getting shifts
+		amp_mlgw, ph_mlgw = generator.get_modes(theta[i,:], times, 
+					out_type = "ampph", modes = modes) #getting single modes from the GW_generator
 
 		for j in range(len(modes)):
 			k = modes_to_k([modes[j]])
 
-				#time aligning by hand... Really Ugly!!
-			argpeak = locate_peak(hlm[str(k[0])][0])
-			t_lm = times - times[argpeak] #aligned grid
+			#removing the shit of TEOBResumS
+			where_zero = np.where(amp_mlgw[:,j] == 0)[0]
+			amp_TEOB =  hlm[str(k[0])][0]
+			ph_TEOB = hlm[str(k[0])][1]
+			amp_TEOB[where_zero] = 0
+			ph_TEOB[where_zero] = ph_TEOB[where_zero[0]]
 
-			amp, ph = generator.get_modes(theta[i,:], t_lm, out_type = "ampph", modes = modes[j], align22 = False)
-
-			h = amp * np.exp(1j*ph)
-			h_TEOB = hlm[str(k[0])][0] * np.exp(1j * hlm[str(k[0])][1])
-				#mismatch with WFs aligned by hand
-			F_temp, phi_0 = compute_optimal_mismatch(h,h_TEOB)
 				#mismatch with WFs aligned authomatically
-			F_aligned, phi_0 = compute_optimal_mismatch(amp_aligned[:,j] * np.exp(1j*ph_aligned[:,j]), h_TEOB) 
+			F_temp, phi_0 = compute_optimal_mismatch(amp_mlgw[:,j] * np.exp(1j*ph_mlgw[:,j]), amp_TEOB*np.exp(1j*ph_TEOB)) 
 
 				#printing and saving results
-			print("\t",modes[j],F_temp, F_aligned)
-			print("\t shift rec vs true: {} / {} ".format(shifts[j]*(theta[i,0]+theta[i,1]),times[argpeak]))
+			print("\t",modes[j], F_temp)
 			F[i,j+1] = F_temp
-			F[i,j+1+len(modes)] = F_aligned
 
-				#plotting (if it's the case)
 			if plot:
 				l, m = modes[j]
 				lm = str(l)+str(m)
 
 				plt.figure(int(lm+'0'))
 				plt.title("Amp mode {}".format(str(modes[j])))
-				plt.plot(times, amp, label = "mlgw")
-				plt.plot(times, amp_aligned[:,j], label = "mlgw - aligned")	
-				plt.plot(times, hlm[str(k[0])][0], label = "TEOB")
+				plt.plot(times, amp_mlgw[:,j], label = "mlgw")	
+				plt.plot(times, amp_TEOB, label = "TEOB")
 				plt.legend(loc = 'upper left')
 
-				where_amp_0 = np.nonzero(amp)[0]
-			
 				fig, ax_list = plt.subplots(num=int(lm+'1'), nrows = 2, ncols = 1, sharex = True)
 				ax_list[0].set_title("Ph mode {}".format(str(modes[j])))
-				ax_list[0].plot(times, ph, label = "mlgw")
-				ax_list[0].plot(times, ph_aligned[:,j], label = "mlgw - aligned")	
-				ax_list[0].plot(times, hlm[str(k[0])][1], label = "TEOB")
+				ax_list[0].plot(times, ph_mlgw[:,j], label = "mlgw")
+				ax_list[0].plot(times, ph_TEOB, label = "TEOB")
 				ax_list[0].legend(loc = 'upper left')
 
 				ax_list[1].set_title("Ph difference mode {}".format(str(modes[j])))
-				ax_list[1].plot(times[where_amp_0],
-	 ph[where_amp_0] - hlm[str(k[0])][1][where_amp_0]- (ph[where_amp_0[0]] - hlm[str(k[0])][1][where_amp_0[0]]), label = "mlgw - TEOB")
+				ax_list[1].plot(times,ph_mlgw[:,j] - ph_TEOB- (ph_mlgw[:,0] - ph_TEOB[0]), label = "mlgw - TEOB")
 
 		plt.show()
 
@@ -204,18 +190,6 @@ for i in range(len(modes)):
 
 
 plt.savefig("accuracy/mismatch_HMs.pdf", format = 'pdf')
-
-	#auto-aligned mismatch
-fig, ax_list = plt.subplots(figsize = (6.4,1.5*6.4),nrows = len(modes), ncols = 1, sharex = True)
-plt.subplots_adjust(hspace = .8)
-plt.suptitle("HMs mismatch - auto aligned", fontsize = 15)
-ax_list[-1].set_xlabel(r"$\log \; \bar{\mathcal{F}}$")
-
-for i in range(len(modes)):
-	ax_list[i].hist(np.log10(F[:,i+1+len(modes)]), bins = 70, color = 'k', density = True)
-	ax_list[i].set_title("Mode {}".format(modes[i]), fontsize = 12)
-
-plt.savefig("accuracy/mismatch_HMs_auto.pdf", format = 'pdf')
 
 	#contour plots
 fig, ax_list = plt.subplots(figsize = (1.5*6.4,1.5*6.4), nrows = 4, ncols = 3)

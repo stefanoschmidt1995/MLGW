@@ -36,6 +36,8 @@ ax[0].set_ylim([-10**(scale_0),10**(scale_0)])
 ax[1].set_ylim([-10**(scale_0),10**(scale_0)])
 ax[0].set_xlim([-10**(t_0),0.01])
 ax[1].set_xlim([-10**(t_0),0.01])
+ax[0].set_ylabel(r"$h_+$")
+ax[1].set_ylabel(r"$h_{\times}$")
 
 	#setting the interactive sliders
 axcolor = 'lightgoldenrodyellow'
@@ -53,13 +55,13 @@ s_s2 = Slider(ax_s2, r'$s_2$', -0.8, 0.8, valinit=s2_0, valstep = 0.01)
 s_dist = Slider(ax_dist, r'$d_L/Mpc$', 0.1, 10, valinit=dist_0, valstep=0.01)
 s_iota = Slider(ax_iota, r'$\iota$', 0., np.pi, valinit=iota_0, valstep = 0.01)
 
-ax_scale = plt.axes([0.058, .47, 0.03, 0.2], facecolor=axcolor)
+ax_scale = plt.axes([0.058, .37, 0.03, 0.1], facecolor=axcolor)
 s_scale = Slider(ax_scale, 'Scale', -20,-17, valinit= scale_0, valstep = 0.01, orientation = "vertical")
 
-ax_time = plt.axes([0.058, .15, 0.03, 0.2], facecolor=axcolor)
+ax_time = plt.axes([0.058, .15, 0.03, 0.1], facecolor=axcolor)
 s_time = Slider(ax_time, r'$\log(t_{min}/s)$', -1, 1.3, valinit= t_0, valstep = 0.01, orientation = "vertical")
 
-ax_buttons = plt.axes([0.025, 0.75, 0.1, 0.15], facecolor=axcolor)
+ax_buttons = plt.axes([0.025, 0.55, 0.1, 0.35], facecolor=axcolor)
 buttons = CheckButtons(ax_buttons, [mode for mode in all_modes], actives = [True for i in range(len(all_modes))])
 
 def update(val):
@@ -70,7 +72,6 @@ def update(val):
 	s2 = s_s2.val
 	dist = s_dist.val
 	iota = s_iota.val
-	print([m1, m2, s1, s2, dist, iota, 0.], t[0])
 	h_p, h_c = gen.get_WF([m1, m2, s1, s2, dist, iota, 0.], t, modes = modes)
 	l_p.set_ydata(h_p)
 	l_c.set_ydata(h_c)

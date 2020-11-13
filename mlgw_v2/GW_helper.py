@@ -234,6 +234,8 @@ create_dataset_TD_TEOBResumS
 		#creating time_grid
 	if modes == [(2,2)]:
 		t_end = 5.2e-4 #estimated maximum time for ringdown: WF will be killed after that time
+	elif modes == [(2,1)] or modes == [(3,3)]:
+		t_end = 1e-6
 	else:
 		t_end = 3e-5 #only for HMs. You should find a better way to set this number...
 	time_grid = np.linspace(-np.power(np.abs(t_coal), alpha), np.power(t_end, alpha), N_grid)
@@ -329,21 +331,14 @@ create_dataset_TD_TEOBResumS
 		temp_amp = hlm[str(k_modes[0])][0]
 		temp_ph = hlm[str(k_modes[0])][1]
 
-		if modes != [(2,2)]:
-			ph_22 = hlm['1'][1] #phase of the 22 mode
-			temp_ph = temp_ph - float(modes[0][1]/2.) *ph_22 #fitting the difference between lm phase and 22 phase
-
-		argpeak = locate_peak(temp_amp)
+		argpeak = locate_peak(hlm['1'][0]) #aligned at the peak of the 22
 		t_peak = time_full[argpeak]
 		time_full = (time_full - t_peak)/(m1+m2) #grid is scaled to standard grid
 			#setting waves to the chosen std grid
 		temp_amp = np.interp(time_grid, time_full, temp_amp)
 		temp_ph = np.interp(time_grid, time_full, temp_ph)
 
-			#here you need to decide what is better
 		temp_ph = temp_ph - temp_ph[0] #all phases are shifted by a constant to make sure every wave has 0 phase at beginning of grid
-		#id0 = np.where(time_grid == 0)[0]
-		#temp_ph = temp_ph - temp_ph[id0] #all phases are shifted by a constant to make every wave start with 0 phase at t=0 (i.e. at maximum amplitude)
 
 		if filename is None:
 			amp_dataset[i,:] = temp_amp  #putting waveform in the dataset to return
@@ -360,158 +355,6 @@ create_dataset_TD_TEOBResumS
 	else:
 		filebuff.close()
 		return None
-
-
-def create_shift_dataset(N_data, modes, filename = None, q_range = (1.,5.), m2_range = None, s1_range = (-0.8,0.8), s2_range = (-0.8,0.8), path_TEOBResumS = None):
-	"""
-create_shift_dataset
-====================
-	Create a dataset which relates the peak position of a given higher mode "mode" w.r.t. the peak position of the 22 mode. It uses (so far) only the TEOBResumS WF model. 
-	Input:
-		N_data				size of dataset
-		modes				mode(s) to be evaluated ( (list of) tuple (l,m), e.g. (3,1)/(2,0)...)
-		filename			name of the file to save dataset in (If is None, nothing is saved on a file)
-		q_range				tuple with range for random q values. if single value, q is kept fixed at that value
-		m2_range			tuple with range for random m2 values. if single value, m2 is kept fixed at that value. If None, m2 will be chosen s.t. m_tot = m1+m2 = 20. M_sun
-		spin_mag_max_1		tuple with range for random spin #1 values. if single value, s1 is kept fixed at that value
-		spin_mag_max_2		tuple with range for random spin #1 values. if single value, s2 is kept fixed at that value
-		path_TEOBResumS		path to a local installation of TEOBResumS with routine 'EOBRun_module' (if given, it overwrites the aprroximant entry)
-	Output:
-		if filename is given
-			None
-		if filename is not given
-			theta_vector (N_data,3)				vector holding ordered set of parameters used to generate the dataset
-			shift_dataset (N_data,N_modes)		dataset with shifts
-	"""
-		#import TEOBResumS
-	try:
-		import sys
-		sys.path.append(path_TEOBResumS) #path to local installation of TEOBResumS
-		import EOBRun_module
-	except:
-		raise RuntimeError("No valid imput source for module 'EOBRun_module' for TEOBResumS. Unable to continue.")
-
-	#do some checks on modes... better!!!
-	modes_to_k = lambda modes:[int(x[0]*(x[0]-1)/2 + x[1]-2) for x in modes] # [(l,m)] -> [k]
-	k_modes = modes_to_k(modes)
-	k_modes.append(1) #adding 22 mode
-	time_shifts = np.zeros((len(modes),)) #to save the shifts
-
-	if isinstance(m2_range, tuple):
-		D_theta = 4 #m2 must be included as a feature
-	else:
-		D_theta = 3
-
-	if filename is not None: #doing header if file is empty - nothing otherwise
-		if not os.path.isfile(filename): #file doesn't exist: must be created with proper header
-			filebuff = open(filename,'w')
-			print("New file ", filename, " created")
-			filebuff.write("# row: theta ("+str(D_theta)+") | shifts ("+str(len(modes))+") for modes "+str(modes)+"\n"+"# | q_range = "+str(q_range)+" | m2_range = "+str(m2_range)+" | s1_range = "+str(s1_range)+" | s2_range = "+str(s2_range)+"\n")
-		else:
-			filebuff = open(filename,'a')
-
-	if filename is None:
-		shift_dataset = np.zeros((N_data,len(modes))) #allocating storage for returning data
-		theta_vector = np.zeros((N_data,D_theta))
-
-	for i in range(N_data): #loop on data to be created
-		if i%100 == 0 and i != 0:
-		#if i%1 == 0 and i != 0: #debug
-			print("Generated WF ", i)
-
-			#setting value for data
-		if isinstance(m2_range, tuple):
-			m2 = np.random.uniform(m2_range[0],m2_range[1])
-		elif m2_range is not None:
-			m2 = float(m2_range)
-		if isinstance(q_range, tuple):
-			q = np.random.uniform(q_range[0],q_range[1])
-		else:
-			q = float(q_range)
-		if isinstance(s1_range, tuple):
-			spin1z = np.random.uniform(s1_range[0],s1_range[1])
-		else:
-			spin1z = float(s1_range)
-		if isinstance(s2_range, tuple):
-			spin2z = np.random.uniform(s2_range[0],s2_range[1])
-		else:
-			spin2z = float(s2_range)
-
-		if m2_range is None:
-			m2 = 20. / (1+q)
-			m1 = q * m2
-		else:
-			m1 = q* m2
-
-			#computing f_min
-		t_coal_freq = .05
-		f_min = .9* ((151*(t_coal_freq)**(-3./8.) * (((1+q)**2)/q)**(3./8.))/(m1+m2))
-		 #in () there is the right scaling formula for frequency in order to get always the right reduced time
-		 #this should be multiplied by a prefactor (~1) for dealing with some small variation due to spins
-
-		#generating WFs for HMs and 22
-		pars = {
-				'M'                  : m1+m2,
-				'q'                  : m1/m2,
-				'Lambda1'            : 0.,
-				'Lambda2'            : 0.,     
-				'chi1'               : spin1z,
-				'chi2'               : spin2z,
-				'domain'             : 0,      # TD
-				'arg_out'            : 1,      # Output hlm/hflm. Default = 0
-				'use_mode_lm'        : k_modes,      # List of modes to use/output through EOBRunPy
-				'srate_interp'       : 10*4096,  # srate at which to interpolate. Default = 4096.
-				'use_geometric_units': 0,      # Output quantities in geometric units. Default = 1
-				'initial_frequency'  : f_min,   # in Hz if use_geometric_units = 0, else in geometric units
-				'interp_uniform_grid': 2,      # Interpolate mode by mode on a uniform grid. Default = 0 (no interpolation)
-				'distance': 1.,
-				'inclination':0.,
-			}
-		time_full, h_p, h_c, hlm = EOBRun_module.EOBRunPy(pars)
-		#print(hlm.keys(), k_modes)
-		t_22 = time_full[np.argmax(hlm['1'][0])] #time at which peak of 22 mode happens
-		for j in range(len(modes)):
-			argpeak = locate_peak(hlm[str(k_modes[j])][0])
-			t_lm = time_full[argpeak]
-			#print(m1+m2)
-			time_shifts[j] = (t_lm-t_22)/(m1+m2) #shifts are in reduced mass
-
-		"""
-		import matplotlib.pyplot as plt
-		#plt.plot(time_full,hlm['1'][0])
-		for j in range(len(modes)):
-			plt.figure()	
-			plt.title(str(modes[j]))
-			plt.plot(time_full,hlm[str(k_modes[j])][0])
-			#plt.axvline(t_22, c = 'r')
-			plt.axvline(t_lm, c = 'g')
-			
-		plt.show()
-		#"""
-
-
-		#saving to file
-		if isinstance(m2_range, tuple):
-			temp_theta = [m1, m2, spin1z, spin2z]		
-		else:
-			temp_theta = [m1/m2, spin1z, spin2z]
-
-		if filename is None:
-			shift_dataset[i,:] = time_shifts  #putting waveform in the dataset to return
-			theta_vector[i,:] = temp_theta
-
-		if filename is not None: #saving to file
-			to_save = np.concatenate((temp_theta, time_shifts))
-			to_save = np.reshape(to_save, (1,len(to_save)))
-			np.savetxt(filebuff, to_save)
-			
-	if filename is None:
-		return theta_vector, shift_dataset
-	else:
-		filebuff.close()
-		return None
-
-
 
 
 def generate_waveform(m1,m2, s1=0.,s2 = 0.,d=1., iota = 0.,phi_0=0., t_coal = 0.4, t_step = 5e-5, f_min = None, t_min = None, verbose = False, approx = "SEOBNRv2_opt"):
@@ -665,7 +508,7 @@ generate_waveform
 	return times[arg:], h_p[arg:], h_c[arg:], hlm, t_m
 
 
-def locate_peak(amp, start = 0.1):
+def locate_peak(amp, start = 0.3):
 	"""
 	Given a time grid and an amplitude of the mode, it returns the peak of the amplitude.
 	Input:
@@ -678,9 +521,6 @@ def locate_peak(amp, start = 0.1):
 	id_start = int(len(amp)*start)
 	extrema = scipy.signal.argrelextrema(np.abs(amp[id_start:]), np.greater)
 	argpeak = extrema[0][0]+id_start
-	#plt.figure()
-	#plt.plot(np.linspace(0,1,len(amp)),amp, c= 'purple' )
-	#plt.axvline(np.linspace(0,1,len(amp))[argpeak], c = 'red')
 	return argpeak
 
 

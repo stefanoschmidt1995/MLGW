@@ -1,5 +1,5 @@
 ###################
-#	Basic routine to display basic usage of the model
+#	Simple routine to display basic usage of the model
 ###################
 
 import numpy as np
@@ -28,15 +28,13 @@ times = np.linspace(-8,0.01, 100000) #time grid in seconds: peak of 22 mode at t
 h_p, h_c = gen.get_WF(theta, times, modes = modes_to_use) #returns plus and cross polarization of the wave -- shape = (D,)
 
 amp_lm, ph_lm = gen.get_modes(theta, times, modes = modes_to_use) 	#returns amplitude and phase of the K modes -- shape = (D,K)
-																	#each mode is time-aligned s.t. its peak happens at t=0
+																	#each mode is time-aligned s.t. the peak of 22 happens at t=0
 
 	#WFs can be also generated in parellel: many orbital paramters can be provided with a single call
 	#The generator accepts also just masses and spins (in this case d_L = 1 Mpc and iota = phi = 0)
 theta_many = np.array([[20,10,0.5,-0.3],[34,19,-0.2,0.6],[10,49,0.7,0.1]]) #shape = (N,4)
 h_p_many, h_c_many = gen.get_WF(theta_many, times, modes = modes_to_use) #shape = (N,D)
-amp_lm_many, ph_lm_many = gen.get_modes(theta_many, times, modes = modes_to_use, #shape = (N,D,K)
-				align22 = True) #the align22 option forces the generator to align the wave s.t. the peak of the 22 mode happens at t=0
-								#if align22=False (default), the generator aligns the wave s.t. the peak of each mode happens at t=0
+amp_lm_many, ph_lm_many = gen.get_modes(theta_many, times, modes = modes_to_use) #shape = (N,D,K)
 
 	#the call option is also available, with a sligthly different call signature:
 h_p_call, h_c_call = gen(times, m1 = 20, m2 = 10, spin1_x = 0., spin1_y=0., spin1_z=0.5, spin2_x=0., spin2_y=0., spin2_z=-0.3, D_L=1., i = .34, phi_0 = 0.88, long_asc_nodes = 0., eccentricity=0., mean_per_ano=0.)	#(D,)
