@@ -7,11 +7,11 @@ import matplotlib.pyplot as plt
 from matplotlib.widgets import Slider, Button, CheckButtons
 
 try:
-	import GW_generator
+	from GW_generator import *
 except:
-	import mlgw.GW_generator
+	from mlgw.GW_generator import *
 
-gen = GW_generator.GW_generator() #loading the generator
+gen = GW_generator() #loading the generator
 
 	#initializing the plot
 fig, ax = plt.subplots(figsize = (6.4*1.3,4.8), nrows = 2, ncols = 1)

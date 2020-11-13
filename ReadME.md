@@ -4,7 +4,8 @@ The model is released as a Python package ``mlgw`` in the PyPI repository: <http
 You can install the package with
 ``pip install mlgw``
 The model outputs the waveform when given the two BHs masses and spins. It implements also the dependence of the waveform on the spherical harmonics.
-Version 1 outputs only the 22 dominant mode. Version 2 is suited to deal with an arbitrary numbers of modes.
+Version 1 outputs only the 22 dominant mode. The model is presented in this [paper]<https://arxiv.org/abs/2011.01958> and it is used to analyse actual GW data.
+Version 2 is suited to deal with an arbitrary numbers of modes, while at the same time it keeps full compatibility with the previous version interface.
 To generate a WF:
 ```Python
 import mlgw.GW_generator as generator
@@ -23,7 +24,7 @@ For version 2 a number of tuturials are available:
 - [play_WF](https://raw.githubusercontent.com/stefanoschmidt1995/MLGW/master/mlgw_v2/play_WF.py): interactive WF generator, to display WF dependence on the relevant parameters.
 
 A number of prefitted models are realesed toghether with the package. However, the interested user can build their own model. A model can be built in two steps following the tutorials:
-1. [generating dataset](https://raw.githubusercontent.com/stefanoschmidt1995/MLGW/master/mlgw_v2/generate_dataset.py): a dataset of WFs is built, using TEOBResumS model. User should build a dataset for each mode to be included. Another dataset, called "shift" dataset cares about the correct alignment of the different modes.
+1. [generating dataset](https://raw.githubusercontent.com/stefanoschmidt1995/MLGW/master/mlgw_v2/generate_dataset.py): a dataset of WFs is built, using TEOBResumS model. User should build a dataset for each mode to be included.
 2. [fitting the model](https://raw.githubusercontent.com/stefanoschmidt1995/MLGW/master/mlgw_v2/do_the_fit.py): a PCA model should be fitted on the WFs dataset and a MoE model should learn the regression from the orbital parameter to the reduced order representation of the WF. Module ``fit_model`` takes care of that. A WF model must be saved in a single folder, which must contain a subfolder for each mode included.
 
 ### Content of the repository

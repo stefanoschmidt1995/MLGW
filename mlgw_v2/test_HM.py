@@ -47,8 +47,8 @@ modes = [(2,2), (2,1), (3,3), (3,2), (3,1), (4,4), (4,3), (4,2), (4,1), (5,5)]	#
 
 if not load:
 
-	F = np.zeros((N_waves,len(modes)+1))  #[F_tot, [F_modes], [F_modes_auto]]
-	generator = GW_generator("TD_models/model_0")	#initializing the generator
+	F = np.zeros((N_waves,len(modes)+1))  #[F_tot, [F_modes]
+	generator = GW_generator(0)	#initializing the generator with standard model
 
 		#getting random theta
 	m1_range = (10.,100.)

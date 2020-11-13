@@ -357,7 +357,7 @@ GW_generator
 
 		for mode in self.modes:	
 			if modes is not None:
-				if mode.lm() not in modes: #skipping a non-necessary mode
+				if mode.lm() not in modes: #skipping a non-necessary or non-existing mode
 					continue
 			#print("got modes {}".format(mode.lm()))
 			amp_lm, ph_lm = mode.get_mode(theta[:,:4], t_grid, out_type = "ampph")

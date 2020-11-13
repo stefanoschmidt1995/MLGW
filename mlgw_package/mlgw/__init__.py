@@ -8,8 +8,10 @@ The packacke has 4 modules:
 	EM_MoE.py
 		It holds a Mixture of Experts model as well as a softmax regression model required for it.
 	ML_routines.py
-		It holds some useful ML routines such as PCA model (required by the MLGW_generator) and a routine for enlarging a dataset dimensionality.
+		It holds some useful ML routines such as PCA model (required by the MLGW_generator) and a routine for performing basis function expansion.
 	GW_helper.py
-		It holds some routines useful for generating a GW dataset and a computing mismatch between waveforms. This is not strictly required by the model but it is useful for training the model. It is used by shared code for fitting and created dataset.
+		It holds some routines useful for generating a GW dataset and a computing mismatch between waveforms. This is not strictly required by the model but it is useful for training the model. Used by module fit_model.py
+	fit_model.py
+		It holds some routines to effectively fit the model.
 		
 """

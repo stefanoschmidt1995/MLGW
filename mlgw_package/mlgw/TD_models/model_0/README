@@ -1,7 +1,9 @@
 {
 "train model": "TEOBResumS",
-"description": "Large parameter range and high accuracy (no NQC)",
-"q range": "[1,20]",
-"s1 range": "[-0.8, 0.95]",
-"s2 range": "[-0.8, 0.95]"
+"description": "Standard model: many modes",
+"q range": "[1,10]",
+"s1 range": "[-0.8, 0.8]",
+"s2 range": "[-0.8, 0.8]",
+"t min": "2 s/M_sun",
+"modes": "22, 21, 31, 32, 33,41,42,43, 44, 55"
 }
