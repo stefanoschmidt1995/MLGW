@@ -32,7 +32,7 @@ modes_to_k = lambda modes:[int(x[0]*(x[0]-1)/2 + x[1]-2) for x in modes] # [(l,m
 #	computing mismatch
 
 
-load = False		#whether to load the saved data
+load = True		#whether to load the saved data
 plot = False		#whether to plot the comparison between the WFs
 
 N_waves = 1500 #WFs to generate
