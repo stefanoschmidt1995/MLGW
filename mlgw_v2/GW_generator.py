@@ -248,10 +248,10 @@ GW_generator
 			h_plus, h_cross (1,D)/(N,D)		desidered polarizations
 		"""
 		theta = np.column_stack((m1, m2, spin1_x, spin1_y, spin1_z, spin2_x, spin2_y, spin2_z, D_L, i, phi_0, long_asc_nodes, eccentricity, mean_per_ano)) #(N,D)
-		return self.get_WF(theta, t_grid= t_grid, modes = None)
+		return self.get_WF(theta, t_grid= t_grid, modes = (2,2))
 
 
-	def get_WF(self, theta, t_grid, modes = None):
+	def get_WF(self, theta, t_grid, modes = (2,2) ):
 		"""
 	get_WF
 	======
@@ -333,7 +333,7 @@ GW_generator
 		"""
 	__get_WF
 	========
-		Generates the waves in time domain, building it as a sum of modes weighted by spherical harminics. Called by get_WF.
+		Generates the waves in time domain, building it as a sum of modes weighted by spherical harmonics. Called by get_WF.
 		Accepts only input features as [q,s1,s2] or [m1, m2, spin1_z , spin2_z, D_L, inclination, phi_0].
 		Input:
 			theta (N,D)		source parameters to make prediction at (D=7)
@@ -348,9 +348,7 @@ GW_generator
 			#computing amplitude prefactor
 		prefactor = 4.7864188273360336e-20 # G/c^2*(M_sun/Mpc)
 		m_tot_us = theta[:,0] + theta[:,1]	#total mass in solar masses for the user  (N,)
-		nu_us = theta[:,0]/ theta[:,1] #q
-		nu_us = np.divide(nu_us, np.square(1+nu_us)) #nu = q/(1+q)**2
-		amp_prefactor = prefactor*nu_us*m_tot_us/theta[:,4] # G/c^2 (nu * M / d_L) apparently nu is there??? Whyyyy?
+		amp_prefactor = prefactor*m_tot_us/theta[:,4] # G/c^2 (M / d_L) 
 
 		h_plus = np.zeros((theta.shape[0],t_grid.shape[0]))
 		h_cross = np.zeros((theta.shape[0],t_grid.shape[0]))
@@ -369,7 +367,7 @@ GW_generator
 
 		return h_plus, h_cross
 
-	def get_modes(self, theta, t_grid, modes = None, out_type = "ampph"):
+	def get_modes(self, theta, t_grid, modes = (2,2), out_type = "ampph"):
 		"""
 	get_modes
 	=========
@@ -445,7 +443,7 @@ GW_generator
 		d_lm = self.__get_Wigner_d_function((l,m),iota) #(N,)
 		d_lmm = self.__get_Wigner_d_function((l,-m),iota) #(N,)
 		const = np.sqrt( (2.*l+1.)/(4.*np.pi) )
-		parity = np.power(-1,l)
+		parity = np.power(-1,l) #are you sure of that? apparently yes...
 
 		h_lm_real = np.multiply(np.multiply(amp.T,np.cos(ph.T+m*phi_0)), const*(d_lm + parity * d_lmm) ).T #(N,D)
 		h_lm_imag = np.multiply(np.multiply(amp.T,np.sin(ph.T+m*phi_0)), const*(d_lm - parity * d_lmm) ).T #(N,D)
@@ -928,8 +926,8 @@ mode_generator
 		"""
 	get_raw_grads
 	=============
-		Computes the gradients (at points theta) of the amplitude and phase w.r.t. (q,s1,s2).
-		Gradients are functions dependent on time and are evaluated on the internal reduced grid (GW_generator.get_time_grid()).
+		Computes the gradients of the amplitude and phase w.r.t. (q,s1,s2).
+		Gradients are functions dependent on time and are evaluated on the internal reduced grid (mode_generator.get_time_grid()).
 		Input:
 			theta (N,3)		Values of orbital parameters to compute the gradient at
 		Output:
@@ -960,10 +958,10 @@ mode_generator
 
 		return grad_amp, grad_ph
 
-	def get_grads(self, theta, t_grid):
+	def get_mode_grads(self, theta, t_grid, out_type ="realimag"):
 		"""
-	__get_grads_theta
-	=================
+	get_mode_grads
+	==============
 		Returns the gradient of the mode
 			hlm = A exp(1j*phi) = A cos(phi) + i* A sin(phi)
 		with respect to theta = (M, q, s1, s2).
@@ -972,6 +970,7 @@ mode_generator
 		Input:
 			theta (N,4)		orbital parameters with format (m1, m2, s1, s2)
 			t_grid (D,)		time grid to evaluate the gradients at
+			out_type		whether to compute gradients of the real and imaginary part ('realimag') or of amplitude and phase ('ampph')
 		Output:
 			grad_Re(h) (N,D,4)		Gradients of the real part of the waveform
 			grad_Im(h) (N,D,4)		Gradients of the imaginary part of the waveform
@@ -991,22 +990,21 @@ mode_generator
 
 		#dealing with gradients w.r.t. (q,s1,s2)
 		grad_q_amp, grad_q_ph = self.get_raw_grads(theta_std) #(N,D_std,3)
-		grad_q_amp = 1e-21*grad_q_amp
-		m_tot_std = 20.
+		grad_q_amp = grad_q_amp
 			#interpolating gradients on the user grid
 		for i in range(theta_std.shape[0]):
 			for j in range(1,4):
 				#print(t_grid.shape,self.times.shape)
-				grad_amp[i,:,j] = np.interp(t_grid, self.times * m_tot_us[i], grad_q_amp[i,:,j-1]* m_tot_us[i]/m_tot_std ,left = 0, right = 0) #set to zero outside the domain #(D,)
+				grad_amp[i,:,j] = np.interp(t_grid, self.times * m_tot_us[i], grad_q_amp[i,:,j-1],left = 0, right = 0) #set to zero outside the domain #(D,)
 				grad_ph[i,:,j]  = np.interp(t_grid, self.times * m_tot_us[i], grad_q_ph[i,:,j-1]) #(D,)
 
 		#dealing with gradients w.r.t. M
-		amp, ph = self.get_mode(theta, t_grid, out_type = "ampph", red_grid = False) #true wave evaluated at t_grid #(N,D)
+		amp, ph = self.get_mode(theta, t_grid, out_type = "ampph") #true wave evaluated at t_grid #(N,D)
 		for i in range(theta_std.shape[0]):
 			grad_M_amp = np.gradient(amp[i,:], t_grid) #(D,)
 			grad_M_ph = np.gradient(ph[i,:], t_grid) #(D,)
-			grad_amp[i,:,0] = amp[i,:]/m_tot_us[i] - np.multiply(t_grid/m_tot_us[i], grad_M_amp) #(D,)
-			grad_ph[i,:,0]  = -np.multiply(t_grid/m_tot_us[i], grad_M_ph) #(D,)
+			grad_amp[i,:,0] = - np.multiply(t_grid/m_tot_us[i]**2, grad_M_amp) #(D,)
+			grad_ph[i,:,0]  = -np.multiply(t_grid/m_tot_us[i]**2, grad_M_ph) #(D,)
 
 		grad_ph = np.subtract(grad_ph,grad_ph[:,0,None,:]) #unclear... but apparently compulsory
 			#check when grad is zero and keeping it
@@ -1014,17 +1012,24 @@ mode_generator
 		zero = np.where(diff== 0)
 		grad_ph[zero[0],zero[1],:] = 0 #takes care of the flat part after ringdown (gradient there shall be zero!!)
 
-		#computing gradients of the real and imaginary part
-		ph = np.subtract(ph.T,ph[:,0]).T
-		grad_Re = np.multiply(grad_amp, np.cos(ph)[:,:,None]) - np.multiply(np.multiply(grad_ph, np.sin(ph)[:,:,None]), amp[:,:,None]) #(N,D,4)
-		grad_Im = np.multiply(grad_amp, np.sin(ph)[:,:,None]) + np.multiply(np.multiply(grad_ph, np.cos(ph)[:,:,None]), amp[:,:,None])#(N,D,4)
 
+		if out_type == "ampph":
 			#switching back spins
 			#sure of it???
-		grad_Re[to_switch,:,2], grad_Re[to_switch,:,3] = grad_Re[to_switch,:,3], grad_Re[to_switch,:,2]
-		grad_Im[to_switch,:,2], grad_Im[to_switch,:,3] = grad_Im[to_switch,:,3], grad_Im[to_switch,:,2]
+			grad_amp[to_switch,:,2], grad_amp[to_switch,:,3] = grad_amp[to_switch,:,3], grad_amp[to_switch,:,2]
+			grad_ph[to_switch,:,2], grad_ph[to_switch,:,3] = grad_ph[to_switch,:,3], grad_ph[to_switch,:,2]
+			return grad_amp, grad_ph
+		if out_type == "realimag":
+			#computing gradients of the real and imaginary part
+			ph = np.subtract(ph.T,ph[:,0]).T
+			grad_Re = np.multiply(grad_amp, np.cos(ph)[:,:,None]) - np.multiply(np.multiply(grad_ph, np.sin(ph)[:,:,None]), amp[:,:,None]) #(N,D,4)
+			grad_Im = np.multiply(grad_amp, np.sin(ph)[:,:,None]) + np.multiply(np.multiply(grad_ph, np.cos(ph)[:,:,None]), amp[:,:,None])#(N,D,4)
 
-		return grad_Re, grad_Im
+			grad_Re[to_switch,:,2], grad_Re[to_switch,:,3] = grad_Re[to_switch,:,3], grad_Re[to_switch,:,2]
+			grad_Im[to_switch,:,2], grad_Im[to_switch,:,3] = grad_Im[to_switch,:,3], grad_Im[to_switch,:,2]
+			return grad_Re, grad_Im
+
+		return None, None
 
 
 

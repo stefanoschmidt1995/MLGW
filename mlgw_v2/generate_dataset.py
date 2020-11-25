@@ -13,9 +13,9 @@ try:
 	import sys
 	lm = sys.argv[1]
 except:
-	lm = "21" 	#mode to fit
+	lm = "22" 	#mode to fit
 
-if False:
+if True:
 	#With create_dataset_TD_TEOBResumS a dataset of WF is created. The user must provide
 	#	-the number of WFs to be generated
 	#	-the number of grid points
@@ -28,10 +28,11 @@ if False:
 	#	-path to a local installation of TEOBResumS: it must have the module 'EOBRun_module'
 	#The dataset is saved to a file, one file for each mode. The WF is time aligned s.t. the peak of the 22 mode happens at t = 0
 
-	create_dataset_TD_TEOBResumS(5500, N_grid = 2000, mode = (int(lm[0]),int(lm[1])), filename = "TD_datasets/{}_dataset.dat".format(lm),
-                t_coal = 2., q_range = (1., 10.), m2_range = None, s1_range = (-0.8,0.8), s2_range = (-0.8,0.8),
+	create_dataset_TD(26, N_grid = 2500, mode = (int(lm[0]),int(lm[1])), filename = "TD_datasets/{}_dataset.dat".format(lm),
+                t_coal = 4., q_range = (1., 20.), m2_range = None, s1_range = (-0.8,0.8), s2_range = (-0.8,0.8),
 #      t_coal = 2., q_range = (1.,10.), m2_range = None, s1_range = (-1e-5,1e-5), s2_range = (-1e-5,1e-5), #for a nonspinning dataset
                 t_step = 1e-4, alpha = 0.5,
+				#approximant = "SEOBNRv2_opt"
 				path_TEOBResumS = '/home/stefano/Desktop/Stefano/scuola/uni/tesi_magistrale/code/TEOBResumS/Python'
 				)
 
@@ -40,7 +41,7 @@ quit() #comment here to plot the dataset
 ############ Plotting dataset
 import matplotlib.pyplot as plt
 
-theta_vector, amp_dataset, ph_dataset, x_grid = load_dataset("TD_datasets/55_dataset.dat", shuffle=False, N_data = None) #loading the dataset
+theta_vector, amp_dataset, ph_dataset, x_grid = load_dataset("TD_datasets/22_dataset_try.dat", shuffle=False, N_data = None) #loading the dataset
 
 N_plots = 50 #number of WFs to be plotted
 

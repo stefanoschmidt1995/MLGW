@@ -131,7 +131,7 @@ fig = plt.figure(figsize=(6,5))
 left, bottom, width, height = 0.1, 0.1, 0.8, 0.8
 ax = fig.add_axes([left, bottom, width, height]) 
 
-cp = plt.contourf(X, Y, Z) #if you prefer a countor plot
+cp = plt.contourf(X, Y, Z, cmap = "coolwarm") #if you prefer a countor plot
 #cp = plt.pcolormesh(X, Y, Z) #if you prefer a colormesh
 plt.colorbar(cp)
 if minimize:

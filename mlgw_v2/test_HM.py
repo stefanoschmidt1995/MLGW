@@ -32,16 +32,16 @@ modes_to_k = lambda modes:[int(x[0]*(x[0]-1)/2 + x[1]-2) for x in modes] # [(l,m
 #	computing mismatch
 
 
-load = True		#whether to load the saved data
+load = False		#whether to load the saved data
 plot = False		#whether to plot the comparison between the WFs
 
 N_waves = 1500 #WFs to generate
-filename = "accuracy/mismatch_hist_TEOBResumS.dat"		#file to save the accuracy data to
-filename_theta = "accuracy/theta_hist_TEOBResumS.dat"	#file to save the orbital paramters the hist refers to
+filename = "accuracy/mismatch_hist_TEOBResumS_new.dat"		#file to save the accuracy data to
+filename_theta = "accuracy/theta_hist_TEOBResumS_new.dat"	#file to save the orbital paramters the hist refers to
 
 f_min = 10	#starting frequency for the WFs
 
-np.random.seed(4423) #optional, setting a random seed for reproducibility
+np.random.seed(2423) #optional, setting a random seed for reproducibility
 
 modes = [(2,2), (2,1), (3,3), (3,2), (3,1), (4,4), (4,3), (4,2), (4,1), (5,5)]	#modes to inspect
 
@@ -71,7 +71,9 @@ if not load:
 		h_TEOB = h_p_TEOB + 1j*h_c_TEOB
 
 			#computing overall mismatch
-		print("it: {} \n  Theta: {}\n   q: {}".format(i, theta[i,:],np.maximum(theta[i,0]/theta[i,1],theta[i,1]/theta[i,0])))
+		q = np.maximum(theta[i,0]/theta[i,1],theta[i,1]/theta[i,0])
+		nu = np.divide(q, np.square(1+q))
+		print("it: {} \n  Theta: {}\n   q: {}".format(i, theta[i,:],q))
 
 		ids = np.where(times < 1e-4)[0] #cutting TEOB WFs beacause they have problems...
 		res = scipy.optimize.minimize_scalar(compute_mismatch, bounds = [0.,2*np.pi],
@@ -106,7 +108,7 @@ if not load:
 
 			#removing the shit of TEOBResumS
 			where_zero = np.where(amp_mlgw[:,j] == 0)[0]
-			amp_TEOB =  hlm[str(k[0])][0]
+			amp_TEOB =  hlm[str(k[0])][0]*nu #TEOBResumS convention is weird...
 			ph_TEOB = hlm[str(k[0])][1]
 			amp_TEOB[where_zero] = 0
 			ph_TEOB[where_zero] = ph_TEOB[where_zero[0]]
@@ -172,11 +174,13 @@ print("Loading histogram from: {}\n\t{} datapoints".format(filename, F.shape[0])
 
 	#overall mismatch
 plt.figure(figsize = (6.4, 4.8/2.))
+plt.subplots_adjust(hspace = .8)
 plt.title("Overall mismatch", fontsize = 15)
 plt.hist(np.log10(F[:,0]), bins = 70, color = 'k', density = True)
 plt.xlabel(r"$\log \; \bar{\mathcal{F}}$")
-plt.savefig("accuracy/mismatch_overall.pdf", format = 'pdf')
 plt.xlim([-6,0])
+plt.tight_layout()
+plt.savefig("accuracy/mismatch_overall.pdf", format = 'pdf', transparent=True)
 
 	#optimal mismatch
 fig, ax_list = plt.subplots(figsize = (6.4,1.5*6.4), nrows = len(modes), ncols = 1, sharex = True)
@@ -189,7 +193,30 @@ for i in range(len(modes)):
 	ax_list[i].set_title("Mode {}".format(modes[i]), fontsize = 12)
 
 
-plt.savefig("accuracy/mismatch_HMs.pdf", format = 'pdf')
+plt.savefig("accuracy/mismatch_HMs.pdf", format = 'pdf', transparent=True)
+
+
+	#optimal mismatch
+fig, ax_list = plt.subplots(figsize = (6.4,1.*6.4), nrows = int(len(modes)/2+.5), ncols = 2, sharex = True)
+plt.subplots_adjust(hspace = 0.6)
+plt.suptitle("HMs mismatch", fontsize = 15)
+ax_list[-1,0].set_xlabel(r"$\log \; \bar{\mathcal{F}}$")
+ax_list[-1,1].set_xlabel(r"$\log \; \bar{\mathcal{F}}$")
+
+for i in range(ax_list.shape[0]):
+	for j in range(ax_list.shape[1]):
+		k = ax_list.shape[1]*i + j
+		if k >= len(modes):
+			ax_list[i,j].cla()
+			ax_list[i,j].axis('off')
+			continue
+		ax_list[i,j].hist(np.log10(F[:,k+1]), bins = 70, color = 'k', density = True)
+		ax_list[i,j].set_title("Mode {}".format(modes[k]), fontsize = 12)
+
+
+plt.savefig("accuracy/mismatch_HMs_twocols.pdf", format = 'pdf', transparent=True)
+
+
 
 	#contour plots
 fig, ax_list = plt.subplots(figsize = (1.5*6.4,1.5*6.4), nrows = 4, ncols = 3)
@@ -213,7 +240,7 @@ for i in range(ax_list.shape[0]):
 		ax_list[i,j].set_xlabel(r"$q$")
 		ax_list[i,j].set_ylabel(r"$s_1$")
 
-plt.savefig("accuracy/countor_HMs.pdf", format = 'pdf')
+plt.savefig("accuracy/countor_HMs.pdf", format = 'pdf', transparent=True)
 
 plt.show()
 

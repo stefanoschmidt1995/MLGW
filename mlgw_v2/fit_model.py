@@ -36,7 +36,6 @@ create_PCA_dataset
 		times					times at which waves are evalueted in the high dimensional representation (not useful for MoE but required by mlgw.GW_generator
 	Dataset will be saved to output folder in the following files (total 9):
 		"amp(ph)_PCA_model"    "PCA_train(test)_theta.dat"    "PCA_train(test)_amp(ph).dat"    "times"
-	While loading, amplitude are scaled by a factor of 1e-21 to make them O(1).
 	Input:
 		K (tuple)		number of PC to consider (K_amp, K_ph); if int amp and ph have the same number of PC
 		dataset_file	path to file holding input waveform dataset
@@ -52,6 +51,10 @@ create_PCA_dataset
 			return
 
 	theta_vector, amp_dataset, ph_dataset, times = load_dataset(dataset_file, shuffle=True) #loading dataset
+	if False: #weird thing to fix a different scaling in the previous dataset. User does not want to care about it
+		nu = np.divide(theta_vector[:,0], np.square(1+theta_vector[:,0]))
+		amp_dataset = np.multiply(amp_dataset.T, nu).T
+
 	print("Loaded datataset with shape: "+ str(ph_dataset.shape))
 
 	train_theta, test_theta, train_amp, test_amp = make_set_split(theta_vector, amp_dataset, train_frac, 1.)

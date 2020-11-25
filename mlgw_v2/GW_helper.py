@@ -151,20 +151,20 @@ compute_optimal_mismatch
 
 ################# Dataset related stuff
 
-def create_dataset_TD_TEOBResumS(N_data, N_grid, mode = (2,2),filename = None,  t_coal = 0.5, q_range = (1.,5.), m2_range = None, s1_range = (-0.8,0.8), s2_range = (-0.8,0.8), t_step = 1e-5, alpha = 0.35, path_TEOBResumS = None):
+def create_dataset_TD(N_data, N_grid, mode = (2,2),filename = None,  t_coal = 0.5, q_range = (1.,5.), m2_range = None, s1_range = (-0.8,0.8), s2_range = (-0.8,0.8), t_step = 1e-5, alpha = 0.35, approximant = "TEOBResumS", path_TEOBResumS = None):
 	"""
-create_dataset_TD_TEOBResumS
-============================
-	Create a dataset for training a ML model to fit GW waveforms in time domain.
-	The dataset consists in 3 parameters theta=(q, spin1z, spin2z) associated to the waveform computed in frequency domain for a grid of N_grid points in the range given by the user.
+create_dataset_TD
+=================
+	Create a dataset for training a ML model to fit GW modes in time domain.
+	The dataset consists in 3 parameters theta=(q, spin1z, spin2z) associated to the modes computed in time domain for a grid of N_grid points in the range given by the user.
 	More specifically, data are stored in 3 vectors:
 		theta_vector	vector holding source parameters q, spin1, spin2
 		amp_vector		vector holding amplitudes for each source evaluated at some N_grid equally spaced points
 		ph_vector		vector holding phase for each source evaluated at some N_grid equally spaced points
 	This routine add N_data data to filename if one is specified (if file is not empty it must contain data with the same N_grid); otherwise the datasets are returned as np vectors. 
-	All the waves are evaluated at a constant distance of 1Mpc. Values of q and m2 as well as spins are drawn randomly in the range given by the user: it holds m1 = q *m2 M_sun.
-	The waveforms are computed with a time step t_step; starting from a frequency f_min (set by the routine according to t_coal and m_tot). Waves are given in a rescaled time grid (i.e. t/m_tot) with N_grid points: t=0 occurs when at time of maximum amplitude. A higher density of grid points is placed in the post merger phase.
-	Dataset is generated either with an implementation of TEOBResumS (a path to a local installation of TEOBResumS should be provided).
+	Values of q and m2 as well as spins are drawn randomly in the range given by the user: it holds m1 = q *m2 M_sun.
+	The waveforms are computed with a time step t_step; starting from a time in reduced grid tau min (s/M_Sun). Waves are given in a rescaled time grid (i.e. t/m_tot) with N_grid points: t=0 occurs when the 22 mode has a peak. A higher density of grid points is placed close to the merger.
+	Dataset is generated either with an implementation of TEOBResumS (a path to a local installation of TEOBResumS should be provided) either with a lal approximant (lalsuite installation should be provided). Unfortunately for lal, only the 22 mode is currently implemented.
 	Dataset can be loaded with load_dataset.
 	Input:
 		N_data				size of dataset
@@ -179,7 +179,8 @@ create_dataset_TD_TEOBResumS
 		t_step				time step to generate the wave with
 		approximant			string for the approximant model to be used (in lal convention; to be used only if lal ought to be used)
 		alpha				distorsion factor for time grid. (In range (0,1], when it's close to 0, more grid points are around merger)
-		path_TEOBResumS		path to a local installation of TEOBResumS with routine 'EOBRun_module' (if given, it overwrites the aprroximant entry)
+		approximant			lal approximant to be used for generating the modes, or "TEOBResumS" (in the latter case a local installation must be provided by the argument path_TEOBResumS) 
+		path_TEOBResumS		path to a local installation of TEOBResumS with routine 'EOBRun_module' (if given, it overwrites the aproximant entry)
 	Output:
 		if filename is given
 			None
@@ -224,11 +225,13 @@ create_dataset_TD_TEOBResumS
 
 	if not isinstance(mode,tuple):
 		raise TypeError("Wrong kind of mode {} given. Expected a tuple (l,m)".format(mode))
+
 	modes = [mode]
-	modes_to_k = lambda modes:[int(x[0]*(x[0]-1)/2 + x[1]-2) for x in modes] # [(l,m)] -> [k]
-	k_modes = modes_to_k(modes)
-	if modes != [(2,2)]:
-		k_modes.append(1) #22 modes is always computed
+	if approximant == "TEOBResumS": #computing k modes for TEOBResumS
+		modes_to_k = lambda modes:[int(x[0]*(x[0]-1)/2 + x[1]-2) for x in modes] # [(l,m)] -> [k]
+		k_modes = modes_to_k(modes)
+		if modes != [(2,2)]:
+			k_modes.append(1) #22 modes is always computed
 	print("Generating mode: "+str(modes[0]))
 
 		#creating time_grid
@@ -258,7 +261,7 @@ create_dataset_TD_TEOBResumS
 			print("New file ", filename, " created")
 			freq_header = np.concatenate((np.zeros((3,)), time_grid, time_grid) )
 			freq_header = np.reshape(freq_header, (1,len(freq_header)))
-			np.savetxt(filebuff, freq_header, header = "# row: theta "+str(D_theta)+" | amp (1,"+str(N_grid)+")| ph (1,"+str(N_grid)+")\n# N_grid = "+str(N_grid)+" | t_coal ="+str(t_coal)+" | t_step ="+str(t_step)+" | q_range = "+str(q_range)+" | m2_range = "+str(m2_range)+" | s1_range = "+str(s1_range)+" | s2_range = "+str(s2_range), newline = '\n')
+			np.savetxt(filebuff, freq_header, header = "# row: theta "+str(D_theta)+" | amp (None,"+str(N_grid)+")| ph (None,"+str(N_grid)+")\n# N_grid = "+str(N_grid)+" | t_coal ="+str(t_coal)+" | t_step ="+str(t_step)+" | q_range = "+str(q_range)+" | m2_range = "+str(m2_range)+" | s1_range = "+str(s1_range)+" | s2_range = "+str(s2_range), newline = '\n')
 		else:
 			filebuff = open(filename,'a')
 
@@ -295,12 +298,17 @@ create_dataset_TD_TEOBResumS
 			m1 = q * m2
 		else:
 			m1 = q* m2
+		nu = np.divide(q, np.square(1+q)) #symmetric mass ratio
 
 			#computing f_min
 		f_min = .9* ((151*(t_coal_freq)**(-3./8.) * (((1+q)**2)/q)**(3./8.))/(m1+m2))
 		 #in () there is the right scaling formula for frequency in order to get always the right reduced time
 		 #this should be multiplied by a prefactor (~1) for dealing with some small variation due to spins
-		#print(f_min, k_modes) #DEBUG
+
+		if isinstance(m2_range, tuple):
+			temp_theta = [m1, m2, spin1z, spin2z]		
+		else:
+			temp_theta = [m1/m2, spin1z, spin2z]
 
 			#getting the wave
 		if approximant == "TEOBResumS": #using TEOBResumS
@@ -322,16 +330,41 @@ create_dataset_TD_TEOBResumS
 				'inclination':inclination,
 			}
 			time_full, h_p, h_c, hlm = EOBRun_module.EOBRunPy(pars)
-			
-		if isinstance(m2_range, tuple):
-			temp_theta = [m1, m2, spin1z, spin2z]		
-		else:
-			temp_theta = [m1/m2, spin1z, spin2z]
+			temp_amp = hlm[str(k_modes[0])][0]*nu #TEOBResumS has weird conventions on the modes
+			temp_ph = hlm[str(k_modes[0])][1]
+			argpeak = locate_peak(hlm['1'][0]*nu) #aligned at the peak of the 22
 
-		temp_amp = hlm[str(k_modes[0])][0]
-		temp_ph = hlm[str(k_modes[0])][1]
 
-		argpeak = locate_peak(hlm['1'][0]) #aligned at the peak of the 22
+		if approximant != "TEOBResumS":
+			if modes != [(2,2)]:
+				raise ValueError("Currently lal approximants do not implement HMs")
+			hp, hc = lalsim.SimInspiralChooseTDWaveform( #where is its definition and documentation????
+				m1*lalsim.lal.MSUN_SI, #m1
+				m2*lalsim.lal.MSUN_SI, #m2
+				0., 0., spin1z, #spin vector 1
+				0., 0., spin2z, #spin vector 2
+				1e6*lalsim.lal.PC_SI, #distance to source
+				0., #inclination
+				0., #phi
+				0., #longAscNodes
+				0., #eccentricity
+				0., #meanPerAno
+				t_step, # time incremental step
+				f_min, # lowest value of freq
+				f_min, #some reference value of freq (??)
+				LALpars, #some lal dictionary
+				approx #approx method for the model
+			)
+			h_p, h_c =  hp.data.data, hc.data.data
+			time_full = np.linspace(0.0, hp.data.length*t_step, hp.data.length) #time grid at which wave is computed
+			temp_amp = np.sqrt(np.square(h_p)+np.square(h_c))
+			temp_ph = np.unwrap(np.arctan2(h_c,h_p))
+			argpeak = locate_peak(temp_amp) #aligned at the peak of the 22
+				#getting mode from WF
+			prefactor = 4.7864188273360336e-20 # G/c^2*(M_sun/Mpc)
+			amp_prefactor = prefactor*(m1+m2)/1. # G/c^2 (M / d_L)
+			temp_amp = temp_amp / amp_prefactor / (4*np.sqrt(5/(64*np.pi)))
+
 		t_peak = time_full[argpeak]
 		time_full = (time_full - t_peak)/(m1+m2) #grid is scaled to standard grid
 			#setting waves to the chosen std grid
