@@ -106,7 +106,7 @@ GW_generator
 			folder		address to folder in which everything is kept (if None, models must be loaded manually with load())
 		"""
 		self.modes = [] #list of modes (classes mode_generator)
-		
+
 		if folder is not None:
 			if type(folder) is int:
 				int_folder = folder
@@ -353,10 +353,12 @@ GW_generator
 		h_plus = np.zeros((theta.shape[0],t_grid.shape[0]))
 		h_cross = np.zeros((theta.shape[0],t_grid.shape[0]))
 
+		if modes is None:
+			modes = self.list_modes()
+
 		for mode in self.modes:	
-			if modes is not None:
-				if mode.lm() not in modes: #skipping a non-necessary or non-existing mode
-					continue
+			if mode.lm() not in modes: #skipping a non-necessary or non-existing mode
+				continue
 			#print("got modes {}".format(mode.lm()))
 			amp_lm, ph_lm = mode.get_mode(theta[:,:4], t_grid, out_type = "ampph")
 			amp_lm =  np.multiply(amp_lm.T, amp_prefactor).T #G/c^2*(M_sun/Mpc) nu *(M/M_sun)/(d_L/Mpc)
@@ -383,6 +385,9 @@ GW_generator
 			amp, ph (N, D', K)		amplitude and phase of the K modes required by the user (if K =1, no third dimension)
 			real, imag (N, D', K)	real and imaginary part of the K modes required by the user (if K =1, no third dimension)
 		"""
+		if out_type not in ["realimag", "ampph"]:
+			raise ValueError("Wrong output type chosen. Expected \"realimag\", \"ampph\", given \""+out_type+"\"")
+
 		theta = np.array(theta)
 		if isinstance(modes,tuple): #it means that the last dimension should be deleted
 			modes = [modes]
@@ -395,7 +400,7 @@ GW_generator
 		except:
 			K = len(self.modes)
 		if modes is None:
-			modes = self.modes
+			modes = self.list_modes()
 
 		if theta.ndim == 1:
 			theta = theta[None,:]
@@ -492,9 +497,9 @@ GW_generator
 		Output:
 			mode_obj	istance of mode_generator
 		"""
-		for mode in self.modes:	
-			if mode.lm() in modes: #check if it is the correct mode
-				return mode
+		for mode_ in self.modes:	
+			if mode_.lm() == mode: #check if it is the correct mode
+				return mode_
 		return None
 
 class mode_generator(object):
@@ -761,6 +766,9 @@ mode_generator
 			amp, phase (1,D)/(N,D)			desidered amplitude and phase (if it applies)
 			hlm_real, hlm_im (1,D)/(N,D)	desidered h_22 components (if it applies)
 		"""
+		if out_type not in ["realimag", "ampph"]:
+			raise ValueError("Wrong output type chosen. Expected \"realimag\", \"ampph\", given \""+out_type+"\"")
+
 		theta = np.array(theta) #to ensure that theta is copied into new array
 		if not isinstance(t_grid, np.ndarray): #making sure that t_grid is np.array
 			t_grid = np.array(t_grid)
@@ -975,7 +983,14 @@ mode_generator
 			grad_Re(h) (N,D,4)		Gradients of the real part of the waveform
 			grad_Im(h) (N,D,4)		Gradients of the imaginary part of the waveform
 		"""
-		assert theta.shape[1] == 4
+		if out_type not in ["realimag", "ampph"]:
+			raise ValueError("Wrong output type chosen. Expected \"realimag\", \"ampph\", given \""+out_type+"\"")
+
+		if theta.shape[1] >= 4:
+			theta = theta[:,:4]
+		elif theta.shape[1]<4:
+			raise ValueError("Wrong input values for theta: expected shape (None,4) [m1,m2,s1,s2]")
+
 			#creating theta_std
 		q = np.divide(theta[:,0],theta[:,1]) #theta[:,0]/theta[:,1] #mass ratio (general) (N,)
 		m_tot_us = theta[:,0] + theta[:,1]	#total mass in solar masses for the user
@@ -990,7 +1005,6 @@ mode_generator
 
 		#dealing with gradients w.r.t. (q,s1,s2)
 		grad_q_amp, grad_q_ph = self.get_raw_grads(theta_std) #(N,D_std,3)
-		grad_q_amp = grad_q_amp
 			#interpolating gradients on the user grid
 		for i in range(theta_std.shape[0]):
 			for j in range(1,4):
@@ -1003,8 +1017,9 @@ mode_generator
 		for i in range(theta_std.shape[0]):
 			grad_M_amp = np.gradient(amp[i,:], t_grid) #(D,)
 			grad_M_ph = np.gradient(ph[i,:], t_grid) #(D,)
-			grad_amp[i,:,0] = - np.multiply(t_grid/m_tot_us[i]**2, grad_M_amp) #(D,)
-			grad_ph[i,:,0]  = -np.multiply(t_grid/m_tot_us[i]**2, grad_M_ph) #(D,)
+				#don't know why but things work here...
+			grad_amp[i,:,0] = - np.multiply(t_grid/m_tot_us[i], grad_M_amp) #(D,)
+			grad_ph[i,:,0]  = -np.multiply(t_grid/m_tot_us[i], grad_M_ph) #(D,)
 
 		grad_ph = np.subtract(grad_ph,grad_ph[:,0,None,:]) #unclear... but apparently compulsory
 			#check when grad is zero and keeping it
@@ -1029,7 +1044,6 @@ mode_generator
 			grad_Im[to_switch,:,2], grad_Im[to_switch,:,3] = grad_Im[to_switch,:,3], grad_Im[to_switch,:,2]
 			return grad_Re, grad_Im
 
-		return None, None
 
 
 
