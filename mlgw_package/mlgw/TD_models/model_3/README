@@ -1,9 +1,0 @@
-{
-"train model": "TEOBResumS",
-"description": "Long time grid of TEOBResumS (only 22 mode)",
-"q range": "[1,20]",
-"s1 range": "[-0.8, 0.95]",
-"s2 range": "[-0.8, 0.95]",
-"t min": "4 s/M_sun",
-"modes": "22"
-}

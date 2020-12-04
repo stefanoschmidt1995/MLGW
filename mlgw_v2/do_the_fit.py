@@ -39,7 +39,7 @@ except:
 	line = 0	#column in the shift dataset to consider
 
 
-dataset_file = "TD_datasets/{}_dataset.dat".format(lm)	#input file for WF dataset of the mode
+dataset_file = "TD_datasets/TEOB_dataset.{}".format(lm)	#input file for WF dataset of the mode
 PCA_dataset_folder = "TD_datasets/{}".format(lm)		#folder in which to store the reduced order dataset after the PCA model is fitted
 model_folder = "TD_models/model_0/{}".format(lm)		#folder in which the model for the current mode must be stored
 

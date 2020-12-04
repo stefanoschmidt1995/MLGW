@@ -22,7 +22,7 @@ def get_list_of_files(dirName):
             allFiles = allFiles + get_list_of_files(fullPath)
         else:
             allFiles.append(fullPath)
-                
+
     return allFiles
 
 
@@ -41,7 +41,7 @@ def set_manifest():
 
 setup(
     name='mlgw',
-    version='2.0.0',
+    version='2.0.1',
     author='Stefano Schmidt',
     author_email='stefanoschmidt1995@gmail.com',
     packages = setuptools.find_packages(),

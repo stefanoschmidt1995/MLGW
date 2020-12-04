@@ -151,11 +151,11 @@ compute_optimal_mismatch
 
 ################# Dataset related stuff
 
-def create_dataset_TD(N_data, N_grid, mode = (2,2),filename = None,  t_coal = 0.5, q_range = (1.,5.), m2_range = None, s1_range = (-0.8,0.8), s2_range = (-0.8,0.8), t_step = 1e-5, alpha = 0.35, approximant = "TEOBResumS", path_TEOBResumS = None):
+def create_dataset_TD(N_data, N_grid, modes, basefilename,  t_coal = 0.5, q_range = (1.,5.), m2_range = None, s1_range = (-0.8,0.8), s2_range = (-0.8,0.8), t_step = 1e-5, alpha = 0.35, approximant = "SEOBNRv2_opt", path_TEOBResumS = None):
 	"""
 create_dataset_TD
 =================
-	Create a dataset for training a ML model to fit GW modes in time domain.
+	Create datasets for training a ML model to fit GW modes in time domain. Each dataset is saved in a different file (basefilename.mode).
 	The dataset consists in 3 parameters theta=(q, spin1z, spin2z) associated to the modes computed in time domain for a grid of N_grid points in the range given by the user.
 	More specifically, data are stored in 3 vectors:
 		theta_vector	vector holding source parameters q, spin1, spin2
@@ -164,37 +164,32 @@ create_dataset_TD
 	This routine add N_data data to filename if one is specified (if file is not empty it must contain data with the same N_grid); otherwise the datasets are returned as np vectors. 
 	Values of q and m2 as well as spins are drawn randomly in the range given by the user: it holds m1 = q *m2 M_sun.
 	The waveforms are computed with a time step t_step; starting from a time in reduced grid tau min (s/M_Sun). Waves are given in a rescaled time grid (i.e. t/m_tot) with N_grid points: t=0 occurs when the 22 mode has a peak. A higher density of grid points is placed close to the merger.
-	Dataset is generated either with an implementation of TEOBResumS (a path to a local installation of TEOBResumS should be provided) either with a lal approximant (lalsuite installation should be provided). Unfortunately for lal, only the 22 mode is currently implemented.
-	Dataset can be loaded with load_dataset.
+	Dataset is generated either with an implementation of TEOBResumS (a path to a local installation of TEOBResumS should be provided) either with SEOBNRv4HM (lalsuite installation required). It can be given an TD lal approximant with no HM; in this case, only the 22 mode can be generated.
+	Datasets can be loaded with load_dataset.
 	Input:
 		N_data				size of dataset
 		N_grid				number of grid points to evaluate
-		mode (l,m)			mode to generate and fill the dataset with				
-		filename			name of the file to save dataset in (If is None, nothing is saved on a file)
+		modes []			list of modes (each a (l,m) tuple) to generate and fill the dataset with				
+		basefilename		basename of the file to save dataset in (each dataset is saved in basefilename.lm)
 		t_coal				time to coalescence to start computation from (measured in reduced grid)
 		q_range				tuple with range for random q values. if single value, q is kept fixed at that value
 		m2_range			tuple with range for random m2 values. if single value, m2 is kept fixed at that value. If None, m2 will be chosen s.t. m_tot = m1+m2 = 20. M_sun
 		spin_mag_max_1		tuple with range for random spin #1 values. if single value, s1 is kept fixed at that value
 		spin_mag_max_2		tuple with range for random spin #1 values. if single value, s2 is kept fixed at that value
 		t_step				time step to generate the wave with
-		approximant			string for the approximant model to be used (in lal convention; to be used only if lal ought to be used)
+		approximant			string for the approximant model to be used (in lal convention; to be used only if lal is to be used)
 		alpha				distorsion factor for time grid. (In range (0,1], when it's close to 0, more grid points are around merger)
 		approximant			lal approximant to be used for generating the modes, or "TEOBResumS" (in the latter case a local installation must be provided by the argument path_TEOBResumS) 
 		path_TEOBResumS		path to a local installation of TEOBResumS with routine 'EOBRun_module' (if given, it overwrites the aproximant entry)
-	Output:
-		if filename is given
-			None
-		if filename is not given
-			theta_vector (N_data,3)		vector holding ordered set of parameters used to generate amp_dataset and ph_dataset
-			amp_dataset (N_data,N_grid)	dataset with amplitudes
-			ph_dataset (N_data,N_grid)	dataset with phases
-			times (N_grid,)				vector holding times at which waves are evaluated (t=0 is the time of maximum amplitude)
 	"""
-	d=1.
-	inclination = 0.#np.pi/2.
-
+		#imports
 	if path_TEOBResumS is not None:
 		approximant = "TEOBResumS"
+
+	if isinstance(modes,tuple):
+		modes = [modes]
+	if not isinstance(modes,list):
+		raise TypeError("Wrong kind of mode {} given. Expected a list [(l,m)]".format(modes))
 
 	if approximant == "TEOBResumS":
 		#see https://bitbucket.org/eob_ihes/teobresums/src/development/ for the implementation of TEOBResumS
@@ -212,6 +207,17 @@ create_dataset_TD
 			raise RuntimeError("Impossible to load lalsimulation: try pip install lalsuite")
 		LALpars = lal.CreateDict()
 		approx = lalsim.SimInspiralGetApproximantFromString(approximant)
+		prefactor = 4.7864188273360336e-20 # G/c^2*(M_sun/Mpc)
+
+			#checking that all is good with modes
+		if approximant == "SEOBNRv4HM":
+			for mode in modes:
+				if mode not in [(2,2),(2,1), (3,3), (4,4), (5,5)]:
+					raise ValueError("Currently SEOBNRv4HM approximants do not implement the chosen HM")
+		else:
+			if modes != [(2,2)]:
+				raise ValueError("The chosen lal approximant does not implement HMs")
+
 		
 
 		#checking if N_grid is fine
@@ -223,30 +229,38 @@ create_dataset_TD
 	else:
 		D_theta = 3
 
-	if not isinstance(mode,tuple):
-		raise TypeError("Wrong kind of mode {} given. Expected a tuple (l,m)".format(mode))
-
-	modes = [mode]
-	if approximant == "TEOBResumS": #computing k modes for TEOBResumS
+		######setting the time grid
+	time_grid_list = []
+	t_end_list = []
+	if approximant == "TEOBResumS":
 		modes_to_k = lambda modes:[int(x[0]*(x[0]-1)/2 + x[1]-2) for x in modes] # [(l,m)] -> [k]
 		k_modes = modes_to_k(modes)
-		if modes != [(2,2)]:
-			k_modes.append(1) #22 modes is always computed
-	print("Generating mode: "+str(modes[0]))
+			#setting a list of time grids
+		for mode in modes:
+				#ugly setting of t_end in TEOBResumS: required to kill bad features after merger
+			if mode == (2,2):
+				t_end = 5.2e-4 #estimated maximum time for ringdown: WF will be killed after that time
+			elif mode == (2,1) or mode == (3,3): #special treatment for 21 and 33
+				t_end = 1e-6
+			else:
+				t_end = 3e-5 #for other modes
+			t_end_list.append(t_end)
+	else:
+		for mode in modes:
+			t_end_list.append(5.2e-4)
+
+	print("Generating modes: "+str(modes))
 
 		#creating time_grid
-	if modes == [(2,2)]:
-		t_end = 5.2e-4 #estimated maximum time for ringdown: WF will be killed after that time
-	elif modes == [(2,1)] or modes == [(3,3)]:
-		t_end = 1e-6
-	else:
-		t_end = 3e-5 #only for HMs. You should find a better way to set this number...
-	time_grid = np.linspace(-np.power(np.abs(t_coal), alpha), np.power(t_end, alpha), N_grid)
-	time_grid = np.multiply( np.sign(time_grid) , np.power(np.abs(time_grid), 1./alpha))
+	for i,mode in enumerate(modes):
+		time_grid = np.linspace(-np.power(np.abs(t_coal), alpha), np.power(t_end_list[i], alpha), N_grid)
+		time_grid = np.multiply( np.sign(time_grid) , np.power(np.abs(time_grid), 1./alpha))
 
-		#adding 0 to time grid
-	index_0 = np.argmin(np.abs(time_grid))
-	time_grid[index_0] = 0. #0 is alway set in the grid
+			#adding 0 to time grid
+		index_0 = np.argmin(np.abs(time_grid))
+		time_grid[index_0] = 0. #0 is alway set in the grid
+
+		time_grid_list.append(time_grid)
 
 		#setting t_coal_freq for generating a waves
 	if np.abs(t_coal) < 0.05:
@@ -255,26 +269,21 @@ create_dataset_TD
 		t_coal_freq = np.abs(t_coal)
 
 
-	if filename is not None: #doing header if file is empty - nothing otherwise
+		#####create a list of buffer to save the WFs
+	buff_list = []
+	for i, mode in enumerate(modes):
+		filename = basefilename+'.'+str(mode[0])+str(mode[1])
 		if not os.path.isfile(filename): #file doesn't exist: must be created with proper header
 			filebuff = open(filename,'w')
 			print("New file ", filename, " created")
-			freq_header = np.concatenate((np.zeros((3,)), time_grid, time_grid) )
-			freq_header = np.reshape(freq_header, (1,len(freq_header)))
-			np.savetxt(filebuff, freq_header, header = "# row: theta "+str(D_theta)+" | amp (None,"+str(N_grid)+")| ph (None,"+str(N_grid)+")\n# N_grid = "+str(N_grid)+" | t_coal ="+str(t_coal)+" | t_step ="+str(t_step)+" | q_range = "+str(q_range)+" | m2_range = "+str(m2_range)+" | s1_range = "+str(s1_range)+" | s2_range = "+str(s2_range), newline = '\n')
+			time_header = np.concatenate((np.zeros((3,)), time_grid_list[i], time_grid_list[i]) )[None,:]
+			np.savetxt(filebuff, time_header, header = "#Mode:"+ str(mode[0])+str(mode[1]) +"\n# row: theta "+str(D_theta)+" | amp (None,"+str(N_grid)+")| ph (None,"+str(N_grid)+")\n# N_grid = "+str(N_grid)+" | t_coal ="+str(t_coal)+" | t_step ="+str(t_step)+" | q_range = "+str(q_range)+" | m2_range = "+str(m2_range)+" | s1_range = "+str(s1_range)+" | s2_range = "+str(s2_range), newline = '\n')
 		else:
 			filebuff = open(filename,'a')
+		buff_list.append(filebuff)
 
-	if filename is None:
-		amp_dataset = np.zeros((N_data,N_grid)) #allocating storage for returning data
-		ph_dataset = np.zeros((N_data,N_grid))
-		theta_vector = np.zeros((N_data,D_theta))
-
-	for i in range(N_data): #loop on data to be created
-		if i%100 == 0 and i != 0:
-		#if i%1 == 0 and i != 0: #debug
-			print("Generated WF ", i)
-
+		#####creating WFs
+	for n_WF in range(N_data): 
 			#setting value for data
 		if isinstance(m2_range, tuple):
 			m2 = np.random.uniform(m2_range[0],m2_range[1])
@@ -311,6 +320,10 @@ create_dataset_TD
 			temp_theta = [m1/m2, spin1z, spin2z]
 
 			#getting the wave
+			#output of the if:
+				#amp_list, ph_list (same order as in modes)
+				#time_full, argpeak
+		amp_list, ph_list = [None for i in range(len(modes))],[None for i in range(len(modes))]
 		if approximant == "TEOBResumS": #using TEOBResumS
 			pars = {
 				'M'                  : m1+m2,
@@ -321,23 +334,45 @@ create_dataset_TD
 				'chi2'               : spin2z,
 				'domain'             : 0,      # TD
 				'arg_out'            : 1,      # Output hlm/hflm. Default = 0
-				'use_mode_lm'        : k_modes,      # List of modes to use/output through EOBRunPy
-				'srate_interp'       : 1./t_step,  # srate at which to interpolate. Default = 4096.
+				'use_mode_lm'        : list(set(k_modes + [1])),      # List of modes to use/output through EOBRunPy (added 22 mode in case there isn't)
+				#'srate_interp'       : 1./t_step,  # srate at which to interpolate. Default = 4096.
 				'use_geometric_units': 0,      # Output quantities in geometric units. Default = 1
 				'initial_frequency'  : f_min,   # in Hz if use_geometric_units = 0, else in geometric units
 				'interp_uniform_grid': 0,      # Interpolate mode by mode on a uniform grid. Default = 0 (no interpolation)
-				'distance': d,
-				'inclination':inclination,
+				'distance': 1.,
+				'inclination':0.,
 			}
 			time_full, h_p, h_c, hlm = EOBRun_module.EOBRunPy(pars)
-			temp_amp = hlm[str(k_modes[0])][0]*nu #TEOBResumS has weird conventions on the modes
-			temp_ph = hlm[str(k_modes[0])][1]
+			for i, k_mode in enumerate(k_modes):
+				temp_amp = hlm[str(k_mode)][0]*nu #TEOBResumS has weird conventions on the modes
+				temp_ph = hlm[str(k_mode)][1]
+				amp_list[i] = temp_amp
+				ph_list[i] = temp_ph
 			argpeak = locate_peak(hlm['1'][0]*nu) #aligned at the peak of the 22
 
+		elif approximant == "SEOBNRv4HM": #using SEOBNRv4HM
+			nqcCoeffsInput=lal.CreateREAL8Vector(10)
+			sp, dyn, dynHi = lalsim.SimIMRSpinAlignedEOBModes(t_step, m1*lal.MSUN_SI, m2*lal.MSUN_SI, f_min, 1e6*lal.PC_SI, spin1z, spin2z,41, 0., 0., 0.,0.,0.,0.,0.,0.,1.,1.,nqcCoeffsInput, 0)
+			amp_prefactor = prefactor*(m1+m2)/1. # G/c^2 (M / d_L)
+			while sp is not None:
+				lm = (sp.l, sp.m)
+				if lm not in modes: #skipping a non-necessary mode
+					continue
+				else: #computing index and saving the mode
+					i = modes.index(lm)
+					hlm = sp.mode.data.data #complex mode vector
+					temp_amp = np.abs(hlm)/ amp_prefactor / nu #scaling with the convention of SEOB
+					temp_ph = np.unwrap(np.angle(hlm))
+					amp_list[i] = temp_amp
+					ph_list[i] = temp_ph
 
-		if approximant != "TEOBResumS":
-			if modes != [(2,2)]:
-				raise ValueError("Currently lal approximants do not implement HMs")
+				if (sp.l, sp.m) == (2,2): #get grid
+					amp_22 = np.abs(sp.mode.data.data) #amp of 22 mode (for time grid alignment)
+					time_full = np.linspace(0.0, sp.mode.data.length*t_step, sp.mode.data.length) #time grid at which wave is computed
+					argpeak = locate_peak(amp_22) #aligned at the peak of the 22
+				sp = sp.next
+
+		else: #another lal approximant (only 22 mode)
 			hp, hc = lalsim.SimInspiralChooseTDWaveform( #where is its definition and documentation????
 				m1*lalsim.lal.MSUN_SI, #m1
 				m2*lalsim.lal.MSUN_SI, #m2
@@ -357,31 +392,32 @@ create_dataset_TD
 			)
 			h_p, h_c =  hp.data.data, hc.data.data
 			time_full = np.linspace(0.0, hp.data.length*t_step, hp.data.length) #time grid at which wave is computed
-			temp_amp = np.sqrt(np.square(h_p)+np.square(h_c))
-			temp_ph = np.unwrap(np.arctan2(h_c,h_p))
-			argpeak = locate_peak(temp_amp) #aligned at the peak of the 22
-				#getting mode from WF
-			prefactor = 4.7864188273360336e-20 # G/c^2*(M_sun/Mpc)
 			amp_prefactor = prefactor*(m1+m2)/1. # G/c^2 (M / d_L)
-			temp_amp = temp_amp / amp_prefactor / (4*np.sqrt(5/(64*np.pi)))
+			temp_amp = np.sqrt(np.square(h_p)+np.square(h_c)) / amp_prefactor / (4*np.sqrt(5/(64*np.pi)))
+			temp_ph = np.unwrap(np.arctan2(h_c,h_p))
+			amp_list = [temp_amp]
+			ph_list = [temp_ph]
+			argpeak = locate_peak(temp_amp) #aligned at the peak of the 22
 
+			#setting time grid
 		t_peak = time_full[argpeak]
 		time_full = (time_full - t_peak)/(m1+m2) #grid is scaled to standard grid
-			#setting waves to the chosen std grid
-		temp_amp = np.interp(time_grid, time_full, temp_amp)
-		temp_ph = np.interp(time_grid, time_full, temp_ph)
 
-		temp_ph = temp_ph - temp_ph[0] #all phases are shifted by a constant to make sure every wave has 0 phase at beginning of grid
+			#computing waves to the chosen std grid and saving to file
+		for i in range(len(amp_list)):
+			temp_amp, temp_ph = amp_list[i], ph_list[i]
+			#print(temp_amp.shape, time_full.shape, time_grid_list[i].shape)
+			temp_amp = np.interp(time_grid_list[i], time_full, temp_amp)
+			temp_ph = np.interp(time_grid_list[i], time_full, temp_ph)
+			temp_ph = temp_ph - temp_ph[0] #all phases are shifted by a constant to make sure every wave has 0 phase at beginning of grid
 
-		if filename is None:
-			amp_dataset[i,:] = temp_amp  #putting waveform in the dataset to return
-			ph_dataset[i,:] =  temp_ph  #phase
-			theta_vector[i,:] = temp_theta
+			to_save = np.concatenate((temp_theta, temp_amp, temp_ph))[None,:] #(1,D)
+			np.savetxt(buff_list[i], to_save)
 
-		if filename is not None: #saving to file
-			to_save = np.concatenate((temp_theta, temp_amp, temp_ph))
-			to_save = np.reshape(to_save, (1,len(to_save)))
-			np.savetxt(filebuff, to_save)
+			#user communication
+		if n_WF%100 == 0 and n_WF != 0:
+		#if n_WF%1 == 0 and n_WF != 0: #debug
+			print("Generated WF ", n_WF)
 
 	if filename is None:
 		return theta_vector, amp_dataset.real, ph_dataset.real, time_grid
