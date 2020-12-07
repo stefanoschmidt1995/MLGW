@@ -45,9 +45,9 @@ if True:
 ############ Plotting dataset
 import matplotlib.pyplot as plt
 
-theta_vector, amp_dataset, ph_dataset, x_grid = load_dataset("TD_datasets/try/TEOB_dataset.21", shuffle=False, N_data = None) #loading the dataset
+theta_vector, amp_dataset, ph_dataset, x_grid = load_dataset("TD_datasets/SEOB_dataset.21", shuffle=False, N_data = None) #loading the dataset
 
-N_plots = 15 #number of WFs to be plotted
+N_plots = 50 #number of WFs to be plotted
 
 plt.figure(0)
 plt.title("Phase of dataset")

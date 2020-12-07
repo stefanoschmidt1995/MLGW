@@ -39,9 +39,9 @@ except:
 	line = 0	#column in the shift dataset to consider
 
 
-dataset_file = "TD_datasets/TEOB_dataset.{}".format(lm)	#input file for WF dataset of the mode
-PCA_dataset_folder = "TD_datasets/{}".format(lm)		#folder in which to store the reduced order dataset after the PCA model is fitted
-model_folder = "TD_models/model_0/{}".format(lm)		#folder in which the model for the current mode must be stored
+dataset_file = "TD_datasets/SEOB_dataset.{}".format(lm)	#input file for WF dataset of the mode
+PCA_dataset_folder = "TD_datasets/{}_SEOB".format(lm)		#folder in which to store the reduced order dataset after the PCA model is fitted
+model_folder = "TD_models/model_1/{}".format(lm)		#folder in which the model for the current mode must be stored
 
 	#control what to do
 fit_PCA = True
@@ -64,7 +64,7 @@ if fit_PCA:
 	#Here a PCA model is fitted and saved to PCA_dataset_folder. At the same time, a reduced version of the WF dataset is saved to PCA_dataset_folder
 	print("Loading dataset from: ", dataset_file)
 	print("Saving PCA dataset to: ", PCA_dataset_folder)
-	create_PCA_dataset((4,5), dataset_file, PCA_dataset_folder, train_frac = 0.8, clean_dataset = False)
+	create_PCA_dataset((4,4), dataset_file, PCA_dataset_folder, train_frac = 0.8, clean_dataset = False)
 
 if fit_MoE_model:
 	#Here many MoE models are fitted from the reduced dataset, built on PCA.

@@ -37,11 +37,14 @@ def set_manifest():
 
 ##################
 
-#set_manifest() #apparently this is done authomatically by setuptools.find_packages()
+set_manifest() #apparently this is done authomatically by setuptools.find_packages()
+print(setuptools.find_packages())
+#print(get_list_of_files("mlgw/TD_models"))
+#quit()
 
 setup(
     name='mlgw',
-    version='2.0.1',
+    version='2.0.2',
     author='Stefano Schmidt',
     author_email='stefanoschmidt1995@gmail.com',
     packages = setuptools.find_packages(),

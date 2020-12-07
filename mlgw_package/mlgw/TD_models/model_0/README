@@ -1,6 +1,6 @@
 {
 "train model": "TEOBResumS",
-"description": "Standard model: many modes",
+"description": "Standard model with TEOBResumS: all modes with l<4 and 55",
 "q range": "[1,10]",
 "s1 range": "[-0.8, 0.8]",
 "s2 range": "[-0.8, 0.8]",

@@ -1,0 +1,9 @@
+{
+"train model": "SEOBNRv2_opt",
+"description": "Standard 22 mode SEOBNR model: large q range and long time grid",
+"q range": "[1,20]",
+"s1 range": "[-0.8, 0.8]",
+"s2 range": "[-0.8, 0.8]",
+"t min": "4 s/M_sun",
+"modes": "22"
+}
