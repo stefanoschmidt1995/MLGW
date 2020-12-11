@@ -26,7 +26,7 @@ fig0.suptitle(r"$S, \beta$")
 
 
 t0=time.time()
-for i in range(10):
+for i in range(3):
 	q=np.random.uniform(0.5,0.9) # Mass ratio
 	chi1=np.random.uniform(0.,1.) # Primary’s spin magnitude
 	chi2=np.random.uniform(0.,1.) # Secondary’s spin magnitude
@@ -37,7 +37,7 @@ for i in range(10):
 
 		#separations
 	ri=500*M  # Initial separation.
-	rf=10.*M   # Final separation.
+	rf= 1.*M   # Final separation.
 	sep=np.linspace(ri,rf,10000) # Output separations
 
 		#random angles
@@ -46,7 +46,9 @@ for i in range(10):
 	dp= np.random.uniform(-np.pi, np.pi) #delta phi
 	xi,J, S = precession.from_the_angles(t1,t2, dp, q,S1,S2, sep[0])
 	
+	print(xi, S, J, q, S1, S2, sep[0])
 	Jvec,Lvec,S1vec,S2vec,Svec = precession.Jframe_projection(xi, S, J, q, S1, S2, sep[0]) #initial conditions given angles
+	quit()
 
 	print("Initial conditions: ",Jvec, Lvec, Svec)
 
@@ -69,7 +71,9 @@ for i in range(10):
 
 	L_fvals = np.sqrt(Lx_fvals**2 + Ly_fvals**2 + Lz_fvals**2)
 	J_fvals = np.sqrt(Jx_fvals**2 + Jy_fvals**2 + Jz_fvals**2)
+	S1_fvals = np.sqrt(S1x_fvals**2 + S1y_fvals**2 + S1z_fvals**2)
 
+	print("S1: ",S1_fvals, chi1)
 	print(Jx_fvals, Jy_fvals, Jz_fvals)
 
 	beta = np.arccos(Lz_fvals/L_fvals)
@@ -94,7 +98,7 @@ for i in range(10):
 		#getting the extrema
 	from scipy.signal import argrelextrema
 	args = argrelextrema(np.arccos(Lz_fvals/L_fvals), np.greater)
-	ax1.plot(t_fvals[args]-t_fvals[-1], np.arccos(Lz_fvals/L_fvals)[args])
+	ax1.plot((t_fvals[args]-t_fvals[-1])*4.93e-6, np.arccos(Lz_fvals/L_fvals)[args])
 
 	#beta_c = beta - 1j*beta
 	#ax1.plot(t_fvals-t_fvals[-1], np.unwrap(np.angle(beta_c)))
@@ -105,30 +109,3 @@ for i in range(10):
 
 plt.show()
 
-
-
-"""
-	xi_min,xi_max=precession.xi_lim(q,S1,S2)
-	Jmin,Jmax=precession.J_lim(q,S1,S2,sep[0])
-	#Sso_min,Sso_max=precession.Sso_limits(S1,S2)
-	J = np.random.uniform(Jmin,Jmax)
-	#St_min,St_max=precession.St_limits(J,q,S1,S2,sep[0])
-	xi_low,xi_up=precession.xi_allowed(J,q,S1,S2,sep[0])
-	xi=	np.random.uniform(xi_low,xi_up)
-	test=(J>=min(precession.J_allowed(xi,q,S1,S2,sep[0])) and J<=max(precession.J_allowed(xi,q,S1,S2,sep[0])))
-	print("Is our couple (xi,J) consistent?", test)
-	Sb_min,Sb_max=precession.Sb_limits(xi,J,q,S1,S2,sep[0])
-	print("S oscillates between\n\tS-=%.3f\n\tS+=%.3f" %(Sb_min,Sb_max))
-	S=np.random.uniform(Sb_min,Sb_max)
-
-
-	print(precession.precession.xi_lim(q,S1,S2),xi)
-	print(precession.J_lim(q,S1,S2, sep[0]), J)
-	print(precession.St_limits(J,q,S1,S2,sep[0]), S)
-	
-	#J = np.random.uniform(*precession.J_allowed(xi,q,S1,S2,sep[0]))
-	#print(precession.J_allowed(xi,q,S1,S2,sep[0]), J)
-	
-	#xi = np.random.uniform(*precession.xi_allowed(J,q,S1,S2,sep[0]))
-	print(precession.xi_allowed(J,q,S1,S2,sep[0]),xi)
-"""

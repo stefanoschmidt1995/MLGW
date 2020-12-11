@@ -19,7 +19,7 @@ try:
 except:
 	lm_list = [(2,2)] 	#modes to fit
 
-if True:
+if False:
 	#With create_dataset_TD_TEOBResumS a dataset of WF is created. The user must provide
 	#	-the number of WFs to be generated
 	#	-the number of grid points
