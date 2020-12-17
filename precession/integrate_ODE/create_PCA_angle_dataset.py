@@ -10,9 +10,10 @@ from ML_routines import *
 
 #alpha, beta = get_alpha_beta(1.4, .4, .14, .75, 1.34, 3., 500., times)
 
-#create_dataset_alpha_beta(50, "angles.dat", 10000, 1000, (1.1,10.))
+create_dataset_alpha_beta(N_angles = 100, "validation_angles.dat", N_grid = 500, tau_min = 20., (1.1,10.))
 
-params, alpha, beta, times = load_dataset("angles_dataset.dat", N_data = 500, n_params = 6)
+quit()
+#params, alpha, beta, times = load_dataset("angles_dataset.dat", N_data = 500, n_params = 6)
 
 print("DATA LOADED")
 beta = beta[:,::4] #downsampling

@@ -12,13 +12,16 @@ import numpy as np
 import precession
 import os
 import sys
+import matplotlib.pyplot as plt
+sys.path.insert(0,'../../mlgw_v2') #this should be removed eventually
+from GW_helper import *
 try:
 	import silence_tensorflow.auto #awsome!!!! :)
 except:
 	pass
 import tensorflow as tf
 
-def get_alpha_beta(q, chi1, chi2, theta1, theta2, delta_phi, r_0, times, verbose = False):
+def get_alpha_beta(q, chi1, chi2, theta1, theta2, delta_phi, times, verbose = False):
 	"""
 get_alpha_beta
 ==============
@@ -31,7 +34,6 @@ get_alpha_beta
 		theta1 (N,)			angle between spin 1 and L
 		theta2 (N,)			angle between spin 2 and L
 		delta_phi (N,)		angle between in plane projection of the spins
-		r_0					initial separation (in natural units)
 		times (D,)			times at which alpha, beta are evaluated (units s/M_sun)
 		verbose 			whether to suppress the output of precession package
 	Outputs:
@@ -39,6 +41,8 @@ get_alpha_beta
 		beta (N,D)		beta angle evaluated at times
 	"""
 	M_sun = 4.93e-6
+	t_min = np.max(np.abs(times))
+	r_0 = 2.5 * np.power(t_min/M_sun, .25) #starting point for the r integration #look eq. 4.26 Maggiore
 	if isinstance(q,float):
 		q = np.array(q)
 		chi1 = np.array(chi1)
@@ -86,7 +90,7 @@ get_alpha_beta
 		J_vec,L_vec,S1_vec,S2_vec,S_vec = precession.Jframe_projection(xi, S, J, q_, S1, S2, r_0) #initial conditions given angles
 
 		r_f = 1.*M
-		sep = np.linspace(r_0, r_f, 10000)
+		sep = np.linspace(r_0, r_f, 5000)
 
 		Lx, Ly, Lz, S1x, S1y, S1z, S2x, S2y, S2z, t = precession.orbit_vectors(*L_vec, *S1_vec, *S2_vec, sep, q_, time = True) #time evolution of L, S1, S2
 		L = np.sqrt(Lx**2 + Ly**2 + Lz**2)
@@ -109,7 +113,7 @@ get_alpha_beta
 
 class angle_generator():
 	"This class provides a generator of angles for the training of the NN."
-	def __init__(self, t_min, N_times, ranges, N_batch = 100, replace_step = 1):
+	def __init__(self, t_min, N_times, ranges, N_batch = 100, replace_step = 1, load_file = None):
 		"Input the size of the time grid and the starting time from the angle generation. Ranges for the 6 dimensional inputs shall be provided by a (6,2) array"
 		self.t_min = np.abs(t_min)
 		self.N_times = N_times
@@ -117,15 +121,39 @@ class angle_generator():
 		self.ranges = ranges #(6,2)
 		self.replace_step = replace_step #number of iteration before computing a new element
 		self.dataset = np.zeros((N_batch*N_times, 9 )) #allocating memory for the dataset
+		self._initialise_dataset(load_file)
+		return
+
+	def _initialise_dataset(self, load_file):
+		if isinstance(load_file, str):
+			params, alpha, beta, times = load_dataset(load_file, N_data=None, N_grid = self.N_times, shuffle = False, n_params = 6)
+			if times.shape[0] != self.N_times:
+				raise ValueError("The input file {} holds a input dataset with only {} grid points but {} grid points are asked. Plese provide a different dataset file or reduce the number of grid points for the dataset".format(load_file, times.shape[0], self.N_times))
+			N_init = params.shape[0] #number of points in the dataset
+			for i in range(N_init):
+				i_start = i
+				if i >= self.N_batch: break
+				new_data = np.repeat(params[i,None,:], self.N_times, axis = 0) #(D,6)
+				new_data = np.concatenate([times[:,None], new_data, alpha[i,:,None], beta[i,:,None]], axis =1) #(N,9)
+
+				id_start = i*(self.N_times)
+				self.dataset[id_start:id_start + self.N_times,:] = new_data
+		else:
+			i_start = 0
+
+			#adding the angles not in the dataset
+		for i in range(i_start+1, self.N_batch):
+			print("Generated angles ",i)
+			self.replace_angle(i) #changing the i-th angle in the datset
+		print("Dataset initialized")
 		return
 
 	def replace_angle(self, i):
 		"Updates the angles corresponding to the i-th point of the batch. They are inserted in the dataset."
 		M_sun = 4.93e-6
-		params = np.random.uniform(self.ranges[:,0], self.ranges[:,1], size = (6,))
-		times = np.random.uniform(-self.t_min, 0., (self.N_times,))
-		r_0 = 2.5 * np.power(self.t_min/M_sun, .25) #starting point for the r integration #look eq. 4.26 Maggiore
-		alpha, beta = get_alpha_beta(*params, r_0, times, verbose = False)
+		params = np.random.uniform(self.ranges[:,0], self.ranges[:,1], size = (6,)) #(6,)
+		times = np.random.uniform(-self.t_min, 0., (self.N_times,)) #(D,)
+		alpha, beta = get_alpha_beta(*params, times, verbose = False) #(D,)
 
 		new_data = np.repeat(params[None,:], self.N_times, axis = 0) #(N,6)
 		new_data = np.concatenate([times[:,None], new_data, alpha[:,None], beta[:,None]], axis =1) #(N,9)
@@ -136,12 +164,8 @@ class angle_generator():
 
 	def __call__(self):
 		"Return a dataset of angles: each row is [t, q, chi1, chi2, theta1, theta2, deltaphi, alfa, beta]"
-		for i in range(self.N_batch):
-			self.replace_angle(i) #changing the i-th angle in the datset
-		print("Generated starting dataset")
-
-		i = -1
-		j = 0
+		i = -1 #keeps track of the dataset index we are replacing
+		j = 0 #keeps track of the iteration number, to know when to replace the data
 		while True:
 			yield self.dataset
 			if j % self.replace_step == 0 and j !=0:
@@ -164,6 +188,7 @@ class NN_precession(tf.keras.Model):
 		self.history = []
 		self.metric = []
 		self.epoch = 0
+		self.ranges = None
 
 		self._l_list = []
 		self._l_list.append(tf.keras.layers.Dense(128*2, activation=tf.nn.sigmoid) )
@@ -208,24 +233,35 @@ class NN_precession(tf.keras.Model):
 
 		return loss
 
-	def fit(self, generator, N_epochs, learning_rate = 5e-4, save_output = True, plot_function = None, save_step = 20000, print_step = 10):
+	def fit(self, generator, N_epochs, learning_rate = 5e-4, save_output = True, plot_function = None, checkpoint_step = 20000, print_step = 10, validation_file = None):
 		self.optimizer = tf.keras.optimizers.Adam(learning_rate = learning_rate) #default optimizer
 		epoch_0 = self.epoch
+
+			#initializing the validation file
+		if isinstance(validation_file, str):
+			val_params, val_alpha, val_beta, val_times = load_dataset(validation_file, N_data=None, N_grid = None, shuffle = False, n_params = 6)
+
+		#assigning ranges (if generator has them)
+		try:
+			self.ranges = generator.ranges
+		except:
+			self.range = None
 
 		tf_dataset = tf.data.Dataset.from_generator(
      			generator,
     			output_signature = tf.TensorSpec(shape=(None,9), dtype=tf.float32)
-					).prefetch(tf.data.experimental.AUTOTUNE)
+					)#.prefetch(tf.data.experimental.AUTOTUNE)
 		
 		n_epoch = -1
-		print(N_epochs)
 		for X in tf_dataset:
 			n_epoch +=1
 			if n_epoch >= N_epochs:
-				print("Ciao")
 				break
-			loss = tf.constant(0.)#self.grad_update(X)
 
+				#gradient update
+			loss = self.grad_update(X)
+
+				#user communication, checkpoints and metric
 			if n_epoch % print_step == 0: #saving history
 				self.epoch = epoch_0 + n_epoch
 				self.history.append((self.epoch, loss.numpy()))
@@ -235,18 +271,20 @@ class NN_precession(tf.keras.Model):
 					np.savetxt(self.name+"/"+self.name+".loss", np.array(self.history))
 					np.savetxt(self.name+"/"+self.name+".metric", np.array(self.metric))
 
-			if n_epoch == 0: continue
-
-			if save_output:
-				if n_epoch%save_step ==0: #computing metric loss
-					metric = 0.
-					self.metric.append((self.epoch, 0.))
-					print("\tMetric: {} {}".format(self.metric[-1][0],self.metric[-1][1]))
-
+			if n_epoch%checkpoint_step ==0 and n_epoch != 0:
+				if save_output:
 					self.save_weights("{}/{}/{}".format(self.name, str(self.epoch), self.name)) #saving to arxiv
-					if plot_function is not None:
-						plot_function(self, "{}/{}".format(self.name, str(self.epoch)))
+
+				if plot_function is not None:
+					plot_function(self, "{}/{}".format(self.name, str(self.epoch)))
 						
+				if isinstance(validation_file, str): #computing validation metric
+					val_alpha_NN, val_beta_NN = self.get_alpha_beta(*val_params.T,val_times)
+					loss_alpha = np.mean(np.square(val_alpha_NN- val_alpha))
+					loss_beta = np.mean(np.square(val_beta_NN- val_beta))
+
+					self.metric.append((self.epoch, loss_alpha, loss_beta))
+					print("\tMetric: {} {} {}".format(self.metric[-1][0],self.metric[-1][1], self.metric[-1][2]))
 					
 		return self.history
 
@@ -268,6 +306,63 @@ class NN_precession(tf.keras.Model):
 
 		return
 
+	def get_alpha_beta(self,q, chi1, chi2, theta1, theta2, delta_phi, times):
+		#do it better
+		X = np.column_stack( [q, chi1, chi2, theta1, theta2, delta_phi]) #(N,6)
+
+		if X.ndim == 1:
+			X = X[None,:]
+
+		N = X.shape[0]
+		alpha = np.zeros((N , len(times)))
+		beta = np.zeros((N, len(times)))
+
+		for i in range(len(times)):
+			t = np.repeat([times[i]], N)[:,None]
+			X_tf = np.concatenate([t,X],axis =1)
+			X_tf = tf.convert_to_tensor(X_tf, dtype=tf.float32)		
+			alpha_beta = self.__call__(X_tf) #(N,2)
+			alpha[:,i] = alpha_beta[:,0]
+			beta[:,i] = alpha_beta[:,1]
+
+		return alpha, beta
+
+
+def plot_solution(model, N_sol, t_min,   seed, folder = ".", show = False):
+	state = np.random.get_state()
+	np.random.seed(seed)
+	try:
+		params = np.random.uniform(model.ranges[:,0], model.ranges[:,1], size = (N_sol,6))
+	except:
+		ranges = np.array([(1.1,10.), (0.,1.), (0.,1.), (0., np.pi), (0., np.pi), (0., 2.*np.pi)])		
+		params = np.random.uniform(ranges[:,0], ranges[:,1], size = (N_sol,6))
+
+	np.random.set_state(state) #using original random state
+	times = np.linspace(-np.abs(t_min), 0.,1000) #(D,)
+
+	alpha, beta = get_alpha_beta(*params.T, times, verbose = False) #true alpha and beta
+	NN_alpha, NN_beta = model.get_alpha_beta(*params.T,times) #(N,D)
+
+		#plotting
+	plt.figure()
+	plt.xlabel("times (s/M_sun)")
+	plt.ylabel(r"$\alpha$")
+	plt.plot(times, NN_alpha.T, c = 'r')
+	plt.plot(times, alpha.T, c= 'b')
+	plt.savefig(folder+"/alpha.pdf", transparent =True)
+
+	plt.figure()
+	plt.xlabel("times (s/M_sun)")
+	plt.ylabel(r"$\beta$")
+	plt.plot(times, NN_beta.T, c= 'r')
+	plt.plot(times, beta.T, c= 'b')
+	plt.savefig(folder+"/beta.pdf", transparent =True)
+
+
+	if show:
+		plt.show()
+	else:
+		plt.close('all')
 
 
 
@@ -317,9 +412,6 @@ create_dataset_alpha_beta
 		np.savetxt(filebuff, time_header, header = "#Alpha, Beta dataset" +"\n# row: params (None,6) | alpha (None,"+str(N_grid)+")| beta (None,"+str(N_grid)+")\n# N_grid = "+str(N_grid)+" | tau_min ="+str(tau_min)+" | q_range = "+str(q_range)+" | chi1_range = "+str(chi1_range)+" | chi2_range = "+str(chi2_range)+" | theta1_range = "+str(theta1_range)+" | theta2_range = "+str(theta2_range)+" | delta_phi_range = "+str(delta_phi_range), newline = '\n')
 	else:
 		filebuff = open(filename,'a')
-	#computing an approximate r_0 as a function of tau_min
-	M_sun = 4.93e-6
-	r_0 = 2.5 * np.power(tau_min/M_sun, .25) #look eq. 4.26 Maggiore
 	
 	#deal with the case in which ranges are not tuples
 	for i, r in enumerate(range_list):
@@ -346,7 +438,7 @@ create_dataset_alpha_beta
 		params = np.random.uniform(lower_limits, upper_limits, (N, len(range_list))) #(N,6) #parameters to generate the angles at
 		count += N
 
-		alpha, beta = get_alpha_beta(*params.T, r_0, time_grid, False)
+		alpha, beta = get_alpha_beta(*params.T, time_grid, False)
 		to_save = np.concatenate([params, alpha, beta], axis = 1)
 		np.savetxt(filebuff, to_save) #saving the batch to file
 		print("Generated angle: ", count)
