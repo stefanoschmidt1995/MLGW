@@ -284,7 +284,7 @@ class NN_precession(tf.keras.Model):
 					loss_beta = np.mean(np.square(val_beta_NN- val_beta))
 
 					self.metric.append((self.epoch, loss_alpha, loss_beta))
-					print("\tMetric: {} {} {}".format(self.metric[-1][0],self.metric[-1][1], self.metric[-1][2]))
+					print("\tMetric: {} {} {} ".format(self.metric[-1][0],self.metric[-1][1], self.metric[-1][2]))
 					
 		return self.history
 
