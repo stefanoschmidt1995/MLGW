@@ -62,10 +62,10 @@ get_alpha_beta
 	else:
 		squeeze = False
 
-	#simple model
-	alpha = np.einsum('i,j',times,q + chi1 + chi2 + theta1 + theta2 + delta_phi).T
-	beta = np.einsum('i,j',times, q - chi1 - chi2 + theta1 + theta2 + delta_phi).T
-	return np.squeeze(alpha), np.squeeze(beta) #DEBUG
+	#simple model (just for debugging)
+	#alpha = np.einsum('i,j',times,q + chi1 + chi2 + theta1 + theta2 + delta_phi).T
+	#beta = np.einsum('i,j',times, q - chi1 - chi2 + theta1 + theta2 + delta_phi).T
+	#return np.squeeze(alpha), np.squeeze(beta) #DEBUG
 
 		#initializing vectors
 	alpha = np.zeros((q.shape[0],times.shape[0]))
@@ -194,13 +194,12 @@ class NN_precession(tf.keras.Model):
 		self.metric = []
 		self.epoch = 0
 		self.ranges = None
-		#self.scaling_consts = tf.constant([10000., np.pi], dtype = tf.float32) #scaling constants for the loss function (set by hand, kind of)
-		self.scaling_consts = tf.constant([1., 1.], dtype = tf.float32)
+		self.scaling_consts = tf.constant([10000., np.pi], dtype = tf.float32) #scaling constants for the loss function (set by hand, kind of)
 
 		self._l_list = []
-		#self._l_list.append(tf.keras.layers.Dense(128*4, activation=tf.nn.sigmoid) )
-		#self._l_list.append(tf.keras.layers.Dense(128*2, activation=tf.nn.sigmoid) )
-		self._l_list.append(tf.keras.layers.Dense(128, activation=tf.nn.sigmoid) )
+		self._l_list.append(tf.keras.layers.Dense(128*4, activation=tf.nn.sigmoid) )
+		self._l_list.append(tf.keras.layers.Dense(128*2, activation=tf.nn.sigmoid) )
+		#self._l_list.append(tf.keras.layers.Dense(128, activation=tf.nn.sigmoid) )
 		self._l_list.append(tf.keras.layers.Dense(2, activation=tf.keras.activations.linear)) #outputs: alpha, beta
 
 		self.optimizer = tf.keras.optimizers.Adam(learning_rate = 1e-3) #default optimizer
@@ -260,7 +259,7 @@ class NN_precession(tf.keras.Model):
 		tf_dataset = tf.data.Dataset.from_generator(
      			generator,
     			output_signature = tf.TensorSpec(shape=(None,9), dtype=tf.float32)
-					)#.prefetch(tf.data.experimental.AUTOTUNE)
+					)#.prefetch(tf.data.experimental.AUTOTUNE) #good idea?? Probably yes
 		
 		n_epoch = -1
 		for X in tf_dataset:
@@ -283,7 +282,7 @@ class NN_precession(tf.keras.Model):
 
 			if n_epoch%checkpoint_step ==0 and n_epoch != 0:
 				if save_output:
-					self.save_weights("{}/{}/{}".format(self.name, str(self.epoch), self.name)) #saving to arxiv
+					self.save_weights("{}/{}/{}".format(self.name, str(self.epoch), self.name)) #saving to an archive
 
 				if plot_function is not None:
 					plot_function(self, "{}/{}".format(self.name, str(self.epoch)))
@@ -302,6 +301,7 @@ class NN_precession(tf.keras.Model):
 		"Loads model and tries to read metric and loss"
 		print("Loading model from: ",path)
 		self.load_weights(path)
+		print(path)
 		try:
 			self.history = np.loadtxt(path+".loss").tolist()
 			self.epoch = int(self.history[-1][0])
