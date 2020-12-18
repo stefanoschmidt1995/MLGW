@@ -62,6 +62,11 @@ get_alpha_beta
 	else:
 		squeeze = False
 
+	#simple model
+	alpha = np.einsum('i,j',times,q + chi1 + chi2 + theta1 + theta2 + delta_phi).T
+	beta = np.einsum('i,j',times, q - chi1 - chi2 + theta1 + theta2 + delta_phi).T
+	return np.squeeze(alpha), np.squeeze(beta) #DEBUG
+
 		#initializing vectors
 	alpha = np.zeros((q.shape[0],times.shape[0]))
 	beta = np.zeros((q.shape[0],times.shape[0]))
@@ -189,9 +194,12 @@ class NN_precession(tf.keras.Model):
 		self.metric = []
 		self.epoch = 0
 		self.ranges = None
+		#self.scaling_consts = tf.constant([10000., np.pi], dtype = tf.float32) #scaling constants for the loss function (set by hand, kind of)
+		self.scaling_consts = tf.constant([1., 1.], dtype = tf.float32)
 
 		self._l_list = []
-		self._l_list.append(tf.keras.layers.Dense(128*2, activation=tf.nn.sigmoid) )
+		#self._l_list.append(tf.keras.layers.Dense(128*4, activation=tf.nn.sigmoid) )
+		#self._l_list.append(tf.keras.layers.Dense(128*2, activation=tf.nn.sigmoid) )
 		self._l_list.append(tf.keras.layers.Dense(128, activation=tf.nn.sigmoid) )
 		self._l_list.append(tf.keras.layers.Dense(2, activation=tf.keras.activations.linear)) #outputs: alpha, beta
 
@@ -218,10 +226,12 @@ class NN_precession(tf.keras.Model):
 		Input should be tensorflow only.
 		"""
 		loss = tf.math.square(self.__call__(X[:,:7]) - X[:,7:]) #(N,2)
+		loss = tf.math.divide(loss,self.scaling_consts)
 		loss = tf.reduce_sum(loss, axis = 1) /X.shape[1] #(N,)
 		return loss
 
-	@tf.function#(jit_compile=True) #very useful for speed up
+		#for jit_compil you must first install: pip install tf-nightly
+	@tf.function(jit_compile=True) #very useful for speed up
 	def grad_update(self, X):
 		"Input should be tensorflow only."
 		with tf.GradientTape() as g:
@@ -280,8 +290,8 @@ class NN_precession(tf.keras.Model):
 						
 				if isinstance(validation_file, str): #computing validation metric
 					val_alpha_NN, val_beta_NN = self.get_alpha_beta(*val_params.T,val_times)
-					loss_alpha = np.mean(np.square(val_alpha_NN- val_alpha))
-					loss_beta = np.mean(np.square(val_beta_NN- val_beta))
+					loss_alpha = np.mean(np.divide(np.abs(val_alpha_NN- val_alpha),val_alpha))
+					loss_beta = np.mean(np.divide(np.abs(val_beta_NN- val_beta),val_beta))
 
 					self.metric.append((self.epoch, loss_alpha, loss_beta))
 					print("\tMetric: {} {} {} ".format(self.metric[-1][0],self.metric[-1][1], self.metric[-1][2]))
