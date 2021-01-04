@@ -12,6 +12,7 @@ import numpy as np
 import precession
 import os
 import sys
+import warnings
 import matplotlib.pyplot as plt
 sys.path.insert(0,'../../mlgw_v2') #this should be removed eventually
 from GW_helper import *
@@ -62,11 +63,6 @@ get_alpha_beta
 	else:
 		squeeze = False
 
-	#simple model (just for debugging)
-	#alpha = np.einsum('i,j',times,q + chi1 + chi2 + theta1 + theta2 + delta_phi).T
-	#beta = np.einsum('i,j',times, q - chi1 - chi2 + theta1 + theta2 + delta_phi).T
-	#return np.squeeze(alpha), np.squeeze(beta) #DEBUG
-
 		#initializing vectors
 	alpha = np.zeros((q.shape[0],times.shape[0]))
 	beta = np.zeros((q.shape[0],times.shape[0]))
@@ -107,8 +103,8 @@ get_alpha_beta
 		beta[i,:] = np.interp(times, (t-t[-1])*M_sun, temp_beta)
 	
 	if not verbose:
-		devnull.close()
 		sys.stdout = old_stdout
+		devnull.close()
 
 	if squeeze:
 		return np.squeeze(alpha), np.squeeze(beta)
@@ -194,12 +190,12 @@ class NN_precession(tf.keras.Model):
 		self.metric = []
 		self.epoch = 0
 		self.ranges = None
-		self.scaling_consts = tf.constant([10000., np.pi], dtype = tf.float32) #scaling constants for the loss function (set by hand, kind of)
+		self.scaling_consts = tf.constant([1e10, 1.], dtype = tf.float32) #scaling constants for the loss function (set by hand, kind of)
 
 		self._l_list = []
+		self._l_list.append(tf.keras.layers.Dense(128*6, activation=tf.nn.sigmoid) )
 		self._l_list.append(tf.keras.layers.Dense(128*4, activation=tf.nn.sigmoid) )
 		self._l_list.append(tf.keras.layers.Dense(128*2, activation=tf.nn.sigmoid) )
-		#self._l_list.append(tf.keras.layers.Dense(128, activation=tf.nn.sigmoid) )
 		self._l_list.append(tf.keras.layers.Dense(2, activation=tf.keras.activations.linear)) #outputs: alpha, beta
 
 		self.optimizer = tf.keras.optimizers.Adam(learning_rate = 1e-3) #default optimizer
@@ -332,8 +328,8 @@ class NN_precession(tf.keras.Model):
 			X_tf = np.concatenate([t,X],axis =1)
 			X_tf = tf.convert_to_tensor(X_tf, dtype=tf.float32)		
 			alpha_beta = self.__call__(X_tf) #(N,2)
-			alpha[:,i] = alpha_beta[:,0]
-			beta[:,i] = alpha_beta[:,1]
+			alpha[:,i] = alpha_beta[:,0] 
+			beta[:,i] = alpha_beta[:,1] 
 
 		return alpha, beta
 
@@ -359,14 +355,16 @@ def plot_solution(model, N_sol, t_min,   seed, folder = ".", show = False):
 	plt.ylabel(r"$\alpha$")
 	plt.plot(times, NN_alpha.T, c = 'r')
 	plt.plot(times, alpha.T, c= 'b')
-	plt.savefig(folder+"/alpha.pdf", transparent =True)
+	if isinstance(folder, str):
+		plt.savefig(folder+"/alpha.pdf", transparent =True)
 
 	plt.figure()
 	plt.xlabel("times (s/M_sun)")
 	plt.ylabel(r"$\beta$")
 	plt.plot(times, NN_beta.T, c= 'r')
 	plt.plot(times, beta.T, c= 'b')
-	plt.savefig(folder+"/beta.pdf", transparent =True)
+	if isinstance(folder, str):
+		plt.savefig(folder+"/beta.pdf", transparent =True)
 
 
 	if show:

@@ -10,16 +10,16 @@ from ML_routines import *
 
 #alpha, beta = get_alpha_beta(1.4, .4, .14, .75, 1.34, 3., 500., times)
 
-create_dataset_alpha_beta(N_angles = 100, "validation_angles.dat", N_grid = 500, tau_min = 20., (1.1,10.))
+#create_dataset_alpha_beta(N_angles = 100, "validation_angles.dat", N_grid = 500, tau_min = 20., (1.1,10.))
 
-quit()
-#params, alpha, beta, times = load_dataset("angles_dataset.dat", N_data = 500, n_params = 6)
+#quit()
+params, alpha, beta, times = load_dataset("starting_dataset.dat", N_data = 1000, n_params = 6)
 
 print("DATA LOADED")
-beta = beta[:,::4] #downsampling
+beta = alpha
 train_p, test_p, train_beta, test_beta = make_set_split(params, beta)
 
-K_max = 100
+K_max = 10
 PCA_beta = PCA_model()
 print("fitting", beta.shape)
 E_beta = PCA_beta.fit_model(train_beta, K_max, scale_PC=True)
@@ -32,10 +32,16 @@ for k in range(K_max):
 	rec_test_beta = PCA_beta.reconstruct_data(red_approx_test_beta) #(N,D)
 	mse = np.sum(np.square(rec_test_beta- test_beta))/(beta.shape[0]*beta.shape[1])
 	mse_list.append(mse)
-	print(mse)
-	if k == 99:
-		plt.plot(rec_test_beta.T)
-		plt.plot(test_beta.T)
+	print("mse(k): ",k,mse)
+
+	if k == 10:
+		plt.title("Test")
+		to_plot = test_beta.T/rec_test_beta.T -1.
+		to_plot_fft = np.fft.rfft(to_plot)
+		#plt.plot(np.abs(to_plot[:,:10]))
+
+		plt.plot(times,rec_test_beta[:10,:].T)
+		plt.plot(times,test_beta[:10,:].T)
 		plt.show()
 
 
@@ -46,7 +52,7 @@ plt.yscale('log')
 
 
 plt.figure()
-plt.plot(times, alpha.T[:,:100]- alpha.T[0,:100])
+plt.plot(times, alpha.T[:,:100])#- alpha.T[0,:100])
 
 plt.figure()
 plt.plot(times[::4], beta.T[:,:100])
