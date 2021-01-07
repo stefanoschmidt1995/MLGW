@@ -25,11 +25,11 @@ def unwrap_general(p, discont=np.pi, modulo = 2*np.pi, axis=-1):
 
 #alpha, beta = get_alpha_beta(1.4, .4, .14, .75, 1.34, 3., 500., times)
 
-#create_dataset_alpha_beta(50, "angles.dat", 10000, 1000, (1.1,10.))
+create_dataset_alpha_beta(50, "try.dat", 10000, 1000, (1.1,10.), verbose = True)
 
-params, alpha, beta, times = load_dataset("validation_angles.dat", n_params = 6, N_data = 10)
+params, alpha, beta, times = load_dataset("try.dat", n_params = 6, N_data = 10)
 
-print(times)
+print(params)
 
 #alpha_unwrap = unwrap_general(alpha, modulo = 0.1)
 #beta_unwrap = unwrap_general(beta, modulo = 0.001)

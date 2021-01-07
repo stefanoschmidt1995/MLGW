@@ -180,6 +180,58 @@ GW_generator
 
 		return
 
+	def _get_precessing_params(self, m1, m2, s1, s2):
+		"""
+		Given the two masses and (dimensionless) spins, it computes the angles between the two spins and the orbital angular momentum (theta1, theta2) and the angle between the projections of the two spins onto the orbital plane (delta_Phi). Please, refer to eqs. (1-4) of https://arxiv.org/abs/1605.01067.
+		Spins must be in the L frame, in which the orbital angular momentum has only the z compoment; they are evaluated when at a given orbital frequency f = 20 Hz (????????????????????????? check better here)
+		Returns the six variables (i.e. q, chi1, chi2, theta1, theta2, delta_Phi) useful for reconstructing precession angles alpha and beta with the NN.
+		Assumes that always (m1>m2)
+		Inputs:
+			m1 ()/(N,)			mass of BH 1
+			m2 ()/(N,)			mass of BH 2
+			s1 (3,)/(N,3)		(dimensionless) spin components of BH 1			
+			s2 (3,)/(N,3)		(dimensionless) spin components of BH 2
+		Ouput:
+			q ()/(N,)				mass ratio (>1)
+			chi1 ()/(N,)			dimensionless spin 1 magnitude
+			chi2 ()/(N,)			dimensionless spin 1 magnitude
+			theta1 ()/(N,)			angle between spin 1 and the orbital angular momentum
+			theta2 ()/(N,)			angle between spin 2 and the orbital angular momentum
+			delta_Phi ()/(N,)		angle between the projections of the two spins onto the orbital plane
+		"""
+		if s1.ndim == s2.ndim == 1:
+			if not (m1.ndim == m2.ndim == 0):
+				raise RuntimeError("Shape of m1,m2 is inconsistent with shape of spins: expected 0 dim array.")
+			s1 = s1[None,:] #(1,3)
+			s2 = s2[None,:]	#(1,3)
+			m1 = m1[None]
+			m2 = m2[None]
+			squeeze = True
+		else:
+			squeeze = False
+			
+		if not (s1.shape[1] == s2.shape[1] ==3):
+			raise RuntimeError("Spin vectors must have 3 components! Instead they have {} and {} components".format(s1.shape[1], s2.shape[1]))
+		
+		
+		chi1 = np.linalg.norm(s1,axis = 1) #(N,)
+		chi2 = np.linalg.norm(s2,axis = 1) #(N,)
+		theta1 = np.arccos(s1[:,2]/chi1)
+		theta2 = np.arccos(s2[:,2]/chi2)
+		L = np.array([0.,0.,1.])
+		
+		plane_1 = np.array([s1[:,1], -s1[:,0],0.]) #s1xL
+		plane_2 = np.array([s2[:,1], -s2[:,0],0.])
+		sign = np.sign(np.cross(plane_1,plane_2)[:,2]) #(N,) #computing the sign
+		
+		plane_1 = plane_1 / np.linalg.norm(plane_1, axis =1) #(N,3)
+		plane_2 = plane_2 / np.linalg.norm(plane_2, axis =1) #(N,3)
+		delta_Phi = np.arccos(np.sum(np.multiply(plane_1,plane_2), axis =1)) #(N,)
+
+		delta_Phi = np.multiply(delta_Phi, sign) #(N,) #setting the right sign
+		
+		return m1/m2, chi1, chi2, theta1, theta2, delta_Phi
+		
 	def summary(self, filename = None):
 		"""
 	summary
@@ -235,9 +287,9 @@ GW_generator
 		Input:
 			t_grid	(N_grid,)		Grid of (physical) time points to evaluate the wave at
 			m1	()/(N,)				Mass of BH 1
-			m2	()/(N,)				Mass of BH 1
+			m2	()/(N,)				Mass of BH 2
 			spin1_x/y/z	()/(N,)		Each variable represents a spin component of BH 1
-			spin2_x/y/z				Each variable represents a spin component of BH 1
+			spin2_x/y/z				Each variable represents a spin component of BH 2
 			D_L	()/(N,)				Luminosity distance
 			i ()/(N,)				Inclination
 			phi_0 ()/(N,)			Reference phase for the wave

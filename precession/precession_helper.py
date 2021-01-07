@@ -14,7 +14,7 @@ import os
 import sys
 import warnings
 import matplotlib.pyplot as plt
-sys.path.insert(0,'../../mlgw_v2') #this should be removed eventually
+sys.path.insert(0,'../mlgw_v2') #this should be removed eventually
 from GW_helper import *
 try:
 	import silence_tensorflow.auto #awsome!!!! :)
@@ -90,7 +90,7 @@ get_alpha_beta
 
 		J_vec,L_vec,S1_vec,S2_vec,S_vec = precession.Jframe_projection(xi, S, J, q_, S1, S2, r_0) #initial conditions given angles
 
-		r_f = 1.*M
+		r_f = 1.* M #final separation: time grid is s.t. t = 0 when r = r_f
 		sep = np.linspace(r_0, r_f, 5000)
 
 		Lx, Ly, Lz, S1x, S1y, S1z, S2x, S2y, S2z, t = precession.orbit_vectors(*L_vec, *S1_vec, *S2_vec, sep, q_, time = True) #time evolution of L, S1, S2
@@ -190,7 +190,7 @@ class NN_precession(tf.keras.Model):
 		self.metric = []
 		self.epoch = 0
 		self.ranges = None
-		self.scaling_consts = tf.constant([1e10, 1.], dtype = tf.float32) #scaling constants for the loss function (set by hand, kind of)
+		self.scaling_consts = tf.constant([1e10, 1.], dtype = tf.float32) #scaling constants for the loss function (set by hand, kind of) #only beta
 
 		self._l_list = []
 		self._l_list.append(tf.keras.layers.Dense(128*6, activation=tf.nn.sigmoid) )
@@ -221,7 +221,7 @@ class NN_precession(tf.keras.Model):
 		Input should be tensorflow only.
 		"""
 		loss = tf.math.square(self.__call__(X[:,:7]) - X[:,7:]) #(N,2)
-		loss = tf.math.divide(loss,self.scaling_consts)
+		loss = tf.math.divide(loss, self.scaling_consts)
 		loss = tf.reduce_sum(loss, axis = 1) /X.shape[1] #(N,)
 		return loss
 
@@ -379,7 +379,7 @@ def plot_solution(model, N_sol, t_min,   seed, folder = ".", show = False):
 ###############################################################################################################
 ###############################################################################################################
 ###############################################################################################################
-def create_dataset_alpha_beta(N_angles, filename, N_grid, tau_min, q_range, chi1_range= (0.,1.), chi2_range = (0.,1.), theta1_range = (0., np.pi), theta2_range = (0., np.pi), delta_phi_range = (-np.pi, np.pi) ):
+def create_dataset_alpha_beta(N_angles, filename, N_grid, tau_min, q_range, chi1_range= (0.,1.), chi2_range = (0.,1.), theta1_range = (0., np.pi), theta2_range = (0., np.pi), delta_phi_range = (-np.pi, np.pi), verbose = False ):
 	"""
 create_dataset_alpha_beta
 =========================
@@ -403,6 +403,7 @@ create_dataset_alpha_beta
 		theta1_range		Tuple of values for the range in which to draw the angles between spin 1 and L. If a single value, theta1 is fixed
 		theta2_range		Tuple of values for the range in which to draw the angles between spin 2 and L. If a single value, theta2 is fixed
 		delta_phi_range		Tuple of values for the range in which to draw the angles between the in-plane components of the spins. If a single value, delta_phi_range is fixed
+		verbose				Whether to print the output to screen
 	"""
 	if not isinstance(N_grid, int):
 		raise TypeError("N_grid is "+str(type(N_grid))+"! Expected to be a int.")
@@ -446,7 +447,7 @@ create_dataset_alpha_beta
 		params = np.random.uniform(lower_limits, upper_limits, (N, len(range_list))) #(N,6) #parameters to generate the angles at
 		count += N
 
-		alpha, beta = get_alpha_beta(*params.T, time_grid, False)
+		alpha, beta = get_alpha_beta(*params.T, time_grid, verbose)
 		to_save = np.concatenate([params, alpha, beta], axis = 1)
 		np.savetxt(filebuff, to_save) #saving the batch to file
 		print("Generated angle: ", count)
