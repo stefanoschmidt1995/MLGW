@@ -12,16 +12,18 @@ import tensorflow as tf
 #quit()
 
 ranges = np.array([(1.1,10.), (0.,1.), (0.,1.), (0., np.pi), (0., np.pi), (0., 2.*np.pi)])
-dataset_generator = angle_generator(t_min = 10., N_times = 150, ranges = ranges, N_batch = 400, replace_step = 5, load_file = "starting_dataset.dat")
+dataset_generator = angle_generator(t_min = 10., N_times = 500, ranges = ranges, N_batch = 10, replace_step = None, load_file = "validation_angles.dat")
+#, load_file = "starting_dataset.dat")
 
 def plot(model, folder):
-	return plot_solution(model, 10, 10., 1995, folder = folder, show = False)
+	return plot_validation_set(model, 10, "validation_angles.dat",folder = folder, show= False)
+	#return plot_solution(model, 10, 10., 1995, folder = folder, show = False)
 
 model = NN_precession("NN_beta")
 model.summary()
 
 
-model.fit(dataset_generator, N_epochs = int(1e9),  learning_rate = 1e-3, save_output = True, plot_function = plot, checkpoint_step = 2000, print_step = 100, validation_file = "validation_angles.dat")
+model.fit(dataset_generator, N_epochs = int(1e9),  learning_rate = 1e-3, save_output = True, plot_function = plot, checkpoint_step = 1000, print_step = 100, validation_file = "validation_angles.dat")
 
 quit()
 model.load_everything("NN_angles/NN_angles")

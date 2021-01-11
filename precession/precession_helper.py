@@ -86,12 +86,14 @@ get_alpha_beta
 		#old_stdout.write("Generated angle "+str(i)+"\n")
 		#old_stdout.flush()
 
-		xi,J, S = precession.from_the_angles(theta1[i],theta2[i], delta_phi[i], q_, S1,S2, r_0) 
-
+		xi,J, S = precession.from_the_angles(theta1[i],theta2[i], delta_phi[i], q_, S1,S2, r_0)
+		
 		J_vec,L_vec,S1_vec,S2_vec,S_vec = precession.Jframe_projection(xi, S, J, q_, S1, S2, r_0) #initial conditions given angles
 
 		r_f = 1.* M #final separation: time grid is s.t. t = 0 when r = r_f
 		sep = np.linspace(r_0, r_f, 5000)
+
+		#J = precession.evolve_J(xi,J, sep, q_, S1,S2) #precession avg evolution
 
 		Lx, Ly, Lz, S1x, S1y, S1z, S2x, S2y, S2z, t = precession.orbit_vectors(*L_vec, *S1_vec, *S2_vec, sep, q_, time = True) #time evolution of L, S1, S2
 		L = np.sqrt(Lx**2 + Ly**2 + Lz**2)
@@ -169,7 +171,9 @@ class angle_generator():
 		j = 0 #keeps track of the iteration number, to know when to replace the data
 		while True:
 			yield self.dataset
-			if j % self.replace_step == 0 and j !=0:
+			if not isinstance(self.replace_step, int):
+				continue
+			elif j % self.replace_step == 0 and j !=0:
 				if i== (self.N_batch-1):
 					i =0
 				else:
@@ -193,9 +197,8 @@ class NN_precession(tf.keras.Model):
 		self.scaling_consts = tf.constant([1e10, 1.], dtype = tf.float32) #scaling constants for the loss function (set by hand, kind of) #only beta
 
 		self._l_list = []
-		self._l_list.append(tf.keras.layers.Dense(128*6, activation=tf.nn.sigmoid) )
-		self._l_list.append(tf.keras.layers.Dense(128*4, activation=tf.nn.sigmoid) )
-		self._l_list.append(tf.keras.layers.Dense(128*2, activation=tf.nn.sigmoid) )
+		self._l_list.append(tf.keras.layers.Dense(128*4, activation=tf.nn.tanh) )
+		self._l_list.append(tf.keras.layers.Dense(128*2, activation=tf.nn.tanh) )
 		self._l_list.append(tf.keras.layers.Dense(2, activation=tf.keras.activations.linear)) #outputs: alpha, beta
 
 		self.optimizer = tf.keras.optimizers.Adam(learning_rate = 1e-3) #default optimizer
@@ -373,7 +376,32 @@ def plot_solution(model, N_sol, t_min,   seed, folder = ".", show = False):
 		plt.close('all')
 
 
+def plot_validation_set(model, N_sol, validation_file, folder = ".", show = False):
+	params, alpha, beta, times = load_dataset(validation_file, N_data=N_sol, N_grid = None, shuffle = False, n_params = 6)
+	NN_alpha, NN_beta = model.get_alpha_beta(*params.T,times) #(N,D)
 
+		#plotting
+	plt.figure()
+	plt.xlabel("times (s/M_sun)")
+	plt.ylabel(r"$\alpha$")
+	plt.plot(times, NN_alpha.T, c = 'r')
+	plt.plot(times, alpha.T, c= 'b')
+	if isinstance(folder, str):
+		plt.savefig(folder+"/alpha.pdf", transparent =True)
+
+	plt.figure()
+	plt.xlabel("times (s/M_sun)")
+	plt.ylabel(r"$\beta$")
+	plt.plot(times, NN_beta.T, c= 'r')
+	plt.plot(times, beta.T, c= 'b')
+	if isinstance(folder, str):
+		plt.savefig(folder+"/beta.pdf", transparent =True)
+
+
+	if show:
+		plt.show()
+	else:
+		plt.close('all')
 
 
 ###############################################################################################################

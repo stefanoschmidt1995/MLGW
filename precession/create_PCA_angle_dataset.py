@@ -16,7 +16,7 @@ from ML_routines import *
 params, alpha, beta, times = load_dataset("starting_dataset.dat", N_data = 1000, n_params = 6)
 
 print("DATA LOADED")
-beta = alpha
+beta = beta
 train_p, test_p, train_beta, test_beta = make_set_split(params, beta)
 
 K_max = 10
@@ -26,12 +26,13 @@ E_beta = PCA_beta.fit_model(train_beta, K_max, scale_PC=True)
 print("PCA eigenvalues for beta: ", E_beta)
 red_true_test_beta = PCA_beta.reduce_data(test_beta)
 red_approx_test_beta = np.zeros(red_true_test_beta.shape)
-mse_list = []
+mse_list = [0 for i in range(K_max)]
 for k in range(K_max):
+	break
 	red_approx_test_beta[:,k] = red_true_test_beta[:,k] 
 	rec_test_beta = PCA_beta.reconstruct_data(red_approx_test_beta) #(N,D)
 	mse = np.sum(np.square(rec_test_beta- test_beta))/(beta.shape[0]*beta.shape[1])
-	mse_list.append(mse)
+	mse_list[i] = mse
 	print("mse(k): ",k,mse)
 
 	if k == 10:
@@ -55,7 +56,7 @@ plt.figure()
 plt.plot(times, alpha.T[:,:100])#- alpha.T[0,:100])
 
 plt.figure()
-plt.plot(times[::4], beta.T[:,:100])
+plt.plot(times, beta.T[:,:100])
 
 plt.show()
 
