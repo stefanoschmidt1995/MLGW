@@ -44,7 +44,7 @@ print(setuptools.find_packages())
 
 setup(
     name='mlgw',
-    version='2.0.2',
+    version='2.0.3',
     author='Stefano Schmidt',
     author_email='stefanoschmidt1995@gmail.com',
     packages = setuptools.find_packages(),

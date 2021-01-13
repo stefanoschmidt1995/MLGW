@@ -16,6 +16,8 @@ import warnings
 import matplotlib.pyplot as plt
 sys.path.insert(0,'../mlgw_v2') #this should be removed eventually
 from GW_helper import *
+from tf_stats_loss import tf_wasserstein_loss
+
 try:
 	import silence_tensorflow.auto #awsome!!!! :)
 except:
@@ -229,12 +231,13 @@ class NN_precession(tf.keras.Model):
 		return loss
 
 		#for jit_compil you must first install: pip install tf-nightly
-	@tf.function(jit_compile=True) #very useful for speed up
+	#@tf.function(jit_compile=True) #very useful for speed up
 	def grad_update(self, X):
 		"Input should be tensorflow only."
 		with tf.GradientTape() as g:
 			g.watch(self.trainable_weights)
-			loss = tf.reduce_sum(self.loss(X))/X.shape[0]
+			#loss = tf.reduce_sum(self.loss(X))/X.shape[0]
+			loss = tf_wasserstein_loss(self.__call__(X[:,:7])[:,1], X[:,8] )
 
 		gradients = g.gradient(loss, self.trainable_weights)
 		self.optimizer.apply_gradients(zip(gradients, self.trainable_weights))

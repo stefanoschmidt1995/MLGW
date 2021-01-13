@@ -138,7 +138,8 @@ be accurate, but sometimes slow to generate, see however~\cite{Nagar:2018gnk} fo
 more efficient approach to obtain the dynamics.
 
 The phenomenological waveforms are based on the post-Newtonian formalism and then calibrated 
-to  EOB waveforms and numerical relativity. They tend to be faster than EOB models, but not as accurate \sschmidt{Insert here a citation to support this claim!}.
+to  EOB waveforms and numerical relativity. They usually tend to be faster than EOB models and 
+for this reason are largely employed in data analysis.
 
 Many efforts have been devoted to the task of speeding up the generation of GW signals from 
 EOB families. For example, one lead to the development of \textit{surrogate models}. Surrogate 
@@ -164,7 +165,7 @@ GW signals significantly faster than the original model,
 matching the performances of a Reduced Order Modelling 
 (ROM)~\cite{Purrer:2015tud,Bohe:2016gbl,Purrer:2017str, Field:2013cfa}.  
 At the same time it shows a good agreement with the train model, at the $10^{-3}$ level\footnote{
-As specified later, the mismatch is computed with a flat power spectral density.
+As specified later, the mismatch is always computed with a flat power spectral density.
 } when averaged on the whole parameter space. For simplicity, we focus here only on the 
 dominant $\ell=|m|=2$ quadrupole waveform and we only consider the \textit{aligned spin} case.
 
@@ -190,7 +191,7 @@ The other EOB-based model in use is the~\texttt{SEOBNRv4}~\cite{Taracchini:2013r
 largely employed by the LIGO-Virgo collaboration. This model was calibrated to NR so as to get  
 maximum EOB/NR unfaithfulness at most of $1\%$. However, differently from 
 TEOB~\cite{Nagar:2018zoe} this model in its native implementation is computationally 
-too slow for parameter estimation purposes and it is absolutely necessary 
+too slow for parameter estimation purposes and it is necessary 
 to use its ROM version, ~\texttt{SEOBNRv4\_ROM}~\cite{Bohe:2016gbl}.
 
 We use both \texttt{TEOBResumS\_SM} (in the following simply \texttt{TEOBResumS}) 
@@ -610,7 +611,6 @@ and we report our results in the histogram in Fig.~\ref{fig:F_hist}. The mismatc
 a median mismatch ${\mathcal{F}_m = 5.5 \times {10^{-4}}}$.
 
 When comparing our results with the discrepancies between state-of-the-art EOB waveforms and NR waveforms (see for comparison \cite{Bohe:2016gbl, Nagar:2020pcj}), we see that we obtain a distribution with similar median value but longer tails (i.e. more WFs with either a very small or very large mismatch). However, our results are reported with a flat noise curve, whereas the other discrepancies are quoted with the Advanced LIGO power spectral density: this might be a plausible explaination for the observed differences.
-\sschmidt{Is this explaination ok?}
 %Such results are similar to the discrepancies between state-of-the-art EOB waveforms and NR waveforms~\cite{Bohe:2016gbl, Nagar:2020pcj}. 
 
 To understand better model performances, it is interesting to display the accuracy as a function of the 
@@ -1004,7 +1004,7 @@ larger than the result of Ref.~\cite{LIGOScientific:2018mvr}.
 We built a ready-to-use Machine Learning model which generates the (dominant quadrupole) time-domain gravitational wave 
 signal from a binary Black Hole coalescence in the non precessing case. The code is released as the package \texttt{mlgw}, which is publicly available at 
 \href{https://pypi.org/project/mlgw/}{pypi.org/project/mlgw/} and can be installed with the command \texttt{pip install mlgw}.
-The model consists of a PCA model to reduce the dimensionality of the $\ell=m=2$ mode (decomposed in amplitude and phase). 
+The model consists of a PCA model to reduce the dimensionality of the ${\ell=|m|=2}$ mode (decomposed in amplitude and phase). 
 A regression (a MoE model) is performed to infer a relation from the orbital parameters to the low dimensional representation of the WF.
 
 It is important to stress that our model is very simple (i.e. it has a very little number of trainable parameters and 

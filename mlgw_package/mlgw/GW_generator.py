@@ -106,6 +106,7 @@ GW_generator
 			folder		address to folder in which everything is kept (if None, models must be loaded manually with load())
 		"""
 		self.modes = [] #list of modes (classes mode_generator)
+		self.id_22 = None #index of the 22 mode
 
 		if folder is not None:
 			if type(folder) is int:
@@ -175,11 +176,67 @@ GW_generator
 			lm = self.__extract_mode(folder+mode)
 			if lm is None:
 				continue
+			if lm == (2,2): #saving index of 22 mode
+				self.id_22 = len(self.modes)
 			self.modes.append(mode_generator(lm, folder+mode)) #loads mode_generator
 			print('    Loaded mode {}'.format(lm))
 
 		return
 
+	def __get_precessing_params(self, m1, m2, s1, s2):
+		"""
+	__get_precessing_params
+	=======================
+		Given the two masses and (dimensionless) spins, it computes the angles between the two spins and the orbital angular momentum (theta1, theta2) and the angle between the projections of the two spins onto the orbital plane (delta_Phi). Please, refer to eqs. (1-4) of https://arxiv.org/abs/1605.01067.
+		Spins must be in the L frame, in which the orbital angular momentum has only the z compoment; they are evaluated when at a given orbital frequency f = 20 Hz (????????????????????????? check better here)
+		Returns the six variables (i.e. q, chi1, chi2, theta1, theta2, delta_Phi) useful for reconstructing precession angles alpha and beta with the NN.
+		Assumes that always (m1>m2)
+		Inputs:
+			m1 ()/(N,)			mass of BH 1
+			m2 ()/(N,)			mass of BH 2
+			s1 (3,)/(N,3)		(dimensionless) spin components of BH 1			
+			s2 (3,)/(N,3)		(dimensionless) spin components of BH 2
+		Ouput:
+			q ()/(N,)				mass ratio (>1)
+			chi1 ()/(N,)			dimensionless spin 1 magnitude
+			chi2 ()/(N,)			dimensionless spin 1 magnitude
+			theta1 ()/(N,)			angle between spin 1 and the orbital angular momentum
+			theta2 ()/(N,)			angle between spin 2 and the orbital angular momentum
+			delta_Phi ()/(N,)		angle between the projections of the two spins onto the orbital plane
+		"""
+		if s1.ndim == s2.ndim == 1:
+			if not (m1.ndim == m2.ndim == 0):
+				raise RuntimeError("Shape of m1,m2 is inconsistent with shape of spins: expected 0 dim array.")
+			s1 = s1[None,:] #(1,3)
+			s2 = s2[None,:]	#(1,3)
+			m1 = m1[None]
+			m2 = m2[None]
+			squeeze = True
+		else:
+			squeeze = False
+			
+		if not (s1.shape[1] == s2.shape[1] ==3):
+			raise RuntimeError("Spin vectors must have 3 components! Instead they have {} and {} components".format(s1.shape[1], s2.shape[1]))
+		
+		
+		chi1 = np.linalg.norm(s1,axis = 1) #(N,)
+		chi2 = np.linalg.norm(s2,axis = 1) #(N,)
+		theta1 = np.arccos(s1[:,2]/chi1)
+		theta2 = np.arccos(s2[:,2]/chi2)
+		L = np.array([0.,0.,1.])
+		
+		plane_1 = np.array([s1[:,1], -s1[:,0],0.]) #s1xL
+		plane_2 = np.array([s2[:,1], -s2[:,0],0.])
+		sign = np.sign(np.cross(plane_1,plane_2)[:,2]) #(N,) #computing the sign
+		
+		plane_1 = plane_1 / np.linalg.norm(plane_1, axis =1) #(N,3)
+		plane_2 = plane_2 / np.linalg.norm(plane_2, axis =1) #(N,3)
+		delta_Phi = np.arccos(np.sum(np.multiply(plane_1,plane_2), axis =1)) #(N,)
+
+		delta_Phi = np.multiply(delta_Phi, sign) #(N,) #setting the right sign
+		
+		return m1/m2, chi1, chi2, theta1, theta2, delta_Phi
+		
 	def summary(self, filename = None):
 		"""
 	summary
@@ -235,9 +292,9 @@ GW_generator
 		Input:
 			t_grid	(N_grid,)		Grid of (physical) time points to evaluate the wave at
 			m1	()/(N,)				Mass of BH 1
-			m2	()/(N,)				Mass of BH 1
+			m2	()/(N,)				Mass of BH 2
 			spin1_x/y/z	()/(N,)		Each variable represents a spin component of BH 1
-			spin2_x/y/z				Each variable represents a spin component of BH 1
+			spin2_x/y/z				Each variable represents a spin component of BH 2
 			D_L	()/(N,)				Luminosity distance
 			i ()/(N,)				Inclination
 			phi_0 ()/(N,)			Reference phase for the wave
@@ -275,12 +332,12 @@ GW_generator
 		User might choose which modes are to be included in the WF.
 		Input:
 			theta (N,D)		source parameters to make prediction at
-			t_grid (D',)	a grid in (physical or reduced) time to evaluate the wave at (uses np.interp)
+			t_grid (D',)	a grid in (reduced) time to evaluate the wave at (uses np.interp)
 			modes			list of modes employed for building the WF (if None, every mode available is employed)
 		Ouput:
 			h_plus, h_cross (D,)/(N,D)		desidered polarizations (if it applies)
 		"""
-		if isinstance(modes,tuple):
+		if isinstance(modes,tuple) and modes != (2,2):
 			modes = [modes]
 		theta = np.array(theta) #to ensure user theta is copied into new array
 		if theta.ndim == 1:
@@ -328,6 +385,22 @@ GW_generator
 			return h_plus[0,:], h_cross[0,:] #(D,)
 		return h_plus, h_cross #(N,D)
 
+	def __get_twisted_modes(self, theta, t_grid, modes):
+		"""
+	__get_twisted_modes
+	======================
+		Return the twisted modes of the model, evaluated in the given time grid.
+		The twisted mode depends on angles alpha, beta, gamma and it is performed as in eqs. (17-20) in https://arxiv.org/abs/2005.05338
+		The function returns the real and imaginary part of the twisted mode.
+		Each mode is aligned s.t. the peak of the (untwisted) 22 mode is at t=0
+		Input:
+			theta (N,8)/(8,)	source parameters to make prediction at (m1, m2, s1 (3,), s2 (3,))
+			t_grid (D',)		a grid in (reduced) time to evaluate the wave at (uses np.interp)
+			modes				list (or a single tuple) of modes to be returned (if None, every mode available is employed)
+		Output:
+			real, imag (N, D', K)	real and imaginary part of the K modes required by the user (if mode is a tuple, no third dimension)
+		"""
+
 
 	def __get_WF(self, theta, t_grid, modes):
 		"""
@@ -337,7 +410,7 @@ GW_generator
 		Accepts only input features as [q,s1,s2] or [m1, m2, spin1_z , spin2_z, D_L, inclination, phi_0].
 		Input:
 			theta (N,D)		source parameters to make prediction at (D=7)
-			t_grid (D',)	a grid in (physical or reduced) time to evaluate the wave at (uses np.interp)
+			t_grid (D',)	a grid in (reduced) time to evaluate the wave at (uses np.interp)
 			modes			list of modes employed for building the WF (if None, every mode available is employed)
 		Ouput:
 			h_plus, h_cross (D,)/(N,D)		desidered polarizations (if it applies)
@@ -352,6 +425,16 @@ GW_generator
 
 		h_plus = np.zeros((theta.shape[0],t_grid.shape[0]))
 		h_cross = np.zeros((theta.shape[0],t_grid.shape[0]))
+
+			#if only mode 22 is required, it is treated separately for speed up
+		if modes == (2,2):# or modes == [(2,2)]:
+			amp_22, ph_22 = self.modes[self.id_22].get_mode(theta[:,:4], t_grid, out_type = "ampph")
+			amp_22 =  np.sqrt(5/(4.*np.pi))*np.multiply(amp_22.T, amp_prefactor).T #G/c^2*(M_sun/Mpc) nu *(M/M_sun)/(d_L/Mpc)
+				#setting spherical harmonics by hand
+			c_i = np.cos(theta[:,5]) #(N,)
+			h_p = np.multiply(np.multiply(amp_22.T,np.cos(ph_22.T+2.*theta[:,6])), 0.5*(1+np.square(c_i)) ).T
+			h_c = np.multiply(np.multiply(amp_22.T,np.sin(ph_22.T+2.*theta[:,6])), c_i ).T
+			return h_p, h_c
 
 		if modes is None:
 			modes = self.list_modes()
@@ -373,13 +456,13 @@ GW_generator
 		"""
 	get_modes
 	=========
-		Return the modes in the model, evaluated in a given time grid.
+		Return the modes in the model, evaluated in the given time grid.
 		It can return amplitude and phase or the real and imaginary part.
-		Each mode is aligned s.t. its peak is at t=0
+		Each mode is aligned s.t. the peak of the 22 mode is at t=0
 		Input:
 			theta (N,D)/(D,)	source parameters to make prediction at (D = 3,4)
-			t_grid (D',)		a grid in (physical or reduced) time to evaluate the wave at (uses np.interp)
-			modes				list of modes employed for building the WF (if None, every mode available is employed)
+			t_grid (D',)		a grid in (reduced) time to evaluate the wave at (uses np.interp)
+			modes				list of modes to be returned (if None, every mode available is employed)
 			out_type			whether amplitude and phase ("ampph") or real and imaginary part ("realimag") shall be returned
 		Output:
 			amp, ph (N, D', K)		amplitude and phase of the K modes required by the user (if K =1, no third dimension)

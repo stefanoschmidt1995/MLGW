@@ -159,8 +159,8 @@ create_dataset_TD
 	The dataset consists in 3 parameters theta=(q, spin1z, spin2z) associated to the modes computed in time domain for a grid of N_grid points in the range given by the user.
 	More specifically, data are stored in 3 vectors:
 		theta_vector	vector holding source parameters q, spin1, spin2
-		amp_vector		vector holding amplitudes for each source evaluated at some N_grid equally spaced points
-		ph_vector		vector holding phase for each source evaluated at some N_grid equally spaced points
+		amp_vector		vector holding amplitudes for each source evaluated at some discrete grid points
+		ph_vector		vector holding phase for each source evaluated at some discrete grid points
 	This routine add N_data data to filename if one is specified (if file is not empty it must contain data with the same N_grid); otherwise the datasets are returned as np vectors. 
 	Values of q and m2 as well as spins are drawn randomly in the range given by the user: it holds m1 = q *m2 M_sun.
 	The waveforms are computed with a time step t_step; starting from a time in reduced grid tau min (s/M_Sun). Waves are given in a rescaled time grid (i.e. t/m_tot) with N_grid points: t=0 occurs when the 22 mode has a peak. A higher density of grid points is placed close to the merger.
@@ -616,10 +616,11 @@ def save_dataset(filename, theta_vector, dataset1, dataset, x_grid):
 	return
 
 
-def load_dataset(filename, N_data=None, N_grid = None, shuffle = False):
+def load_dataset(filename, N_data=None, N_grid = None, shuffle = False, n_params = 3):
 	"""
-	Load a GW dataset from file. The file should be suitable for np arrays and have the following structure:
-		theta 3 | amplitudes K | phases K
+	Load a dataset from file. The file should be suitable for np arrays and have the following structure:
+		parameters n_params | entry_1 K | entry_2 K
+	It is suitable for both GW dataset (n_params = 3 and entry_1/2 = amplitude/phase) and for angles dataset (n_params = 6 and entry_1/2 = alpha/beta)
 	The first row hold the frequncy vector.
 	It can shuffle the data if required.
 	Input:
@@ -627,32 +628,34 @@ def load_dataset(filename, N_data=None, N_grid = None, shuffle = False):
 		N_data		number of data to extract (only if data in file are more than N_data) (if None N_data = N)
 		N_grid		number of grid points to evaluate the waves in (Only if N_grid < N_grid_dataset)
 		shuffle		whether to shuffle data
+		n_params	number of columns in the theta_vector
 	Outuput:
-		theta_vector (N_data,3)	vector holding ordered set of parameters used to generate amp_dataset and ph_dataset
-		amp_dataset (N_data,K)	dataset with amplitudes and wave parameters K = (f_high-30)/(f_step*N_grid)
-		ph_dataset (N_data,K)	dataset with phases and wave parameters K = (f_high-30)/(f_step*N_grid)
-		x_grid (K,)				vector holding x_grid at which waves are evaluated (can be frequency or time grid)
+		theta_vector (N_data,n_params)	vector holding ordered set of parameters used to generate amp_dataset and ph_dataset
+		entry1_dataset (N_data,K)		dataset with amplitudes
+		entry2_dataset (N_data,K)		dataset with phases
+		x_grid (K,)						vector holding x_grid at which the entries are evaluated (can be frequency or time grid)
 	"""
+		#here entry1 is amp and entry2 is ph (change it)
 	if N_data is not None:
 		N_data += 1
 	data = np.loadtxt(filename, max_rows = N_data)
 	N = data.shape[0]
-	K = int((data.shape[1]-3)/2)
-	x_grid = data[0,3:3+K] #saving x_grid
+	K = int((data.shape[1]-n_params)/2)
+	x_grid = data[0,n_params:n_params+K] #saving x_grid
 
 	data = data[1:,:] #removing x_grid from full data
 	if shuffle: 	#shuffling if required
 		np.random.shuffle(data)
 
-	theta_vector = data[:,0:3]
-	amp_dataset = data[:,3:3+K]
-	ph_dataset = data[:,3+K:]
+	theta_vector = data[:,0:n_params]
+	amp_dataset = data[:,n_params:n_params+K]
+	ph_dataset = data[:,n_params+K:]
 
 	if N_grid is not None:
 		if ph_dataset.shape[1] < N_grid:
-			print("Not enough grid points ("+str(ph_dataset.shape[1])+") for the required N_grid value ("+str(N_grid)+").\nMaximum number of grid point is taken (but less than N_grid)")
+			warnings.warn("Not enough grid points ("+str(ph_dataset.shape[1])+") for the required N_grid value ("+str(N_grid)+").\nMaximum number of grid point is taken (but less than N_grid)")
 			N_grid = ph_dataset.shape[1]
-		indices = np.arange(0, ph_dataset.shape[1], int(ph_dataset.shape[1]/N_grid)).astype(int)
+		indices = np.random.choice(range(ph_dataset.shape[1]), size = (N_grid,), replace = False)
 		x_grid = x_grid[indices]
 		ph_dataset = ph_dataset[:,indices]
 		amp_dataset = amp_dataset[:,indices]

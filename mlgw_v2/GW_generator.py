@@ -22,6 +22,8 @@ from EM_MoE import *			#MoE model
 from ML_routines import *		#PCA model
 from scipy.special import factorial as fact
 
+import matplotlib.pyplot as plt #DEBUG
+
 warnings.simplefilter("always", UserWarning) #always print a UserWarning message ??
 
 #############DEBUG PROFILING
@@ -106,7 +108,7 @@ GW_generator
 			folder		address to folder in which everything is kept (if None, models must be loaded manually with load())
 		"""
 		self.modes = [] #list of modes (classes mode_generator)
-		self.id_22 = None #index of the 22 mode
+		self.mode_dict = {}
 
 		if folder is not None:
 			if type(folder) is int:
@@ -176,9 +178,10 @@ GW_generator
 			lm = self.__extract_mode(folder+mode)
 			if lm is None:
 				continue
-			if lm == (2,2): #saving index of 22 mode
-				self.id_22 = len(self.modes)
-			self.modes.append(mode_generator(lm, folder+mode)) #loads mode_generator
+			else:
+				self.mode_dict[lm] = len(self.modes)
+				self.modes.append(mode_generator(lm, folder+mode)) #loads mode_generator
+
 			print('    Loaded mode {}'.format(lm))
 
 		return
@@ -224,13 +227,13 @@ GW_generator
 		theta1 = np.arccos(s1[:,2]/chi1)
 		theta2 = np.arccos(s2[:,2]/chi2)
 		L = np.array([0.,0.,1.])
-		
-		plane_1 = np.array([s1[:,1], -s1[:,0],0.]) #s1xL
-		plane_2 = np.array([s2[:,1], -s2[:,0],0.])
+				
+		plane_1 = np.column_stack([s1[:,1], -s1[:,0], np.zeros(s1[:,1].shape)]) #(N,3) #s1xL
+		plane_2 = np.column_stack([s2[:,1], -s2[:,0], np.zeros(s2[:,1].shape)])
 		sign = np.sign(np.cross(plane_1,plane_2)[:,2]) #(N,) #computing the sign
 		
-		plane_1 = plane_1 / np.linalg.norm(plane_1, axis =1) #(N,3)
-		plane_2 = plane_2 / np.linalg.norm(plane_2, axis =1) #(N,3)
+		plane_1 = np.divide(plane_1.T, np.linalg.norm(plane_1, axis =1)).T #(N,3)
+		plane_2 = np.divide(plane_2.T, np.linalg.norm(plane_2, axis =1)).T #(N,3)
 		delta_Phi = np.arccos(np.sum(np.multiply(plane_1,plane_2), axis =1)) #(N,)
 
 		delta_Phi = np.multiply(delta_Phi, sign) #(N,) #setting the right sign
@@ -385,10 +388,45 @@ GW_generator
 			return h_plus[0,:], h_cross[0,:] #(D,)
 		return h_plus, h_cross #(N,D)
 
-	def __get_twisted_modes(self, theta, t_grid, modes):
+	def __check_modes_input(self, theta, modes):
 		"""
-	__get_twisted_modes
-	======================
+	__check_modes_input
+	===================
+		Checks that all the inputs of get_modes and get_twisted_modes are fine and makes them ready for processing. It also states whether the output shall be squeezes over some axis.
+		Input:
+			theta (N,D)/(D,)	source parameters to compute the modes at
+			modes				list (or tuple) of modes to consider
+		Output:
+			theta (N,D)			as in input but (perhaps reshaped)
+			modes				list of modes (even if input was a tuple)
+			remove_first_dim	whether to remove the first axis on the ouput
+			remove_last_dim		whether to remove the last axis on the ouput
+		"""
+		if isinstance(modes,tuple): #it means that the last dimension should be deleted
+			modes = [modes]
+			remove_last_dim = True
+		else:
+			remove_last_dim = False
+
+		if modes is None:
+			modes = self.list_modes()
+
+		if theta.ndim == 1:
+			theta = theta[None,:]
+			remove_first_dim = True
+		else:
+			remove_first_dim = False
+		
+		if theta.ndim != 2:
+			raise RuntimeError("Wrong number of input theta dimensions: 2 expected but {} given".format(theta.ndim))
+
+		return theta, modes, remove_first_dim, remove_last_dim
+
+
+	def get_twisted_modes(self, theta, t_grid, modes):
+		"""
+	get_twisted_modes
+	=================
 		Return the twisted modes of the model, evaluated in the given time grid.
 		The twisted mode depends on angles alpha, beta, gamma and it is performed as in eqs. (17-20) in https://arxiv.org/abs/2005.05338
 		The function returns the real and imaginary part of the twisted mode.
@@ -400,6 +438,72 @@ GW_generator
 		Output:
 			real, imag (N, D', K)	real and imaginary part of the K modes required by the user (if mode is a tuple, no third dimension)
 		"""
+		#FIXME: here we have the serious issuf of the time at which L, S1, S2 are computed. It should be at a ref frequency or at the beginning of the time grid; but they are computed at a constant separation (which can be related to a frequency btw)
+		
+		theta = np.array(theta)
+		theta, modes, remove_first_dim, remove_last_dim = self.__check_modes_input(theta, modes)
+		theta_modes = np.concatenate([theta[:,:2], np.linalg.norm(theta[:,2:5],axis = 1)[:,None], np.linalg.norm(theta[:,5:8],axis = 1)[:,None]] , axis = 1) #(N,4) #theta for generating the non-precessing WFs
+		print("theta_modes",theta_modes)
+
+		if theta.shape[1] != 8:
+			raise ValueError("Wrong number of orbital parameters to make predictions at. Expected 8 but {} given".format(theta.shape[1]))
+
+		l_list = set([m[0] for m in modes]) #computing the set of l to take care of
+		h_P = np.zeros((theta.shape[0], t_grid.shape[0], len(modes)), dtype = np.complex64) #(N,D,K) #output matrix
+		
+			#huge loop over l_list
+		for l in l_list:
+			m_modes_list = [lm for lm in modes if lm[0] == l] #len = M #list of the twisted lm modes (with constant l) required by the user
+			
+				#genereting the non-precessing l-modes available
+			mprime_modes_list = [lm  for lm in self.list_modes() if lm[0] == l] #len = M'
+			l_modes_p, l_modes_c = self.get_modes(theta_modes, t_grid, mprime_modes_list, out_type = "realimag") #(N,D,M')
+			h_NP_l = l_modes_p +1j* l_modes_c #(N,D,M') #awful using complex numbers but necessary
+			
+				#adding negative m modes
+			ids = np.where(np.array([m[1] for m in mprime_modes_list])>0)[0]
+			h_NP_l = np.concatenate([h_NP_l,np.conj(h_NP_l[:,:,ids])*(-1)**(l)], axis =2) #(N,D,M'')
+			mprime_modes_list = mprime_modes_list + [(m[0],-m[1]) for m in mprime_modes_list if m[1]> 0] #len = M''
+			print(mprime_modes_list)
+			
+				#getting alpha, beta, gamma
+			sys.path.insert(0,'../precession')
+			from precession_helper import get_alpha_beta
+			alpha, beta = get_alpha_beta(*self.__get_precessing_params(theta[:,0],theta[:,1], theta[:,2:5],theta[:,5:8]), t_grid, verbose = False) #(N,D) #this line should call a NN in the future
+					#gamma
+			alpha_dot = np.gradient(alpha, t_grid, axis = 1) #(N,D)
+			gamma = np.multiply(alpha_dot, np.cos(beta)) #(N,D)
+			gamma = np.cumsum(np.multiply(gamma, np.diff(t_grid, prepend= 0)), axis =1) #(N,D) #\int alpha_dot(t) cos(beta(t)) dt
+			
+				#computing beta matrix
+			d_mmprime = np.zeros((theta.shape[0], t_grid.shape[0], len(mprime_modes_list), len(m_modes_list)))#(N,D, M'', M)
+			for i, mprime in enumerate(mprime_modes_list):
+				for j, m in enumerate(m_modes_list):
+					d_mmprime[:,:,i,j] = self.__get_Wigner_d_function(l, mprime[1], m[1], beta) #(N,D)
+			print(d_mmprime[:,0,:])
+			
+				#computing exp(-1j*m*alpha)
+			exp_alpha = np.einsum('ij,k->ijk', alpha, np.array([lm[1] for lm in m_modes_list])) #(N,D,M)
+			exp_alpha = np.exp(-1j*exp_alpha) #(N,D,M)
+
+				#computing exp(1j*m'*gamma)
+			exp_gamma = np.einsum('ij,k->ijk', gamma, np.array([lm[1] for lm in mprime_modes_list])) #(N,D,M'')
+			exp_gamma = np.exp(1j*exp_gamma) #(N,D,M'')
+			
+				#putting everything together
+			h_P_l = np.multiply(exp_gamma, h_NP_l) #(N,D,M'')
+			h_P_l = np.einsum('ijkl,ijk->ijl' , d_mmprime, h_P_l) #(N,D,M)
+			h_P_l = np.multiply(h_P_l, exp_alpha) #(N,D,M)
+			
+				#saving the results in the output matrix
+			ids_l = [i for i, lm in enumerate(modes) if lm[0] == l]
+			h_P[:,:,ids_l] = h_P_l
+			
+		if remove_last_dim:
+			h_P = h_P[...,0] #(N,D)
+		if remove_first_dim:
+			h_P = h_P[0,...] #(D,)/(D,K)
+		return h_P.real, h_P.imag
 
 
 	def __get_WF(self, theta, t_grid, modes):
@@ -428,7 +532,7 @@ GW_generator
 
 			#if only mode 22 is required, it is treated separately for speed up
 		if modes == (2,2):# or modes == [(2,2)]:
-			amp_22, ph_22 = self.modes[self.id_22].get_mode(theta[:,:4], t_grid, out_type = "ampph")
+			amp_22, ph_22 = self.modes[self.mode_dict[(2,2)]].get_mode(theta[:,:4], t_grid, out_type = "ampph")
 			amp_22 =  np.sqrt(5/(4.*np.pi))*np.multiply(amp_22.T, amp_prefactor).T #G/c^2*(M_sun/Mpc) nu *(M/M_sun)/(d_L/Mpc)
 				#setting spherical harmonics by hand
 			c_i = np.cos(theta[:,5]) #(N,)
@@ -439,14 +543,17 @@ GW_generator
 		if modes is None:
 			modes = self.list_modes()
 
-		for mode in self.modes:	
-			if mode.lm() not in modes: #skipping a non-necessary or non-existing mode
+		for mode in modes:
+			try:	
+				mode_id = self.mode_dict[mode]
+			except KeyError:
+				warnings.warn("Unable to find mode {}: mode might be non existing or in the wrong format. Skipping it".format(mode))
 				continue
-			#print("got modes {}".format(mode.lm()))
-			amp_lm, ph_lm = mode.get_mode(theta[:,:4], t_grid, out_type = "ampph")
+				
+			amp_lm, ph_lm = self.modes[mode_id].get_mode(theta[:,:4], t_grid, out_type = "ampph")
 			amp_lm =  np.multiply(amp_lm.T, amp_prefactor).T #G/c^2*(M_sun/Mpc) nu *(M/M_sun)/(d_L/Mpc)
 				# setting spherical harmonics: amp, ph, D_L,iota, phi_0
-			h_lm_real, h_lm_imag = self.__set_spherical_harmonics(mode.lm(), amp_lm, ph_lm, theta[:,5], theta[:,6])
+			h_lm_real, h_lm_imag = self.__set_spherical_harmonics(mode, amp_lm, ph_lm, theta[:,5], theta[:,6])
 			h_plus = h_plus + h_lm_real
 			h_cross = h_cross + h_lm_imag
 
@@ -457,7 +564,7 @@ GW_generator
 	get_modes
 	=========
 		Return the modes in the model, evaluated in the given time grid.
-		It can return amplitude and phase or the real and imaginary part.
+		It can return amplitude and phase (out_type = "ampph") or the real and imaginary part (out_type = "realimag").
 		Each mode is aligned s.t. the peak of the 22 mode is at t=0
 		Input:
 			theta (N,D)/(D,)	source parameters to make prediction at (D = 3,4)
@@ -472,37 +579,30 @@ GW_generator
 			raise ValueError("Wrong output type chosen. Expected \"realimag\", \"ampph\", given \""+out_type+"\"")
 
 		theta = np.array(theta)
-		if isinstance(modes,tuple): #it means that the last dimension should be deleted
-			modes = [modes]
-			remove_last_dim = True
-		else:
-			remove_last_dim = False
+		theta, modes, remove_first_dim, remove_last_dim = self.__check_modes_input(theta, modes)
 
-		try:
-			K = len(modes)
-		except:
-			K = len(self.modes)
-		if modes is None:
-			modes = self.list_modes()
-
-		if theta.ndim == 1:
-			theta = theta[None,:]
-			remove_first_dim = True
-		else:
-			remove_first_dim = False
 		if theta.shape[1] == 7:
 			theta = theta[:,:4]
+		K = len(modes)
 
 		res1 = np.zeros((theta.shape[0],t_grid.shape[0],K))
 		res2 = np.zeros((theta.shape[0],t_grid.shape[0],K))
 
-		for mode in self.modes:	
-			if mode.lm() not in modes: #skipping a non-necessary mode
+			#old version (worse)
+		#for mode in self.modes:	
+		#	if mode.lm() not in modes: #skipping a non-necessary mode
+		#		continue
+		#	else: #computing index to save the mode at
+		#		i = modes.index(mode.lm())
+		#	res1[:,:,i], res2[:,:,i] = mode.get_mode(theta, t_grid, out_type = out_type)
+
+		for i, mode in enumerate(modes):
+			try:
+				mode_id = self.mode_dict[mode]
+			except KeyError:
+				warnings.warn("Unable to find mode {}: mode might be non existing or in the wrong format. Skipping it".format(mode))
 				continue
-			else: #computing index to save the mode at
-				i = modes.index(mode.lm())
-			#print("got modes {}".format(mode.lm()))
-			res1[:,:,i], res2[:,:,i] = mode.get_mode(theta, t_grid, out_type = out_type)
+			res1[:,:,i], res2[:,:,i] = self.modes[mode_id].get_mode(theta, t_grid, out_type = out_type)
 
 		if remove_last_dim:
 			res1, res2 = res1[...,0], res2[...,0] #(N,D)
@@ -528,8 +628,8 @@ GW_generator
 		"""
 		l,m = mode
 			#computing the iota dependence of the WF
-		d_lm = self.__get_Wigner_d_function((l,m),iota) #(N,)
-		d_lmm = self.__get_Wigner_d_function((l,-m),iota) #(N,)
+		d_lm = self.__get_Wigner_d_function(l,m,2,iota) #(N,)
+		d_lmm = self.__get_Wigner_d_function(l,-m,2,iota) #(N,)
 		const = np.sqrt( (2.*l+1.)/(4.*np.pi) )
 		parity = np.power(-1,l) #are you sure of that? apparently yes...
 
@@ -538,22 +638,20 @@ GW_generator
 
 		return h_lm_real, h_lm_imag
 
-	def __get_Wigner_d_function(self, mode, iota):
+	def __get_Wigner_d_function(self, l, m, s, iota):
 		"""
 	__get_Wigner_d_function
 	=======================
-		Return Wigner d function. This encodes the inclination dependent part d_lm of the spherical harmonics Y_lm, according to:
-			Y_lm(iota, phi_0) = d_lm(iota) * exp(i*m*phi_0)
-		See https://arxiv.org/pdf/0709.0093.pdf for an explicit expression.
+		Return the general Wigner d function (or small Wigner matrix).
+		See eq. (18) of https://arxiv.org/pdf/2005.05338.pdf or https://arxiv.org/pdf/0709.0093.pdf for an explicit expression.
 		Input:
-			mode			(l,m) of the current mode
-			iota (N,)		inclination for to compute the amplitude at
+			l				l parameter
+			m,s				matrix elements
+			iota (N,)		angle to evaluate the function at
 		Output:
-			d_lm (N,)		Amplitude of the spherical harmonics d_lm(iota)
+			d_lms (N,)		Amplitude of the spherical harmonics d_lm(iota)
 		"""
-		l,m = mode
-		s = 2
-		d_lm = np.zeros(iota.shape) #(N,)
+		d_lms = np.zeros(iota.shape) #(N,)
     
 		cos_i = np.cos(iota*0.5) #(N,)
 		sin_i = np.sin(iota*0.5) #(N,)
@@ -565,10 +663,11 @@ GW_generator
     	
 		for k in range(ki,kf+1):
 			norm = fact(k) * fact(l+m-k) * fact(l-s-k) * fact(s-m+k) #normalization constant
-			d_lm = d_lm +  (pow(-1.,k) * np.power(cos_i,2*l+m-s-2*k) * np.power(sin_i,2*k+s-m) ) / norm
+			d_lms = d_lms +  (pow(-1.,k) * np.power(cos_i,2*l+m-s-2*k) * np.power(sin_i,2*k+s-m) ) / norm
 
 		const = np.sqrt(fact(l+m) * fact(l-m) * fact(l+s) * fact(l-s))
-		return const*d_lm
+		return const*d_lms
+		
 	
 	def get_mode_obj(self, mode):
 		"""
