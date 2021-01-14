@@ -28,11 +28,11 @@ red_true_test_beta = PCA_beta.reduce_data(test_beta)
 red_approx_test_beta = np.zeros(red_true_test_beta.shape)
 mse_list = [0 for i in range(K_max)]
 for k in range(K_max):
-	break
+	#break
 	red_approx_test_beta[:,k] = red_true_test_beta[:,k] 
 	rec_test_beta = PCA_beta.reconstruct_data(red_approx_test_beta) #(N,D)
 	mse = np.sum(np.square(rec_test_beta- test_beta))/(beta.shape[0]*beta.shape[1])
-	mse_list[i] = mse
+	mse_list[k] = mse
 	print("mse(k): ",k,mse)
 
 	if k == 10:
@@ -54,6 +54,10 @@ plt.yscale('log')
 
 plt.figure()
 plt.plot(times, alpha.T[:,:100])#- alpha.T[0,:100])
+
+plt.figure()
+plt.title("GRADS")
+plt.plot(times, np.gradient(beta,times, axis = 1).T[:,:100])
 
 plt.figure()
 plt.plot(times, beta.T[:,:100])

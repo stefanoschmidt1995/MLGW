@@ -99,10 +99,10 @@ get_alpha_beta
 
 		Lx, Ly, Lz, S1x, S1y, S1z, S2x, S2y, S2z, t = precession.orbit_vectors(*L_vec, *S1_vec, *S2_vec, sep, q_, time = True) #time evolution of L, S1, S2
 		L = np.sqrt(Lx**2 + Ly**2 + Lz**2)
-		
+
 		temp_alpha = np.unwrap(np.arctan2(Ly,Lx))
 		temp_beta = np.arccos(Lz/L)
-		
+
 		alpha[i,:] = np.interp(times, (t-t[-1])*M_sun, temp_alpha)
 		beta[i,:] = np.interp(times, (t-t[-1])*M_sun, temp_beta)
 	
@@ -410,7 +410,7 @@ def plot_validation_set(model, N_sol, validation_file, folder = ".", show = Fals
 ###############################################################################################################
 ###############################################################################################################
 ###############################################################################################################
-def create_dataset_alpha_beta(N_angles, filename, N_grid, tau_min, q_range, chi1_range= (0.,1.), chi2_range = (0.,1.), theta1_range = (0., np.pi), theta2_range = (0., np.pi), delta_phi_range = (-np.pi, np.pi), verbose = False ):
+def create_dataset_alpha_beta(N_angles, filename, N_grid, tau_min, q_range, chi1_range= (0.,1.), chi2_range = (0.,1.), theta1_range = (0., np.pi), theta2_range = (0., np.pi), delta_phi_range = (-np.pi, np.pi), alpha =0.5, verbose = False ):
 	"""
 create_dataset_alpha_beta
 =========================
@@ -434,6 +434,7 @@ create_dataset_alpha_beta
 		theta1_range		Tuple of values for the range in which to draw the angles between spin 1 and L. If a single value, theta1 is fixed
 		theta2_range		Tuple of values for the range in which to draw the angles between spin 2 and L. If a single value, theta2 is fixed
 		delta_phi_range		Tuple of values for the range in which to draw the angles between the in-plane components of the spins. If a single value, delta_phi_range is fixed
+		alpha				distorsion parameter (for accumulating more grid points around the merger)
 		verbose				Whether to print the output to screen
 	"""
 	if not isinstance(N_grid, int):
@@ -443,7 +444,11 @@ create_dataset_alpha_beta
 
 	range_list = [q_range, chi1_range, chi2_range, theta1_range, theta2_range, delta_phi_range]
 
-	time_grid = np.linspace(-np.abs(tau_min), 0., N_grid)
+
+	time_grid = np.linspace(np.power(np.abs(tau_min),alpha), 1e-20, N_grid)
+	time_grid = -np.power(time_grid,1./alpha)
+	time_grid[-1] = 0.
+	
 		#initializing file. If file is full, it is assumed to have the proper time grid
 	if not os.path.isfile(filename): #file doesn't exist: must be created with proper header
 		filebuff = open(filename,'w')
