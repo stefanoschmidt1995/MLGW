@@ -75,11 +75,11 @@ where m_i and s_i are BH masses and spins, d_L the luminosity distance from the 
 
 Package ``mlgw`` consists in five modules.
 
-   * **GW_generator**: the module holds class ``mode_generator`` which builds up all the components for a fit for a single mode (i.e. PCA + regressions for each PC). Class ``GW_generator`` collects many istances of ``mode_generator`` and sum them together including the dependence on spherical harmonics.
-   * **EM_MoE**: holds an implementation of a MoE model as well as the softmax classifier required for it
-   * **ML_routines**: holds an implementation of the PCA model as well a GDA classifier and a routine to do data augmentation
-   * **GW_helper**: provides some routines to generate a dataset and to evaluate the closeness between waves. This is useful to assess model ability to reproduce original waves
-   * **fit_model**: provides some routines useful to fit the MoE + PCA model.
+* **GW_generator**: the module holds class ``mode_generator`` which builds up all the components for a fit for a single mode (i.e. PCA + regressions for each PC). Class ``GW_generator`` collects many istances of ``mode_generator`` and sum them together including the dependence on spherical harmonics.
+* **EM_MoE**: holds an implementation of a MoE model as well as the softmax classifier required for it
+* **ML_routines**: holds an implementation of the PCA model as well a GDA classifier and a routine to do data augmentation
+* **GW_helper**: provides some routines to generate a dataset and to evaluate the closeness between waves. This is useful to assess model ability to reproduce original waves
+* **fit_model**: provides some routines useful to fit the MoE + PCA model.
 
 Class ``GW_generator`` provides method ``get_WF`` to return the plus and cross polarization of the waveform. The orbital parameters must be specified. It accepts N data as ``(N,D) np.array``. The D features must have one of the following layout:
 ::
@@ -108,15 +108,15 @@ It requires ``numpy`` and ``scipy`` all available to PyPI.
 
 A number of tutorials are available to the interested user.
 
-	* `generate_WF.py <https://raw.githubusercontent.com/stefanoschmidt1995/MLGW/master/mlgw_v2/generate_WF.py>`_: to generate the WF and using the model in its basic features.
-	* `test_HM.py <https://raw.githubusercontent.com/stefanoschmidt1995/MLGW/master/mlgw_v2/test_HM.py>`_: to test the accuracy of the model. It requires a local installation of EOB model `TEOBResumS <https://arxiv.org/abs/1806.01772>`_ and it compares the ``mlgw`` results with those of ``TEOBResumS``.
-	* `play_WF.py <https://raw.githubusercontent.com/stefanoschmidt1995/MLGW/master/mlgw_v2/play_WF.py>`_: an interactive plot to plot how a WF changes when the the masses, spins and geometrical variables change.
+* `generate_WF.py <https://raw.githubusercontent.com/stefanoschmidt1995/MLGW/master/mlgw_v2/generate_WF.py>`_: to generate the WF and using the model in its basic features.
+* `test_HM.py <https://raw.githubusercontent.com/stefanoschmidt1995/MLGW/master/mlgw_v2/test_HM.py>`_: to test the accuracy of the model. It requires a local installation of EOB model `TEOBResumS <https://arxiv.org/abs/1806.01772>`_ and it compares the ``mlgw`` results with those of ``TEOBResumS``.
+* `play_WF.py <https://raw.githubusercontent.com/stefanoschmidt1995/MLGW/master/mlgw_v2/play_WF.py>`_: an interactive plot to plot how a WF changes when the the masses, spins and geometrical variables change.
 
 A number of pre-fitted model are realeased together with the model. The available models can be listed with ``mlgw.GW_generator.list_models()``.
 However the user is welcome to fit their own model, using the module ``mlgw.fit_model``. To build a model, two steps are required:
 
-	* **Generating a dataset of WFs**: in this part a datset of WFs is created for each of the (l,m) mode to be included. The user here shall choose the range of orbital parameters to include within the dataset as well as the length in time of the WF. See `generate_dataset.py <https://raw.githubusercontent.com/stefanoschmidt1995/MLGW/master/mlgw_v2/generate_dataset.py>`_ for a practical guide on how to do it.
-	* **Fitting the model on the dataset**: in this part, for each mode, a PCA model and a MoE model are fitted with the available data. Once the various ML models are properly gathered together, ``mlgw`` is raeady to be used. See `do_the_fit.py <https://raw.githubusercontent.com/stefanoschmidt1995/MLGW/master/mlgw_v2/do_the_fit.py>`_ for more information.
+* **Generating a dataset of WFs**: in this part a datset of WFs is created for each of the (l,m) mode to be included. The user here shall choose the range of orbital parameters to include within the dataset as well as the length in time of the WF. See `generate_dataset.py <https://raw.githubusercontent.com/stefanoschmidt1995/MLGW/master/mlgw_v2/generate_dataset.py>`_ for a practical guide on how to do it.
+* **Fitting the model on the dataset**: in this part, for each mode, a PCA model and a MoE model are fitted with the available data. Once the various ML models are properly gathered together, ``mlgw`` is raeady to be used. See `do_the_fit.py <https://raw.githubusercontent.com/stefanoschmidt1995/MLGW/master/mlgw_v2/do_the_fit.py>`_ for more information.
 	
 The tutorials above are intended only to present a basic usage.
 For more advanced use or for more information, please refer to the code documentation: ::

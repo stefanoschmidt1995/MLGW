@@ -35,7 +35,7 @@ for k in range(K_max):
 	mse_list[k] = mse
 	print("mse(k): ",k,mse)
 
-	if k == 10:
+	if k == 1:
 		plt.title("Test")
 		to_plot = test_beta.T/rec_test_beta.T -1.
 		to_plot_fft = np.fft.rfft(to_plot)
@@ -43,6 +43,9 @@ for k in range(K_max):
 
 		plt.plot(times,rec_test_beta[:10,:].T)
 		plt.plot(times,test_beta[:10,:].T)
+		
+		plt.figure()
+		plt.plot(times,-rec_test_beta[:3,:].T+test_beta[:3,:].T)
 		plt.show()
 
 

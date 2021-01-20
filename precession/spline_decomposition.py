@@ -17,77 +17,66 @@ from ML_routines import *
 #plt.plot(t, np.arccos(ph)/t)
 #plt.plot(np.fft.rfftfreq(len(ph),np.diff(t)[0]),np.fft.rfft(ph))
 #plt.show()
+#"""
+create_dataset_alpha_beta(N_angles = 20, filename="temp.dat", N_grid = 1500, tau_min = 20., q_range= (1.1,10.), smooth_oscillation = True, verbose = True)
 
-def compute_spline_peaks(x,y):
-	max_list = []
-	min_list = []
-	for i in range(y.shape[0]):
-		max_peaks, props = scipy.signal.find_peaks(y[i,:])
-		min_peaks, props = scipy.signal.find_peaks(-y[i,:])
-		#max_peaks = np.append(max_peaks,len(y[i,:])-1)
-		#min_peaks = np.append(min_peaks,len(y[i,:])-1)
+params, alpha, beta_avg, beta_residual, times = load_dataset("temp.dat", N_data = None, n_params = 6, N_entries = 3)
 
-		if len(max_peaks) > 5 and len(min_peaks) > 5:
-			max_list.append(scipy.interpolate.CubicSpline(x[max_peaks], y[i, max_peaks], extrapolate = True))
-			min_list.append(scipy.interpolate.CubicSpline(x[min_peaks], y[i, min_peaks], extrapolate = True))
-		else:
-			print("Using all the data")
-			max_list.append(scipy.interpolate.CubicSpline(x, y[i, :], extrapolate = True))
-			min_list.append(scipy.interpolate.CubicSpline(x, y[i, :], extrapolate = True))
-		
-	return min_list, max_list
-	
-def compute_spline_extrema(x,y, get_spline = False):
-	maxima = scipy.signal.argrelextrema(y, np.greater, axis = 1) #(N,M)
-	minima = scipy.signal.argrelextrema(y, np.less, axis = 1) #(N,M')
+plt.figure()
+plt.title("avg")
+plt.plot(times,beta_avg.T)
+plt.plot(times,(beta_avg+beta_residual).T)
+plt.figure()
+plt.title("residual")
+plt.plot(times,beta_residual.T)
+plt.figure()
+plt.title("alpha")
+plt.plot(times,alpha.T)
 
-	max_list = []
-	min_list = []
-	spline_list = []
-	for i in range(y.shape[0]):
-		ids_0_max = np.where(maxima[0]==i)[0]
-		ids_0_min = np.where(minima[0]==i)[0]
-
-		max_list.append(scipy.interpolate.CubicSpline(x[maxima[1][ids_0_max]], y[i, maxima[1][ids_0_max]], extrapolate = True))
-		min_list.append(scipy.interpolate.CubicSpline(x[minima[1][ids_0_min]], y[i, minima[1][ids_0_min]], extrapolate = True))
-		if get_spline:
-			spline_list.append(scipy.interpolate.CubicSpline(x, y[i,:], extrapolate = True))
-	if get_spline:
-		return min_list, max_list, spline_list
-	return min_list, max_list
-
-#create_dataset_alpha_beta(N_angles = 30, filename="grad_angles.dat", N_grid = 1500, tau_min = 20., q_range= (1.1,10.))
-
+plt.show()
+#"""
+#quit()
 params, alpha, beta, times = load_dataset("grad_angles.dat", N_data = None, n_params = 6)
-N = 6
+print("Loaded {} data".format(params.shape[0]))
+N = 10
 
 	#Averaging the function
 	#doing something dirty, but maybe useful
 
 f_min, f_max = compute_spline_peaks(times, beta)
+f_mean = get_spline_mean(times, beta)
 
-plt.figure()
+fig, ax = plt.subplots(2,1)
 #np.random.seed(21)
+choice = np.array([2, 26, 27, 49, 81,81, 114,121,123,130, 138])
 choice = np.random.choice(range(beta.shape[0]), size =(N,), replace = False)
 for i in choice:
 
-	plt.plot(times, beta[i,:])
+	ax[0].plot(times, beta[i,:])
 	peaks, props = scipy.signal.find_peaks(beta[i,:])
-	plt.plot(times[peaks], beta[i,peaks], 'o', ms = 3)#(f_grad_max[i](times)+f_grad_min[i](times))/2.)
-	plt.plot(times, (f_max[i](times)+f_min[i](times))/2.)
+	m_peaks, props = scipy.signal.find_peaks(-beta[i,:])
+	peaks = np.append(peaks, m_peaks)
+	ax[0].plot(times[peaks], beta[i,peaks], 'o', ms = 3)#(f_grad_max[i](times)+f_grad_min[i](times))/2.)
+	ax[0].plot(times, (f_max[i](times)+f_min[i](times))/2.)
+	ax[1].plot(times, (f_max[i](times)+f_min[i](times))/2.)
+	
+	assert np.allclose((f_max[i](times)+f_min[i](times))/2., f_mean(times)[i,:])
 
-
-	#plotting beta-avg to see if the proble is simpler...
+	#plotting beta-avg to see if the problem is simpler...
 fig, ax = plt.subplots(2,1)
 for i in choice:
 	avg = (f_max[i](times)+f_min[i](times))/2.
-	amp = compute_spline_peaks(times, (beta[i,:]-avg)[None,:])[1][0]
+	m_list, M_list = compute_spline_peaks(times, (beta[i,:]-avg)[None,:])
+	amp = lambda t: (M_list[0](t) - m_list[0](t))/2.
 	cutoff = 950
-	
 	
 	ax[0].plot(times, amp(times),'-.')#,'o', ms = 3)
 	ax[0].plot(times, beta[i,:]-avg)
-	ax[1].plot(times[:cutoff], ((beta[i,:]-avg)/amp(times))[:cutoff])
+	if np.all((beta[i,:]-avg) == 0 ):
+		ax[1].plot(times[:cutoff], np.zeros(times[:cutoff].shape))
+	else:
+		ax[1].plot(times[:cutoff], ((beta[i,:]-avg)/amp(times))[:cutoff])
+	
 		#polishing cos args
 	args = ((beta[i,:]-avg)/amp(times))[:cutoff]
 	args[np.where(args > 1.)] = 1.

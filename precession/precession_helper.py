@@ -24,7 +24,92 @@ except:
 	pass
 import tensorflow as tf
 
-def get_alpha_beta(q, chi1, chi2, theta1, theta2, delta_phi, times, verbose = False):
+
+########## spline helpers
+
+def compute_spline_peaks(x,y):
+	print("Dealing with {} points".format(y.shape[0]))
+	max_list = []
+	min_list = []
+	mean_list = []
+	min_peak_density = .2
+	for i in range(y.shape[0]):
+		max_peaks, props = scipy.signal.find_peaks(y[i,:])
+		min_peaks, props = scipy.signal.find_peaks(-y[i,:])
+		max_peaks = np.append(max_peaks, len(x)-1)
+		min_peaks = np.append(min_peaks, len(x)-1)
+		print(max_peaks, len(x))
+		
+		if len(max_peaks)/(np.max(x)-np.min(x)) >= min_peak_density and len(min_peaks)/(np.max(x)-np.min(x)) >= min_peak_density:
+			max_list.append(scipy.interpolate.CubicSpline(x[max_peaks], y[i, max_peaks], extrapolate = True))
+			min_list.append(scipy.interpolate.CubicSpline(x[min_peaks], y[i, min_peaks], extrapolate = True))
+		else:
+			warnings.warn("As not enough peaks were located, the curve will be interpolated using all the points available")
+			max_list.append(scipy.interpolate.CubicSpline(x, y[i, :], extrapolate = True))
+			min_list.append(scipy.interpolate.CubicSpline(x, y[i, :], extrapolate = True))
+		
+	return min_list, max_list
+	
+def get_spline_mean(x,y):
+	f_min, f_max = compute_spline_peaks(x,y)
+	def mean(times, i =None):
+		if i is not None:
+			return (f_max[i](times)+f_min[i](times))/2.
+		res = np.zeros((len(f_min),len(times)))
+		for i in range((len(f_min))):
+			res[i,:] = (f_max[i](times)+f_min[i](times))/2.
+		return res #(N,D)
+	
+	return mean
+	
+def get_grad_mean(x,y):
+	interp_list = []
+	for i in range(y.shape[0]):
+		grad = np.gradient(y[i,:], x)
+		max_peaks, props = scipy.signal.find_peaks(grad)
+		min_peaks, props = scipy.signal.find_peaks(-grad)
+		peaks = np.concatenate([max_peaks, min_peaks]) #indices of the grad peaks
+		peaks = np.sort(peaks)
+	
+			#setting a minum density of peaks
+		min_peak_density = 0
+		
+		if len(peaks)/(max(x) - min(x)) > min_peak_density:
+			interp_list.append(scipy.interpolate.CubicSpline(x[peaks], y[i, peaks], extrapolate = True))
+		else:
+			interp_list.append(scipy.interpolate.CubicSpline(x, y[i, :], extrapolate = True))
+		
+		plt.title("Points")
+		plt.plot(x, y[i,:])
+		plt.plot(x, 0.01*grad)
+		plt.plot(x[max_peaks], y[i,max_peaks],'o', ms =5, c = 'r')
+		plt.plot(x[min_peaks], y[i,min_peaks],'o', ms =5, c = 'k')
+
+	return interp_list
+		
+	
+def compute_spline_extrema(x,y, get_spline = False):
+	maxima = scipy.signal.argrelextrema(y, np.greater, axis = 1) #(N,M)
+	minima = scipy.signal.argrelextrema(y, np.less, axis = 1) #(N,M')
+
+	max_list = []
+	min_list = []
+	spline_list = []
+	for i in range(y.shape[0]):
+		ids_0_max = np.where(maxima[0]==i)[0]
+		ids_0_min = np.where(minima[0]==i)[0]
+
+		max_list.append(scipy.interpolate.CubicSpline(x[maxima[1][ids_0_max]], y[i, maxima[1][ids_0_max]], extrapolate = True))
+		min_list.append(scipy.interpolate.CubicSpline(x[minima[1][ids_0_min]], y[i, minima[1][ids_0_min]], extrapolate = True))
+		if get_spline:
+			spline_list.append(scipy.interpolate.CubicSpline(x, y[i,:], extrapolate = True))
+	if get_spline:
+		return min_list, max_list, spline_list
+	return min_list, max_list
+	
+#######################
+
+def get_alpha_beta(q, chi1, chi2, theta1, theta2, delta_phi, times, smooth_oscillation = True, verbose = False):
 	"""
 get_alpha_beta
 ==============
@@ -38,10 +123,12 @@ get_alpha_beta
 		theta2 (N,)			angle between spin 2 and L
 		delta_phi (N,)		angle between in plane projection of the spins
 		times (D,)			times at which alpha, beta are evaluated (units s/M_sun)
+		smooth_oscillation	whether to smooth the oscillation and return the average part and the residuals
 		verbose 			whether to suppress the output of precession package
 	Outputs:
 		alpha (N,D)		alpha angle evaluated at times
-		beta (N,D)		beta angle evaluated at times
+		beta (N,D)		beta angle evaluated at times (if not smooth_oscillation)
+		beta (N,D,3)	[mean of beta angles, amplitude of the oscillating part, phase of the oscillating part] (if smooth_oscillation)
 	"""
 	M_sun = 4.93e-6
 	t_min = np.max(np.abs(times))
@@ -67,7 +154,11 @@ get_alpha_beta
 
 		#initializing vectors
 	alpha = np.zeros((q.shape[0],times.shape[0]))
-	beta = np.zeros((q.shape[0],times.shape[0]))
+	if smooth_oscillation:
+		t_cutoff = 0#-0.1 #shall I insert a cutoff here?
+		beta = np.zeros((q.shape[0],times.shape[0], 2))	
+	else:
+		beta = np.zeros((q.shape[0],times.shape[0]))
 	
 	if not verbose:
 		devnull = open(os.devnull, "w")
@@ -103,8 +194,68 @@ get_alpha_beta
 		temp_alpha = np.unwrap(np.arctan2(Ly,Lx))
 		temp_beta = np.arccos(Lz/L)
 
-		alpha[i,:] = np.interp(times, (t-t[-1])*M_sun, temp_alpha)
-		beta[i,:] = np.interp(times, (t-t[-1])*M_sun, temp_beta)
+		t_out = (t-t[-1])*M_sun #output grid
+		ids = np.where(t_out > np.min(times))[0]
+		t_out = t_out[ids]
+		temp_alpha = temp_alpha[ids]
+		temp_beta = temp_beta[ids]
+		
+		alpha[i,:] = np.interp(times, t_out, temp_alpha)
+		if not smooth_oscillation:
+			beta[i,:] = np.interp(times, t_out, temp_beta)
+		if smooth_oscillation:
+			mean = get_spline_mean(t_out, temp_beta[None,:])
+			beta[i,:,0] = mean(times) #avg beta
+			beta[i,:,1] = np.interp(times, t_out, temp_beta) - mean(times) #residuals of beta
+
+				#dealing with amplitude
+			#m_list, M_list = compute_spline_peaks(t_out, (temp_beta - mean(t_out)))
+			#amp = lambda t: (M_list[0](t) - m_list[0](t))/2.
+			#beta[i,:,1] = amp(times) #amplitude
+			#temp_ph = (temp_beta - mean(t_out) )/amp(t_out)
+			#print(temp_ph.shape)
+			#beta[i,:,2] = np.interp(times, t_out, temp_ph[0,:]) #phase
+			
+				#applying late times cutoff
+			#max_cutoff, props = scipy.signal.find_peaks(temp_beta)
+			#min_cutoff, props = scipy.signal.find_peaks(temp_beta)
+			#t_cutoff = t_out[int((max_cutoff[-1]+ min_cutoff[-1])/2.)]
+			#id_cutoff = np.where(times>t_cutoff)[0]
+			#beta[i,id_cutoff,1:] = 0.
+			#beta[i, id_cutoff, 0] = np.interp(times[id_cutoff], t_out, temp_beta)
+			
+			mean_grad = get_grad_mean(t_out, temp_beta[None,:])
+				#plotting
+			if True: #DEBUG
+				plt.figure()
+				plt.title("Alpha")
+				plt.plot(times,alpha[i,:])
+
+				plt.figure()			
+				plt.title("Mean maxmin")
+				plt.plot(times,beta[i,:,0])
+				plt.plot(t_out,temp_beta)
+				
+				plt.figure()
+				plt.title("Mean grad")
+				plt.plot(t_out, temp_beta)
+				plt.plot(t_out, mean_grad[0](t_out))
+				
+				plt.figure()
+				plt.title("Gradient")
+				plt.plot(t_out,np.gradient(temp_beta, t_out))
+				plt.ylim([-0.6,0.6])
+				
+				#plt.figure()
+				#plt.plot(t_out, amp(t_out))
+				#plt.plot(t_out,np.squeeze(temp_beta - mean(t_out) ))
+				
+				#plt.figure()
+				#plt.plot(times,beta[i,:,1])
+				
+				#plt.figure()
+				#plt.plot(times,beta[i,:,2])
+				plt.show()
 	
 	if not verbose:
 		sys.stdout = old_stdout
@@ -410,7 +561,7 @@ def plot_validation_set(model, N_sol, validation_file, folder = ".", show = Fals
 ###############################################################################################################
 ###############################################################################################################
 ###############################################################################################################
-def create_dataset_alpha_beta(N_angles, filename, N_grid, tau_min, q_range, chi1_range= (0.,1.), chi2_range = (0.,1.), theta1_range = (0., np.pi), theta2_range = (0., np.pi), delta_phi_range = (-np.pi, np.pi), alpha =0.5, verbose = False ):
+def create_dataset_alpha_beta(N_angles, filename, N_grid, tau_min, q_range, chi1_range= (0.,1.), chi2_range = (0.,1.), theta1_range = (0., np.pi), theta2_range = (0., np.pi), delta_phi_range = (-np.pi, np.pi), smooth_oscillation = False, alpha =0.5, verbose = False ):
 	"""
 create_dataset_alpha_beta
 =========================
@@ -434,6 +585,7 @@ create_dataset_alpha_beta
 		theta1_range		Tuple of values for the range in which to draw the angles between spin 1 and L. If a single value, theta1 is fixed
 		theta2_range		Tuple of values for the range in which to draw the angles between spin 2 and L. If a single value, theta2 is fixed
 		delta_phi_range		Tuple of values for the range in which to draw the angles between the in-plane components of the spins. If a single value, delta_phi_range is fixed
+		smooth_oscillation	whether to represent beta with beta_avg, amplitude and phase
 		alpha				distorsion parameter (for accumulating more grid points around the merger)
 		verbose				Whether to print the output to screen
 	"""
@@ -453,7 +605,10 @@ create_dataset_alpha_beta
 	if not os.path.isfile(filename): #file doesn't exist: must be created with proper header
 		filebuff = open(filename,'w')
 		print("New file ", filename, " created")
-		time_header = np.concatenate((np.zeros((6,)), time_grid, time_grid) )[None,:]
+		if smooth_oscillation == True:
+			time_header = np.concatenate((np.zeros((6,)), time_grid, time_grid, time_grid) )[None,:]	
+		else:
+			time_header = np.concatenate((np.zeros((6,)), time_grid, time_grid) )[None,:]
 		np.savetxt(filebuff, time_header, header = "#Alpha, Beta dataset" +"\n# row: params (None,6) | alpha (None,"+str(N_grid)+")| beta (None,"+str(N_grid)+")\n# N_grid = "+str(N_grid)+" | tau_min ="+str(tau_min)+" | q_range = "+str(q_range)+" | chi1_range = "+str(chi1_range)+" | chi2_range = "+str(chi2_range)+" | theta1_range = "+str(theta1_range)+" | theta2_range = "+str(theta2_range)+" | delta_phi_range = "+str(delta_phi_range), newline = '\n')
 	else:
 		filebuff = open(filename,'a')
@@ -470,7 +625,7 @@ create_dataset_alpha_beta
 	lower_limits = [r[0] for r in range_list]	
 	upper_limits = [r[1] for r in range_list]	
 	
-	b_size = 2 #batch size at which angles are stored before being saved
+	b_size = 3 #batch size at which angles are stored before being saved
 	count = 0 #keep track of how many angles were generated
 	while True:
 		if N_angles- count > b_size:
@@ -483,8 +638,13 @@ create_dataset_alpha_beta
 		params = np.random.uniform(lower_limits, upper_limits, (N, len(range_list))) #(N,6) #parameters to generate the angles at
 		count += N
 
-		alpha, beta = get_alpha_beta(*params.T, time_grid, verbose)
-		to_save = np.concatenate([params, alpha, beta], axis = 1)
+		alpha, beta = get_alpha_beta(*params.T, time_grid, smooth_oscillation, verbose= verbose)
+		if smooth_oscillation:
+			to_save = np.concatenate([params, alpha, beta[:,:,0], beta[:,:,1]], axis = 1) #(N,4*D)
+			print(to_save.shape)
+		else:
+			to_save = np.concatenate([params, alpha, beta], axis = 1)
+		print(to_save.shape)
 		np.savetxt(filebuff, to_save) #saving the batch to file
 		print("Generated angle: ", count)
 

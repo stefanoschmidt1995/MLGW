@@ -594,7 +594,7 @@ def locate_peak(amp, start = 0.3):
 
 
 
-def save_dataset(filename, theta_vector, dataset1, dataset, x_grid):
+def save_dataset(filename, theta_vector, amp_dataset, ph_dataset, x_grid):
 	"""
 	Save a dataset in a way that it's readable by load_dataset.
 	Input:
@@ -616,12 +616,12 @@ def save_dataset(filename, theta_vector, dataset1, dataset, x_grid):
 	return
 
 
-def load_dataset(filename, N_data=None, N_grid = None, shuffle = False, n_params = 3):
+def load_dataset(filename, N_data=None, N_entries = 2, N_grid = None, shuffle = False, n_params = 3):
 	"""
 	Load a dataset from file. The file should be suitable for np arrays and have the following structure:
-		parameters n_params | entry_1 K | entry_2 K
-	It is suitable for both GW dataset (n_params = 3 and entry_1/2 = amplitude/phase) and for angles dataset (n_params = 6 and entry_1/2 = alpha/beta)
-	The first row hold the frequncy vector.
+		parameters n_params | entry_1 K | entry_2 K | ... | entry_2 D
+	It is suitable for GW dataset (n_params = 3 and entry_1/2 = amplitude/phase), for angles dataset (n_params = 6 and entry_1/2 = alpha/beta) and for "extended" angle dataset (n_params = 6 and entries = alpha, beta_m, beta_amp, beta_ph)
+	The first row hold the x_grid vector.
 	It can shuffle the data if required.
 	Input:
 		filename	input filename
@@ -630,37 +630,47 @@ def load_dataset(filename, N_data=None, N_grid = None, shuffle = False, n_params
 		shuffle		whether to shuffle data
 		n_params	number of columns in the theta_vector
 	Outuput:
-		theta_vector (N_data,n_params)	vector holding ordered set of parameters used to generate amp_dataset and ph_dataset
-		entry1_dataset (N_data,K)		dataset with amplitudes
-		entry2_dataset (N_data,K)		dataset with phases
-		x_grid (K,)						vector holding x_grid at which the entries are evaluated (can be frequency or time grid)
+		A list storing the following np.array
+			theta_vector (N_data,n_params)	vector holding ordered set of parameters used to generate amp_dataset and ph_dataset
+			dataset_1 (N_data,K)			entry 1
+			.
+			.
+			dataset_D	(N_data,K)			entry D
+			x_grid (K,)						vector holding x_grid at which the entries are evaluated (can be frequency or time grid)
 	"""
 		#here entry1 is amp and entry2 is ph (change it)
 	if N_data is not None:
 		N_data += 1
 	data = np.loadtxt(filename, max_rows = N_data)
 	N = data.shape[0]
-	K = int((data.shape[1]-n_params)/2)
+	D = N_entries
+	K = int((data.shape[1]-n_params)/D)
 	x_grid = data[0,n_params:n_params+K] #saving x_grid
+
+	if data.shape[1] != D*K + n_params:
+		raise ValueError("File given is not suitable for the required dataset. Unable to continue")
 
 	data = data[1:,:] #removing x_grid from full data
 	if shuffle: 	#shuffling if required
 		np.random.shuffle(data)
 
 	theta_vector = data[:,0:n_params]
-	amp_dataset = data[:,n_params:n_params+K]
-	ph_dataset = data[:,n_params+K:]
+	dataset_list = []
+	for d in range(D):
+		dataset_list.append(data[:,n_params+d*K:n_params+(d+1)*K])
 
 	if N_grid is not None:
-		if ph_dataset.shape[1] < N_grid:
+		if dataset_list[0].shape[1] < N_grid:
 			warnings.warn("Not enough grid points ("+str(ph_dataset.shape[1])+") for the required N_grid value ("+str(N_grid)+").\nMaximum number of grid point is taken (but less than N_grid)")
-			N_grid = ph_dataset.shape[1]
+			N_grid = dataset_list[0].shape[1]
 		indices = np.random.choice(range(ph_dataset.shape[1]), size = (N_grid,), replace = False)
 		x_grid = x_grid[indices]
-		ph_dataset = ph_dataset[:,indices]
-		amp_dataset = amp_dataset[:,indices]
+		for d in range(D):
+			dataset_list[d] = dataset_list[d][:,indices]
 
-	return theta_vector, amp_dataset, ph_dataset, x_grid
+	to_return = [theta_vector, *dataset_list, x_grid]
+
+	return to_return
 
 def make_set_split(data, labels, train_fraction = .85, scale_factor = None):
 	"""
