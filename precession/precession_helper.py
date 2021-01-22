@@ -458,8 +458,8 @@ class NN_precession(tf.keras.Model):
 		self.optimizer = tf.keras.optimizers.Adam(learning_rate = 1e-3) #default optimizer
 		
 		self._l_list = []
-		self._l_list.append(tf.keras.layers.Dense(128*4, activation=tf.nn.tanh) )
 		self._l_list.append(tf.keras.layers.Dense(128*2, activation=tf.nn.tanh) )
+		self._l_list.append(tf.keras.layers.Dense(128*1, activation=tf.nn.tanh) )
 		if smooth_oscillation:
 			self._l_list.append(tf.keras.layers.Dense(4, activation=tf.keras.activations.linear)) #outputs: alpha, beta
 		else:
