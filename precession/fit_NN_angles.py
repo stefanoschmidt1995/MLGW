@@ -12,7 +12,7 @@ import tensorflow as tf
 #quit()
 
 ranges = np.array([(1.1,10.), (0.,1.), (0.,1.), (0., np.pi), (0., np.pi), (0., 2.*np.pi)])
-dataset_generator = angle_generator(t_min = 10., N_times = 500, ranges = ranges, N_batch = 10, replace_step = None, load_file = "starting_dataset.dat", smooth_oscillation = True)
+dataset_generator = angle_generator(t_min = 10., N_times = 500, ranges = ranges, N_batch = 500, replace_step = 1, load_file = "starting_dataset.dat", smooth_oscillation = True)
 #, load_file = "starting_dataset.dat")
 
 def plot(model, folder):

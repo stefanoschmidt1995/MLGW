@@ -5,9 +5,6 @@ Module precession_helper.py
 	Requires precession module (pip install precession) and tensorflow (pip install tensorflow)
 """
 
-#Issues:
-#	set r_0 properly
-
 import numpy as np
 import precession
 import os
@@ -24,6 +21,7 @@ except:
 	pass
 import tensorflow as tf
 
+#FIXME: set a unique return signature for the two get_alpha_beta
 
 ########## spline helpers
 class smoothener():
@@ -111,7 +109,7 @@ def compute_spline_peaks(x,y):
 			#max_list.append(scipy.interpolate.UnivariateSpline(x[max_peaks], y[i, max_peaks], ext = 0))
 			#min_list.append(scipy.interpolate.UnivariateSpline(x[min_peaks], y[i, min_peaks], ext = 0))
 		else:
-			warnings.warn("As not enough peaks were located, the curve will be interpolated using all the points available")
+			#warnings.warn("As not enough peaks were located, the curve will be interpolated using all the points available")
 			max_list.append(scipy.interpolate.CubicSpline(x, y[i, :], extrapolate = True, bc_type = 'natural'))
 			min_list.append(scipy.interpolate.CubicSpline(x, y[i, :], extrapolate = True, bc_type = 'natural'))
 		
@@ -408,8 +406,8 @@ class angle_generator():
 		params = np.random.uniform(self.ranges[:,0], self.ranges[:,1], size = (6,)) #(6,)
 		times = np.random.uniform(-self.t_min, 0., (self.N_times,)) #(D,)
 		if self.smooth_oscillation:
-			alpha, beta_m, beta_amp, beta_ph = get_alpha_beta(*params, times, self.smooth_oscillation, verbose = False) #(D,)
-			alpha_beta = np.column_stack([alpha, beta_m, beta_amp, beta_ph]) #(D,4)
+			alpha, beta = get_alpha_beta(*params, times, self.smooth_oscillation, verbose = False) #(D,), (D,3)
+			alpha_beta = np.concatenate([alpha[:,None], beta], axis =1) #(D,4)
 		else:
 			alpha, beta = get_alpha_beta(*params, times, self.smooth_oscillation, verbose = False) #(D,)
 			alpha_beta = np.column_stack([alpha, beta]) #(D,2)
@@ -451,7 +449,7 @@ class NN_precession(tf.keras.Model):
 		self.smooth_oscillation = smooth_oscillation
 		self.ranges = None
 		if smooth_oscillation:
-			self.scaling_consts = tf.constant([1e4, 1.,1e20,1e20], dtype = tf.float32) #scaling constants for the loss function (set by hand, kind of)
+			self.scaling_consts = tf.constant([5e2, 1.,1e20,1e20], dtype = tf.float32) #scaling constants for the loss function (set by hand, kind of)
 		else:
 			self.scaling_consts = tf.constant([1., 1.], dtype = tf.float32) #scaling constants for the loss function (set by hand, kind of)
 
