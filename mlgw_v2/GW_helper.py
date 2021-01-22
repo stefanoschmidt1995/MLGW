@@ -661,9 +661,9 @@ def load_dataset(filename, N_data=None, N_entries = 2, N_grid = None, shuffle = 
 
 	if N_grid is not None:
 		if dataset_list[0].shape[1] < N_grid:
-			warnings.warn("Not enough grid points ("+str(ph_dataset.shape[1])+") for the required N_grid value ("+str(N_grid)+").\nMaximum number of grid point is taken (but less than N_grid)")
+			warnings.warn("Not enough grid points ("+str(dataset_list[0].shape[1])+") for the required N_grid value ("+str(N_grid)+").\nMaximum number of grid point is taken (but less than N_grid)")
 			N_grid = dataset_list[0].shape[1]
-		indices = np.random.choice(range(ph_dataset.shape[1]), size = (N_grid,), replace = False)
+		indices = np.random.choice(range(dataset_list[0].shape[1]), size = (N_grid,), replace = False)
 		x_grid = x_grid[indices]
 		for d in range(D):
 			dataset_list[d] = dataset_list[d][:,indices]

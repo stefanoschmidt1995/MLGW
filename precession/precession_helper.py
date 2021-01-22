@@ -26,6 +26,59 @@ import tensorflow as tf
 
 
 ########## spline helpers
+class smoothener():
+	"Class which extract from a fast oscillating function the trend and the oscillation amplitude"
+
+	def __init__(self, x,y):
+		"Initialize the class with the function y(x) and computes the smoothener"
+			#initializing the lists
+		max_peaks, props = scipy.signal.find_peaks(y)
+		min_peaks, props = scipy.signal.find_peaks(-y)
+		min_peak_density = .2
+		
+		if len(max_peaks)/(np.max(x)-np.min(x)) >= min_peak_density and len(min_peaks)/(np.max(x)-np.min(x)) >= min_peak_density:
+
+			min_val = np.maximum(np.max(max_peaks), np.max(min_peaks))
+			step = np.minimum(np.min(np.diff(min_peaks)), np.min(np.diff(max_peaks)))
+			continuation = np.arange(min_val, len(x), int(step), dtype = int)
+			print("continuation", continuation)
+
+			if len(continuation) > 0: continuation = continuation[1:]
+			if len(continuation) <= 2: continuation = None
+
+		else:
+			max_peaks = range(len(x))
+			min_peaks = range(len(x))
+			continuation = None
+		
+		self.smoothener = self._build_smoothener(max_peaks, min_peaks, continuation, x, y) #function
+		
+		return
+		
+	def _build_smoothener(self,max_peaks , min_peaks, continuation, x,y):
+		"Builds the smoothener"
+		spline_max = scipy.interpolate.CubicSpline(x[max_peaks], y[max_peaks], extrapolate = True, bc_type = 'natural')
+		spline_min = scipy.interpolate.CubicSpline(x[min_peaks], y[min_peaks], extrapolate = True, bc_type = 'natural')
+		if continuation is not None:
+			continuation_interp = scipy.interpolate.interp1d(x[continuation], y[continuation], fill_value = 'extrapolate')
+			boundary = x[continuation[0]]		
+		else:
+			boundary = x[-1] +1
+
+		def smooth(x_):
+			y_ = np.zeros(x_.shape)
+			use_spline = np.where(x_<=boundary)[0]
+			y_[use_spline] = (spline_max(x_[use_spline])+spline_min(x_[use_spline]))/2.
+			use_continuation = np.where(x_>boundary)[0]
+			if len(use_continuation) >  0:
+				y_[use_continuation] = continuation_interp(x_[use_continuation])
+			return y_
+		
+		return smooth
+	
+	def __call__(self, y_):
+		return self.smoothener(y_) #(D,)
+		
 
 def compute_spline_peaks(x,y):
 	print("Dealing with {} points".format(y.shape[0]))
@@ -36,21 +89,35 @@ def compute_spline_peaks(x,y):
 	for i in range(y.shape[0]):
 		max_peaks, props = scipy.signal.find_peaks(y[i,:])
 		min_peaks, props = scipy.signal.find_peaks(-y[i,:])
-		max_peaks = np.append(max_peaks, len(x)-1)
-		min_peaks = np.append(min_peaks, len(x)-1)
-		print(max_peaks, len(x))
-		
+
 		if len(max_peaks)/(np.max(x)-np.min(x)) >= min_peak_density and len(min_peaks)/(np.max(x)-np.min(x)) >= min_peak_density:
-			max_list.append(scipy.interpolate.CubicSpline(x[max_peaks], y[i, max_peaks], extrapolate = True))
-			min_list.append(scipy.interpolate.CubicSpline(x[min_peaks], y[i, min_peaks], extrapolate = True))
+
+			min_val = np.maximum(np.max(max_peaks), np.max(min_peaks))
+			step = np.minimum(np.min(np.diff(min_peaks)), np.min(np.diff(max_peaks)))
+			continuation = np.arange(min_val, y.shape[1], int(step), dtype = int)
+			continuation_min = np.arange(np.max(min_peaks), y.shape[1], int(np.min(np.diff(min_peaks))), dtype = int)
+			print("continuation", continuation)
+
+			if len(continuation) > 0: continuation = continuation[1:]
+
+			#continuation = [y.shape[1]-1]
+			max_peaks = np.concatenate([max_peaks, continuation])
+			min_peaks = np.concatenate([min_peaks, continuation])
+			
+			max_list.append(scipy.interpolate.interp1d(x[max_peaks], y[i, max_peaks], fill_value = 'extrapolate'))
+			min_list.append(scipy.interpolate.interp1d(x[min_peaks], y[i, min_peaks], fill_value = 'extrapolate'))
+			#max_list.append(scipy.interpolate.CubicSpline(x[max_peaks], y[i, max_peaks], extrapolate = True, bc_type = 'natural'))
+			#min_list.append(scipy.interpolate.CubicSpline(x[min_peaks], y[i, min_peaks], extrapolate = True, bc_type = 'natural'))
+			#max_list.append(scipy.interpolate.UnivariateSpline(x[max_peaks], y[i, max_peaks], ext = 0))
+			#min_list.append(scipy.interpolate.UnivariateSpline(x[min_peaks], y[i, min_peaks], ext = 0))
 		else:
 			warnings.warn("As not enough peaks were located, the curve will be interpolated using all the points available")
-			max_list.append(scipy.interpolate.CubicSpline(x, y[i, :], extrapolate = True))
-			min_list.append(scipy.interpolate.CubicSpline(x, y[i, :], extrapolate = True))
+			max_list.append(scipy.interpolate.CubicSpline(x, y[i, :], extrapolate = True, bc_type = 'natural'))
+			min_list.append(scipy.interpolate.CubicSpline(x, y[i, :], extrapolate = True, bc_type = 'natural'))
 		
 	return min_list, max_list
 	
-def get_spline_mean(x,y):
+def get_spline_mean(x,y, f_minmax = False):
 	f_min, f_max = compute_spline_peaks(x,y)
 	def mean(times, i =None):
 		if i is not None:
@@ -59,7 +126,9 @@ def get_spline_mean(x,y):
 		for i in range((len(f_min))):
 			res[i,:] = (f_max[i](times)+f_min[i](times))/2.
 		return res #(N,D)
-	
+
+	if f_minmax:
+		return mean, f_min, f_max	
 	return mean
 	
 def get_grad_mean(x,y):
@@ -155,8 +224,8 @@ get_alpha_beta
 		#initializing vectors
 	alpha = np.zeros((q.shape[0],times.shape[0]))
 	if smooth_oscillation:
-		t_cutoff = 0#-0.1 #shall I insert a cutoff here?
-		beta = np.zeros((q.shape[0],times.shape[0], 2))	
+		t_cutoff = -0.1 #shall I insert a cutoff here?
+		beta = np.zeros((q.shape[0],times.shape[0], 3))	
 	else:
 		beta = np.zeros((q.shape[0],times.shape[0]))
 	
@@ -204,29 +273,40 @@ get_alpha_beta
 		if not smooth_oscillation:
 			beta[i,:] = np.interp(times, t_out, temp_beta)
 		if smooth_oscillation:
-			mean = get_spline_mean(t_out, temp_beta[None,:])
-			beta[i,:,0] = mean(times) #avg beta
-			beta[i,:,1] = np.interp(times, t_out, temp_beta) - mean(times) #residuals of beta
+			#mean, f_min, f_max = get_spline_mean(t_out, temp_beta[None,:], f_minmax = True)
+			s = smoothener(t_out, temp_beta)
+			#beta[i,:,0] = mean(times) #avg beta
+			beta[i,:,0] = s(times)
+			#beta[i,:,1] = np.interp(times, t_out, temp_beta) - mean(times) #residuals of beta
 
-				#dealing with amplitude
-			#m_list, M_list = compute_spline_peaks(t_out, (temp_beta - mean(t_out)))
-			#amp = lambda t: (M_list[0](t) - m_list[0](t))/2.
-			#beta[i,:,1] = amp(times) #amplitude
-			#temp_ph = (temp_beta - mean(t_out) )/amp(t_out)
+				#dealing with amplitude and phase
+			residual = (temp_beta - s(t_out))
+			if np.mean(np.abs(residual))< 0.001:
+				residual[:] = 0
+			id_cutoff = np.where(t_out>t_cutoff)[0]
+			not_id_cutoff = np.where(t_out<=t_cutoff)[0]
+			residual[id_cutoff] = 0.
+			
+			
+			m_list, M_list = compute_spline_peaks(t_out, residual[None,:])
+			amp = lambda t: (M_list[0](t) - m_list[0](t))/2.
+			beta[i,:,1] = amp(times) #amplitude
+			temp_ph = residual / (amp(t_out)+1e-30)
+			temp_ph[id_cutoff] = 0.
 			#print(temp_ph.shape)
-			#beta[i,:,2] = np.interp(times, t_out, temp_ph[0,:]) #phase
+			beta[i,:,2] = np.interp(times, t_out, temp_ph) #phase
+			beta[i,np.where(np.abs(beta[i,:,2])>1)[0],2] = np.sign(beta[i,np.where(np.abs(beta[i,:,2])>1)[0],2])
 			
 				#applying late times cutoff
 			#max_cutoff, props = scipy.signal.find_peaks(temp_beta)
 			#min_cutoff, props = scipy.signal.find_peaks(temp_beta)
 			#t_cutoff = t_out[int((max_cutoff[-1]+ min_cutoff[-1])/2.)]
-			#id_cutoff = np.where(times>t_cutoff)[0]
-			#beta[i,id_cutoff,1:] = 0.
-			#beta[i, id_cutoff, 0] = np.interp(times[id_cutoff], t_out, temp_beta)
 			
-			mean_grad = get_grad_mean(t_out, temp_beta[None,:])
+			#beta[i, id_cutoff, 0] = np.interp(times[id_cutoff], t_out, temp_beta) #probably a good idea...
+			
+			#mean_grad = get_grad_mean(t_out, temp_beta[None,:])
 				#plotting
-			if True: #DEBUG
+			if False: #DEBUG
 				plt.figure()
 				plt.title("Alpha")
 				plt.plot(times,alpha[i,:])
@@ -236,25 +316,28 @@ get_alpha_beta
 				plt.plot(times,beta[i,:,0])
 				plt.plot(t_out,temp_beta)
 				
-				plt.figure()
-				plt.title("Mean grad")
-				plt.plot(t_out, temp_beta)
-				plt.plot(t_out, mean_grad[0](t_out))
-				
-				plt.figure()
-				plt.title("Gradient")
-				plt.plot(t_out,np.gradient(temp_beta, t_out))
-				plt.ylim([-0.6,0.6])
+				#plt.figure()
+				#plt.title("Mean grad")
+				#plt.plot(t_out, temp_beta)
+				#plt.plot(t_out, mean_grad[0](t_out))
 				
 				#plt.figure()
+				#plt.title("Gradient")
+				#plt.plot(t_out,np.gradient(temp_beta, t_out))
+				#plt.ylim([-0.6,0.6])
+				
+				plt.figure()
+				plt.title("Amplitude")
 				#plt.plot(t_out, amp(t_out))
-				#plt.plot(t_out,np.squeeze(temp_beta - mean(t_out) ))
+				plt.plot(times, beta[i,:,1])
+				plt.plot(t_out,np.squeeze(temp_beta - s(t_out) ))
 				
 				#plt.figure()
 				#plt.plot(times,beta[i,:,1])
 				
-				#plt.figure()
-				#plt.plot(times,beta[i,:,2])
+				plt.figure()
+				plt.title("ph")
+				plt.plot(times,beta[i,:,2])
 				plt.show()
 	
 	if not verbose:
@@ -269,20 +352,35 @@ get_alpha_beta
 
 class angle_generator():
 	"This class provides a generator of angles for the training of the NN."
-	def __init__(self, t_min, N_times, ranges, N_batch = 100, replace_step = 1, load_file = None):
+	def __init__(self, t_min, N_times, ranges, N_batch = 100, replace_step = 1, load_file = None, smooth_oscillation = True):
 		"Input the size of the time grid and the starting time from the angle generation. Ranges for the 6 dimensional inputs shall be provided by a (6,2) array"
 		self.t_min = np.abs(t_min)
 		self.N_times = N_times
 		self.N_batch = N_batch
+		self.smooth_oscillation = smooth_oscillation
 		self.ranges = ranges #(6,2)
 		self.replace_step = replace_step #number of iteration before computing a new element
-		self.dataset = np.zeros((N_batch*N_times, 9 )) #allocating memory for the dataset
+		if not (isinstance(self.replace_step, int) or (self.replace_step is None)):
+			try:
+				self.replace_step = int(self.replace_step)
+			except ValueError:
+				raise ValueError("Wrong format for replace_step: expected int but got {} instead".format(type(self.replace_step)))
+		self.dataset = np.zeros((N_batch*N_times, 9 + int(smooth_oscillation)*2 )) #allocating memory for the dataset
 		self._initialise_dataset(load_file)
 		return
 
+	def get_output_dim(self):
+		return self.dataset.shape[1]
+
 	def _initialise_dataset(self, load_file):
 		if isinstance(load_file, str):
-			params, alpha, beta, times = load_dataset(load_file, N_data=None, N_grid = self.N_times, shuffle = False, n_params = 6)
+			if self.smooth_oscillation:
+				params, alpha, beta_m, beta_amp, beta_ph, times = load_dataset(load_file, N_data=None, N_grid = self.N_times, shuffle = False, n_params = 6, N_entries = 4)
+				alpha_beta = np.stack([alpha, beta_m, beta_amp, beta_ph], 2) #(N,D,4)
+			else:
+				params, alpha, beta, times = load_dataset(load_file, N_data=None, N_grid = self.N_times, shuffle = False, n_params = 6)
+				alpha_beta = np.stack([alpha, beta], 2) #(N,D,2)
+				
 			if times.shape[0] != self.N_times:
 				raise ValueError("The input file {} holds a input dataset with only {} grid points but {} grid points are asked. Plese provide a different dataset file or reduce the number of grid points for the dataset".format(load_file, times.shape[0], self.N_times))
 			N_init = params.shape[0] #number of points in the dataset
@@ -290,7 +388,7 @@ class angle_generator():
 				i_start = i
 				if i >= self.N_batch: break
 				new_data = np.repeat(params[i,None,:], self.N_times, axis = 0) #(D,6)
-				new_data = np.concatenate([times[:,None], new_data, alpha[i,:,None], beta[i,:,None]], axis =1) #(N,9)
+				new_data = np.concatenate([times[:,None], new_data, alpha_beta[i,...]], axis =1) #(N,9/11)
 
 				id_start = i*(self.N_times)
 				self.dataset[id_start:id_start + self.N_times,:] = new_data
@@ -309,10 +407,15 @@ class angle_generator():
 		M_sun = 4.93e-6
 		params = np.random.uniform(self.ranges[:,0], self.ranges[:,1], size = (6,)) #(6,)
 		times = np.random.uniform(-self.t_min, 0., (self.N_times,)) #(D,)
-		alpha, beta = get_alpha_beta(*params, times, verbose = False) #(D,)
+		if self.smooth_oscillation:
+			alpha, beta_m, beta_amp, beta_ph = get_alpha_beta(*params, times, self.smooth_oscillation, verbose = False) #(D,)
+			alpha_beta = np.column_stack([alpha, beta_m, beta_amp, beta_ph]) #(D,4)
+		else:
+			alpha, beta = get_alpha_beta(*params, times, self.smooth_oscillation, verbose = False) #(D,)
+			alpha_beta = np.column_stack([alpha, beta]) #(D,2)
 
-		new_data = np.repeat(params[None,:], self.N_times, axis = 0) #(N,6)
-		new_data = np.concatenate([times[:,None], new_data, alpha[:,None], beta[:,None]], axis =1) #(N,9)
+		new_data = np.repeat(params[None,:], self.N_times, axis = 0) #(D,6)
+		new_data = np.concatenate([times[:,None], new_data, alpha_beta], axis =1) #(D,9/11)
 
 		id_start = i*(self.N_times)
 		self.dataset[id_start:id_start + self.N_times,:] = new_data
@@ -324,14 +427,13 @@ class angle_generator():
 		j = 0 #keeps track of the iteration number, to know when to replace the data
 		while True:
 			yield self.dataset
-			if not isinstance(self.replace_step, int):
-				continue
-			elif j % self.replace_step == 0 and j !=0:
-				if i== (self.N_batch-1):
-					i =0
-				else:
-					i +=1
-				self.replace_angle(i)
+			if self.replace_step is not None:
+				if j % self.replace_step == 0 and j !=0:
+					if i== (self.N_batch-1):
+						i =0
+					else:
+						i +=1
+					self.replace_angle(i)
 			j+=1
 
 ###############################################################################################################
@@ -340,30 +442,48 @@ class angle_generator():
 
 class NN_precession(tf.keras.Model):
 
-	def __init__(self, name = "NN_precession_model"):
+	def __init__(self, name = "NN_precession_model", smooth_oscillation = True):
 		super(NN_precession, self).__init__(name = name)
 		print("Initializing model ",self.name)
 		self.history = []
 		self.metric = []
 		self.epoch = 0
+		self.smooth_oscillation = smooth_oscillation
 		self.ranges = None
-		self.scaling_consts = tf.constant([1e10, 1.], dtype = tf.float32) #scaling constants for the loss function (set by hand, kind of) #only beta
+		if smooth_oscillation:
+			self.scaling_consts = tf.constant([1e4, 1.,1e20,1e20], dtype = tf.float32) #scaling constants for the loss function (set by hand, kind of)
+		else:
+			self.scaling_consts = tf.constant([1., 1.], dtype = tf.float32) #scaling constants for the loss function (set by hand, kind of)
 
+		self.optimizer = tf.keras.optimizers.Adam(learning_rate = 1e-3) #default optimizer
+		
 		self._l_list = []
 		self._l_list.append(tf.keras.layers.Dense(128*4, activation=tf.nn.tanh) )
 		self._l_list.append(tf.keras.layers.Dense(128*2, activation=tf.nn.tanh) )
-		self._l_list.append(tf.keras.layers.Dense(2, activation=tf.keras.activations.linear)) #outputs: alpha, beta
-
-		self.optimizer = tf.keras.optimizers.Adam(learning_rate = 1e-3) #default optimizer
-		self.build(input_shape = (None, 7)) #This is required to specify the input shape of the model and to state which are the trainable paramters
+		if smooth_oscillation:
+			self._l_list.append(tf.keras.layers.Dense(4, activation=tf.keras.activations.linear)) #outputs: alpha, beta
+		else:
+			self._l_list.append(tf.keras.layers.Dense(2, activation=tf.keras.activations.linear)) #outputs: alpha, beta
+		
+		self.build(input_shape = (None, 7)) #This is required to specify the input shape of the model and to state which are the trainable paramters		
 
 	def call(self, inputs):
-		"Inputs: [t, X_0 (n_vars,), Omega (n_params,)]"
+		"Inputs: [t, params (6,)]"
 		output = inputs
 		for l in self._l_list:
 			output = l(output)
 		return output #(N,n_vars)
-
+		
+	def call_alpha_beta(self,inputs):
+		res = self.call(inputs) #(N, 2/4)
+		if self.smooth_oscillation:
+			beta = res[:,1] + res[:,2]*tf.math.cos(res[:,3]) #(N,)
+			return tf.stack([res[:,0], beta], axis = 1) #(N,2)
+		else:
+			return res
+			
+			
+			
 	def __ok_inputs(self, inputs):
 		if not isinstance(inputs, tf.Tensor):
 			inputs = tf.convert_to_tensor(inputs, dtype=tf.float32) #(N,D)
@@ -376,19 +496,18 @@ class NN_precession(tf.keras.Model):
 		Loss function: takes an input array X (N,9) with values to test the model at and the angles at those points.
 		Input should be tensorflow only.
 		"""
-		loss = tf.math.square(self.__call__(X[:,:7]) - X[:,7:]) #(N,2)
+		loss = tf.math.square(self.call(X[:,:7]) - X[:,7:]) #(N,2/4)
 		loss = tf.math.divide(loss, self.scaling_consts)
 		loss = tf.reduce_sum(loss, axis = 1) /X.shape[1] #(N,)
 		return loss
 
 		#for jit_compil you must first install: pip install tf-nightly
-	#@tf.function(jit_compile=True) #very useful for speed up
+	@tf.function(jit_compile=True) #very useful for speed up
 	def grad_update(self, X):
 		"Input should be tensorflow only."
 		with tf.GradientTape() as g:
 			g.watch(self.trainable_weights)
-			#loss = tf.reduce_sum(self.loss(X))/X.shape[0]
-			loss = tf_wasserstein_loss(self.__call__(X[:,:7])[:,1], X[:,8] )
+			loss = tf.reduce_sum(self.loss(X))/X.shape[0]
 
 		gradients = g.gradient(loss, self.trainable_weights)
 		self.optimizer.apply_gradients(zip(gradients, self.trainable_weights))
@@ -401,7 +520,10 @@ class NN_precession(tf.keras.Model):
 
 			#initializing the validation file
 		if isinstance(validation_file, str):
-			val_params, val_alpha, val_beta, val_times = load_dataset(validation_file, N_data=None, N_grid = None, shuffle = False, n_params = 6)
+			if self.smooth_oscillation:
+				val_params, val_alpha, val_beta, val_beta_amp, val_beta_ph, val_times = load_dataset(validation_file, N_data=None, N_grid = None, shuffle = False, n_params = 6, N_entries = 4)
+			else:
+				val_params, val_alpha, val_beta, val_times = load_dataset(validation_file, N_data=None, N_grid = None, shuffle = False, n_params = 6)
 
 		#assigning ranges (if generator has them)
 		try:
@@ -411,11 +533,12 @@ class NN_precession(tf.keras.Model):
 
 		tf_dataset = tf.data.Dataset.from_generator(
      			generator,
-    			output_signature = tf.TensorSpec(shape=(None,9), dtype=tf.float32)
+    			output_signature = tf.TensorSpec(shape=(None,generator.get_output_dim()), dtype=tf.float32)
 					)#.prefetch(tf.data.experimental.AUTOTUNE) #good idea?? Probably yes
 		
 		n_epoch = -1
 		for X in tf_dataset:
+			print("Start iteration", n_epoch)
 			n_epoch +=1
 			if n_epoch >= N_epochs:
 				break
@@ -439,9 +562,13 @@ class NN_precession(tf.keras.Model):
 
 				if plot_function is not None:
 					plot_function(self, "{}/{}".format(self.name, str(self.epoch)))
-						
+
 				if isinstance(validation_file, str): #computing validation metric
-					val_alpha_NN, val_beta_NN = self.get_alpha_beta(*val_params.T,val_times)
+					if self.smooth_oscillation:
+						val_alpha_NN, val_beta_NN, val_beta_amp_NN, val_beta_ph_NN = self.get_alpha_beta(*val_params.T,val_times, True)
+						#here val_beta_NN is actually beta mean
+					else:
+						val_alpha_NN, val_beta_NN = self.get_alpha_beta(*val_params.T,val_times)
 					loss_alpha = np.mean(np.divide(np.abs(val_alpha_NN- val_alpha),val_alpha))
 					loss_beta = np.mean(np.divide(np.abs(val_beta_NN- val_beta),val_beta))
 
@@ -469,7 +596,7 @@ class NN_precession(tf.keras.Model):
 
 		return
 
-	def get_alpha_beta(self,q, chi1, chi2, theta1, theta2, delta_phi, times):
+	def get_alpha_beta(self,q, chi1, chi2, theta1, theta2, delta_phi, times, get_mean = False):
 		#do it better
 		X = np.column_stack( [q, chi1, chi2, theta1, theta2, delta_phi]) #(N,6)
 
@@ -479,19 +606,30 @@ class NN_precession(tf.keras.Model):
 		N = X.shape[0]
 		alpha = np.zeros((N , len(times)))
 		beta = np.zeros((N, len(times)))
+		
+		if get_mean and self.smooth_oscillation:
+			beta_amp = np.zeros((N, len(times)))
+			beta_ph = np.zeros((N, len(times)))
 
 		for i in range(len(times)):
 			t = np.repeat([times[i]], N)[:,None]
 			X_tf = np.concatenate([t,X],axis =1)
-			X_tf = tf.convert_to_tensor(X_tf, dtype=tf.float32)		
-			alpha_beta = self.__call__(X_tf) #(N,2)
+			X_tf = tf.convert_to_tensor(X_tf, dtype=tf.float32)
+			if get_mean and self.smooth_oscillation:
+				alpha_beta = self.call(X_tf) #(N,4)
+				beta_amp[:,i] = alpha_beta[:,2]
+				beta_ph[:,i] = alpha_beta[:,3]
+			else:
+				alpha_beta = self.call_alpha_beta(X_tf) #(N,2)
 			alpha[:,i] = alpha_beta[:,0] 
 			beta[:,i] = alpha_beta[:,1] 
 
+		if get_mean and self.smooth_oscillation:
+			return alpha, beta, beta_amp, beta_ph
 		return alpha, beta
 
 
-def plot_solution(model, N_sol, t_min,   seed, folder = ".", show = False):
+def plot_solution(model, N_sol, t_min,   seed, folder = ".", show = False, smooth_oscillation = False):
 	state = np.random.get_state()
 	np.random.seed(seed)
 	try:
@@ -503,8 +641,13 @@ def plot_solution(model, N_sol, t_min,   seed, folder = ".", show = False):
 	np.random.set_state(state) #using original random state
 	times = np.linspace(-np.abs(t_min), 0.,1000) #(D,)
 
-	alpha, beta = get_alpha_beta(*params.T, times, verbose = False) #true alpha and beta
-	NN_alpha, NN_beta = model.get_alpha_beta(*params.T,times) #(N,D)
+	if smooth_oscillation:
+		alpha, beta = get_alpha_beta(*params.T, times, smooth_oscillation = True, verbose = False) #true alpha and beta
+		beta, beta_amp, beta_ph = beta[:,:,0], beta[:,:,1], beta[:,:,2]
+		NN_alpha, NN_beta, NN_beta_amp, NN_beta_ph = model.get_alpha_beta(*params.T,times, True) #(N,D)
+	else:
+		alpha, beta = get_alpha_beta(*params.T, times, smooth_oscillation = False, verbose = False) #true alpha and beta
+		NN_alpha, NN_beta = model.get_alpha_beta(*params.T,times) #(N,D)
 
 		#plotting
 	plt.figure()
@@ -523,6 +666,23 @@ def plot_solution(model, N_sol, t_min,   seed, folder = ".", show = False):
 	if isinstance(folder, str):
 		plt.savefig(folder+"/beta.pdf", transparent =True)
 
+	if smooth_oscillation:
+			#plotting
+		plt.figure()
+		plt.xlabel("times (s/M_sun)")
+		plt.ylabel(r"$A_\beta$")
+		plt.plot(times, NN_beta_amp.T, c = 'r')
+		plt.plot(times, beta_amp.T, c= 'b')
+		if isinstance(folder, str):
+			plt.savefig(folder+"/beta_amp.pdf", transparent =True)
+
+		plt.figure()
+		plt.xlabel("times (s/M_sun)")
+		plt.ylabel(r"$\phi_\beta$")
+		plt.plot(times, NN_beta_ph.T, c= 'r')
+		plt.plot(times, beta_ph.T, c= 'b')
+		if isinstance(folder, str):
+			plt.savefig(folder+"/beta_ph.pdf", transparent =True)
 
 	if show:
 		plt.show()
@@ -606,7 +766,7 @@ create_dataset_alpha_beta
 		filebuff = open(filename,'w')
 		print("New file ", filename, " created")
 		if smooth_oscillation == True:
-			time_header = np.concatenate((np.zeros((6,)), time_grid, time_grid, time_grid) )[None,:]	
+			time_header = np.concatenate((np.zeros((6,)), time_grid, time_grid, time_grid, time_grid) )[None,:]	
 		else:
 			time_header = np.concatenate((np.zeros((6,)), time_grid, time_grid) )[None,:]
 		np.savetxt(filebuff, time_header, header = "#Alpha, Beta dataset" +"\n# row: params (None,6) | alpha (None,"+str(N_grid)+")| beta (None,"+str(N_grid)+")\n# N_grid = "+str(N_grid)+" | tau_min ="+str(tau_min)+" | q_range = "+str(q_range)+" | chi1_range = "+str(chi1_range)+" | chi2_range = "+str(chi2_range)+" | theta1_range = "+str(theta1_range)+" | theta2_range = "+str(theta2_range)+" | delta_phi_range = "+str(delta_phi_range), newline = '\n')
@@ -640,11 +800,10 @@ create_dataset_alpha_beta
 
 		alpha, beta = get_alpha_beta(*params.T, time_grid, smooth_oscillation, verbose= verbose)
 		if smooth_oscillation:
-			to_save = np.concatenate([params, alpha, beta[:,:,0], beta[:,:,1]], axis = 1) #(N,4*D)
+			to_save = np.concatenate([params, alpha, beta[:,:,0], beta[:,:,1], beta[:,:,2]], axis = 1) #(N,4*D)
 			print(to_save.shape)
 		else:
 			to_save = np.concatenate([params, alpha, beta], axis = 1)
-		print(to_save.shape)
 		np.savetxt(filebuff, to_save) #saving the batch to file
 		print("Generated angle: ", count)
 
