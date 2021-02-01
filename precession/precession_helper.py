@@ -373,20 +373,21 @@ class angle_generator():
 	def _initialise_dataset(self, load_file):
 		if isinstance(load_file, str):
 			if self.smooth_oscillation:
-				params, alpha, beta_m, beta_amp, beta_ph, times = load_dataset(load_file, N_data=None, N_grid = self.N_times, shuffle = False, n_params = 6, N_entries = 4)
+				params, alpha, beta_m, beta_amp, beta_ph, times = load_dataset(load_file, N_data=None, N_grid = None, shuffle = False, n_params = 6, N_entries = 4)
 				alpha_beta = np.stack([alpha, beta_m, beta_amp, beta_ph], 2) #(N,D,4)
 			else:
 				params, alpha, beta, times = load_dataset(load_file, N_data=None, N_grid = self.N_times, shuffle = False, n_params = 6)
 				alpha_beta = np.stack([alpha, beta], 2) #(N,D,2)
 				
-			if times.shape[0] != self.N_times:
+			if times.shape[0] < self.N_times:
 				raise ValueError("The input file {} holds a input dataset with only {} grid points but {} grid points are asked. Plese provide a different dataset file or reduce the number of grid points for the dataset".format(load_file, times.shape[0], self.N_times))
 			N_init = params.shape[0] #number of points in the dataset
 			for i in range(N_init):
+				ids_ = np.random.choice(len(times), self.N_times)
 				i_start = i
 				if i >= self.N_batch: break
 				new_data = np.repeat(params[i,None,:], self.N_times, axis = 0) #(D,6)
-				new_data = np.concatenate([times[:,None], new_data, alpha_beta[i,...]], axis =1) #(N,9/11)
+				new_data = np.concatenate([times[ids_,None], new_data, alpha_beta[i,ids_,:]], axis =1) #(N,9/11)
 
 				id_start = i*(self.N_times)
 				self.dataset[id_start:id_start + self.N_times,:] = new_data
@@ -449,7 +450,7 @@ class NN_precession(tf.keras.Model):
 		self.smooth_oscillation = smooth_oscillation
 		self.ranges = None
 		if smooth_oscillation:
-			self.scaling_consts = tf.constant([5e2, 1.,1e20,1e20], dtype = tf.float32) #scaling constants for the loss function (set by hand, kind of)
+			self.scaling_consts = tf.constant([1e4, 1.,1e20,1e20], dtype = tf.float32) #scaling constants for the loss function (set by hand, kind of)
 		else:
 			self.scaling_consts = tf.constant([1., 1.], dtype = tf.float32) #scaling constants for the loss function (set by hand, kind of)
 
@@ -479,8 +480,6 @@ class NN_precession(tf.keras.Model):
 			return tf.stack([res[:,0], beta], axis = 1) #(N,2)
 		else:
 			return res
-			
-			
 			
 	def __ok_inputs(self, inputs):
 		if not isinstance(inputs, tf.Tensor):
@@ -536,7 +535,6 @@ class NN_precession(tf.keras.Model):
 		
 		n_epoch = -1
 		for X in tf_dataset:
-			print("Start iteration", n_epoch)
 			n_epoch +=1
 			if n_epoch >= N_epochs:
 				break
@@ -688,9 +686,13 @@ def plot_solution(model, N_sol, t_min,   seed, folder = ".", show = False, smoot
 		plt.close('all')
 
 
-def plot_validation_set(model, N_sol, validation_file, folder = ".", show = False):
-	params, alpha, beta, times = load_dataset(validation_file, N_data=N_sol, N_grid = None, shuffle = False, n_params = 6)
-	NN_alpha, NN_beta = model.get_alpha_beta(*params.T,times) #(N,D)
+def plot_validation_set(model, N_sol, validation_file, folder = ".", show = False, smooth_oscillation = False):
+	if smooth_oscillation:
+		params, alpha, beta, beta_amp, beta_ph, times = load_dataset(validation_file, N_data=N_sol, N_grid = None, shuffle = False, n_params = 6, N_entries = 4)
+		NN_alpha, NN_beta, NN_beta_amp, NN_beta_ph = model.get_alpha_beta(*params.T,times, True) #(N,D)
+	else:
+		params, alpha, beta, times = load_dataset(validation_file, N_data=N_sol, N_grid = None, shuffle = False, n_params = 6)
+		NN_alpha, NN_beta = model.get_alpha_beta(*params.T,times) #(N,D)
 
 		#plotting
 	plt.figure()
