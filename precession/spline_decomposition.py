@@ -19,8 +19,8 @@ from ML_routines import *
 #plt.show()
 #"""
 
-#create_dataset_alpha_beta(N_angles = 20, filename="temp.dat", N_grid = 1500, tau_min = 20., q_range= (1.1,10.), smooth_oscillation = True, verbose = False)
-params, alpha, beta_avg, beta_amp, beta_ph, times = load_dataset("validation_angles.dat", N_data = 10, n_params = 6, N_entries = 4)
+create_dataset_alpha_beta(N_angles = 20, filename="temp.dat", N_grid = 1500, tau_min = 20., q_range= (1.1,10.), smooth_oscillation = True, verbose = False)
+params, alpha, beta_avg, beta_amp, beta_ph, times = load_dataset("validation_angles.dat", N_data = 10, n_params = 6, N_entries = 4, shuffle = True)
 
 plt.figure()
 plt.title("avg")

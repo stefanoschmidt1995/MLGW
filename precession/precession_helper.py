@@ -22,6 +22,8 @@ except:
 import tensorflow as tf
 
 #FIXME: set a unique return signature for the two get_alpha_beta
+#TODO: find a good way to smoothen the function
+#TODO: replace the robustness check
 
 ########## spline helpers
 class smoothener():
@@ -39,7 +41,6 @@ class smoothener():
 			min_val = np.maximum(np.max(max_peaks), np.max(min_peaks))
 			step = np.minimum(np.min(np.diff(min_peaks)), np.min(np.diff(max_peaks)))
 			continuation = np.arange(min_val, len(x), int(step), dtype = int)
-			print("continuation", continuation)
 
 			if len(continuation) > 0: continuation = continuation[1:]
 			if len(continuation) <= 2: continuation = None
@@ -291,20 +292,12 @@ get_alpha_beta
 			beta[i,:,1] = amp(times) #amplitude
 			temp_ph = residual / (amp(t_out)+1e-30)
 			temp_ph[id_cutoff] = 0.
-			#print(temp_ph.shape)
 			beta[i,:,2] = np.interp(times, t_out, temp_ph) #phase
 			beta[i,np.where(np.abs(beta[i,:,2])>1)[0],2] = np.sign(beta[i,np.where(np.abs(beta[i,:,2])>1)[0],2])
 			
-				#applying late times cutoff
-			#max_cutoff, props = scipy.signal.find_peaks(temp_beta)
-			#min_cutoff, props = scipy.signal.find_peaks(temp_beta)
-			#t_cutoff = t_out[int((max_cutoff[-1]+ min_cutoff[-1])/2.)]
-			
-			#beta[i, id_cutoff, 0] = np.interp(times[id_cutoff], t_out, temp_beta) #probably a good idea...
-			
-			#mean_grad = get_grad_mean(t_out, temp_beta[None,:])
 				#plotting
-			if False: #DEBUG
+			print(np.max(np.abs(temp_beta-s(t_out))))
+			if np.max(np.abs(temp_beta-s(t_out))) > 2: #DEBUG
 				plt.figure()
 				plt.title("Alpha")
 				plt.plot(times,alpha[i,:])
@@ -390,6 +383,14 @@ class angle_generator():
 				new_data = np.concatenate([times[ids_,None], new_data, alpha_beta[i,ids_,:]], axis =1) #(N,9/11)
 
 				id_start = i*(self.N_times)
+				
+				#robustness check (temporary thing: it should eventually be improved) #VERY VERY UGLY
+				if np.any(new_data[:,8]>3.14) or np.any(new_data[:,8]<0.1):
+					if i >= 1:
+						new_data = self.dataset[id_start-self.N_times:id_start,:]
+					else:
+						new_data = 0
+				
 				self.dataset[id_start:id_start + self.N_times,:] = new_data
 		else:
 			i_start = 0
@@ -403,7 +404,6 @@ class angle_generator():
 
 	def replace_angle(self, i):
 		"Updates the angles corresponding to the i-th point of the batch. They are inserted in the dataset."
-		M_sun = 4.93e-6
 		params = np.random.uniform(self.ranges[:,0], self.ranges[:,1], size = (6,)) #(6,)
 		times = np.random.uniform(-self.t_min, 0., (self.N_times,)) #(D,)
 		if self.smooth_oscillation:
@@ -417,6 +417,9 @@ class angle_generator():
 		new_data = np.concatenate([times[:,None], new_data, alpha_beta], axis =1) #(D,9/11)
 
 		id_start = i*(self.N_times)
+		#robustness check (temporary thing: it should eventually be improved) #VERY VERY UGLY
+		if np.any(new_data[:,8]>3.14) or np.any(new_data[:,8]<0.1):
+			return
 		self.dataset[id_start:id_start + self.N_times,:] = new_data
 		return
 
@@ -495,7 +498,7 @@ class NN_precession(tf.keras.Model):
 		"""
 		loss = tf.math.square(self.call(X[:,:7]) - X[:,7:]) #(N,2/4)
 		loss = tf.math.divide(loss, self.scaling_consts)
-		loss = tf.reduce_sum(loss, axis = 1) /X.shape[1] #(N,)
+		loss = tf.reduce_sum(loss[:,:2], axis = 1) /X.shape[1] #(N,) #DEBUG: NO AMP PH
 		return loss
 
 		#for jit_compil you must first install: pip install tf-nightly
@@ -785,7 +788,7 @@ create_dataset_alpha_beta
 	lower_limits = [r[0] for r in range_list]	
 	upper_limits = [r[1] for r in range_list]	
 	
-	b_size = 3 #batch size at which angles are stored before being saved
+	b_size = 10 #batch size at which angles are stored before being saved
 	count = 0 #keep track of how many angles were generated
 	while True:
 		if N_angles- count > b_size:

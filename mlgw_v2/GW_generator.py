@@ -568,7 +568,7 @@ GW_generator
 		Each mode is aligned s.t. the peak of the 22 mode is at t=0
 		Input:
 			theta (N,D)/(D,)	source parameters to make prediction at (D = 3,4)
-			t_grid (D',)		a grid in (reduced) time to evaluate the wave at (uses np.interp)
+			t_grid (D',)		a grid in time to evaluate the wave at (uses np.interp)
 			modes				list of modes to be returned (if None, every mode available is employed)
 			out_type			whether amplitude and phase ("ampph") or real and imaginary part ("realimag") shall be returned
 		Output:
@@ -683,6 +683,66 @@ GW_generator
 			if mode_.lm() == mode: #check if it is the correct mode
 				return mode_
 		return None
+		
+	def get_mode_grads(self, theta, t_grid, modes = (2,2), out_type = "ampph", mchirp_eta = False):
+		"""
+	get_mode_grads
+	==============
+		Return the gradients of the GW higher order modes in the model; the gradients are evaluated on the given time grid.
+		It can return the gradient of the amplitude and phase (out_type = "ampph") or the gradient of the real and imaginary part (out_type = "realimag").
+		Gradients are computed w.r.t. [M,q,s1,s2] if mchirp_eta is False or [Mc,eta,s1,s2] otherwise. They are returned in this order for each point of the time grid.
+		Input:
+			theta (N,D)/(D,)	source parameters to make prediction at (D = 4)
+			t_grid (D',)		a grid in time to evaluate the wave at (uses np.interp)
+			modes				list of modes to be returned (if None, every mode available is employed)
+			out_type			whether amplitude and phase ("ampph") or real and imaginary part ("realimag") shall be returned
+			mchirp_eta			whether to compute the gradients w.r.t. chirp mass and eta rather than w.r.t. total mass and q
+		Output:
+			grad_amp, grad_ph (N, D', 4, K)		amplitude and phase of the K modes required by the user
+			grad_real, grad_imag (N, D', 4, K)		real and imaginary part of the K modes required by the user
+		"""
+		if out_type not in ["realimag", "ampph"]:
+			raise ValueError("Wrong output type chosen. Expected \"realimag\", \"ampph\", given \""+out_type+"\"")
+
+		theta = np.array(theta)
+		theta, modes, remove_first_dim, remove_last_dim = self.__check_modes_input(theta, modes)
+
+		if mchirp_eta:
+			dq_deta = lambda mchirp, eta: -(1/(eta*np.sqrt(1-4*eta))+0.5/eta**2+ np.sqrt(1-4*eta)/(2*eta**2))
+			dM_dmchirp = lambda mchirp, eta: np.power(eta, -3./5.)
+			dM_deta = lambda mchirp, eta: -3./5.*np.multiply(mchirp,np.power(eta, -8./5.))
+			mchirp = np.power(theta[:,0]*theta[:,1], 3./5.)/np.power(theta[:,0]+theta[:,1], 1./5.) #chirp mass
+			eta = np.divide(theta[:,0]/theta[:,1], np.square(1+theta[:,0]/theta[:,1])) #chirp mass
+			
+			Jac = np.zeros((theta.shape[0],2,2))
+			Jac[:,0,0] = dM_dmchirp(mchirp, eta)
+			Jac[:,1,0] = dM_deta(mchirp, eta)
+			Jac[:,1,1] = dq_deta(mchirp, eta)
+			#Jac[:,0,1] = dq/dmchirp = 0
+			
+		K = len(modes)
+
+		res1 = np.zeros((theta.shape[0],t_grid.shape[0],4,K))
+		res2 = np.zeros((theta.shape[0],t_grid.shape[0],4,K))
+
+		for i, mode in enumerate(modes):
+			try:
+				mode_id = self.mode_dict[mode]
+			except KeyError:
+				warnings.warn("Unable to find mode {}: mode might be non existing or in the wrong format. Skipping it".format(mode))
+				continue
+			res1[:,:,:,i], res2[:,:,:,i] = self.modes[mode_id].get_grads(theta, t_grid, out_type = out_type)
+
+		if mchirp_eta:
+			res1[:,:,:2,:] = np.einsum('ijkl,imk -> ijml', res1[:,:,:2,:], Jac)
+			res2[:,:,:2,:] = np.einsum('ijkl,imk -> ijml', res2[:,:,:2,:], Jac)
+
+		if remove_last_dim:
+			res1, res2 = res1[...,0], res2[...,0] #(N,D)
+		if remove_first_dim:
+			res1, res2 = res1[0,...], res2[0,...] #(D,)/(D,K)
+		return res1, res2
+	
 
 class mode_generator(object):
 	"""
@@ -1070,7 +1130,7 @@ mode_generator
 		Ouput:
 			red_amp,red_ph (N,K)	PCA reduced amplitude and phase
 		"""
-		assert theta.shape[1] == 3
+		assert theta.shape[1] == 3, ValueError("Wrong number of features given: expected 3 but {} given".format(theta.shape[1])) #DEBUG
 
 			#adding extra features
 		amp_theta = add_extra_features(theta, self.amp_features, log_list = [0])
@@ -1148,10 +1208,10 @@ mode_generator
 
 		return grad_amp, grad_ph
 
-	def get_mode_grads(self, theta, t_grid, out_type ="realimag"):
+	def get_grads(self, theta, t_grid, out_type ="realimag"):
 		"""
-	get_mode_grads
-	==============
+	get_grads
+	=========
 		Returns the gradient of the mode
 			hlm = A exp(1j*phi) = A cos(phi) + i* A sin(phi)
 		with respect to theta = (M, q, s1, s2).
@@ -1175,6 +1235,7 @@ mode_generator
 
 			#creating theta_std
 		q = np.divide(theta[:,0],theta[:,1]) #theta[:,0]/theta[:,1] #mass ratio (general) (N,)
+		
 		m_tot_us = theta[:,0] + theta[:,1]	#total mass in solar masses for the user
 		theta_std = np.column_stack((q,theta[:,2],theta[:,3])) #(N,3)
 			#switching masses (where relevant)

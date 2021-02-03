@@ -161,9 +161,9 @@ fit_MoE
 	if train_mismatch:
 		test_mismatch = True
 
-	if not fit_type in ["amp","ph"]:
-		raise RuntimeError("Data type for fit_type not understood. Required (\"amp\"/\"ph\") but \""+str(fit_type)+"\" given.")
-		return
+	#if not fit_type in ["amp","ph"]:
+	#	raise RuntimeError("Data type for fit_type not understood. Required (\"amp\"/\"ph\") but \""+str(fit_type)+"\" given.")
+	#	return
 
 	if not os.path.isdir(out_folder): #check if out_folder exists
 		raise RuntimeError("Ouput folder "+str(out_folder)+" does not exist. Please, choose a valid folder.")
@@ -257,6 +257,7 @@ fit_MoE
 		MoE_models[i].save(out_folder+fit_type+"_exp_"+str(i),out_folder+fit_type+"_gat_"+str(i))
 
 		#doing test
+	F_MoE, F_MoE_train = np.nan, np.nan
 	if test_mismatch and fit_type is "ph": #testing for phase
 		PCA_test_amp = np.loadtxt(in_folder+"PCA_test_amp.dat")
 		PCA_amp = PCA_model(in_folder+"amp_PCA_model")
