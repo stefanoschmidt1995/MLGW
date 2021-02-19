@@ -232,8 +232,8 @@ GW_generator
 		plane_2 = np.column_stack([s2[:,1], -s2[:,0], np.zeros(s2[:,1].shape)])
 		sign = np.sign(np.cross(plane_1,plane_2)[:,2]) #(N,) #computing the sign
 		
-		plane_1 = np.divide(plane_1.T, np.linalg.norm(plane_1, axis =1)).T #(N,3)
-		plane_2 = np.divide(plane_2.T, np.linalg.norm(plane_2, axis =1)).T #(N,3)
+		plane_1 = np.divide(plane_1.T, np.linalg.norm(plane_1, axis =1)+1e-30).T #(N,3)
+		plane_2 = np.divide(plane_2.T, np.linalg.norm(plane_2, axis =1)+1e-30).T #(N,3)
 		delta_Phi = np.arccos(np.sum(np.multiply(plane_1,plane_2), axis =1)) #(N,)
 
 		delta_Phi = np.multiply(delta_Phi, sign) #(N,) #setting the right sign
@@ -423,7 +423,7 @@ GW_generator
 		return theta, modes, remove_first_dim, remove_last_dim
 
 
-	def get_twisted_modes(self, theta, t_grid, modes):
+	def get_twisted_modes(self, theta, t_grid, modes, smooth = False):
 		"""
 	get_twisted_modes
 	=================
@@ -468,8 +468,21 @@ GW_generator
 			
 				#getting alpha, beta, gamma
 			sys.path.insert(0,'../precession')
-			from precession_helper import get_alpha_beta
-			alpha, beta = get_alpha_beta(*self.__get_precessing_params(theta[:,0],theta[:,1], theta[:,2:5],theta[:,5:8]), t_grid, verbose = False) #(N,D) #this line should call a NN in the future
+			from precession_helper import get_alpha_beta,get_alpha_beta_M
+			M = (theta[0,0]+theta[0,1])
+			#alpha, beta = get_alpha_beta(*self.__get_precessing_params(theta[:,0],theta[:,1], theta[:,2:5],theta[:,5:8]), t_grid/M/.5, f_ref =5.,  smooth_oscillation = smooth, verbose = True) #(N,D) #this line should call a NN in the future
+				#why the scaling does not work??? It needs to work, in order to go on
+				#attention: the grid in get_alpha_beta is a reduced grid!!
+			times, alpha, beta = get_alpha_beta_M(.5, *self.__get_precessing_params(theta[:,0],theta[:,1], theta[:,2:5],theta[:,5:8]), f_ref =20., smooth_oscillation = smooth, verbose = True) #(D,)
+			plt.plot(times, beta)
+			
+			times, alpha, beta = get_alpha_beta_M(1., *self.__get_precessing_params(theta[:,0],theta[:,1], theta[:,2:5],theta[:,5:8]), f_ref =20., smooth_oscillation = smooth, verbose = True) #(D,)
+			plt.plot(times, beta)
+			plt.show()
+			
+			if smooth:
+				beta = beta[:,:,0]
+			
 					#gamma
 			alpha_dot = np.gradient(alpha, t_grid, axis = 1) #(N,D)
 			gamma = np.multiply(alpha_dot, np.cos(beta)) #(N,D)

@@ -15,3 +15,5 @@ The packacke has 4 modules:
 		It holds some routines to effectively fit the model.
 		
 """
+
+from .GW_generator import *

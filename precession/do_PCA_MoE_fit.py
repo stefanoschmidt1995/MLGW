@@ -41,7 +41,7 @@ def fit_create_PCA_angle_dataset(K, dataset_file, out_folder, train_frac = 0.75)
 	print("PCA eigenvalues for beta: ", E_beta)
 	red_train_beta = PCA_beta.reduce_data(train_beta)			#(N,K) to save in train dataset 
 	red_test_beta = PCA_beta.reduce_data(test_beta)			#(N,K) to save in test dataset
-	rec_test_beta = PCA_beta.reconstruct_data(red_test_beta) 	#(N,D) for computing mismatch
+	rec_test_beta = PCA_beta.reconstruct_data(red_test_beta) 	#(N,D) for computing mse
 
 		#amplitude
 	PCA_alpha = PCA_model()
@@ -49,7 +49,7 @@ def fit_create_PCA_angle_dataset(K, dataset_file, out_folder, train_frac = 0.75)
 	print("PCA eigenvalues for alpha: ", E_alpha)
 	red_train_alpha = PCA_alpha.reduce_data(train_alpha)			#(N,K) to save in train dataset 
 	red_test_alpha = PCA_alpha.reduce_data(test_alpha)			#(N,K) to save in test dataset
-	rec_test_alpha = PCA_alpha.reconstruct_data(red_test_alpha) 	#(N,D) for computing mismatch
+	rec_test_alpha = PCA_alpha.reconstruct_data(red_test_alpha) 	#(N,D) for computing mse
 	
 			#saving to files
 	PCA_alpha.save_model(out_folder+"alpha_PCA_model")				#saving amp PCA model
@@ -62,12 +62,14 @@ def fit_create_PCA_angle_dataset(K, dataset_file, out_folder, train_frac = 0.75)
 	np.savetxt(out_folder+"PCA_test_beta.dat", red_test_beta)		#saving test reduced phases
 	np.savetxt(out_folder+"times", times)						#saving times
 	
+	print("Alpha mse: ", np.mean(np.square(rec_test_alpha-test_alpha)))
+	print("Beta mse: ", np.mean(np.square(rec_test_beta-test_beta)))
+	
 	return
 
 def create_PCA_angle_dataset(PCA_model_alpha, PCA_model_beta, N_angles, out_type = "train", out_folder = './'):
 	batch = 100
 	i = 0
-	print(out_folder+'PCA_{}_theta'.format(out_type))
 	while i < N_angles:
 		print("We are at: ",i)
 		p.create_dataset_alpha_beta(N_angles = batch, filename="temp.dat", N_grid = 1000, tau_min = 20., q_range= (1.1,10.), smooth_oscillation = False, verbose = False)
@@ -119,25 +121,25 @@ dataset_file = "PCA_fit_dataset.dat"
 PCA_dataset_folder = "alpha_beta_model/"
 model_folder = "alpha_beta_model/22"
 
-if True:
+if False:
 	p.create_dataset_alpha_beta(N_angles = 2000, filename="PCA_fit_dataset.dat", N_grid = 1000, tau_min = 20., q_range= (1.1,10.), smooth_oscillation = False, verbose = False)
 
-if True:
+if False:
 	fit_create_PCA_angle_dataset((3,3), dataset_file, PCA_dataset_folder, train_frac = 0.9)	
 
 if True: #adding to PCA dataset
 	PCA_alpha = PCA_model(PCA_dataset_folder+"alpha_PCA_model")
 	PCA_beta = PCA_model(PCA_dataset_folder+"beta_PCA_model")
 
-	create_PCA_angle_dataset(PCA_alpha, PCA_beta, 1000, out_type = "test", out_folder = PCA_dataset_folder)	
-	create_PCA_angle_dataset(PCA_alpha, PCA_beta, 10000, out_type = "train", out_folder = PCA_dataset_folder)
+	#create_PCA_angle_dataset(PCA_alpha, PCA_beta, 1000, out_type = "test", out_folder = PCA_dataset_folder)	
+	create_PCA_angle_dataset(PCA_alpha, PCA_beta, 7000, out_type = "train", out_folder = PCA_dataset_folder)
 
 	
 
-quit()
+#quit()
 
 #loading datasets
-N_train = 10000
+N_train = 100000
 times = np.loadtxt(PCA_dataset_folder+"times")
 train_theta = np.loadtxt(PCA_dataset_folder+"PCA_train_theta.dat")[:N_train,:]		#(N,3)
 test_theta = np.loadtxt(PCA_dataset_folder+"PCA_test_theta.dat")					#(N',3)
@@ -152,26 +154,53 @@ val_data = test_theta, np.concatenate([test_alpha, test_beta], axis =1)
 train_vals = np.concatenate([train_alpha,train_beta],axis =1)
 
 #import tensorflow.keras as keras
+import tensorflow as tf
 from tensorflow.keras.models import Sequential
 from tensorflow.keras.layers import Dense
 # Neural network
 model = Sequential()
-model.add(Dense(300, input_dim=6, activation='tanh'))
+#model.add(Dense(300, input_dim=6, activation='tanh'))
+model.add(Dense(600, input_dim=6, activation='tanh'))
+model.add(Dense(300, activation='tanh'))
 model.add(Dense(100, activation='tanh'))
 model.add(Dense(train_vals.shape[1]	, activation='linear'))
 
-model.compile(loss='mse', optimizer='adam', metrics=['mse'])
+opt = tf.keras.optimizers.Adam(learning_rate=0.0001)
+model.compile(loss='mse', optimizer=opt, metrics=['mse'])
 
-
-history = model.fit(train_theta, train_vals, validation_data = val_data, epochs=100, batch_size=1000)
+model.load_weights("alpha_beta_model/PCA_coeff")
+history = model.fit(train_theta, train_vals, validation_data = val_data, epochs=5000, batch_size=2000, verbose = 2)
+model.save("alpha_beta_model/PCA_coeff")
 
 prediction = model(test_theta)
 
-rec_beta = PCA_beta.reconstruct_data(prediction[:,3:])
-true_beta = PCA_beta.reconstruct_data(val_data[1][:,3:])
+
+rec_beta = PCA_beta.reconstruct_data(prediction[:50,3:]) #(50, N_grid)
+true_beta = PCA_beta.reconstruct_data(val_data[1][:50,3:])
+
+rec_alpha = PCA_alpha.reconstruct_data(prediction[:50,:3])
+true_alpha = PCA_alpha.reconstruct_data(val_data[1][:50,:3])
+
+to_save = np.concatenate([true_alpha, rec_alpha, true_beta, rec_beta], axis = 1) #(50, 4*N_grid)
+
+np.savetxt("alpha_beta_model/predictions.dat", to_save)
+
+np.savetxt("alpha_beta_model/residuals.dat", [np.mean(np.square(true_alpha - rec_alpha)), np.mean(np.square(true_beta - rec_beta))])
+
+plt.figure()
+plt.title("Beta")
 plt.plot(times, rec_beta[:10,:].T, c = 'r')
 plt.plot(times, true_beta[:10,:].T, c= 'b')
-plt.show()
+plt.savefig('alpha_beta_model/beta.pdf')
+
+plt.figure()
+plt.title("Alpha")
+plt.plot(times, rec_alpha[:10,:].T, c = 'r')
+plt.plot(times, true_alpha[:10,:].T, c= 'b')
+
+plt.savefig('alpha_beta_model/alpha.pdf')
+
+#plt.show()
 
 
 

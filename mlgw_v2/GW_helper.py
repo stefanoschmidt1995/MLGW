@@ -204,7 +204,7 @@ create_dataset_TD
 			import lal
 			import lalsimulation as lalsim
 		except:
-			raise RuntimeError("Impossible to load lalsimulation: try pip install lalsuite")
+			raise RuntimeError("Impossible to load lal and lalsimulation: try pip install lalsuite")
 		LALpars = lal.CreateDict()
 		approx = lalsim.SimInspiralGetApproximantFromString(approximant)
 		prefactor = 4.7864188273360336e-20 # G/c^2*(M_sun/Mpc)

@@ -177,7 +177,78 @@ def compute_spline_extrema(x,y, get_spline = False):
 	
 #######################
 
-def get_alpha_beta(q, chi1, chi2, theta1, theta2, delta_phi, times, smooth_oscillation = True, verbose = False):
+def get_alpha_beta_M(M, q, chi1, chi2, theta1, theta2, delta_phi, f_ref = 20., smooth_oscillation = False, verbose = False):
+	"""
+get_alpha_beta
+==============
+	Returns angles alpha and beta by solving PN equations for spins. Uses module precession.
+	Angles are evaluated on a user-given time grid (units: s/M_sun) s.t. the 0 of time is at separation r = M_tot.
+	Inputs:
+		M (N,)				total mass
+		q (N,)				mass ratio (>1)
+		chi1 (N,)			dimensionless spin magnitude of BH 1 (in [0,1])
+		chi1 (N,)			dimensionless spin magnitude of BH 2 (in [0,1])
+		theta1 (N,)			angle between spin 1 and L
+		theta2 (N,)			angle between spin 2 and L
+		delta_phi (N,)		angle between in plane projection of the spins
+		f_ref				frequency at which the orbital parameters refer to (and at which the computation starts)
+		verbose 			whether to suppress the output of precession package
+	Outputs:
+		times (D,)		times at which alpha, beta are evaluated (units s)
+		alpha (N,D)		alpha angle evaluated at times
+		beta (N,D)		beta angle evaluated at times (if not smooth_oscillation)
+	"""
+	M_sun = 4.93e-6
+	
+	if isinstance(q,np.ndarray):
+		q = q[0]
+		chi1 = chi1[0]
+		chi2 = chi2[0]
+		theta1 = theta1[0]
+		theta2 = theta2[0]
+		delta_phi = delta_phi[0]
+
+		#initializing vectors
+	if not verbose:
+		devnull = open(os.devnull, "w")
+		old_stdout = sys.stdout
+		sys.stdout = devnull
+	else:
+		old_stdout = sys.stdout
+
+		#computing alpha, beta
+	q_ = 1./q #using conventions of precession package
+	m1=M/(1.+q_) # Primary mass
+	m2=q*M/(1.+q_) # Secondary mass
+	S1=chi1*m1**2 # Primary spin magnitude
+	S2=chi2*m2**2 # Secondary spin magnitude
+	r_0 = precession.ftor(f_ref,M)
+	print(r_0)
+	
+	xi,J, S = precession.from_the_angles(theta1,theta2, delta_phi, q_, S1,S2, r_0)
+		
+	J_vec,L_vec,S1_vec,S2_vec,S_vec = precession.Jframe_projection(xi, S, J, q_, S1, S2, r_0) #initial conditions given angles
+
+	r_f = 1.* M #final separation: time grid is s.t. t = 0 when r = r_f
+	sep = np.linspace(r_0, r_f, 5000)
+
+	#J = precession.evolve_J(xi,J, sep, q_, S1,S2) #precession avg evolution
+
+	Lx, Ly, Lz, S1x, S1y, S1z, S2x, S2y, S2z, t = precession.orbit_vectors(*L_vec, *S1_vec, *S2_vec, sep, q_, time = True) #time evolution of L, S1, S2
+	L = np.sqrt(Lx**2 + Ly**2 + Lz**2)
+
+	alpha = np.unwrap(np.arctan2(Ly,Lx))
+	beta = np.arccos(Lz/L)
+
+	t_out = (t-t[-1])#*M_sun*Mtot #output grid
+		
+	if not verbose:
+		sys.stdout = old_stdout
+		devnull.close()
+
+	return t_out, alpha, beta
+
+def get_alpha_beta(q, chi1, chi2, theta1, theta2, delta_phi, times, f_ref = 20., smooth_oscillation = False, verbose = False):
 	"""
 get_alpha_beta
 ==============
@@ -191,6 +262,7 @@ get_alpha_beta
 		theta2 (N,)			angle between spin 2 and L
 		delta_phi (N,)		angle between in plane projection of the spins
 		times (D,)			times at which alpha, beta are evaluated (units s/M_sun)
+		f_ref				frequency at which the orbital parameters refer to (and at which the computation starts)
 		smooth_oscillation	whether to smooth the oscillation and return the average part and the residuals
 		verbose 			whether to suppress the output of precession package
 	Outputs:
@@ -200,7 +272,10 @@ get_alpha_beta
 	"""
 	M_sun = 4.93e-6
 	t_min = np.max(np.abs(times))
-	r_0 = 2.5 * np.power(t_min/M_sun, .25) #starting point for the r integration #look eq. 4.26 Maggiore
+	#r_0 = 2. * np.power(t_min/M_sun, .25) #starting point for the r integration #look eq. 4.26 Maggiore #uglyyyyy
+	#print(f_ref, precession.rtof(r_0, 1.))
+	r_0 = precession.ftor(f_ref,1)
+	
 	if isinstance(q,float):
 		q = np.array(q)
 		chi1 = np.array(chi1)
@@ -224,7 +299,7 @@ get_alpha_beta
 	alpha = np.zeros((q.shape[0],times.shape[0]))
 	if smooth_oscillation:
 		t_cutoff = -0.1 #shall I insert a cutoff here?
-		beta = np.zeros((q.shape[0],times.shape[0], 3))	
+		beta = np.zeros((q.shape[0],times.shape[0], 3))
 	else:
 		beta = np.zeros((q.shape[0],times.shape[0]))
 	
@@ -263,6 +338,7 @@ get_alpha_beta
 		temp_beta = np.arccos(Lz/L)
 
 		t_out = (t-t[-1])*M_sun #output grid
+		print("\n\nTimes!! ",t_out[0], times[0])
 		ids = np.where(t_out > np.min(times))[0]
 		t_out = t_out[ids]
 		temp_alpha = temp_alpha[ids]
@@ -270,6 +346,8 @@ get_alpha_beta
 		
 		alpha[i,:] = np.interp(times, t_out, temp_alpha)
 		if not smooth_oscillation:
+			#plt.plot(t_out,temp_beta)
+			#plt.show()
 			beta[i,:] = np.interp(times, t_out, temp_beta)
 		if smooth_oscillation:
 			#mean, f_min, f_max = get_spline_mean(t_out, temp_beta[None,:], f_minmax = True)
@@ -296,8 +374,7 @@ get_alpha_beta
 			beta[i,np.where(np.abs(beta[i,:,2])>1)[0],2] = np.sign(beta[i,np.where(np.abs(beta[i,:,2])>1)[0],2])
 			
 				#plotting
-			print(np.max(np.abs(temp_beta-s(t_out))))
-			if np.max(np.abs(temp_beta-s(t_out))) > 2: #DEBUG
+			if False:# np.max(np.abs(temp_beta-s(t_out))) > 2: #DEBUG
 				plt.figure()
 				plt.title("Alpha")
 				plt.plot(times,alpha[i,:])
@@ -418,7 +495,7 @@ class angle_generator():
 
 		id_start = i*(self.N_times)
 		#robustness check (temporary thing: it should eventually be improved) #VERY VERY UGLY
-		if np.any(new_data[:,8]>3.14) or np.any(new_data[:,8]<0.1):
+		if np.any(new_data[:,8]>3.14) or np.any(new_data[:,8]<-0.1):
 			return
 		self.dataset[id_start:id_start + self.N_times,:] = new_data
 		return
@@ -803,6 +880,12 @@ create_dataset_alpha_beta
 
 		alpha, beta = get_alpha_beta(*params.T, time_grid, smooth_oscillation, verbose= verbose)
 		if smooth_oscillation:
+				#removing possible outliers
+			ids = np.where(np.logical_and(beta[:,:,0]>3.14, beta[:,:,0]<-0.1))
+			ids = set(ids[0])
+			if len(ids)> 0:
+				beta[list(ids),:,0] = 1. #very ugly...
+		
 			to_save = np.concatenate([params, alpha, beta[:,:,0], beta[:,:,1], beta[:,:,2]], axis = 1) #(N,4*D)
 			print(to_save.shape)
 		else:
