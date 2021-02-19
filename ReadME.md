@@ -4,7 +4,7 @@ The model is released as a Python package ``mlgw`` in the PyPI repository: <http
 You can install the package with
 ``pip install mlgw``
 The model outputs the waveform when given the two BHs masses and spins. It implements also the dependence of the waveform on the spherical harmonics.
-Version 1 outputs only the 22 dominant mode. The model is presented in this [paper]<https://arxiv.org/abs/2011.01958> and it is used to analyse actual GW data.
+Version 1 outputs only the 22 dominant mode. The model is presented in this [paper](https://arxiv.org/abs/2011.01958) and it is used to analyse actual GW data.
 Version 2 is suited to deal with an arbitrary numbers of modes, while at the same time it keeps full compatibility with the previous version interface.
 To generate a WF:
 ```Python
