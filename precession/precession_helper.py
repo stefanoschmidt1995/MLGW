@@ -270,12 +270,16 @@ get_alpha_beta
 		beta (N,D)		beta angle evaluated at times (if not smooth_oscillation)
 		beta (N,D,3)	[mean of beta angles, amplitude of the oscillating part, phase of the oscillating part] (if smooth_oscillation)
 	"""
+	#have a loook at precession.evolve_angles: it does exactly what we want..
+	#https://github.com/dgerosa/precession/blob/precession_v1/precession/precession.py#L3043
+	
 	M_sun = 4.93e-6
 	t_min = np.max(np.abs(times))
-	#r_0 = 2. * np.power(t_min/M_sun, .25) #starting point for the r integration #look eq. 4.26 Maggiore #uglyyyyy
+	r_0 = 2. * np.power(t_min/M_sun, .25) #starting point for the r integration #look eq. 4.26 Maggiore #uglyyyyy
 	#print(f_ref, precession.rtof(r_0, 1.))
+	#print(f_ref)
 	r_0 = precession.ftor(f_ref,1)
-	
+		
 	if isinstance(q,float):
 		q = np.array(q)
 		chi1 = np.array(chi1)
@@ -321,21 +325,35 @@ get_alpha_beta
 		print("Generated angle "+str(i)+"\n")
 		#old_stdout.write("Generated angle "+str(i)+"\n")
 		#old_stdout.flush()
+		if np.abs(delta_phi[i]) < 1e-6:#delta Phi cannot be zero(for some reason)
+			delta_phi[i] = 1e-6
+			
+		xi,J, S = precession.from_the_angles(theta1[i],theta2[i], delta_phi[i], q_, S1,S2, r_0) 
 
-		xi,J, S = precession.from_the_angles(theta1[i],theta2[i], delta_phi[i], q_, S1,S2, r_0)
-		
 		J_vec,L_vec,S1_vec,S2_vec,S_vec = precession.Jframe_projection(xi, S, J, q_, S1, S2, r_0) #initial conditions given angles
 
 		r_f = 1.* M #final separation: time grid is s.t. t = 0 when r = r_f
 		sep = np.linspace(r_0, r_f, 5000)
 
-		#J = precession.evolve_J(xi,J, sep, q_, S1,S2) #precession avg evolution
-
 		Lx, Ly, Lz, S1x, S1y, S1z, S2x, S2y, S2z, t = precession.orbit_vectors(*L_vec, *S1_vec, *S2_vec, sep, q_, time = True) #time evolution of L, S1, S2
 		L = np.sqrt(Lx**2 + Ly**2 + Lz**2)
-
+		
+		print(Lx, Ly, Lz, S1x, S1y, S1z, S2x, S2y, S2z, t)
+		#quit()
+		
+			#cos(beta(t)) = L(t).(0,0,1) #this is how I currently do!
+			#cos(beta(t)) = L(t).L_vect #this is the convention that I want
 		temp_alpha = np.unwrap(np.arctan2(Ly,Lx))
 		temp_beta = np.arccos(Lz/L)
+		
+			#computing beta in the other reference frame
+		L_0 = L_vec /np.linalg.norm(L_vec)
+		L_t = (np.column_stack([Lx,Ly,Lz]).T/L).T #(D,3)
+		temp_beta = np.einsum('ij,j->i', L_t, L_0) #cos beta
+		print(L_t.shape, temp_beta.shape, L_vec)
+		
+		temp_beta = np.arccos(temp_beta)
+
 
 		t_out = (t-t[-1])*M_sun #output grid
 		print("\n\nTimes!! ",t_out[0], times[0])
@@ -878,7 +896,7 @@ create_dataset_alpha_beta
 		params = np.random.uniform(lower_limits, upper_limits, (N, len(range_list))) #(N,6) #parameters to generate the angles at
 		count += N
 
-		alpha, beta = get_alpha_beta(*params.T, time_grid, smooth_oscillation, verbose= verbose)
+		alpha, beta = get_alpha_beta(*params.T, time_grid, smooth_oscillation = smooth_oscillation, verbose= verbose)
 		if smooth_oscillation:
 				#removing possible outliers
 			ids = np.where(np.logical_and(beta[:,:,0]>3.14, beta[:,:,0]<-0.1))

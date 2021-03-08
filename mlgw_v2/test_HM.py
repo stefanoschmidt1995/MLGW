@@ -13,9 +13,11 @@ import scipy.stats
 try:
 	from GW_generator import *	#GW_generator: builds the WF
 	from GW_helper import * 	#routines for dealing with datasets
+	print("Using local version")
 except:
 	from mlgw.GW_generator import *	
-	from mlgw.GW_helper import * 	
+	from mlgw.GW_helper import *
+	print("Using pip package")
 
 def compute_mismatch(phi_ref, h_true, theta, times, generator, modes):
 	"Compute mismatch between h_true and h_mlgw as a function of phi_ref"
@@ -32,7 +34,7 @@ modes_to_k = lambda modes:[int(x[0]*(x[0]-1)/2 + x[1]-2) for x in modes] # [(l,m
 #	computing mismatch
 
 
-load = True		#whether to load the saved data
+load = False		#whether to load the saved data
 plot = False		#whether to plot the comparison between the WFs
 
 N_waves = 1500 #WFs to generate

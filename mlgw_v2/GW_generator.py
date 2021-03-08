@@ -207,25 +207,13 @@ GW_generator
 			theta2 ()/(N,)			angle between spin 2 and the orbital angular momentum
 			delta_Phi ()/(N,)		angle between the projections of the two spins onto the orbital plane
 		"""
-		if s1.ndim == s2.ndim == 1:
-			if not (m1.ndim == m2.ndim == 0):
-				raise RuntimeError("Shape of m1,m2 is inconsistent with shape of spins: expected 0 dim array.")
-			s1 = s1[None,:] #(1,3)
-			s2 = s2[None,:]	#(1,3)
-			m1 = m1[None]
-			m2 = m2[None]
-			squeeze = True
-		else:
-			squeeze = False
-			
 		if not (s1.shape[1] == s2.shape[1] ==3):
 			raise RuntimeError("Spin vectors must have 3 components! Instead they have {} and {} components".format(s1.shape[1], s2.shape[1]))
 		
-		
 		chi1 = np.linalg.norm(s1,axis = 1) #(N,)
 		chi2 = np.linalg.norm(s2,axis = 1) #(N,)
-		theta1 = np.arccos(s1[:,2]/chi1)
-		theta2 = np.arccos(s2[:,2]/chi2)
+		theta1 = np.arccos(s1[:,2]/chi1) #(N,)
+		theta2 = np.arccos(s2[:,2]/chi2) #(N,)
 		L = np.array([0.,0.,1.])
 				
 		plane_1 = np.column_stack([s1[:,1], -s1[:,0], np.zeros(s1[:,1].shape)]) #(N,3) #s1xL
@@ -422,8 +410,23 @@ GW_generator
 
 		return theta, modes, remove_first_dim, remove_last_dim
 
+	def get_merger_frequency(self, theta):
+		"""
+	get_merger_frequency
+	====================
+		Returns the (approximate) merger frequency in Hz, computed as half the 22 mode frequency at the peak of amplitude.
+		Input:
+			theta (N,4)		Values of intrinsic parameters
+		Output:
+			f_merger (N,)	Merger frequency in Hz
+		"""
+		dt = 0.001
+		t_grid = np.linspace(-dt,dt, 2)
+		amp, ph = self.get_modes(theta, t_grid, (2,2), out_type = "ampph")#(N,2)
+		f_merger = 0.5* (ph[:,1]-ph[:,0])/(2*dt) #(N,)
+		return np.abs(f_merger)
 
-	def get_twisted_modes(self, theta, t_grid, modes, smooth = False):
+	def get_twisted_modes(self, theta, t_grid, modes, f_ref = 20., gamma0 = 0.):
 		"""
 	get_twisted_modes
 	=================
@@ -434,7 +437,8 @@ GW_generator
 		Input:
 			theta (N,8)/(8,)	source parameters to make prediction at (m1, m2, s1 (3,), s2 (3,))
 			t_grid (D',)		a grid in (reduced) time to evaluate the wave at (uses np.interp)
-			modes				list (or a single tuple) of modes to be returned (if None, every mode available is employed)
+			modes				list (or a single tuple) of modes to be returned
+			f_ref				reference frequency (in Hz) of the 22 mode at which the theta parameters refers to
 		Output:
 			real, imag (N, D', K)	real and imaginary part of the K modes required by the user (if mode is a tuple, no third dimension)
 		"""
@@ -443,13 +447,12 @@ GW_generator
 		theta = np.array(theta)
 		theta, modes, remove_first_dim, remove_last_dim = self.__check_modes_input(theta, modes)
 		theta_modes = np.concatenate([theta[:,:2], np.linalg.norm(theta[:,2:5],axis = 1)[:,None], np.linalg.norm(theta[:,5:8],axis = 1)[:,None]] , axis = 1) #(N,4) #theta for generating the non-precessing WFs
-		print("theta_modes",theta_modes)
 
 		if theta.shape[1] != 8:
 			raise ValueError("Wrong number of orbital parameters to make predictions at. Expected 8 but {} given".format(theta.shape[1]))
 
 		l_list = set([m[0] for m in modes]) #computing the set of l to take care of
-		h_P = np.zeros((theta.shape[0], t_grid.shape[0], len(modes)), dtype = np.complex64) #(N,D,K) #output matrix
+		h_P = np.zeros((theta.shape[0], t_grid.shape[0], len(modes)), dtype = np.complex64) #(N,D,K) #output matrix of precessing modes
 		
 			#huge loop over l_list
 		for l in l_list:
@@ -464,36 +467,55 @@ GW_generator
 			ids = np.where(np.array([m[1] for m in mprime_modes_list])>0)[0]
 			h_NP_l = np.concatenate([h_NP_l,np.conj(h_NP_l[:,:,ids])*(-1)**(l)], axis =2) #(N,D,M'')
 			mprime_modes_list = mprime_modes_list + [(m[0],-m[1]) for m in mprime_modes_list if m[1]> 0] #len = M''
-			print(mprime_modes_list)
 			
 				#getting alpha, beta, gamma
 			sys.path.insert(0,'../precession')
-			from precession_helper import get_alpha_beta,get_alpha_beta_M
-			M = (theta[0,0]+theta[0,1])
-			#alpha, beta = get_alpha_beta(*self.__get_precessing_params(theta[:,0],theta[:,1], theta[:,2:5],theta[:,5:8]), t_grid/M/.5, f_ref =5.,  smooth_oscillation = smooth, verbose = True) #(N,D) #this line should call a NN in the future
-				#why the scaling does not work??? It needs to work, in order to go on
-				#attention: the grid in get_alpha_beta is a reduced grid!!
-			times, alpha, beta = get_alpha_beta_M(.5, *self.__get_precessing_params(theta[:,0],theta[:,1], theta[:,2:5],theta[:,5:8]), f_ref =20., smooth_oscillation = smooth, verbose = True) #(D,)
-			plt.plot(times, beta)
+			import precession_helper
+			import lalintegrate_PNeqs
+			#M = (theta[0,0]+theta[0,1]) #debug
+			#print(theta[:,0]+theta[:,1],self.__get_precessing_params(theta[:,0],theta[:,1], theta[:,2:5],theta[:,5:8])) #debug
 			
-			times, alpha, beta = get_alpha_beta_M(1., *self.__get_precessing_params(theta[:,0],theta[:,1], theta[:,2:5],theta[:,5:8]), f_ref =20., smooth_oscillation = smooth, verbose = True) #(D,)
-			plt.plot(times, beta)
-			plt.show()
+			f_merger = self.get_merger_frequency(theta_modes)
+			alpha, beta = lalintegrate_PNeqs.get_alpha_beta(theta[0,0]/theta[0,1], theta[0,2:5],theta[0,5:8], f_ref, t_grid, f_merger = f_merger)
 			
-			if smooth:
-				beta = beta[:,:,0]
+			#alpha_, beta_ = precession_helper.get_alpha_beta(*self.__get_precessing_params(theta[:,0],theta[:,1], theta[:,2:5],theta[:,5:8]), t_grid/M, f_ref =400.,  smooth_oscillation = smooth, verbose = True) #(N,D) #this line should call a NN in the future
+
+			plt.plot(t_grid, beta[0,:])
+			#plt.plot(t_grid, beta_[0,:])
 			
 					#gamma
 			alpha_dot = np.gradient(alpha, t_grid, axis = 1) #(N,D)
 			gamma = np.multiply(alpha_dot, np.cos(beta)) #(N,D)
 			gamma = np.cumsum(np.multiply(gamma, np.diff(t_grid, prepend= 0)), axis =1) #(N,D) #\int alpha_dot(t) cos(beta(t)) dt
+			gamma = gamma - gamma[:,0]  + gamma0
+			
+				#DEBUG
+			#alpha[...] =0
+			#gamma[...] =0
+			
+			if False: #check integration: should be OK
+				x = np.exp(2*t_grid)*t_grid**3
+				x = np.gradient(x,t_grid)
+				x = np.multiply(x, t_grid)
+				x = np.cumsum(np.multiply(x, np.diff(t_grid, prepend= 0)))
+				x = x-x[0]
+				plt.plot(t_grid, x, '--', c = 'k')
+				sol = lambda t: (1./8.)*(8*t**4- 4*t**3 +6*t**2 -6*t +3)*np.exp(2.*t)
+				
+				plt.plot(t_grid, sol(t_grid)-sol(t_grid[0]) , '-', c = 'r')
+				
+				plt.figure()
+				x = np.cumsum(np.multiply(t_grid**3, np.diff(t_grid, prepend= 0)))
+				plt.plot(t_grid, x- x[0])
+				plt.plot(t_grid, t_grid**4/4. -t_grid[0]**4/4.)
+				
+				plt.show()
 			
 				#computing beta matrix
 			d_mmprime = np.zeros((theta.shape[0], t_grid.shape[0], len(mprime_modes_list), len(m_modes_list)))#(N,D, M'', M)
 			for i, mprime in enumerate(mprime_modes_list):
 				for j, m in enumerate(m_modes_list):
-					d_mmprime[:,:,i,j] = self.__get_Wigner_d_function(l, mprime[1], m[1], beta) #(N,D)
-			print(d_mmprime[:,0,:])
+					d_mmprime[:,:,i,j] = self.__get_Wigner_d_function(l, mprime[1], m[1], -beta) #(N,D)
 			
 				#computing exp(-1j*m*alpha)
 			exp_alpha = np.einsum('ij,k->ijk', alpha, np.array([lm[1] for lm in m_modes_list])) #(N,D,M)
@@ -517,7 +539,6 @@ GW_generator
 		if remove_first_dim:
 			h_P = h_P[0,...] #(D,)/(D,K)
 		return h_P.real, h_P.imag
-
 
 	def __get_WF(self, theta, t_grid, modes):
 		"""
@@ -641,9 +662,9 @@ GW_generator
 		"""
 		l,m = mode
 			#computing the iota dependence of the WF
-		d_lm = self.__get_Wigner_d_function(l,m,2,iota) #(N,)
-		d_lmm = self.__get_Wigner_d_function(l,-m,2,iota) #(N,)
-		const = np.sqrt( (2.*l+1.)/(4.*np.pi) )
+		d_lm = self.__get_Wigner_d_function(l,-m,-2,iota) #(N,)
+		d_lmm = self.__get_Wigner_d_function(l,m,-2,iota) #(N,)
+		const = np.sqrt( (2.*l+1.)/(4.*np.pi) ) * (-1)**m
 		parity = np.power(-1,l) #are you sure of that? apparently yes...
 
 		h_lm_real = np.multiply(np.multiply(amp.T,np.cos(ph.T+m*phi_0)), const*(d_lm + parity * d_lmm) ).T #(N,D)
@@ -651,35 +672,34 @@ GW_generator
 
 		return h_lm_real, h_lm_imag
 
-	def __get_Wigner_d_function(self, l, m, s, iota):
+	def __get_Wigner_d_function(self, l, n, m, iota):
 		"""
 	__get_Wigner_d_function
 	=======================
 		Return the general Wigner d function (or small Wigner matrix).
-		See eq. (18) of https://arxiv.org/pdf/2005.05338.pdf or https://arxiv.org/pdf/0709.0093.pdf for an explicit expression.
+		See eq. (16-18) of https://arxiv.org/pdf/2005.05338.pdf for an explicit expression.
 		Input:
 			l				l parameter
-			m,s				matrix elements
+			n,m				matrix elements
 			iota (N,)		angle to evaluate the function at
 		Output:
 			d_lms (N,)		Amplitude of the spherical harmonics d_lm(iota)
 		"""
-		d_lms = np.zeros(iota.shape) #(N,)
+		d_lnm = np.zeros(iota.shape) #(N,)
     
 		cos_i = np.cos(iota*0.5) #(N,)
 		sin_i = np.sin(iota*0.5) #(N,)
     
 			#starting computation (sloooow??)
-		ki = max(0, m-s)
-		kf = min(l+m, l-s)
-		#print(ki,kf)
-    	
+		ki = max(0, m-n)
+		kf = min(l+m, l-n)
+		   	
 		for k in range(ki,kf+1):
-			norm = fact(k) * fact(l+m-k) * fact(l-s-k) * fact(s-m+k) #normalization constant
-			d_lms = d_lms +  (pow(-1.,k) * np.power(cos_i,2*l+m-s-2*k) * np.power(sin_i,2*k+s-m) ) / norm
+			norm = fact(k) * fact(l+m-k) * fact(l-n-k) * fact(n-m+k) #normalization constant
+			d_lnm = d_lnm +  (pow(-1.,k+n-m) * np.power(cos_i,2*l+m-n-2*k) * np.power(sin_i,2*k+n-m) ) / norm
 
-		const = np.sqrt(fact(l+m) * fact(l-m) * fact(l+s) * fact(l-s))
-		return const*d_lms
+		const = np.sqrt(fact(l+m) * fact(l-m) * fact(l+n) * fact(l-n))
+		return const*d_lnm
 		
 	
 	def get_mode_obj(self, mode):
