@@ -11,6 +11,8 @@ Module GW_generator.py
 """
 #################
 
+#TODO: implement Wigner matrix as in https://dcc.ligo.org/LIGO-T2000446 eqs. (2.4) and (2.8): more straightforward expression!
+
 import os
 import sys
 import warnings
@@ -424,9 +426,9 @@ GW_generator
 		t_grid = np.linspace(-dt,dt, 2)
 		amp, ph = self.get_modes(theta, t_grid, (2,2), out_type = "ampph")#(N,2)
 		f_merger = 0.5* (ph[:,1]-ph[:,0])/(2*dt) #(N,)
-		return np.abs(f_merger)
+		return np.abs(f_merger)/(2*np.pi)
 
-	def get_twisted_modes(self, theta, t_grid, modes, f_ref = 20., gamma0 = 0.):
+	def get_twisted_modes(self, theta, t_grid, modes, f_ref = 20., alpha0 = 0., gamma0 = 0.):
 		"""
 	get_twisted_modes
 	=================
@@ -443,10 +445,12 @@ GW_generator
 			real, imag (N, D', K)	real and imaginary part of the K modes required by the user (if mode is a tuple, no third dimension)
 		"""
 		#FIXME: here we have the serious issuf of the time at which L, S1, S2 are computed. It should be at a ref frequency or at the beginning of the time grid; but they are computed at a constant separation (which can be related to a frequency btw)
+		#FIXME: we need to make clear at which parameters we generate the NP WFs. Now, if we only take the norm (no sign) we do not recover correctly the NP limit!! 
 		
 		theta = np.array(theta)
 		theta, modes, remove_first_dim, remove_last_dim = self.__check_modes_input(theta, modes)
 		theta_modes = np.concatenate([theta[:,:2], np.linalg.norm(theta[:,2:5],axis = 1)[:,None], np.linalg.norm(theta[:,5:8],axis = 1)[:,None]] , axis = 1) #(N,4) #theta for generating the non-precessing WFs
+		print(theta,theta_modes)
 
 		if theta.shape[1] != 8:
 			raise ValueError("Wrong number of orbital parameters to make predictions at. Expected 8 but {} given".format(theta.shape[1]))
@@ -464,71 +468,36 @@ GW_generator
 			h_NP_l = l_modes_p +1j* l_modes_c #(N,D,M') #awful using complex numbers but necessary
 			
 				#adding negative m modes
+				#phase at initial time matters: how to set it???
 			ids = np.where(np.array([m[1] for m in mprime_modes_list])>0)[0]
 			h_NP_l = np.concatenate([h_NP_l,np.conj(h_NP_l[:,:,ids])*(-1)**(l)], axis =2) #(N,D,M'')
 			mprime_modes_list = mprime_modes_list + [(m[0],-m[1]) for m in mprime_modes_list if m[1]> 0] #len = M''
 			
 				#getting alpha, beta, gamma
-			sys.path.insert(0,'../precession')
-			import precession_helper
 			import lalintegrate_PNeqs
 			#M = (theta[0,0]+theta[0,1]) #debug
 			#print(theta[:,0]+theta[:,1],self.__get_precessing_params(theta[:,0],theta[:,1], theta[:,2:5],theta[:,5:8])) #debug
 			
 			f_merger = self.get_merger_frequency(theta_modes)
 			alpha, beta = lalintegrate_PNeqs.get_alpha_beta(theta[0,0]/theta[0,1], theta[0,2:5],theta[0,5:8], f_ref, t_grid, f_merger = f_merger)
+			alpha = alpha-alpha[0]+alpha0
 			
-			#alpha_, beta_ = precession_helper.get_alpha_beta(*self.__get_precessing_params(theta[:,0],theta[:,1], theta[:,2:5],theta[:,5:8]), t_grid/M, f_ref =400.,  smooth_oscillation = smooth, verbose = True) #(N,D) #this line should call a NN in the future
-
 			plt.plot(t_grid, beta[0,:])
 			#plt.plot(t_grid, beta_[0,:])
 			
-					#gamma
+					#gamma old
 			alpha_dot = np.gradient(alpha, t_grid, axis = 1) #(N,D)
-			gamma = np.multiply(alpha_dot, np.cos(beta)) #(N,D)
-			gamma = np.cumsum(np.multiply(gamma, np.diff(t_grid, prepend= 0)), axis =1) #(N,D) #\int alpha_dot(t) cos(beta(t)) dt
-			gamma = gamma - gamma[:,0]  + gamma0
 			
-				#DEBUG
-			#alpha[...] =0
-			#gamma[...] =0
+			gamma_prime = scipy.interpolate.interp1d(t_grid, np.multiply(alpha_dot, np.cos(beta)))
+			f_gamma_prime = lambda t, y : -gamma_prime(t)
+			res_gamma = scipy.integrate.solve_ivp(f_gamma_prime, (t_grid[0],t_grid[-1]), [gamma0], t_eval = t_grid)
+			gamma = res_gamma['y']
 			
-			if False: #check integration: should be OK
-				x = np.exp(2*t_grid)*t_grid**3
-				x = np.gradient(x,t_grid)
-				x = np.multiply(x, t_grid)
-				x = np.cumsum(np.multiply(x, np.diff(t_grid, prepend= 0)))
-				x = x-x[0]
-				plt.plot(t_grid, x, '--', c = 'k')
-				sol = lambda t: (1./8.)*(8*t**4- 4*t**3 +6*t**2 -6*t +3)*np.exp(2.*t)
-				
-				plt.plot(t_grid, sol(t_grid)-sol(t_grid[0]) , '-', c = 'r')
-				
-				plt.figure()
-				x = np.cumsum(np.multiply(t_grid**3, np.diff(t_grid, prepend= 0)))
-				plt.plot(t_grid, x- x[0])
-				plt.plot(t_grid, t_grid**4/4. -t_grid[0]**4/4.)
-				
-				plt.show()
-			
-				#computing beta matrix
-			d_mmprime = np.zeros((theta.shape[0], t_grid.shape[0], len(mprime_modes_list), len(m_modes_list)))#(N,D, M'', M)
-			for i, mprime in enumerate(mprime_modes_list):
-				for j, m in enumerate(m_modes_list):
-					d_mmprime[:,:,i,j] = self.__get_Wigner_d_function(l, mprime[1], m[1], -beta) #(N,D)
-			
-				#computing exp(-1j*m*alpha)
-			exp_alpha = np.einsum('ij,k->ijk', alpha, np.array([lm[1] for lm in m_modes_list])) #(N,D,M)
-			exp_alpha = np.exp(-1j*exp_alpha) #(N,D,M)
-
-				#computing exp(1j*m'*gamma)
-			exp_gamma = np.einsum('ij,k->ijk', gamma, np.array([lm[1] for lm in mprime_modes_list])) #(N,D,M'')
-			exp_gamma = np.exp(1j*exp_gamma) #(N,D,M'')
+				#computing Wigner D matrix
+			D_mprimem = self.__get_Wigner_D_matrix(l,[lm[1] for lm in mprime_modes_list], [lm[1] for lm in m_modes_list], gamma, -beta, -alpha) #(N,D,M'',M)
 			
 				#putting everything together
-			h_P_l = np.multiply(exp_gamma, h_NP_l) #(N,D,M'')
-			h_P_l = np.einsum('ijkl,ijk->ijl' , d_mmprime, h_P_l) #(N,D,M)
-			h_P_l = np.multiply(h_P_l, exp_alpha) #(N,D,M)
+			h_P_l = np.einsum('ijkl,ijk->ijl' , D_mprimem, h_NP_l) #(N,D,M)
 			
 				#saving the results in the output matrix
 			ids_l = [i for i, lm in enumerate(modes) if lm[0] == l]
@@ -700,7 +669,54 @@ GW_generator
 
 		const = np.sqrt(fact(l+m) * fact(l-m) * fact(l+n) * fact(l-n))
 		return const*d_lnm
+	
+	def __get_Wigner_D_matrix(self, l, m_prime, m, alpha, beta, gamma):
+		"""
+	__get_Wigner_D_matrix
+	=====================
+		Return the general Wigner D matrix. It takes in input l,n,m and the angles (might be time dependent)
+		See eq. (3.4) of https://arxiv.org/pdf/2004.06503.pdf for an explicit expression or (2.8) in https://dcc.ligo.org/LIGO-T2000446
+		Input:
+			l					l parameter
+			m_prime,m			matrix elements (list)
+			alpha (N,)/(N,D)	Euler angle alpha
+			beta (N,)/(N,D)		Euler angle beta
+			alpha (N,)/(N,D)	Euler angle gamma
+		Output:
+			D_lms (N,D,M',M)/(N,M',M)		Wigner D matrix
+		"""
+		if alpha.ndim == 1:
+			alpha = alpha[:,None]
+			beta = beta[:,None]
+			gamma = gamma[:,None]
+			squeeze = True
+		else:
+			squeeze = False
 		
+		if isinstance(m_prime,float): m_prime = [m_prime]
+		if isinstance(m,float): m = [m]
+		
+		print(m,m_prime)
+
+		D_mprimem = np.zeros((alpha.shape[0], alpha.shape[1], len(m_prime), len(m))) #(N,D, M', M)
+		for i, m_prime_ in enumerate(m_prime):
+			for j, m_ in enumerate(m):
+				D_mprimem[:,:,i,j] = self.__get_Wigner_d_function(l, m_prime_, m_, beta) #(N,D)
+			
+				#computing exp(-1j*m*alpha)
+			exp_alpha = np.einsum('ij,k->ijk', alpha, np.array(m)) #(N,D,M)
+			exp_alpha = np.exp(1j*exp_alpha) #(N,D,M)
+
+				#computing exp(1j*m'*gamma)
+			exp_gamma = np.einsum('ij,k->ijk', gamma, np.array(m_prime)) #(N,D,M')
+			exp_gamma = np.exp(1j*exp_gamma) #(N,D,M'')
+			
+				#putting everything together
+			exp_term = np.einsum('ijk,ijl->ijkl',exp_gamma, exp_alpha) #(N,D, M', M)
+			D_mprimem = np.multiply(D_mprimem,exp_term)
+		
+		if squeeze: return D_mprimem[:,0,:,:]
+		return D_mprimem
 	
 	def get_mode_obj(self, mode):
 		"""

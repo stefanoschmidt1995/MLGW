@@ -18,8 +18,8 @@ def m1m2(mchirp, eta):
 
 model = gen.GW_generator(0)#"/home/stefano/Desktop/Stefano/scuola/uni/tesi_magistrale/code/mlgw_v2/TD_model/model_0")
 
-mode_name = (4,2)
-grad_id = 4
+mode_name = (2,2)
+grad_id = 0
 q0= 20
 
 if grad_id == 0:
