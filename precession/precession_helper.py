@@ -176,6 +176,34 @@ def compute_spline_extrema(x,y, get_spline = False):
 	return min_list, max_list
 	
 #######################
+def get_alpha_beta_L0frame(M, q, chi1, chi2, f_ref = 20.):
+	"Wrapper to precession.orbit_vectors()"
+	M_sun = 4.93e-6
+	
+		#computing alpha, beta
+	q_ = 1./q #using conventions of precession package
+	m1=M/(1.+q_) # Primary mass
+	m2=q*M/(1.+q_) # Secondary mass
+	S1=chi1*m1**2 # Primary spin magnitude
+	S2=chi2*m2**2 # Secondary spin magnitude
+	r_0 = precession.ftor(f_ref,M)
+	
+	L_0 = precession.get_L(r_0, q_)
+	print("q, L0, r_0 ", q_, L_0, r_0)
+
+	r_f = 1.* M #final separation: time grid is s.t. t = 0 when r = r_f
+	sep = np.linspace(r_0, r_f, 5000)
+
+	Lx, Ly, Lz, S1x, S1y, S1z, S2x, S2y, S2z, t = precession.orbit_vectors(0,0,L_0, *S1, *S2, sep, q_, time = True)
+	L = np.sqrt(Lx**2 + Ly**2 + Lz**2)
+	
+	alpha = np.unwrap(np.arctan2(Ly,Lx))
+	beta = np.arccos(Lz/L)
+
+	t_out = (t-t[-1])*M_sun*M #output grid
+
+	return t_out, alpha, beta
+
 
 def get_alpha_beta_M(M, q, chi1, chi2, theta1, theta2, delta_phi, f_ref = 20., smooth_oscillation = False, verbose = False):
 	"""
@@ -223,7 +251,6 @@ get_alpha_beta
 	S1=chi1*m1**2 # Primary spin magnitude
 	S2=chi2*m2**2 # Secondary spin magnitude
 	r_0 = precession.ftor(f_ref,M)
-	print(r_0)
 	
 	xi,J, S = precession.from_the_angles(theta1,theta2, delta_phi, q_, S1,S2, r_0)
 		
@@ -232,15 +259,25 @@ get_alpha_beta
 	r_f = 1.* M #final separation: time grid is s.t. t = 0 when r = r_f
 	sep = np.linspace(r_0, r_f, 5000)
 
-	#J = precession.evolve_J(xi,J, sep, q_, S1,S2) #precession avg evolution
-
 	Lx, Ly, Lz, S1x, S1y, S1z, S2x, S2y, S2z, t = precession.orbit_vectors(*L_vec, *S1_vec, *S2_vec, sep, q_, time = True) #time evolution of L, S1, S2
 	L = np.sqrt(Lx**2 + Ly**2 + Lz**2)
 
-	alpha = np.unwrap(np.arctan2(Ly,Lx))
-	beta = np.arccos(Lz/L)
+	L_0 = np.array([Lx[0], Ly[0], Lz[0]])/L[0]
 
-	t_out = (t-t[-1])#*M_sun*Mtot #output grid
+		#in L0 frame
+	Ln = (np.array([Lx, Ly, Lz])/L).T
+	L0_y = np.array([1.,0.,0.])
+	L0_y = L0_y - np.dot(L0_y,L_0) * L_0
+	L0_x = np.cross(L0_y,L_0)
+
+	alpha = np.unwrap(np.arctan2(np.dot(Ln,L0_y),np.dot(Ln,L0_x)))
+	beta = np.arccos(np.dot(Ln,L_0))
+	
+		#in J frame
+	#alpha = np.unwrap(np.arctan2(Ly,Lx))
+	#beta = np.arccos(Lz/L)
+
+	t_out = (t-t[-1])*M_sun*M #output grid
 		
 	if not verbose:
 		sys.stdout = old_stdout

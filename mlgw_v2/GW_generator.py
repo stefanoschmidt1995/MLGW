@@ -188,10 +188,10 @@ GW_generator
 
 		return
 
-	def __get_precessing_params(self, m1, m2, s1, s2):
+	def get_precessing_params(self, m1, m2, s1, s2):
 		"""
-	__get_precessing_params
-	=======================
+	get_precessing_params
+	=====================
 		Given the two masses and (dimensionless) spins, it computes the angles between the two spins and the orbital angular momentum (theta1, theta2) and the angle between the projections of the two spins onto the orbital plane (delta_Phi). Please, refer to eqs. (1-4) of https://arxiv.org/abs/1605.01067.
 		Spins must be in the L frame, in which the orbital angular momentum has only the z compoment; they are evaluated when at a given orbital frequency f = 20 Hz (????????????????????????? check better here)
 		Returns the six variables (i.e. q, chi1, chi2, theta1, theta2, delta_Phi) useful for reconstructing precession angles alpha and beta with the NN.
@@ -209,6 +209,10 @@ GW_generator
 			theta2 ()/(N,)			angle between spin 2 and the orbital angular momentum
 			delta_Phi ()/(N,)		angle between the projections of the two spins onto the orbital plane
 		"""
+		if s1.ndim == 1:
+			s1 = s1[None,:]
+			s2 = s2[None,:]
+
 		if not (s1.shape[1] == s2.shape[1] ==3):
 			raise RuntimeError("Spin vectors must have 3 components! Instead they have {} and {} components".format(s1.shape[1], s2.shape[1]))
 		
@@ -422,13 +426,15 @@ GW_generator
 		Output:
 			f_merger (N,)	Merger frequency in Hz
 		"""
+		theta = np.array(theta)
+		if theta.ndim == 1: theta = theta[None,:]
 		dt = 0.001
 		t_grid = np.linspace(-dt,dt, 2)
 		amp, ph = self.get_modes(theta, t_grid, (2,2), out_type = "ampph")#(N,2)
 		f_merger = 0.5* (ph[:,1]-ph[:,0])/(2*dt) #(N,)
 		return np.abs(f_merger)/(2*np.pi)
 
-	def get_twisted_modes(self, theta, t_grid, modes, f_ref = 20., alpha0 = 0., gamma0 = 0.):
+	def get_twisted_modes(self, theta, t_grid, modes, f_ref = 20., t_shift = 0., alpha0 = 0., gamma0 = 0.):
 		"""
 	get_twisted_modes
 	=================
@@ -446,12 +452,14 @@ GW_generator
 		"""
 		#FIXME: here we have the serious issuf of the time at which L, S1, S2 are computed. It should be at a ref frequency or at the beginning of the time grid; but they are computed at a constant separation (which can be related to a frequency btw)
 		#FIXME: we need to make clear at which parameters we generate the NP WFs. Now, if we only take the norm (no sign) we do not recover correctly the NP limit!! 
-		
+		#FIXME: the merger frequency is really an issue!
+
 		theta = np.array(theta)
 		theta, modes, remove_first_dim, remove_last_dim = self.__check_modes_input(theta, modes)
 		theta_modes = np.concatenate([theta[:,:2], np.linalg.norm(theta[:,2:5],axis = 1)[:,None], np.linalg.norm(theta[:,5:8],axis = 1)[:,None]] , axis = 1) #(N,4) #theta for generating the non-precessing WFs
-		print(theta,theta_modes)
-
+		theta_modes[:,[2,3]] = np.multiply(theta_modes[:,[2,3]], np.sign(theta[:,[4,7]]))
+		theta_modes[:,[2,3]] = theta[:,[4,7]] #probably this is the right way to do it...
+		
 		if theta.shape[1] != 8:
 			raise ValueError("Wrong number of orbital parameters to make predictions at. Expected 8 but {} given".format(theta.shape[1]))
 
@@ -479,22 +487,22 @@ GW_generator
 			#print(theta[:,0]+theta[:,1],self.__get_precessing_params(theta[:,0],theta[:,1], theta[:,2:5],theta[:,5:8])) #debug
 			
 			f_merger = self.get_merger_frequency(theta_modes)
-			alpha, beta = lalintegrate_PNeqs.get_alpha_beta(theta[0,0]/theta[0,1], theta[0,2:5],theta[0,5:8], f_ref, t_grid, f_merger = f_merger)
+			alpha, beta = lalintegrate_PNeqs.get_alpha_beta(theta[0,0]/theta[0,1], theta[0,2:5],theta[0,5:8], f_ref, t_grid, t_shift, f_merger = f_merger)
 			alpha = alpha-alpha[0]+alpha0
 			
-			plt.plot(t_grid, beta[0,:])
-			#plt.plot(t_grid, beta_[0,:])
+			#plt.plot(t_grid, beta[0,:])
 			
 					#gamma old
 			alpha_dot = np.gradient(alpha, t_grid, axis = 1) #(N,D)
 			
 			gamma_prime = scipy.interpolate.interp1d(t_grid, np.multiply(alpha_dot, np.cos(beta)))
-			f_gamma_prime = lambda t, y : -gamma_prime(t)
+			f_gamma_prime = lambda t, y : gamma_prime(t)
 			res_gamma = scipy.integrate.solve_ivp(f_gamma_prime, (t_grid[0],t_grid[-1]), [gamma0], t_eval = t_grid)
 			gamma = res_gamma['y']
 			
-				#computing Wigner D matrix
-			D_mprimem = self.__get_Wigner_D_matrix(l,[lm[1] for lm in mprime_modes_list], [lm[1] for lm in m_modes_list], gamma, -beta, -alpha) #(N,D,M'',M)
+				#computing Wigner inverse D matrix: D(-gamma, -beta, -alpha)*
+			D_mprimem = self.__get_Wigner_D_matrix(l,[lm[1] for lm in mprime_modes_list], [lm[1] for lm in m_modes_list], -gamma, -beta, -alpha) #(N,D,M'',M)
+			D_mprimem = np.conj(D_mprimem) #(N,D,M'',M) #complex conjugate (it does not seem to matter much)
 			
 				#putting everything together
 			h_P_l = np.einsum('ijkl,ijk->ijl' , D_mprimem, h_NP_l) #(N,D,M)
@@ -675,7 +683,8 @@ GW_generator
 	__get_Wigner_D_matrix
 	=====================
 		Return the general Wigner D matrix. It takes in input l,n,m and the angles (might be time dependent)
-		See eq. (3.4) of https://arxiv.org/pdf/2004.06503.pdf for an explicit expression or (2.8) in https://dcc.ligo.org/LIGO-T2000446
+		For an explicit expression, see eq. (3.4) in https://arxiv.org/pdf/2004.06503.pdf or eq. (36-37) in https://arxiv.org/pdf/2004.08302.pdf
+		See also: (2.8) in https://dcc.ligo.org/LIGO-T2000446
 		Input:
 			l					l parameter
 			m_prime,m			matrix elements (list)
@@ -685,6 +694,7 @@ GW_generator
 		Output:
 			D_lms (N,D,M',M)/(N,M',M)		Wigner D matrix
 		"""
+		#FIXME:check over the sign of exp(1j*alpha), exp(1j*gamma)!! There is an ambiguity...
 		if alpha.ndim == 1:
 			alpha = alpha[:,None]
 			beta = beta[:,None]
@@ -696,24 +706,22 @@ GW_generator
 		if isinstance(m_prime,float): m_prime = [m_prime]
 		if isinstance(m,float): m = [m]
 		
-		print(m,m_prime)
-
 		D_mprimem = np.zeros((alpha.shape[0], alpha.shape[1], len(m_prime), len(m))) #(N,D, M', M)
 		for i, m_prime_ in enumerate(m_prime):
 			for j, m_ in enumerate(m):
 				D_mprimem[:,:,i,j] = self.__get_Wigner_d_function(l, m_prime_, m_, beta) #(N,D)
 			
-				#computing exp(-1j*m*alpha)
-			exp_alpha = np.einsum('ij,k->ijk', alpha, np.array(m)) #(N,D,M)
-			exp_alpha = np.exp(1j*exp_alpha) #(N,D,M)
+			#computing exp(-1j*m*alpha)
+		exp_alpha = np.einsum('ij,k->ijk', alpha, np.array(m_prime)) #(N,D,M')
+		exp_alpha = np.exp(-1j*exp_alpha) #(N,D,M)
 
-				#computing exp(1j*m'*gamma)
-			exp_gamma = np.einsum('ij,k->ijk', gamma, np.array(m_prime)) #(N,D,M')
-			exp_gamma = np.exp(1j*exp_gamma) #(N,D,M'')
+			#computing exp(1j*m'*gamma)
+		exp_gamma = np.einsum('ij,k->ijk', gamma, np.array(m)) #(N,D,M)
+		exp_gamma = np.exp(-1j*exp_gamma) #(N,D,M'')
 			
-				#putting everything together
-			exp_term = np.einsum('ijk,ijl->ijkl',exp_gamma, exp_alpha) #(N,D, M', M)
-			D_mprimem = np.multiply(D_mprimem,exp_term)
+			#putting everything together
+		exp_term = np.einsum('ijk,ijl->ijkl',exp_alpha, exp_gamma) #(N,D, M', M)
+		D_mprimem = np.multiply(D_mprimem,exp_term)
 		
 		if squeeze: return D_mprimem[:,0,:,:]
 		return D_mprimem

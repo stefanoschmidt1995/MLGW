@@ -23,10 +23,10 @@ import lalsimulation as lalsim
 
 import scipy.optimize, scipy.integrate, scipy.interpolate
 
-def compute_mismatch(gamma0, h_true, theta, times, generator, modes, f_ref):
+def compute_mismatch(param, h_true, theta, times, generator, modes, f_ref):
 	"Compute mismatch between h_true and h_mlgw as a function of phi_ref"
 	theta = np.array(theta)
-	h_p, h_c = generator.get_twisted_modes(theta, times, modes, f_ref, gamma0)
+	h_p, h_c = generator.get_twisted_modes(theta, times, modes, f_ref, t_shift = param, alpha0 = -np.pi/2., gamma0 = np.pi/2.)
 	h_rec = h_p +1j* h_c
 	F = compute_optimal_mismatch(np.squeeze(h_rec),np.squeeze(h_true), True)[0][0]
 	print(F)
@@ -172,21 +172,22 @@ def get_SEOBNRv4PHM_modes(q, M, chi1, chi2, f_start , deltaT = 1./(4096*4.)):
 	times = times-t_max
 	return times, hI
 
-gen.list_models()
+#gen.list_models()
 g = gen.GW_generator(1)
 
-#theta = np.array([.68, .32,0.1,.2,-0.3,-0.8,0.,0.32])#,[20,15,0.,.3,.1,.1,0.,-0.2]]
-theta = np.array([.68, .32,0.,0.,0.3,-0.,0.,0.82])#,[20,15,0.,.3,.1,.1,0.,-0.2]]
+theta = np.array([.66666667, .33333333,-0.43,.4,-0.2, 0.5,0.,0.3])#,[20,15,0.,.3,.1,.1,0.,-0.2]]
+#theta = np.array([.68, .32,0.,0.,-0.3,-0.,0.,0.82])#,[20,15,0.,.3,.1,.1,0.,-0.2]]
 #theta = np.array([2*6.8, 2*3.2,0.,.0,-0.3,-0.,0.,0.42])
 q = theta[0]/theta[1]
 M = theta[0]+theta[1]
 chi1 = theta[2:5]
 chi2 = theta[5:]
+print("ciao")
 
 	#computing modes SEOB
 #t_grid, h_SEOB = get_SEOBNRv2_WF(q, M, np.linalg.norm(chi1), np.linalg.norm(chi2), f_start = 400 , deltaT = 1./(4096*5))
 
-if True:
+if False:
 	t_grid, hI_SEOB = get_SEOBNRv4PHM_modes(q, M, chi1, chi2, f_start = 400 , deltaT = 1./(409600))
 	h_SEOB = hI_SEOB[(2,1)]
 	h_SEOB_22 = hI_SEOB[(2,2)]
@@ -197,8 +198,6 @@ else:
 	t_grid = t_grid.real
 
 	#looking at SEOBNRv4HM
-	#SEOBNRv4 is not consistent trhoughout its versions!!! Fuck it!!
-	#SEOBNRv4HM and SEOBNRv4PHM do not agree on the NP limit!! Super weird
 #t_grid, h_SEOB_NPHM = get_SEOBNRv4HM_WF(q, M, np.linalg.norm(chi1), np.linalg.norm(chi2), f_start = 40 , t_step = 1./(4.*4096))
 #h_SEOB = h_SEOB_NPHM[(2,1)]
 #h_SEOB_22 =  h_SEOB_NPHM[(2,2)]
@@ -208,11 +207,11 @@ else:
 	#computing modes mlgw
 modes = [(2,1),(2,2), (2,-1)]
 
-theta_NP = np.concatenate([theta[None,:2], np.linalg.norm(theta[None,2:5],axis = 1)[:,None], np.linalg.norm(theta[None,5:8],axis = 1)[:,None]] , axis = 1)[0,:]
-
-#res = scipy.optimize.minimize_scalar(compute_mismatch, bounds = [0.,2*np.pi],
-#						args = (h_SEOB, theta, t_grid, g, modes[0], 400.), method = "Brent")	
-#print("Optimal mismatch, gamma0: ",res['fun'], res['x'])
+	#optimizing over gamma
+if False:
+	res = scipy.optimize.minimize_scalar(compute_mismatch, bounds = [-0.1,0.1],
+						args = (h_SEOB, theta, t_grid, g, modes[0], 400.), method = "Brent")	
+	print("Optimal mismatch, t_shift: ",res['fun'], res['x'])
 
 #h_p_mlgw_bis, h_c_mlgw_bis = g.get_twisted_modes(theta,t_grid, modes, 400.)
 #h_p_mlgw, h_c_mlgw = g.get_modes(theta[[0,1,4,7]],t_grid, modes, out_type = 'realimag')
@@ -220,8 +219,11 @@ theta_NP = np.concatenate([theta[None,:2], np.linalg.norm(theta[None,2:5],axis =
 #F, ph = compute_optimal_mismatch(h_mlgw,h_mlgw_bis)
 #print("Mismatch, ph ",F,ph)
 
-h_p_mlgw, h_c_mlgw = g.get_twisted_modes(theta,t_grid, modes, 400., -np.pi/2., np.pi/2.)#,res['x'])
-amp_NP_mlgw, ph_NP_mlgw = g.get_modes(theta_NP,t_grid, modes[0], out_type = 'ampph')
+theta_modes = np.concatenate([theta[:2], [np.linalg.norm(theta[2:5])], [np.linalg.norm(theta[5:8])] ]) #(N,4) #theta for generating the non-precessing WFs
+theta_modes[[2,3]] = np.multiply(theta_modes[[2,3]], np.sign(theta[[4,7]]))
+
+
+h_p_mlgw, h_c_mlgw = g.get_twisted_modes(theta,t_grid, modes, 400., -0., -np.pi/2., np.pi/2.)#,res['x'])
 
 h_mlgw = h_p_mlgw[:,0]+1j*h_c_mlgw[:,0] #(2,1)
 h_mlgw_22 = h_p_mlgw[:,1]+1j*h_c_mlgw[:,1] #(2,2)
@@ -245,7 +247,10 @@ print('mismatch ',F, ph)
 
 import lalintegrate_PNeqs
 #is beta computed correctly???
-alpha, beta = lalintegrate_PNeqs.get_alpha_beta(theta[0]/theta[1], theta[2:5],theta[5:8], 400., t_grid, f_merger = g.get_merger_frequency(theta_NP[None,:]))
+alpha, beta = lalintegrate_PNeqs.get_alpha_beta(theta[0]/theta[1], theta[2:5],theta[5:8], 400., t_grid, 
+		t_shift = -0.,
+		f_merger =g.get_merger_frequency(theta_modes)
+		)
 
 	#gamma computation
 alpha_dot = np.gradient(alpha, t_grid, axis = 1) #(N,D)
@@ -257,7 +262,7 @@ gamma_ivp = res['y']
 	#plotting everything
 plt.plot(t_grid, (h_mlgw).real, label = '2,1')
 plt.plot(t_grid, h_SEOB.real, label = '2,1 - SEOB')
-plt.plot(t_grid, amp_NP_mlgw, label = '2,1 - NP')
+plt.plot(t_grid, beta[0,:])
 plt.legend()
 
 plt.figure()
@@ -275,11 +280,6 @@ plt.plot(t_grid, gamma_ivp[0,:], label = 'gamma ivp')
 #plt.plot(t_grid, np.cos(beta)[0,:], label = 'cos(beta)')
 plt.legend()
 
-#plt.plot(t_grid, ph_SEOB-ph_SEOB[0], label = '2,1 - SEOB')
-#plt.plot(t_grid, (ph_mlgw-ph_mlgw[0] - (ph_SEOB-ph_SEOB[0])), label = '2,1 - SEOB')
-
-#plt.plot(t_grid, np.abs(h_mlgw), label = '2,1')
-#plt.plot(t_grid, np.abs(h_SEOB), label = '2,1 - SEOB')
 
 plt.show()
 
