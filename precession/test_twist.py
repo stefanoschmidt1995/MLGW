@@ -189,20 +189,13 @@ print("ciao")
 
 if False:
 	t_grid, hI_SEOB = get_SEOBNRv4PHM_modes(q, M, chi1, chi2, f_start = 400 , deltaT = 1./(409600))
-	h_SEOB = hI_SEOB[(2,1)]
+	h_SEOB_21 = hI_SEOB[(2,1)]
 	h_SEOB_22 = hI_SEOB[(2,2)]
-	np.savetxt('WF.dat', np.column_stack([t_grid, h_SEOB, h_SEOB_22]))
+	np.savetxt('WF.dat', np.column_stack([t_grid, h_SEOB_21, h_SEOB_22]))
 else:
 	WFs = np.loadtxt('WF.dat', dtype = np.complex64)
-	t_grid, h_SEOB, h_SEOB_22 = WFs[:,0], WFs[:,1], WFs[:,2]
+	t_grid, h_SEOB_21, h_SEOB_22 = WFs[:,0], WFs[:,1], WFs[:,2]
 	t_grid = t_grid.real
-
-	#looking at SEOBNRv4HM
-#t_grid, h_SEOB_NPHM = get_SEOBNRv4HM_WF(q, M, np.linalg.norm(chi1), np.linalg.norm(chi2), f_start = 40 , t_step = 1./(4.*4096))
-#h_SEOB = h_SEOB_NPHM[(2,1)]
-#h_SEOB_22 =  h_SEOB_NPHM[(2,2)]
-
-#t_grid, h_SEOB, h_SEOB_22 = get_TEOBResumS_WF(q, M, chi1, chi2, f_start = 400 , deltaT = 1./(4096*5))
 
 	#computing modes mlgw
 modes = [(2,1),(2,2), (2,-1)]
@@ -210,7 +203,7 @@ modes = [(2,1),(2,2), (2,-1)]
 	#optimizing over gamma
 if False:
 	res = scipy.optimize.minimize_scalar(compute_mismatch, bounds = [-0.1,0.1],
-						args = (h_SEOB, theta, t_grid, g, modes[0], 400.), method = "Brent")	
+						args = (h_SEOB_21, theta, t_grid, g, modes[0], 400.), method = "Brent")	
 	print("Optimal mismatch, t_shift: ",res['fun'], res['x'])
 
 #h_p_mlgw_bis, h_c_mlgw_bis = g.get_twisted_modes(theta,t_grid, modes, 400.)
@@ -220,21 +213,21 @@ if False:
 #print("Mismatch, ph ",F,ph)
 
 theta_modes = np.concatenate([theta[:2], [np.linalg.norm(theta[2:5])], [np.linalg.norm(theta[5:8])] ]) #(N,4) #theta for generating the non-precessing WFs
-theta_modes[[2,3]] = np.multiply(theta_modes[[2,3]], np.sign(theta[[4,7]]))
+theta_modes[[2,3]] = theta[[4,7]]#np.multiply(theta_modes[[2,3]], np.sign(theta[[4,7]]))
 
 
-h_p_mlgw, h_c_mlgw = g.get_twisted_modes(theta,t_grid, modes, 400., -0., -np.pi/2., np.pi/2.)#,res['x'])
+h_p_mlgw, h_c_mlgw = g.get_twisted_modes(theta,t_grid, modes, 400., -0.00, -np.pi/2., np.pi/2.)#,res['x'])
 
-h_mlgw = h_p_mlgw[:,0]+1j*h_c_mlgw[:,0] #(2,1)
+h_mlgw_21 = h_p_mlgw[:,0]+1j*h_c_mlgw[:,0] #(2,1)
 h_mlgw_22 = h_p_mlgw[:,1]+1j*h_c_mlgw[:,1] #(2,2)
 
-F, ph = compute_optimal_mismatch(h_mlgw,h_SEOB)
+F, ph = compute_optimal_mismatch(h_mlgw_21,h_SEOB_21)
 
 #h_mlgw=h_mlgw*np.exp(-1j*1.5)
 
-ph_mlgw = np.unwrap(np.angle(h_mlgw))
-ph_SEOB = np.unwrap(np.angle(h_SEOB))
-ph_diff = (ph_mlgw - ph_SEOB)
+ph_mlgw_21 = np.unwrap(np.angle(h_mlgw_21))
+ph_SEOB_21 = np.unwrap(np.angle(h_SEOB_21))
+ph_diff_21 = (ph_mlgw_21 - ph_SEOB_21)
 #ph_diff = (ph_mlgw-ph_mlgw[0] - (ph_SEOB-ph_SEOB[0]))
 
 ph_mlgw_22 = np.unwrap(np.angle(h_mlgw_22))
@@ -260,30 +253,35 @@ res = scipy.integrate.solve_ivp(f_, (t_grid[0],t_grid[-1]), [0.], t_eval = t_gri
 gamma_ivp = res['y']
 
 	#plotting everything
-plt.plot(t_grid, (h_mlgw).real, label = '2,1')
-plt.plot(t_grid, h_SEOB.real, label = '2,1 - SEOB')
+plt.plot(t_grid, (h_mlgw_21).real, label = '2,1')
+plt.plot(t_grid, h_SEOB_21.real, label = '2,1 - SEOB')
 plt.plot(t_grid, beta[0,:])
 plt.legend()
 
 plt.figure()
 plt.title("phase")
-plt.plot(t_grid, ph_SEOB, label ='SEOB')
-plt.plot(t_grid, ph_mlgw, label ='mlgw')
+plt.plot(t_grid, ph_SEOB_21, label ='SEOB')
+plt.plot(t_grid, ph_mlgw_21, label ='mlgw')
+print(ph_SEOB_21[0],ph_SEOB_22[0])
+plt.legend()
+
+plt.figure()
+plt.title("Amp")
+plt.plot(t_grid, np.abs(h_SEOB_21), label ='SEOB')
+plt.plot(t_grid, np.abs(h_mlgw_21), label ='mlgw')
+print(ph_SEOB_21[0],ph_SEOB_22[0])
 plt.legend()
 
 plt.figure()
 plt.title(r"$\Delta \Phi - \alpha, \beta, \gamma$")
-plt.plot(t_grid, ph_diff, label = 'ph diff')
+plt.plot(t_grid, ph_diff_21, label = 'ph diff')
 plt.plot(t_grid, alpha[0,:], label = 'alpha')
 plt.plot(t_grid, beta[0,:], label = 'beta')
 plt.plot(t_grid, gamma_ivp[0,:], label = 'gamma ivp')
 #plt.plot(t_grid, np.cos(beta)[0,:], label = 'cos(beta)')
 plt.legend()
 
-
 plt.show()
-
-
 
 
 

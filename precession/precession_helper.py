@@ -176,14 +176,14 @@ def compute_spline_extrema(x,y, get_spline = False):
 	return min_list, max_list
 	
 #######################
-def get_alpha_beta_L0frame(M, q, chi1, chi2, f_ref = 20.):
+def get_alpha_beta_L0frame(M, q, chi1, chi2, times, f_ref = 20.):
 	"Wrapper to precession.orbit_vectors()"
 	M_sun = 4.93e-6
 	
 		#computing alpha, beta
 	q_ = 1./q #using conventions of precession package
 	m1=M/(1.+q_) # Primary mass
-	m2=q*M/(1.+q_) # Secondary mass
+	m2=q_*M/(1.+q_) # Secondary mass (<m1)
 	S1=chi1*m1**2 # Primary spin magnitude
 	S2=chi2*m2**2 # Secondary spin magnitude
 	r_0 = precession.ftor(f_ref,M)
@@ -201,8 +201,10 @@ def get_alpha_beta_L0frame(M, q, chi1, chi2, f_ref = 20.):
 	beta = np.arccos(Lz/L)
 
 	t_out = (t-t[-1])*M_sun*M #output grid
-
-	return t_out, alpha, beta
+	if times is None:
+		return t_out, alpha, beta
+	
+	return
 
 
 def get_alpha_beta_M(M, q, chi1, chi2, theta1, theta2, delta_phi, f_ref = 20., smooth_oscillation = False, verbose = False):
@@ -247,7 +249,7 @@ get_alpha_beta
 		#computing alpha, beta
 	q_ = 1./q #using conventions of precession package
 	m1=M/(1.+q_) # Primary mass
-	m2=q*M/(1.+q_) # Secondary mass
+	m2=q_*M/(1.+q_) # Secondary mass
 	S1=chi1*m1**2 # Primary spin magnitude
 	S2=chi2*m2**2 # Secondary spin magnitude
 	r_0 = precession.ftor(f_ref,M)

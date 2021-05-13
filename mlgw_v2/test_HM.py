@@ -35,7 +35,7 @@ modes_to_k = lambda modes:[int(x[0]*(x[0]-1)/2 + x[1]-2) for x in modes] # [(l,m
 
 
 load = False		#whether to load the saved data
-plot = False		#whether to plot the comparison between the WFs
+plot = True		#whether to plot the comparison between the WFs
 
 N_waves = 1500 #WFs to generate
 filename = "accuracy/mismatch_hist_TEOBResumS_new.dat"		#file to save the accuracy data to

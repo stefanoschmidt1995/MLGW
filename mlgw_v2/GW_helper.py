@@ -141,7 +141,7 @@ compute_optimal_mismatch
 		phi_optimal = np.zeros(norm_factor.shape)
 	overlap = np.divide(scalar(h1,(h2.T*np.exp(1j*phi_optimal)).T), norm_factor)
 	overlap = overlap.real
-
+	
 	if return_F:
 		return 1-overlap, phi_optimal
 	if not return_F:
@@ -555,9 +555,9 @@ generate_waveform
 			'interp_uniform_grid': 2,      # Interpolate mode by mode on a uniform grid. Default = 0 (no interpolation)
 			'distance': d,
 			'inclination': iota,
-			#'nqc':2, #{"no", "auto", "manual"}
-			#'nqc_coefs_flx': 2, # {"none", "nrfit_nospin20160209", "fit_spin_202002", "fromfile"}
-			#'nqc_coefs_hlm':0
+			'nqc':1, #{"no", "auto", "manual"}
+			'nqc_coefs_flx':0, # {"none", "nrfit_nospin20160209", "fit_spin_202002", "fromfile"}
+			'nqc_coefs_hlm':0
 		}
 	times, h_p, h_c, hlm = EOBRun_module.EOBRunPy(pars)
 
