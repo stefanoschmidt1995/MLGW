@@ -1,13 +1,13 @@
 import numpy as np
 import lal
-import lalsimulation
+import lalsimulation as lalsim
 
 import matplotlib.pyplot as plt
 
-from MLGW_generator import *
+from GW_generator import *
 from GW_helper import * 	#routines for dealing with datasets
 
-generator = MLGW_generator("TD", "./TD_model_TEOBResumS")
+generator = GW_generator("./TD_model_TEOBResumS")
 
 m1 = 50.0
 m2 = 45.0
@@ -59,13 +59,12 @@ for inclination in np.linspace(-np.pi/2,np.pi/2,10):
                            0.0,
                            0.0,
                            0.0,
-                           0.0,
-                           plus_cross = True)
+                           0.0)
 
     h = amp * np.exp(1j*ph)
     
     plt.plot(times, hptilde.data.data, 'r')
     #plt.plot(times, np.squeeze(hpml), 'b')
-    plt.plot(generator.times, h.real)
+    plt.plot(generator.times, h.real[0,:])
     plt.show()
     exit()

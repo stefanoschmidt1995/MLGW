@@ -1,0 +1,51 @@
+# Getting angles from IMRPhenomTPHM
+
+## Instructions on how to get the EULER ANGLES from IMRPhenomTPHM
+
+XLALSimInspiralChooseTDModes:
+	ChooseTDModes, callable by python
+	It calls: XLALSimIMRPhenomTPHM_ChooseTDModes
+	File: LALSimInspiral.c
+	https://git.ligo.org/lscsoft/lalsuite/-/blob/master/lalsimulation/lib/LALSimInspiral.c#L3106
+
+XLALSimIMRPhenomTPHM_ChooseTDModes
+	Outputs the modes produced by the model
+	It calls XLALSimIMRPhenomTPHM_L0Modes
+	File: LALSimIMRPhenomTPHM.c
+	https://git.ligo.org/lscsoft/lalsuite/-/blob/master/lalsimulation/lib/LALSimIMRPhenomTPHM.c#L290
+
+XLALSimIMRPhenomTPHM_L0Modes
+	Computes the modes in the L0 frame
+	Two steps:
+		modes in J0 frame: XLALSimIMRPhenomTPHM_JModes
+			generating modes and angles in coprecessing frame: XLALSimIMRPhenomTPHM_CoprecModes
+			twisting modes: PhenomTPHM_RotateModes
+		writing the modes in the J0 frame
+			PhenomTPHM_RotateModes_Global
+	File: LALSimIMRPhenomTPHM.c
+	https://git.ligo.org/lscsoft/lalsuite/-/blob/master/lalsimulation/lib/LALSimIMRPhenomTPHM.c#L328
+
+## Changes to make
+
+XLALSimIMRPhenomTPHM_L0Modes should save to file (or print to stdout) the modes, the angles and the reference angles.
+The local version of the file to modify is: /home/stefano/lscsoft/lalsuite/lalsimulation/lib/LALSimIMRPhenomTPHM.c
+
+For handling files, you can use the LALFileIO: https://lscsoft.docs.ligo.org/lalsuite/lal/_file_i_o_8h.html
+	Include it with:
+		#include <lal/FileIO.h>
+Or, even though it's not recommended, you can use std C library:
+	#include <stdio.h>
+	fp = fopen("/tmp/test.txt", "w");
+	fprintf(fp, "This is testing for fprintf...\n");
+	fclose(fp);
+	
+## To compile
+I do not really know...
+Have a look at the wiki: https://wiki.ligo.org/Computing/LALSuiteInstall
+Or to ~/Dropbox/Stefano/PhD/code/lal_instruction
+
+You should aim to have a shared object *.so that can be plugged into the right place
+
+
+
+

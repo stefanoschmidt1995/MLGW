@@ -32,16 +32,10 @@ try:
 	lm = sys.argv[1]
 except:
 	lm = "22" 	#mode to fit
-try:
-	import sys
-	line = int(sys.argv[2])
-except:
-	line = 0	#column in the shift dataset to consider
 
-
-dataset_file = "TD_datasets/SEOB_dataset.{}".format(lm)	#input file for WF dataset of the mode
-PCA_dataset_folder = "TD_datasets/{}_SEOB".format(lm)		#folder in which to store the reduced order dataset after the PCA model is fitted
-model_folder = "TD_models/model_1/{}".format(lm)		#folder in which the model for the current mode must be stored
+dataset_file = "TD_datasets/IMRPhenomTPHM_dataset.{}".format(lm)	#input file for WF dataset of the mode
+PCA_dataset_folder = "TD_datasets/{}_IMRPhenomTPHM".format(lm)		#folder in which to store the reduced order dataset after the PCA model is fitted
+model_folder = "TD_models/model_3/{}".format(lm)		#folder in which the model for the current mode must be stored
 
 	#control what to do
 fit_PCA = True
@@ -56,7 +50,13 @@ fifth_order = ["00", "11","22", "01", "02", "12","000", "001", "002", "011", "01
 fourth_order = ["00", "11","22", "01", "02", "12","000", "001", "002", "011", "012", "022", "111", "112", "122", "222",
 "0000", "0001","0002", "0011", "0022","0012","0111","0112", "0122", "0222","1111", "1112", "1122", "1222", "2222"]
 
-no_spins = ["00", "000", "0000", "00000"]
+sixth_order = fifth_order + ["000000", "000001", "000002", "000011", "000012", "000022", "000111", "000112","000122", "000222", #6th order
+"001111", "001112", "001122", "001222", "002222", "011111", "011112", "011122","011222", "012222", "022222",
+"111111", "111112", "111122","111222", "112222", "122222","222222"]#6th order
+
+#seventh_order = sixth_order + [...]
+
+no_spins = ["00", "000", "0000", "00000", "000000"]
 
 print("Dealing with {} mode".format(lm))
 
@@ -72,7 +72,7 @@ if fit_MoE_model:
 	#The routines also copies the PCA models and the times to the relevant folder, making it ready to use.
 	print("Saving MoE model to: ", model_folder)
 	print("Fitting phase")
-	fit_MoE("ph", PCA_dataset_folder, model_folder, experts = 4, comp_to_fit = None, features = fifth_order, EM_threshold = 1e-2, args = None, N_train = 14000, verbose = False, test_mismatch = True)
+	fit_MoE("ph", PCA_dataset_folder, model_folder, experts = 2, comp_to_fit = None, features = sixth_order, EM_threshold = 1e-2, args = None, N_train = 14000, verbose = False, test_mismatch = True)
 	print("Fitting amplitude")
-	fit_MoE("amp", PCA_dataset_folder, model_folder, experts = 4, comp_to_fit = None, features = fifth_order, EM_threshold = 1e-2, args = 	None, N_train = 14000, verbose = False, test_mismatch = True)
+	fit_MoE("amp", PCA_dataset_folder, model_folder, experts = 2, comp_to_fit = None, features = sixth_order, EM_threshold = 1e-2, args = 	None, N_train = 14000, verbose = False, test_mismatch = True)
 

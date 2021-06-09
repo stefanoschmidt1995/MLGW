@@ -68,6 +68,7 @@ if not load:
 
 	for i in range(N_waves):
 			#computing test WFs
+			#add support also for lal WFs, 'cause you need to check!
 		times, h_p_TEOB, h_c_TEOB, hlm, t_m = generate_waveform_TEOBResumS(*theta[i,:-1], f_min = f_min,
 								verbose = False, t_step = 1e-4, modes = modes)
 		h_TEOB = h_p_TEOB + 1j*h_c_TEOB

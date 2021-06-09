@@ -12,6 +12,7 @@ Module GW_generator.py
 #################
 
 #TODO: implement Wigner matrix as in https://dcc.ligo.org/LIGO-T2000446 eqs. (2.4) and (2.8): more straightforward expression!
+#FIXME: make the MoE model compatible also with 1D vectors (i.e. one single expert)
 
 import os
 import sys
@@ -457,9 +458,48 @@ GW_generator
 		if to_reshape:
 			return theta_new[0,:]
 		return theta_new
+	
+	def get_alpha_beta_gamma(self, theta, t_grid, f_ref):
+		"""
+	get_alpha_beta_gamma
+	====================
+		Return the Euler angles alpha, beta and gamma as provided by the ML model.
+		They are evaluated on the given time grid and the parameters refer to the frequency f_ref.
+		Input:
+			theta (N,8)/(8,)	source parameters to make prediction at (m1, m2, s1 (3,), s2 (3,))
+			t_grid (D,)			a grid in (physical) time to evaluate the wave at (uses np.interp)
+			f_ref				reference frequency (in Hz) of the 22 mode at which the theta parameters refers to
+		Output:
+			alpha, beta, gamma (N, D)	Euler angles
+		"""
+		#TODO: makes sure that theta has 2 dims!!
+		sys.path.insert(0, '/home/stefano/Dropbox/Stefano/PhD/mlgw_repository/precession/IMRPhenomTPHM/') #temporary, to load the IMRPhenomTPHM modes
+		from run_IMR import get_IMRPhenomTPHM_angles
+		
+		alpha, beta, gamma = np.zeros((theta.shape[0], len(t_grid))), np.zeros((theta.shape[0], len(t_grid))), np.zeros((theta.shape[0], len(t_grid)))
+		
+		for i in range(alpha.shape[0]):
+			m1, m2 = theta[i,:2]
+			M_std = 20. #DEBUG
+			M_us = m1 + m2
+			ratio = M_std/M_us
+				#computing the angles and performing the scaling
+			t, alpha_, beta_, gamma_ = get_IMRPhenomTPHM_angles(m1*M_std/M_us, m2*M_std/M_us, *theta[i,2:], f_ref*(M_us/M_std), delta_T = 1e-4)
+			alpha[i,:] = np.interp(t_grid/M_us, t/M_std, alpha_)
+			beta[i,:] = np.interp(t_grid/M_us, t/M_std, beta_)
+			gamma[i,:] = np.interp(t_grid/M_us, t/M_std, gamma_)
+		
+			#integration of gamma (old)
+		#alpha_dot = np.gradient(alpha, t_grid, axis = 1) #(N,D)
+		#gamma_prime = scipy.interpolate.interp1d(t_grid, np.multiply(alpha_dot, np.cos(beta)))
+		#f_gamma_prime = lambda t, y : gamma_prime(t)
+		#res_gamma = scipy.integrate.solve_ivp(f_gamma_prime, (t_grid[0],t_grid[-1]), [gamma0], t_eval = t_grid)
+		#gamma = res_gamma['y']
+		
+		return alpha, beta, gamma
 		
 
-	def get_twisted_modes(self, theta, t_grid, modes, f_ref = 20., t_shift = 0., alpha0 = 0., gamma0 = 0.):
+	def get_twisted_modes(self, theta, t_grid, modes, f_ref = 20., alpha0 = 0., gamma0 = 0., L0_frame = False):
 		"""
 	get_twisted_modes
 	=================
@@ -469,9 +509,10 @@ GW_generator
 		Each mode is aligned s.t. the peak of the (untwisted) 22 mode is at t=0
 		Input:
 			theta (N,8)/(8,)	source parameters to make prediction at (m1, m2, s1 (3,), s2 (3,))
-			t_grid (D',)		a grid in (reduced) time to evaluate the wave at (uses np.interp)
+			t_grid (D',)		a grid in (physical) time to evaluate the wave at (uses np.interp)
 			modes				list (or a single tuple) of modes to be returned
 			f_ref				reference frequency (in Hz) of the 22 mode at which the theta parameters refers to
+			L0_frame			whether to output the modes in the inertial L0_frame
 		Output:
 			real, imag (N, D', K)	real and imaginary part of the K modes required by the user (if mode is a tuple, no third dimension)
 		"""
@@ -499,71 +540,38 @@ GW_generator
 			h_NP_l = l_modes_p +1j* l_modes_c #(N,D,M') #awful using complex numbers but necessary
 			
 				#adding negative m modes
-				#phase at initial time matters: how to set it???
 			ids = np.where(np.array([m[1] for m in mprime_modes_list])>0)[0]
 			h_NP_l = np.concatenate([h_NP_l, np.conj(h_NP_l[:,:,ids])*(-1)**(l)], axis =2) #(N,D,M'')
 			mprime_modes_list = mprime_modes_list + [(m[0],-m[1]) for m in mprime_modes_list if m[1]> 0] #len = M''
 			
 				#getting alpha, beta, gamma
-			if True:
-				file_TEOB = '/home/stefano/Dropbox/Stefano/PhD/mlgw_repository/precession/TEOBResumS_angles/bbh_test/anglesint.txt'
-				file_TEOB_22 = '/home/stefano/Dropbox/Stefano/PhD/mlgw_repository/precession/TEOBResumS_angles/bbh_test/hTlm_l2_m2.txt'
-#				file_TEOB_22 = '/home/stefano/Dropbox/Stefano/PhD/mlgw_repository/precession/TEOBResumS_angles/bbh_test/hlm_interp_l2_m2.txt'
-
-				t_TEOB, alpha, beta, gamma = np.loadtxt(file_TEOB).T
-
-				M_sun = 1.*4.93e-6 #solar mass in seconds
-				t_TEOB *= M_sun
-
-				t_22, h_22_amp, h_22_ph = np.loadtxt(file_TEOB_22).T 
-				t_merger = t_22[np.argmax(np.abs(h_22_amp))]*M_sun
-				
-				alpha = np.interp(t_grid, t_TEOB-t_merger, alpha)[None,:]
-				beta = np.interp(t_grid, t_TEOB-t_merger, beta)[None,:]
-				gamma = np.interp(t_grid, t_TEOB-t_merger, gamma)[None,:]
-
-				#plt.plot(t_grid, gamma[0,:], label = 'mlgw')
-				#plt.plot(t_grid, h_NP_l[0,:,0].real, label = "GW generator 21")
-				#plt.plot(h_NP_l[0,:,1].imag, label = "GW generator 22")
-				
-			elif False:	
-				import lalintegrate_PNeqs
-				f_merger = self.get_merger_frequency(theta_modes)
-				alpha, beta = lalintegrate_PNeqs.get_alpha_beta(theta[0,0]/theta[0,1], theta[0,2:5],theta[0,5:8], f_ref, t_grid, t_shift, f_merger = f_merger)
-			else:
-				#TODO: align better the angles in time for the precession package
-				import precession_helper
-				t_grid_, alpha, beta = precession_helper.get_alpha_beta_L0frame(theta[0,0]+theta[0,1], theta[0,0]/theta[0,1], theta[0,2:5],theta[0,5:8], None, 400.)
-				alpha = np.interp(t_grid, t_grid_, alpha)[None,:]
-				beta = np.interp(t_grid, t_grid_, beta)[None,:]
+			alpha, beta, gamma = self.get_alpha_beta_gamma(theta, t_grid, f_ref)
 			
 			if alpha0 is not None:
 				alpha = alpha - alpha[:,0] + alpha0 
 			if gamma0 is not None:
 				gamma = gamma - gamma[:,0] + gamma0
 			
-			print(gamma, alpha)
-			#plt.plot(t_grid, beta[0,:])
+				#OLD way: with TEOB conventions
+			#D_mprimem = self.__get_Wigner_D_matrix(l,[lm[1] for lm in mprime_modes_list], [lm[1] for lm in m_modes_list], -gamma, -beta, -alpha) #(N,D,M'',M)
+			#D_mprimem = np.conj(D_mprimem) #(N,D,M'',M) #complex conjugate
+			#h_P_l = np.einsum('ijkl,ijk->ijl', D_mprimem, h_NP_l) #(N,D,M)
 			
-					#gamma
-			#alpha_dot = np.gradient(alpha, t_grid, axis = 1) #(N,D)
-			#gamma_prime = scipy.interpolate.interp1d(t_grid, np.multiply(alpha_dot, np.cos(beta)))
-			#f_gamma_prime = lambda t, y : gamma_prime(t)
-			#res_gamma = scipy.integrate.solve_ivp(f_gamma_prime, (t_grid[0],t_grid[-1]), [gamma0], t_eval = t_grid)
-			#gamma = res_gamma['y']
-			
-				#computing Wigner inverse D matrix: D(-gamma, -beta, -alpha)
-			#print(gamma);quit()#DEBUG
-			#print("\tGW_generator")
-			#print(l, [lm[1] for lm in mprime_modes_list], [lm[1] for lm in m_modes_list])
-			D_mprimem = self.__get_Wigner_D_matrix(l,[lm[1] for lm in mprime_modes_list], [lm[1] for lm in m_modes_list], gamma, -beta, -alpha) #(N,D,M'',M)
-			#D_mprimem = np.conj(D_mprimem) #(N,D,M'',M) #complex conjugate (it does not seem to matter much)
-			#print(D_mprimem.shape)
-			#print(ids)
-			#np.save('data/GW_generator_Wigner.npy',D_mprimem)
+				#computing Wigner D matrix Dmm'(alpha, beta, gamma)
+			D_mmprime = self.__get_Wigner_D_matrix(l, [lm[1] for lm in m_modes_list], [lm[1] for lm in mprime_modes_list], alpha, beta, gamma) #(N,D,M, M'')
 			
 				#putting everything together
-			h_P_l = np.einsum('ijkl,ijk->ijl', D_mprimem, h_NP_l) #(N,D,M)
+				#h_lm(t) = D_mm'(t) h_lm'
+			h_P_l = np.einsum('ijlk,ijk->ijl', D_mmprime, h_NP_l) #(N,D,M)
+			
+				#twist the system to the L0 frame (if it is the case)
+			if L0_frame:
+				#TODO: set alpha_ref etc...
+				alpha_ref = alpha[:,0]
+				beta_ref = beta[:,0]
+				gamma_ref = gamma[:,0]
+				D_mmprime_L0 = self.__get_Wigner_D_matrix(l,[lm[1] for lm in m_modes_list], [lm[1] for lm in m_modes_list],  -gamma_ref, -beta_ref, -alpha_ref) #(N,M,M')
+				h_P_l = np.einsum('ilk,ijk -> ijl', D_mmprime_L0, h_P_l)
 			
 				#saving the results in the output matrix
 			ids_l = [i for i, lm in enumerate(modes) if lm[0] == l]
@@ -799,19 +807,23 @@ GW_generator
 				return mode_
 		return None
 		
-	def get_mode_grads(self, theta, t_grid, modes = (2,2), out_type = "ampph", mchirp_eta = False):
+	def get_mode_grads(self, theta, t_grid, modes = (2,2), out_type = "ampph", grad_var = 'M_q'):
 		"""
 	get_mode_grads
 	==============
 		Return the gradients of the GW higher order modes in the model; the gradients are evaluated on the given time grid.
 		It can return the gradient of the amplitude and phase (out_type = "ampph") or the gradient of the real and imaginary part (out_type = "realimag").
-		Gradients are computed w.r.t. [M,q,s1,s2] if mchirp_eta is False or [Mc,eta,s1,s2] otherwise. They are returned in this order for each point of the time grid.
+		Gradients are computed w.r.t. 
+			[M,q,s1,s2] 	if grad_var = 'M_q' 
+			[Mc,eta,s1,s2] 	if grad_var = 'mchirp_eta'
+			[m1,m2,s1,s2] 	if grad_var = 'm1_m2'
+		They are returned in this order for each point of the time grid.
 		Input:
 			theta (N,D)/(D,)	source parameters to make prediction at (D = 4)
 			t_grid (D',)		a grid in time to evaluate the wave at (uses np.interp)
 			modes				list of modes to be returned (if None, every mode available is employed)
 			out_type			whether amplitude and phase ("ampph") or real and imaginary part ("realimag") shall be returned
-			mchirp_eta			whether to compute the gradients w.r.t. chirp mass and eta rather than w.r.t. total mass and q
+			grad_var			the variables which the gradients are computed w.r.t.
 		Output:
 			grad_amp, grad_ph (N, D', 4, K)		amplitude and phase of the K modes required by the user
 			grad_real, grad_imag (N, D', 4, K)		real and imaginary part of the K modes required by the user
@@ -819,10 +831,13 @@ GW_generator
 		if out_type not in ["realimag", "ampph"]:
 			raise ValueError("Wrong output type chosen. Expected \"realimag\", \"ampph\", given \""+out_type+"\"")
 
+		if grad_var not in ["M_q", "mchirp_eta", "m1_m2"]:
+			raise ValueError("Wrong gradient variables chosen. Expected \"M_q\", \"mchirp_eta\", \"m1_m2\"; given \"{}\"".format(grad_var))
+
 		theta = np.array(theta)
 		theta, modes, remove_first_dim, remove_last_dim = self.__check_modes_input(theta, modes)
 
-		if mchirp_eta:
+		if grad_var == 'mchirp_eta':
 			dq_deta = lambda mchirp, eta: -(1/(eta*np.sqrt(1-4*eta))+0.5/eta**2+ np.sqrt(1-4*eta)/(2*eta**2))
 			dM_dmchirp = lambda mchirp, eta: np.power(eta, -3./5.)
 			dM_deta = lambda mchirp, eta: -3./5.*np.multiply(mchirp,np.power(eta, -8./5.))
@@ -834,6 +849,23 @@ GW_generator
 			Jac[:,1,0] = dM_deta(mchirp, eta)
 			Jac[:,1,1] = dq_deta(mchirp, eta)
 			#Jac[:,0,1] = dq/dmchirp = 0
+
+		if grad_var == 'm1_m2':
+			dq_dm1 = lambda m1,m2: 1/m2
+			dq_dm2 = lambda m1,m2: -m1/m2**2
+				#switchin m1/m2 wherever needed
+			ids_inv = np.where(theta[:,0]<theta[:,1])
+			ids_ok = np.where(theta[:,0]>=theta[:,1])
+			
+			Jac = np.zeros((theta.shape[0],2,2))
+			Jac[:,0,0] = 1. #dM_dm1
+			Jac[:,1,0] = 1. #dM_dm2
+			Jac[ids_ok,0,1] = dq_dm1(theta[ids_ok,0], theta[ids_ok,1])
+			Jac[ids_ok,1,1] = dq_dm2(theta[ids_ok,0], theta[ids_ok,1])
+
+			Jac[ids_inv,0,1] = dq_dm2(theta[ids_inv,1], theta[ids_inv,0])
+			Jac[ids_inv,1,1] = dq_dm1(theta[ids_inv,1], theta[ids_inv,0])
+			
 			
 		K = len(modes)
 
@@ -848,7 +880,7 @@ GW_generator
 				continue
 			res1[:,:,:,i], res2[:,:,:,i] = self.modes[mode_id].get_grads(theta, t_grid, out_type = out_type)
 
-		if mchirp_eta:
+		if grad_var in ['m1_m2', 'mchirp_eta']:
 			res1[:,:,:2,:] = np.einsum('ijkl,imk -> ijml', res1[:,:,:2,:], Jac)
 			res2[:,:,:2,:] = np.einsum('ijkl,imk -> ijml', res2[:,:,:2,:], Jac)
 
@@ -1403,8 +1435,60 @@ mode_generator
 			return grad_Re, grad_Im
 
 
+#################
+# Old stuff for loading the modes
+"""
+			if True:
+				file_IMR = '/home/stefano/Dropbox/Stefano/PhD/mlgw_repository/precession/angles.txt'
+				file_IMR_22 = '/home/stefano/Dropbox/Stefano/PhD/mlgw_repository/precession/modes_NP.txt'
+				
+				t_IMR, alpha, beta, gamma = np.loadtxt(file_IMR)
+				
+				modes_NP = np.loadtxt(file_IMR_22, dtype = np.complex128).T
+				h_22 = modes_NP[:,29]
+				t_merger = t_IMR[np.argmax(np.abs(h_22))]
+				
+				alpha = np.interp(t_grid, t_IMR-t_merger, alpha)[None,:]
+				beta = np.interp(t_grid, t_IMR-t_merger, np.arccos(beta))[None,:]
+				gamma = np.interp(t_grid, t_IMR-t_merger, gamma)[None,:]
+			elif False:
+				file_TEOB = '/home/stefano/Dropbox/Stefano/PhD/mlgw_repository/precession/TEOBResumS_angles/bbh_test/anglesint.txt'
+				file_TEOB_22 = '/home/stefano/Dropbox/Stefano/PhD/mlgw_repository/precession/TEOBResumS_angles/bbh_test/hTlm_l2_m2.txt'
+#				file_TEOB_22 = '/home/stefano/Dropbox/Stefano/PhD/mlgw_repository/precession/TEOBResumS_angles/bbh_test/hlm_interp_l2_m2.txt'
 
+				t_TEOB, alpha, beta, gamma = np.loadtxt(file_TEOB).T
 
+				M_sun = 1.*4.93e-6 #solar mass in seconds
+				t_TEOB *= M_sun
+
+				t_22, h_22_amp, h_22_ph = np.loadtxt(file_TEOB_22).T 
+				t_merger = t_22[np.argmax(np.abs(h_22_amp))]*M_sun
+				
+				alpha = np.interp(t_grid, t_TEOB-t_merger, alpha)[None,:]
+				beta = np.interp(t_grid, t_TEOB-t_merger, beta)[None,:]
+				gamma = np.interp(t_grid, t_TEOB-t_merger, gamma)[None,:]
+
+				#plt.plot(t_grid, gamma[0,:], label = 'mlgw')
+				#plt.plot(t_grid, h_NP_l[0,:,0].real, label = "GW generator 21")
+				#plt.plot(h_NP_l[0,:,1].imag, label = "GW generator 22")
+				
+			elif False:	
+				import lalintegrate_PNeqs
+				f_merger = self.get_merger_frequency(theta_modes)
+				alpha, beta = lalintegrate_PNeqs.get_alpha_beta(theta[0,0]/theta[0,1], theta[0,2:5],theta[0,5:8], f_ref, t_grid, t_shift, f_merger = f_merger)
+				
+					#computing gamma
+				gamma_prime = scipy.interpolate.interp1d(t_grid, np.multiply(alpha_dot, np.cos(beta)))
+				f_gamma_prime = lambda t, y : gamma_prime(t)
+				res_gamma = scipy.integrate.solve_ivp(f_gamma_prime, (t_grid[0],t_grid[-1]), [gamma0], t_eval = t_grid)
+				gamma = res_gamma['y']
+			else:
+				#TODO: align better the angles in time for the precession package
+				import precession_helper
+				t_grid_, alpha, beta = precession_helper.get_alpha_beta_L0frame(theta[0,0]+theta[0,1], theta[0,0]/theta[0,1], theta[0,2:5],theta[0,5:8], None, 400.)
+				alpha = np.interp(t_grid, t_grid_, alpha)[None,:]
+				beta = np.interp(t_grid, t_grid_, beta)[None,:]
+"""
 
 
 

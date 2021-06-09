@@ -52,8 +52,18 @@ create_PCA_dataset
 
 	theta_vector, amp_dataset, ph_dataset, times = load_dataset(dataset_file, shuffle=True) #loading dataset
 	if False: #weird thing to fix a different scaling in the previous dataset. User does not want to care about it
+		print("##################################### Non standard stuff! Attention #####################################")
 		nu = np.divide(theta_vector[:,0], np.square(1+theta_vector[:,0]))
 		amp_dataset = np.multiply(amp_dataset.T, nu).T
+	
+	if False: #trim the last part of the model, to remove ringdown and change regression variable to ~Mchirp
+		print("##################################### Non standard stuff! Attention #####################################")
+		N_trim = ph_dataset.shape[0]
+		amp_dataset, ph_dataset, times = amp_dataset[:,:N_trim], ph_dataset[:,:N_trim], times[:N_trim]
+			#regression with Mchirp and chi_eff
+		theta_vector[:,1] = (theta_vector[:,1]*theta_vector[:,0]+ theta_vector[:,2])/(1+theta_vector[:,0])
+		theta_vector[:,0] = np.power(theta_vector[:,0]/np.square(1+theta_vector[:,0]), 3./5.)
+		theta_vector[:,0] = np.exp(theta_vector[:,0]) #hack to remove logaritmic features
 
 	print("Loaded datataset with shape: "+ str(ph_dataset.shape))
 
@@ -222,13 +232,13 @@ fit_MoE
 	mse_test_list = [] #list for holding mse of every PCs
 
 		#starting fit procedure
-	for k in comp_to_fit:
-		print("### Fitting component ", k, " | experts = ", experts[k])
+	for i,k in enumerate(comp_to_fit):
+		print("### Fitting component ", k, " | experts = ", experts[i])
 			#useless variables for sake of clariness
 		y_train = PCA_train[:,k]
 		y_test = PCA_test[:,k]
 
-		MoE_models.append(MoE_model(D,experts[k]))
+		MoE_models.append(MoE_model(D,experts[i]))
 		MoE_models[-1].fit(train_theta, y_train, threshold = EM_threshold, args = args, verbose = verbose, val_set = (test_theta, y_test))
 
 			#doing some test
@@ -291,7 +301,7 @@ fit_MoE
 		F_MoE_train = compute_mismatch(rec_amp, rec_ph, rec_amp_pred, rec_ph) 
 
 	if test_mismatch:
-		print("Average MoE mismatch: ",np.mean(F_MoE))
+		print("MoE mismatch [50th, 5th, 95th] percentile: ", np.percentile(F_MoE,[50,5,95]))
 
 	if test_mismatch and not train_mismatch:
 		return np.mean(F_MoE), mse_test_list
