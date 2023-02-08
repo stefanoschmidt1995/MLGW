@@ -4,11 +4,11 @@
 
 import numpy as np
 import matplotlib.pyplot as plt
-from mpl_toolkits.axes_grid.inset_locator import (inset_axes, InsetPosition,mark_inset)
+#from mpl_toolkits.axes_grid.inset_locator import (InsetPosition, mark_inset)
 try:
-	from GW_generator import *
+	from GW_generator import GW_generator
 except:
-	from mlgw.GW_generator import *
+	from mlgw.GW_generator import GW_generator
 
 ###################
 #	generating the WFs
@@ -24,9 +24,8 @@ gen.list_modes() #print to screen the modes available in the generator
 modes_to_use = [(2,2),(3,3),(3,2), (4,4),(5,5)] #HMs to include in the WFs. If None, every mode available is included.
 
 theta = np.array([20,10,0.5,-0.3, 1, .34, 0.88]) #list of parameters to be given to generator [m1,m2,s1,s2, d_L, iota, phi]
-times = np.linspace(-8,0.01, 100000) #time grid in seconds: peak of 22 mode at t=0 -- shape = (D,)
+times = np.linspace(-8,0.01, 4096*8) #time grid in seconds: peak of 22 mode at t=0 -- shape = (D,)
 h_p, h_c = gen.get_WF(theta, times, modes = modes_to_use) #returns plus and cross polarization of the wave -- shape = (D,)
-
 amp_lm, ph_lm = gen.get_modes(theta, times, modes = modes_to_use) 	#returns amplitude and phase of the K modes -- shape = (D,K)
 																	#each mode is time-aligned s.t. the peak of 22 happens at t=0
 
@@ -43,13 +42,14 @@ h_p_call, h_c_call = gen(times, m1 = 20, m2 = 10, spin1_x = 0., spin1_y=0., spin
 ###################
 #	plotting the waves
 
-plt.figure(figsize=(15,8))
+fig, ax = plt.subplots(1,1, figsize=(15,8))
 plt.title("GW by a BBH with [m1,m2,s1,s2, d_L, iota, phi] = "+str(theta)+"\nModes: "+str(modes_to_use)+"\n", fontsize = 15)
-plt.plot(times, h_p, c='k') #plot the plus polarization
+ax.plot(times, h_p, c='k') #plot the plus polarization
 plt.xlabel("Time (s)", fontsize = 12)
 plt.ylabel(r"$h_+$", fontsize = 12)
 	#zoom on the merger
-axins = inset_axes(plt.gca(), width="70%", height="30%", loc=2, borderpad = 2.)
+#axins = ax.inset_axes(width="70%", height="30%", loc=2, borderpad = 2.)
+axins = ax.inset_axes([0.05, .65,.7,.3])
 axins.plot(times[times >= -0.2], h_p[times >= -0.2], c='k')
 
 	#plotting a mode

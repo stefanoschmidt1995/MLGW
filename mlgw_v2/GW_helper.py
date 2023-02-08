@@ -392,6 +392,7 @@ create_dataset_TD
 			)
 			amp_prefactor = prefactor*(m1+m2)/1.
 			for i, lm in enumerate(modes):
+				#{(2,2): lal.ts} 
 				temp_hlm = lalsim.SphHarmTimeSeriesGetMode(hlm, lm[0], lm[1]).data.data
 				temp_amp = np.abs(temp_hlm)/ amp_prefactor / nu #check that this conventions are for every lal part
 				temp_ph = np.unwrap(np.angle(temp_hlm))

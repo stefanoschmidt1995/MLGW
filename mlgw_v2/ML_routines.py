@@ -11,7 +11,7 @@ Module ML_routines.py
 """
 #################
 
-import scipy.stats
+import scipy.stats, scipy.linalg
 import numpy as np
 import warnings
 
@@ -97,17 +97,21 @@ PCA_model
 		self.PCA_params= [V,mu,max_PC, E]
 		return None
 
-	def reconstruct_data(self, red_data):
+	def reconstruct_data(self, red_data, K = None):
 		"""
 	reconstruct_data
 	================
 		Gives the best estimate of high dimensional data given the low dimensional PCA approximation.
 		Data are rescaled back to the original training measure inverting the preprocessing procedure.
 		Input:
-			red_data (N,K)	low dimensional representation of data
+			red_data (N,K')	low dimensional representation of data
+			K				Number of compontents to be used for reconstruction. If None, all the given components will be used
 		Output:
 			data (N,D)		high dimensional reconstruction of data (after inversion of preprocessing)
 		"""
+		if K is not None: #adding zeros if the compontents are not to be used
+			if K < self.PCA_params[0].shape[1]:
+				red_data = np.concatenate([red_data[:,:K], np.zeros((red_data.shape[0], self.PCA_params[0].shape[1]-K))], axis = 1) 
 		red_data = np.multiply(red_data, self.PCA_params[2])
 		data = np.matmul(red_data, self.PCA_params[0].T)
 		data = data+self.PCA_params[1]
@@ -142,15 +146,17 @@ PCA_model
 		Output:
 			E (K,)	eigenvalues of the first K principal components
 		"""
-		X = X.real
+		X = X.astype(np.float128)
 		mu = np.mean(X,0) #(D,)
 		X = X - mu
 
 			#doing actual PCA
 		if K is None:
 			K = X.shape[1]
-		#E, V = np.linalg.eig(np.dot(X.T, X))
-		E, V = np.linalg.eig(np.cov(X.T))
+
+		#E, V = np.linalg.eig(np.cov(X.T))
+		E, V = scipy.linalg.eig(np.cov(X.T)) #better than np?
+		
 		idx = np.argsort(E)[::-1]
 		V = V[:, idx[:K]] # (D,K)
 		E = E[idx[:K]].real #(K,)
@@ -383,15 +389,13 @@ add_extra_features
 	D = data.shape[1]
 	new_features = np.zeros((data.shape[0],len(feature_list)))
 	for i in range(len(feature_list)):
-		temp = np.ones((data.shape[0],)) #(N,)
-		exps = np.zeros((D,)) #(D,)
-		for j in range(D):
-			exps[j] = feature_list[i].count(str(j))
-		temp = np.power(data,exps) #(N,D)
+		exps = [feature_list[i].count(str(j)) for j in range(D)]		
+		temp = np.power(data, exps) #(N,D)
 		temp = np.prod(temp, axis =1) #(N,)
 		new_features[:,i] = temp #assign new feature
 
 	new_data = np.concatenate((data, new_features), axis = 1)
+
 	return new_data
 
 def jac_extra_features(data, feature_list, log_list = None):

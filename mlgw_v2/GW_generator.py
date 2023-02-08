@@ -100,15 +100,17 @@ GW_generator
 	Some default models are already included in the package.
 	"""
 
-	def __init__(self, folder = 0):
+	def __init__(self, folder = 0, verbose = False):
 		"""
 	__init__
 	========
 		Initialise class by loading the modes from file.
 		A number of pre-fitted models for the modes are released: they can be loaded with folder argument by specifying an integer index (default 0. They are all saved in "__dir__/TD_models/model_(index_given)". A list of the available models can be listed with list models().
 		Each model is composed by many modes. Each mode is represented by a mode_generator istance, each saved in a different folder within the folder.
-		Input:
+		
+		Inputs:
 			folder		address to folder in which everything is kept (if None, models must be loaded manually with load())
+			verbose		whether to print the output
 		"""
 		self.modes = [] #list of modes (classes mode_generator)
 		self.mode_dict = {}
@@ -119,7 +121,7 @@ GW_generator
 				folder = os.path.dirname(inspect.getfile(GW_generator))+"/TD_models/model_"+str(folder)
 				if not os.path.isdir(folder):
 					raise RuntimeError("Given value {0} for pre-fitted model is not valid. Available models are:\n{1}".format(str(int_folder), list_models(False)))
-			self.load(folder)
+			self.load(folder, verbose)
 		return
 
 	def __extract_mode(self, folder):
@@ -144,22 +146,24 @@ GW_generator
 			return None
 		return lm
 
-	def load(self, folder):
+	def load(self, folder, verbose = False):
 		"""
 	load
 	====
 		Loads the GW generator by loading the different mode_generator classes.
 		Each mode is loaded from a dedicated folder in the given folder of the model.
 		An optional README files holds some information about the model.
-		Input:
-			address to folder in which everything is kept
+		
+		Inputs:
+			folder		address to folder in which everything is kept
+			verbose		whether to print output	
 		"""
 		if not os.path.isdir(folder):
 			raise RuntimeError("Unable to load folder "+folder+": no such directory!")
 
 		if not folder.endswith('/'):
 			folder = folder + "/"
-		print("Loading model from: ", folder)
+		if verbose: print("Loading model from: ", folder)
 		file_list = os.listdir(folder)
 		
 		if 'README' in file_list:
@@ -185,7 +189,7 @@ GW_generator
 				self.mode_dict[lm] = len(self.modes)
 				self.modes.append(mode_generator(lm, folder+mode)) #loads mode_generator
 
-			print('    Loaded mode {}'.format(lm))
+			if verbose: print('    Loaded mode {}'.format(lm))
 
 		return
 
@@ -305,7 +309,7 @@ GW_generator
 		theta = np.column_stack((m1, m2, spin1_x, spin1_y, spin1_z, spin2_x, spin2_y, spin2_z, D_L, i, phi_0, long_asc_nodes, eccentricity, mean_per_ano)) #(N,D)
 		return self.get_WF(theta, t_grid= t_grid, modes = (2,2))
 
-
+	#@do_profile(follow=[])
 	def get_WF(self, theta, t_grid, modes = (2,2) ):
 		"""
 	get_WF
@@ -434,6 +438,53 @@ GW_generator
 		amp, ph = self.get_modes(theta, t_grid, (2,2), out_type = "ampph")#(N,2)
 		f_merger = 0.5* (ph[:,1]-ph[:,0])/(2*dt) #(N,)
 		return np.abs(f_merger)/(2*np.pi)
+	
+	def get_orbital_frequency(self, theta, t):
+		"""
+	get_merger_frequency
+	====================
+		Returns the (approximate) orbital frequency in Hz, computed as half the 22 mode frequency at a given time t.
+		Input:
+			theta (N,4)		Values of intrinsic parameters
+			t 				Time at which the orbital frequency shall be evaluated (the 0 is the time of the merger)
+		Output:
+			f_merger (N,)	Merger frequency in Hz
+		"""
+		theta = np.array(theta)
+		if theta.ndim == 1: theta = theta[None,:]
+		dt = 0.001
+		t = np.abs(t)
+		t_grid = np.array([-t-dt, -t + dt, 0.])
+		amp, ph = self.get_modes(theta, t_grid, (2,2), out_type = "ampph")#(N,2)
+		f_t = 0.5* (ph[:,1]-ph[:,0])/(2*dt) #(N,)
+		return np.abs(f_t)/(2*np.pi)
+
+	def get_merger_time(self, f, theta):
+		"""
+	get_merger_time
+	===============
+		Given an orbital frequency, it computes the merger time for a given set of BBH parameters
+		Input:
+			f 					starting frequency of the WF
+			theta (N,4)/(4,)	source parameters (m1, m2, s1z, s2z)
+		Output:
+			tau (N,)/(1,)	time to merger
+		"""
+		theta = np.array(theta)
+		if theta.ndim == 1: theta = theta[None,:]
+		t_grid = np.linspace(-100,0.,1000)
+		warnings.filterwarnings('ignore')
+		_, ph = self.get_modes(theta, t_grid, (2,2), out_type = "ampph")#(N,D)
+		warnings.filterwarnings('default')
+			#computing frequency as a function of time
+		f_t = -(1./(2*np.pi)) * np.gradient(ph, t_grid , axis = 1) #(N,D)
+		
+		tau = np.zeros((theta.shape[0],))
+		
+		for i in range(theta.shape[0]):
+			tau[i] = -np.interp([f], f_t[i,:], t_grid)
+		
+		return np.abs(tau)
 
 	def get_NP_theta(self, theta):
 		"""
@@ -459,7 +510,7 @@ GW_generator
 			return theta_new[0,:]
 		return theta_new
 	
-	def get_alpha_beta_gamma(self, theta, t_grid, f_ref):
+	def get_alpha_beta_gamma(self, theta, t_grid, f_ref, singlespin = False):
 		"""
 	get_alpha_beta_gamma
 	====================
@@ -469,28 +520,39 @@ GW_generator
 			theta (N,8)/(8,)	source parameters to make prediction at (m1, m2, s1 (3,), s2 (3,))
 			t_grid (D,)			a grid in (physical) time to evaluate the wave at (uses np.interp)
 			f_ref				reference frequency (in Hz) of the 22 mode at which the theta parameters refers to
+			singlespin			whether to use the single spin approximation
 		Output:
 			alpha, beta, gamma (N, D)	Euler angles
 		"""
 		#TODO: makes sure that theta has 2 dims!!
 		sys.path.insert(0, '/home/stefano/Dropbox/Stefano/PhD/mlgw_repository/precession/IMRPhenomTPHM/') #temporary, to load the IMRPhenomTPHM modes
 		from run_IMR import get_IMRPhenomTPHM_angles
+		from precession_helper import set_effective_spins
 		
 		alpha, beta, gamma = np.zeros((theta.shape[0], len(t_grid))), np.zeros((theta.shape[0], len(t_grid))), np.zeros((theta.shape[0], len(t_grid)))
 		
 		for i in range(alpha.shape[0]):
 			m1, m2 = theta[i,:2]
-			M_std = 20. #DEBUG
 			M_us = m1 + m2
+			M_std = 20. #DEBUG
 			ratio = M_std/M_us
 				#computing the angles and performing the scaling
-			t, alpha_, beta_, gamma_ = get_IMRPhenomTPHM_angles(m1*M_std/M_us, m2*M_std/M_us, *theta[i,2:], f_ref*(M_us/M_std), delta_T = 1e-4)
+				# f1*M1 = f2*M2
+			chi1 = theta[i,[2,3,4]]
+			chi2 = theta[i,[5,6,7]]
+			
+			if singlespin:
+				chi1, chi2 = set_effective_spins(m1, m2, chi1, chi2)
+				
+#			print("Setting spins: ",chi1, chi2)
+			t, alpha_, beta_, gamma_ = get_IMRPhenomTPHM_angles(m1*M_std/M_us, m2*M_std/M_us, *chi1, *chi2, f_ref*(M_us/M_std), delta_T = 1e-4)
+			
 			alpha[i,:] = np.interp(t_grid/M_us, t/M_std, alpha_)
 			beta[i,:] = np.interp(t_grid/M_us, t/M_std, beta_)
 			gamma[i,:] = np.interp(t_grid/M_us, t/M_std, gamma_)
 		
 			#integration of gamma (old)
-		#alpha_dot = np.gradient(alpha, t_grid, axis = 1) #(N,D)
+		#alpha_dot = np.gradient(alpha,get_twisted_modes( t_grid, axis = 1) #(N,D)
 		#gamma_prime = scipy.interpolate.interp1d(t_grid, np.multiply(alpha_dot, np.cos(beta)))
 		#f_gamma_prime = lambda t, y : gamma_prime(t)
 		#res_gamma = scipy.integrate.solve_ivp(f_gamma_prime, (t_grid[0],t_grid[-1]), [gamma0], t_eval = t_grid)
@@ -499,7 +561,7 @@ GW_generator
 		return alpha, beta, gamma
 		
 
-	def get_twisted_modes(self, theta, t_grid, modes, f_ref = 20., alpha0 = 0., gamma0 = 0., L0_frame = False):
+	def get_twisted_modes(self, theta, t_grid, modes, f_ref = 20., alpha0 = 0., gamma0 = 0., L0_frame = False, singlespin = False):
 		"""
 	get_twisted_modes
 	=================
@@ -513,12 +575,14 @@ GW_generator
 			modes				list (or a single tuple) of modes to be returned
 			f_ref				reference frequency (in Hz) of the 22 mode at which the theta parameters refers to
 			L0_frame			whether to output the modes in the inertial L0_frame
+			singlespin			whether to use the single spin approximation
 		Output:
 			real, imag (N, D', K)	real and imaginary part of the K modes required by the user (if mode is a tuple, no third dimension)
 		"""
 		#FIXME: here we have the serious issuf of the time at which L, S1, S2 are computed. It should be at a ref frequency or at the beginning of the time grid; but they are computed at a constant separation (which can be related to a frequency btw)
 		#FIXME: we need to make clear at which parameters we generate the NP WFs. Now, if we only take the norm (no sign) we do not recover correctly the NP limit!! 
 		#FIXME: the merger frequency is really an issue!
+		#FIXME: this function might have an error
 
 		theta = np.array(theta)
 		theta, modes, remove_first_dim, remove_last_dim = self.__check_modes_input(theta, modes)
@@ -545,7 +609,7 @@ GW_generator
 			mprime_modes_list = mprime_modes_list + [(m[0],-m[1]) for m in mprime_modes_list if m[1]> 0] #len = M''
 			
 				#getting alpha, beta, gamma
-			alpha, beta, gamma = self.get_alpha_beta_gamma(theta, t_grid, f_ref)
+			alpha, beta, gamma = self.get_alpha_beta_gamma(theta, t_grid, f_ref, singlespin)
 			
 			if alpha0 is not None:
 				alpha = alpha - alpha[:,0] + alpha0 
@@ -583,6 +647,7 @@ GW_generator
 			h_P = h_P[0,...] #(D,)/(D,K)
 		return h_P.real, h_P.imag
 
+	#@do_profile(follow=[])
 	def __get_WF(self, theta, t_grid, modes):
 		"""
 	__get_WF
@@ -607,7 +672,7 @@ GW_generator
 		h_plus = np.zeros((theta.shape[0],t_grid.shape[0]))
 		h_cross = np.zeros((theta.shape[0],t_grid.shape[0]))
 
-			#if only mode 22 is required, it is treated separately for speed up
+			#if only mode 22 is required, it is treated separately for speed up	
 		if modes == (2,2):# or modes == [(2,2)]:
 			amp_22, ph_22 = self.modes[self.mode_dict[(2,2)]].get_mode(theta[:,:4], t_grid, out_type = "ampph")
 			amp_22 =  np.sqrt(5/(4.*np.pi))*np.multiply(amp_22.T, amp_prefactor).T #G/c^2*(M_sun/Mpc) nu *(M/M_sun)/(d_L/Mpc)
@@ -687,7 +752,7 @@ GW_generator
 			res1, res2 = res1[0,...], res2[0,...] #(D,)/(D,K)
 		return res1, res2
 		
-
+	#@do_profile(follow=[])
 	def __set_spherical_harmonics(self, mode, amp, ph, iota, phi_0):
 		"""
 	__set_spherical_harmonics
@@ -710,6 +775,7 @@ GW_generator
 		const = np.sqrt( (2.*l+1.)/(4.*np.pi) ) * (-1)**m
 		parity = np.power(-1,l) #are you sure of that? apparently yes...
 
+			#FIXME: this can be done better interpolating after the spherical harmonic multiplication
 		h_lm_real = np.multiply(np.multiply(amp.T,np.cos(ph.T+m*phi_0)), const*(d_lm + parity * d_lmm) ).T #(N,D)
 		h_lm_imag = np.multiply(np.multiply(amp.T,np.sin(ph.T+m*phi_0)), const*(d_lm - parity * d_lmm) ).T #(N,D)
 
@@ -895,7 +961,7 @@ class mode_generator(object):
 	"""
 mode_generator
 ==============
-	This class holds all the parts of ML models and acts as single (l,m) mode generator. Model is composed by a PCA model to reduce dimensionality of a WF datasets and by several MoE models to fit PCA in terms of source parameters. WFs can be generated both in time domain and frequency domain.
+	This class holds all the parts of ML models and acts as single (l,m) mode generator. Model is composed by a PCA model to reduce dimensionality of a WF datasets and by several MoE models to fit PCA in terms of source parameters. WFs are generated in time domain.
 	Everything is hold in a PCA model (class PCA_model defined in ML_routines) and in two lists of MoE models (class MoE_model defined in EM_MoE). All models are loaded from files in a folder given by user. Files must be named exactly as follows:
 		amp(ph)_exp_#		for amplitude (phase) of expert model for PCA component #
 		amp(ph)_gat_#		for amplitude (phase) of gating function for PCA component #
