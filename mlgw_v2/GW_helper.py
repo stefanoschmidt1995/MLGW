@@ -462,7 +462,7 @@ create_dataset_TD
 		filebuff.close()
 		return None
 
-def generate_mode(m1,m2, s1=0.,s2 = 0., d=1., t_coal = 0.4, t_step = 5e-5, f_min = None, t_min = None, verbose = False, approx = "IMRPhenomXPHM"):
+def generate_mode(m1,m2, s1=0.,s2 = 0., d=1., t_coal = 0.4, t_step = 5e-5, f_min = None, t_min = None, verbose = False, approx = "IMRPhenomTPHM"):
 	"""
 generate_mode
 =============
