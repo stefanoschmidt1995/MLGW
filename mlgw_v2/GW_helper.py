@@ -462,6 +462,79 @@ create_dataset_TD
 		filebuff.close()
 		return None
 
+def generate_mode(m1,m2, s1=0.,s2 = 0., d=1., t_coal = 0.4, t_step = 5e-5, f_min = None, t_min = None, verbose = False, approx = "IMRPhenomXPHM"):
+	"""
+generate_mode
+=============
+	Wrapper to lalsimulation.SimInspiralChooseTDModes() to generate modes of a waveform. Wave is not preprocessed.
+	Input:
+		m1,m2,s1,s2,d				orbital parameters
+		t_coal						approximate time to coalescence in reduced grid (ignored if f_min or t_min is set)
+		t_step						EOB integration time to be given to lal
+		f_min						starting frequency in Hz (if None, it will be determined by t_coal; ignored if t_min is set)
+		t_min						starting time in s (if None, t_coal will be returned)
+		verbose						whether to print messages for each wave...
+	Output:
+		times (D,)	times at which modes are evaluated
+		mode_dict	dictionary with the modes (each mode is a complex timeseries)
+	"""
+	import lal
+	import lalsimulation as lalsim
+	q = m1/m2
+	mtot = (m1+m2)#*lal.MTSUN_SI
+	mc = (m1*m2)**(3./5.)/(m1+m2)**(1./5.)
+	mc /= 1.21 #M_c / 1.21 M_sun
+
+	if t_min is not None:
+		f_min = .8* ((151*(t_min/mtot)**(-3./8.) * (((1+q)**2)/q)**(3./8.))/mtot)
+
+	if f_min is None:
+		f_min = .9* ((151*(t_coal)**(-3./8.) * (((1+q)**2)/q)**(3./8.))/mtot)
+
+	if verbose:
+		print("Generating wave @: ",m1,m2,s1,s2,d, iota, phi_0)
+
+	hlm = lalsim.SimInspiralChooseTDModes(0.,
+				t_step,
+				m1*lalsim.lal.MSUN_SI,
+				m2*lalsim.lal.MSUN_SI,
+				0.,
+				0.,
+				s1z,
+				0.,
+				0.,
+				s2z,
+				f_min,
+				f_min,
+				1e6*d*lalsim.lal.PC_SI,
+				LALpars,
+				5,			#lmax
+				lalsim.GetApproximantFromString(approx) #approx method for the model
+			)
+		
+		mode_dict = {}
+		for l in range(2,6):
+			for m in range(1,l+1):
+				#{(2,2): lal.ts}
+				try:
+					temp_hlm = lalsim.SphHarmTimeSeriesGetMode(hlm, lm[0], lm[1]).data.data
+					mode_dict[(l,m)] = np.array(temp_hlm)
+				except:
+					continue
+
+	amp = np.abs(mode_dict[(2,2)])
+	times = np.linspace(0.0, amp.shape[0]*t_step, amp.shape[0])  #time actually
+	t_m =  times[np.argmax(amp)]
+	times = times - t_m
+
+	if t_min is not None:
+		arg = np.argmin(np.abs(times+t_min))
+		for k, v in mode_dict.items():
+			mode_dict[k] = v[arg:]
+		times = times[arg:]
+
+	return times, mode_dict
+
 
 def generate_waveform(m1,m2, s1=0.,s2 = 0.,d=1., iota = 0.,phi_0=0., t_coal = 0.4, t_step = 5e-5, f_min = None, t_min = None, verbose = False, approx = "SEOBNRv2_opt"):
 	"""
