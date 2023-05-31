@@ -101,6 +101,9 @@ while tmp_mode:# is not None:
 		inset.plot(t_grid[:100], ph_lm_mlgw[:100], label = 'mlgw')
 		plt.legend()
 		plt.savefig('mode_alignment/{}{}.png'.format(l,m))
+		
+		plt.figure()
+		plt.plot(t_grid[:-2000], (ph_lm_mlgw-ph_lm)[:-2000], label = 'lal')
 		#plt.show()
 	tmp_mode = tmp_mode.next
 

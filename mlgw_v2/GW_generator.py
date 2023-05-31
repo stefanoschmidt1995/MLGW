@@ -1320,6 +1320,7 @@ mode_generator
 		for i in range(amp.shape[0]):
 				#computing the true red grid
 			interp_grid = np.divide(t_grid, m_tot_us[i])
+			#FIXME: here you can already apply spherical harmonics (calling _set_spherical_harmonics) for speed up
 
 				#putting the wave on the user grid
 			new_amp[i,:] = np.interp(interp_grid, self.times, amp[i,:], left = 0, right = 0) #set to zero outside the domain
