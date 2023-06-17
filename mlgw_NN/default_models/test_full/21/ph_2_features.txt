@@ -1,0 +1,1 @@
+eff_spin_powers, sym_mas_powers, chirp, 2nd_poly, log, eff_spin_sym_mas_2nd_poly, eff_spin_sym_mas_3rd_poly, eff_spin_sym_mas_4th_poly
