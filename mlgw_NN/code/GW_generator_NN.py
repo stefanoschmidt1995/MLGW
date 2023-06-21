@@ -1,18 +1,18 @@
 import sys
 import os
+os.environ['TF_CPP_MIN_LOG_LEVEL'] = '2'
+
 import tensorflow as tf
 from tensorflow.python.framework.convert_to_constants import convert_variables_to_constants_v2
 
-sys.path.append('/home/tim.grimbergen/my_code_v2')
-sys.path.append('/home/tim.grimbergen/MLGW-master/mlgw_v2')
-os.environ['TF_CPP_MIN_LOG_LEVEL'] = '2'
+sys.path.append(os.path.join(os.path.dirname(os.path.dirname(sys.path[0])),'MLGW-master','mlgw_v2')) #ugly way of adding mlgw_v2
 
 import numpy as np
 import warnings
 
 #from sklearn.metrics import mean_squared_error
-import PCAdata_v2
-import NNmodel_v2
+from PCAdata_v2 import PcaData
+from NNmodel_v2 import NeuralNetwork
 import ast
 from GW_generator import GW_generator, mode_generator
 from ML_routines import PCA_model
@@ -122,18 +122,18 @@ class mode_generator_NN(mode_generator):
             self.ph_2res_features = file.readline().split(", ")
         
         if frozen == False:
-            self.model_amp = NNmodel_v2.NeuralNetwork.load_model(folder+"model_amp",as_h5 = True)
-            self.model_ph_2 = NNmodel_v2.NeuralNetwork.load_model(folder+"model_ph_2", as_h5 = True)
-            self.model_ph_3456 = NNmodel_v2.NeuralNetwork.load_model(folder+"model_ph_3456", as_h5 = True)
-            self.model_ph_2res = NNmodel_v2.NeuralNetwork.load_model(folder+"model_ph_2res", as_h5 = True)
+            self.model_amp = NeuralNetwork.load_model(folder+"model_amp",as_h5 = True)
+            self.model_ph_2 = NeuralNetwork.load_model(folder+"model_ph_2", as_h5 = True)
+            self.model_ph_3456 = NeuralNetwork.load_model(folder+"model_ph_3456", as_h5 = True)
+            self.model_ph_2res = NeuralNetwork.load_model(folder+"model_ph_2res", as_h5 = True)
         else:
             #frozen graph optimization, of course it is not optimzal to create the frozen models
             #inside of the load function.
             
-            model_amp = NNmodel_v2.NeuralNetwork.load_model(folder+"model_amp",as_h5 = True)
-            model_ph_2 = NNmodel_v2.NeuralNetwork.load_model(folder+"model_ph_2", as_h5 = True)
-            model_ph_3456 = NNmodel_v2.NeuralNetwork.load_model(folder+"model_ph_3456", as_h5 = True)
-            model_ph_2res = NNmodel_v2.NeuralNetwork.load_model(folder+"model_ph_2res", as_h5 = True)
+            model_amp = NeuralNetwork.load_model(folder+"model_amp",as_h5 = True)
+            model_ph_2 = NeuralNetwork.load_model(folder+"model_ph_2", as_h5 = True)
+            model_ph_3456 = NeuralNetwork.load_model(folder+"model_ph_3456", as_h5 = True)
+            model_ph_2res = NeuralNetwork.load_model(folder+"model_ph_2res", as_h5 = True)
             
             print("amp_model input shape = ", model_amp.inputs[0].shape)
             full_model_amp = tf.function(lambda x : model_amp(x))
@@ -168,10 +168,10 @@ class mode_generator_NN(mode_generator):
         #Utilize bigger batch_size by loading in multiple theta_vectors. But... architecture of mode_generator
         #has to be changed.
         
-        amp_theta = PCAdata_v2.PcaData.augment_features_2(theta, self.amp_features)
-        ph_2_theta = PCAdata_v2.PcaData.augment_features_2(theta, self.ph_2_features)
-        ph_3456_theta = PCAdata_v2.PcaData.augment_features_2(theta, self.ph_3456_features)
-        ph_2res_theta = PCAdata_v2.PcaData.augment_features_2(theta, self.ph_2res_features)
+        amp_theta = PcaData.augment_features_2(theta, self.amp_features)
+        ph_2_theta = PcaData.augment_features_2(theta, self.ph_2_features)
+        ph_3456_theta = PcaData.augment_features_2(theta, self.ph_3456_features)
+        ph_2res_theta = PcaData.augment_features_2(theta, self.ph_2res_features)
         
         amp_pred = np.zeros((amp_theta.shape[0], self.amp_PCA.get_dimensions()[1]))
         ph_pred = np.zeros((ph_2_theta.shape[0], self.ph_PCA.get_dimensions()[1]))
