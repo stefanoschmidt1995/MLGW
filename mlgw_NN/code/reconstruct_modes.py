@@ -13,9 +13,9 @@ import tensorflow as tf
 tf.compat.v1.disable_eager_execution() #to speed up WF predictions (~4x speed up!)
 
 modes = ["21","22","33","44","55"]
-model_loc = "/home/tim.grimbergen/full_models_test/test_full/"
-save_loc = "/home/tim.grimbergen/modes_test/testBIG/"
-to_save = True
+model_loc = "../default_models/test_full/"
+save_loc = "../save_data" #provide location to save data to
+to_save = False
 time_batch = True
 
 gen_NN = GW_generator_NN(folder = model_loc)
