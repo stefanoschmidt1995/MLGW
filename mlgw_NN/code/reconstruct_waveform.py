@@ -32,8 +32,8 @@ def get_random_antenna_patterns():
 
 	return F_p, F_c
 
-model_loc = "/home/tim.grimbergen/full_models_test/test_full/"
-save_loc = "/home/tim.grimbergen/full_test_wf/test4/"
+model_loc = "../default_models/test_full/"
+save_loc = "../save_data/" #provide location to save data to
 to_save = True
 time_batch = True
 save_fig = True
