@@ -5,9 +5,7 @@ import tensorflow as tf
 import os
 import sys
 import time
-
-sys.path.append('/home/tim.grimbergen/my_code_v2')
-import PCAdata_v2
+from PCAdata_v2
 
 class NeuralNetwork:
     def __init__(self, PCA_data, quantity, layers_nodes=[10,10,10,10,10], activation = 'sigmoid',
