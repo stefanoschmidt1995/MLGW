@@ -3,7 +3,7 @@ import random
 import tensorflow as tf
 import math
 import sys
-sys.path.append('/home/tim.grimbergen/MLGW-master/mlgw_v2')
+sys.path.append(os.path.join(os.path.dirname(os.path.dirname(sys.path[0])),'MLGW-master','mlgw_v2')) #ugly way of adding mlgw_v2
 from ML_routines import PCA_model
 
 class PcaData:
