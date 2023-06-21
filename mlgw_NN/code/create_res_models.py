@@ -1,12 +1,11 @@
 import sys
 import math
 
-sys.path.append('/home/tim.grimbergen/my_code_v2')
 from NNmodel_v2 import NeuralNetwork
-import PCAdata_v2
+from PCAdata_v2 import Schedulers
 
-data_loc = "C:/Users/timgr/Documents/Scriptie/Natuurkunde/Code/Dataset/8_8_HM_spin/res_22_2comp/res1/"
-save_loc = "C:/Users/timgr/Documents/Scriptie/Natuurkunde/Code/ModelsV2_cluster/spin/HM_spin_1.1/22/res_PH_comp2/res1/"
+data_loc = "C:/Users/timgr/Documents/Scriptie/Natuurkunde/Code/Dataset/8_8_HM_spin/res_22_2comp/res1/" #provide location to residual data
+save_loc = "C:/Users/timgr/Documents/Scriptie/Natuurkunde/Code/ModelsV2_cluster/spin/HM_spin_1.1/22/res_PH_comp2/res1/" #provide location to save model to
 
 param_dict = {'layer_list' : [[15,15,15,15]],
               'optimizers' : [("Nadam",0.0006)],
