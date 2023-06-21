@@ -1,6 +1,6 @@
 import sys
 import os
-sys.path.append("/home/tim.grimbergen/my_code_v2")
+sys.path.append(os.path.join(os.path.dirname(os.path.dirname(sys.path[0])),'MLGW-master','mlgw_v2')) #ugly way of adding mlgw_v2
 os.environ['TF_CPP_MIN_LOG_LEVEL'] = '2'
 
 import pycbc.filter
