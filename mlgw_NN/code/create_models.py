@@ -2,14 +2,13 @@ import sys
 import os
 os.environ['TF_CPP_MIN_LOG_LEVEL'] = '2'
 
-sys.path.append('/home/tim.grimbergen/my_code_v2')
 from NNmodel_v2 import NeuralNetwork
-import PCAdata_v2
+from PCAdata_v2 import Schedulers
 
 
 
-data_loc = "/home/tim.grimbergen/PCA_Data/8_8_HM_spin/"
-save_loc = "/home/tim.grimbergen/ModelsV2/HM_spin_3456PH/"
+data_loc = "/home/tim.grimbergen/PCA_Data/8_8_HM_spin/" #provide the data location on which to train models
+save_loc = "/home/tim.grimbergen/ModelsV2/HM_spin_3456PH/" #prove the location to which the model should be saved
 
 param_dict = {'layer_list' : [[20,20,15,15]],
               'optimizers' : [("Nadam",0.002)],
