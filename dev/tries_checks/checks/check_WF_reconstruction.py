@@ -5,9 +5,11 @@ import lal
 import lalsimulation as lalsim
 
 import sys
-sys.path.insert(0, '../../mlgw_v2')
+sys.path.insert(0, '../../..')
 
-import GW_generator as g
+import mlgw
+from mlgw import GW_generator as g
+
 ###############################################
 #lalsim.SimIMRPhenomTPHM_L0Modes
 
@@ -16,7 +18,7 @@ s1x, s1y, s1z = 0, 0, -0.4
 s2x, s2y, s2z = 0, 0, 0.8
 iota, phi = np.pi/2, 2.
 
-model = g.GW_generator(0)
+model = g(3)
 
 modes_lal = lalsim.SimIMRPhenomTPHM_L0Modes(
 #modes_lal, alpha, beta, gamma, _ = lalsim.SimIMRPhenomTPHM_JModes(
@@ -75,10 +77,14 @@ while tmp_mode:# is not None:
 		#ph_lm = ph_lm-ph_lm[0]
 
 			#FIXME: wrong time alignment
+			#Old model ph_lal = -ph_mlgw; w/o nu scaling
+			#New model ph_lal = ph_mlgw; w nu scaling
+			
 		amp_lm_mlgw, ph_lm_mlgw = model.get_modes([m1, m2, s1z, s2z], t_grid-t_peak_22, modes = (l,m))
-		ph_lm_mlgw = -ph_lm_mlgw + phi_diff[(l,m)]
+		ph_lm_mlgw = ph_lm_mlgw + phi_diff[(l,m)]
 		amp_prefactor = 4.7864188273360336e-20*(m1+m2)/1.
-		amp_lm_mlgw *= amp_prefactor
+		nu = m1*m2/(m1+m2)**2
+		amp_lm_mlgw *= amp_prefactor*nu
 		
 		h_lm_mlgw_real, h_lm_mlgw_imag = model._GW_generator__set_spherical_harmonics((l,m), amp_lm_mlgw, ph_lm_mlgw, np.array(iota), np.pi/2.- np.array(phi))
 		h_plus_mlgw = h_plus_mlgw + h_lm_mlgw_real

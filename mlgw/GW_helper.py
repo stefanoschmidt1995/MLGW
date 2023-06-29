@@ -141,7 +141,7 @@ compute_optimal_mismatch
 		phi_optimal = np.zeros(norm_factor.shape)
 	overlap = np.divide(scalar(h1,(h2.T*np.exp(1j*phi_optimal)).T), norm_factor)
 	overlap = overlap.real
-
+	
 	if return_F:
 		return 1-overlap, phi_optimal
 	if not return_F:
@@ -180,12 +180,9 @@ create_dataset_TD
 		approximant			string for the approximant model to be used (in lal convention; to be used only if lal is to be used)
 		alpha				distorsion factor for time grid. (In range (0,1], when it's close to 0, more grid points are around merger)
 		approximant			lal approximant to be used for generating the modes, or "TEOBResumS" (in the latter case a local installation must be provided by the argument path_TEOBResumS) 
-		path_TEOBResumS		path to a local installation of TEOBResumS with routine 'EOBRun_module' (if given, it overwrites the aproximant entry)
+		path_TEOBResumS		path to a local installation of TEOBResumS with routine 'EOBRun_module' (has effect only if approximant is "TEOBResumS")
 	"""
-		#imports
-	if path_TEOBResumS is not None:
-		approximant = "TEOBResumS"
-
+	#TODO: create a function get modes, wrapper to ChooseTDModes: you can call it from here to get the modes
 	if isinstance(modes,tuple):
 		modes = [modes]
 	if not isinstance(modes,list):
@@ -193,6 +190,8 @@ create_dataset_TD
 
 	if approximant == "TEOBResumS":
 		#see https://bitbucket.org/eob_ihes/teobresums/src/development/ for the implementation of TEOBResumS
+		if not isinstance(path_TEOBResumS, str):
+			raise ValueError("Missing path to TEOBResumS: unable to continue")
 		try:
 			import sys
 			sys.path.append(path_TEOBResumS) #path to local installation of TEOBResumS
@@ -204,7 +203,7 @@ create_dataset_TD
 			import lal
 			import lalsimulation as lalsim
 		except:
-			raise RuntimeError("Impossible to load lalsimulation: try pip install lalsuite")
+			raise RuntimeError("Impossible to load lal and lalsimulation: try pip install lalsuite")
 		LALpars = lal.CreateDict()
 		approx = lalsim.SimInspiralGetApproximantFromString(approximant)
 		prefactor = 4.7864188273360336e-20 # G/c^2*(M_sun/Mpc)
@@ -214,7 +213,7 @@ create_dataset_TD
 			for mode in modes:
 				if mode not in [(2,2),(2,1), (3,3), (4,4), (5,5)]:
 					raise ValueError("Currently SEOBNRv4HM approximants do not implement the chosen HM")
-		else:
+		elif approximant != "IMRPhenomTPHM":
 			if modes != [(2,2)]:
 				raise ValueError("The chosen lal approximant does not implement HMs")
 
@@ -283,7 +282,7 @@ create_dataset_TD
 		buff_list.append(filebuff)
 
 		#####creating WFs
-	for n_WF in range(N_data): 
+	for n_WF in range(N_data):
 			#setting value for data
 		if isinstance(m2_range, tuple):
 			m2 = np.random.uniform(m2_range[0],m2_range[1])
@@ -350,7 +349,7 @@ create_dataset_TD
 				ph_list[i] = temp_ph
 			argpeak = locate_peak(hlm['1'][0]*nu) #aligned at the peak of the 22
 
-		elif approximant == "SEOBNRv4HM": #using SEOBNRv4HM
+		elif approximant == "SEOBNRv4HM:old": #using SEOBNRv4HM
 			nqcCoeffsInput=lal.CreateREAL8Vector(10)
 			sp, dyn, dynHi = lalsim.SimIMRSpinAlignedEOBModes(t_step, m1*lal.MSUN_SI, m2*lal.MSUN_SI, f_min, 1e6*lal.PC_SI, spin1z, spin2z,41, 0., 0., 0.,0.,0.,0.,0.,0.,1.,1.,nqcCoeffsInput, 0)
 			amp_prefactor = prefactor*(m1+m2)/1. # G/c^2 (M / d_L)
@@ -371,6 +370,37 @@ create_dataset_TD
 					time_full = np.linspace(0.0, sp.mode.data.length*t_step, sp.mode.data.length) #time grid at which wave is computed
 					argpeak = locate_peak(amp_22) #aligned at the peak of the 22
 				sp = sp.next
+		elif approximant == "IMRPhenomTPHM" or approximant == "SEOBNRv4HM":
+			#https://lscsoft.docs.ligo.org/lalsuite/lalsimulation/test___s_e_o_b_n_rv4_p_h_m__vs__4_h_m__ringdown_8py_source.html
+			#approx = lalsim.SEOBNRv4PHM #DEBUG
+			hlm = lalsim.SimInspiralChooseTDModes(0.,
+				t_step,
+				m1*lalsim.lal.MSUN_SI,
+				m2*lalsim.lal.MSUN_SI,
+				0.,
+				0.,
+				spin1z,
+				0.,
+				0.,
+				spin2z,
+				f_min,
+				f_min,
+				1e6*lalsim.lal.PC_SI,
+				LALpars,
+				5,			#lmax
+				lalsim.IMRPhenomTPHM
+			)
+			amp_prefactor = prefactor*(m1+m2)/1.
+			for i, lm in enumerate(modes):
+				#{(2,2): lal.ts} 
+				temp_hlm = lalsim.SphHarmTimeSeriesGetMode(hlm, lm[0], lm[1]).data.data
+				temp_amp = np.abs(temp_hlm)/ amp_prefactor / nu #check that this conventions are for every lal part
+				temp_ph = np.unwrap(np.angle(temp_hlm))
+				amp_list[i] = temp_amp
+				ph_list[i] = temp_ph
+				if (lm[0], lm[1]) == (2,2): #get grid
+					argpeak = locate_peak(temp_amp) #aligned at the peak of the 22
+			time_full = np.linspace(0.0, len(temp_amp)*t_step, len(temp_amp)) #time grid at which wave is computed
 
 		else: #another lal approximant (only 22 mode)
 			hp, hc = lalsim.SimInspiralChooseTDWaveform( #where is its definition and documentation????
@@ -406,16 +436,23 @@ create_dataset_TD
 			#computing waves to the chosen std grid and saving to file
 		for i in range(len(amp_list)):
 			temp_amp, temp_ph = amp_list[i], ph_list[i]
-			#print(temp_amp.shape, time_full.shape, time_grid_list[i].shape)
 			temp_amp = np.interp(time_grid_list[i], time_full, temp_amp)
 			temp_ph = np.interp(time_grid_list[i], time_full, temp_ph)
 			temp_ph = temp_ph - temp_ph[0] #all phases are shifted by a constant to make sure every wave has 0 phase at beginning of grid
+
+			if False:
+				#TODO: remove this shit!!
+				plt.figure()
+				plt.plot(time_grid_list[i], temp_amp_,'o', ms = 2)
+				plt.plot(time_full, temp_amp)
+				plt.xlim([-0.00015,0.00015])
+				plt.show()
 
 			to_save = np.concatenate((temp_theta, temp_amp, temp_ph))[None,:] #(1,D)
 			np.savetxt(buff_list[i], to_save)
 
 			#user communication
-		if n_WF%100 == 0 and n_WF != 0:
+		if n_WF%50 == 0 and n_WF != 0:
 		#if n_WF%1 == 0 and n_WF != 0: #debug
 			print("Generated WF ", n_WF)
 
@@ -424,6 +461,79 @@ create_dataset_TD
 	else:
 		filebuff.close()
 		return None
+
+def generate_mode(m1,m2, s1=0.,s2 = 0., d=1., t_coal = 0.4, t_step = 5e-5, f_min = None, t_min = None, verbose = False, approx = "IMRPhenomTPHM"):
+	"""
+generate_mode
+=============
+	Wrapper to lalsimulation.SimInspiralChooseTDModes() to generate modes of a waveform. Wave is not preprocessed.
+	Input:
+		m1,m2,s1,s2,d				orbital parameters
+		t_coal						approximate time to coalescence in reduced grid (ignored if f_min or t_min is set)
+		t_step						EOB integration time to be given to lal
+		f_min						starting frequency in Hz (if None, it will be determined by t_coal; ignored if t_min is set)
+		t_min						starting time in s (if None, t_coal will be returned)
+		verbose						whether to print messages for each wave...
+	Output:
+		times (D,)	times at which modes are evaluated
+		mode_dict	dictionary with the modes (each mode is a complex timeseries)
+	"""
+	import lal
+	import lalsimulation as lalsim
+	q = m1/m2
+	mtot = (m1+m2)#*lal.MTSUN_SI
+	mc = (m1*m2)**(3./5.)/(m1+m2)**(1./5.)
+	mc /= 1.21 #M_c / 1.21 M_sun
+
+	if t_min is not None:
+		f_min = .8* ((151*(t_min/mtot)**(-3./8.) * (((1+q)**2)/q)**(3./8.))/mtot)
+
+	if f_min is None:
+		f_min = .9* ((151*(t_coal)**(-3./8.) * (((1+q)**2)/q)**(3./8.))/mtot)
+
+	if verbose:
+		print("Generating wave @: ",m1,m2,s1,s2,d, iota, phi_0)
+
+	hlm = lalsim.SimInspiralChooseTDModes(0.,
+				t_step,
+				m1*lalsim.lal.MSUN_SI,
+				m2*lalsim.lal.MSUN_SI,
+				0.,
+				0.,
+				s1z,
+				0.,
+				0.,
+				s2z,
+				f_min,
+				f_min,
+				1e6*d*lalsim.lal.PC_SI,
+				LALpars,
+				5,			#lmax
+				lalsim.GetApproximantFromString(approx) #approx method for the model
+			)
+		
+	mode_dict = {}
+	for l in range(2,6):
+		for m in range(1,l+1):
+			#{(2,2): lal.ts}
+			try:
+				temp_hlm = lalsim.SphHarmTimeSeriesGetMode(hlm, lm[0], lm[1]).data.data
+				mode_dict[(l,m)] = np.array(temp_hlm)
+			except:
+				continue
+
+	amp = np.abs(mode_dict[(2,2)])
+	times = np.linspace(0.0, amp.shape[0]*t_step, amp.shape[0])  #time actually
+	t_m =  times[np.argmax(amp)]
+	times = times - t_m
+
+	if t_min is not None:
+		arg = np.argmin(np.abs(times+t_min))
+		for k, v in mode_dict.items():
+			mode_dict[k] = v[arg:]
+		times = times[arg:]
+
+	return times, mode_dict
 
 
 def generate_waveform(m1,m2, s1=0.,s2 = 0.,d=1., iota = 0.,phi_0=0., t_coal = 0.4, t_step = 5e-5, f_min = None, t_min = None, verbose = False, approx = "SEOBNRv2_opt"):
@@ -555,9 +665,9 @@ generate_waveform
 			'interp_uniform_grid': 2,      # Interpolate mode by mode on a uniform grid. Default = 0 (no interpolation)
 			'distance': d,
 			'inclination': iota,
-			#'nqc':2, #{"no", "auto", "manual"}
-			#'nqc_coefs_flx': 2, # {"none", "nrfit_nospin20160209", "fit_spin_202002", "fromfile"}
-			#'nqc_coefs_hlm':0
+			'nqc':1, #{"no", "auto", "manual"}
+			'nqc_coefs_flx':0, # {"none", "nrfit_nospin20160209", "fit_spin_202002", "fromfile"}
+			'nqc_coefs_hlm':0
 		}
 	times, h_p, h_c, hlm = EOBRun_module.EOBRunPy(pars)
 
@@ -594,7 +704,7 @@ def locate_peak(amp, start = 0.3):
 
 
 
-def save_dataset(filename, theta_vector, dataset1, dataset, x_grid):
+def save_dataset(filename, theta_vector, amp_dataset, ph_dataset, x_grid):
 	"""
 	Save a dataset in a way that it's readable by load_dataset.
 	Input:
@@ -616,12 +726,12 @@ def save_dataset(filename, theta_vector, dataset1, dataset, x_grid):
 	return
 
 
-def load_dataset(filename, N_data=None, N_grid = None, shuffle = False, n_params = 3):
+def load_dataset(filename, N_data=None, N_entries = 2, N_grid = None, shuffle = False, n_params = 3):
 	"""
 	Load a dataset from file. The file should be suitable for np arrays and have the following structure:
-		parameters n_params | entry_1 K | entry_2 K
-	It is suitable for both GW dataset (n_params = 3 and entry_1/2 = amplitude/phase) and for angles dataset (n_params = 6 and entry_1/2 = alpha/beta)
-	The first row hold the frequncy vector.
+		parameters n_params | entry_1 K | entry_2 K | ... | entry_2 D
+	It is suitable for GW dataset (n_params = 3 and entry_1/2 = amplitude/phase), for angles dataset (n_params = 6 and entry_1/2 = alpha/beta) and for "extended" angle dataset (n_params = 6 and entries = alpha, beta_m, beta_amp, beta_ph)
+	The first row hold the x_grid vector.
 	It can shuffle the data if required.
 	Input:
 		filename	input filename
@@ -630,37 +740,47 @@ def load_dataset(filename, N_data=None, N_grid = None, shuffle = False, n_params
 		shuffle		whether to shuffle data
 		n_params	number of columns in the theta_vector
 	Outuput:
-		theta_vector (N_data,n_params)	vector holding ordered set of parameters used to generate amp_dataset and ph_dataset
-		entry1_dataset (N_data,K)		dataset with amplitudes
-		entry2_dataset (N_data,K)		dataset with phases
-		x_grid (K,)						vector holding x_grid at which the entries are evaluated (can be frequency or time grid)
+		A list storing the following np.array
+			theta_vector (N_data,n_params)	vector holding ordered set of parameters used to generate amp_dataset and ph_dataset
+			dataset_1 (N_data,K)			entry 1
+			.
+			.
+			dataset_D	(N_data,K)			entry D
+			x_grid (K,)						vector holding x_grid at which the entries are evaluated (can be frequency or time grid)
 	"""
 		#here entry1 is amp and entry2 is ph (change it)
 	if N_data is not None:
 		N_data += 1
 	data = np.loadtxt(filename, max_rows = N_data)
 	N = data.shape[0]
-	K = int((data.shape[1]-n_params)/2)
+	D = N_entries
+	K = int((data.shape[1]-n_params)/D)
 	x_grid = data[0,n_params:n_params+K] #saving x_grid
+
+	if data.shape[1] != D*K + n_params:
+		raise ValueError("File given is not suitable for the required dataset. Unable to continue")
 
 	data = data[1:,:] #removing x_grid from full data
 	if shuffle: 	#shuffling if required
 		np.random.shuffle(data)
 
 	theta_vector = data[:,0:n_params]
-	amp_dataset = data[:,n_params:n_params+K]
-	ph_dataset = data[:,n_params+K:]
+	dataset_list = []
+	for d in range(D):
+		dataset_list.append(data[:,n_params+d*K:n_params+(d+1)*K])
 
 	if N_grid is not None:
-		if ph_dataset.shape[1] < N_grid:
-			warnings.warn("Not enough grid points ("+str(ph_dataset.shape[1])+") for the required N_grid value ("+str(N_grid)+").\nMaximum number of grid point is taken (but less than N_grid)")
-			N_grid = ph_dataset.shape[1]
-		indices = np.random.choice(range(ph_dataset.shape[1]), size = (N_grid,), replace = False)
+		if dataset_list[0].shape[1] < N_grid:
+			warnings.warn("Not enough grid points ("+str(dataset_list[0].shape[1])+") for the required N_grid value ("+str(N_grid)+").\nMaximum number of grid point is taken (but less than N_grid)")
+			N_grid = dataset_list[0].shape[1]
+		indices = np.random.choice(range(dataset_list[0].shape[1]), size = (N_grid,), replace = False)
 		x_grid = x_grid[indices]
-		ph_dataset = ph_dataset[:,indices]
-		amp_dataset = amp_dataset[:,indices]
+		for d in range(D):
+			dataset_list[d] = dataset_list[d][:,indices]
 
-	return theta_vector, amp_dataset, ph_dataset, x_grid
+	to_return = [theta_vector, *dataset_list, x_grid]
+
+	return to_return
 
 def make_set_split(data, labels, train_fraction = .85, scale_factor = None):
 	"""

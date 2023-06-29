@@ -16,4 +16,4 @@ The packacke has 4 modules:
 		
 """
 
-from .GW_generator import *
+from .GW_generator import GW_generator, list_models
