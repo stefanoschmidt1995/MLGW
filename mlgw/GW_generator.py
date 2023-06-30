@@ -25,8 +25,7 @@ from tensorflow.keras import models as keras_models
 import inspect
 sys.path.insert(1, os.path.dirname(__file__)) 	#adding to path folder where mlgw package is installed (ugly?)
 from .EM_MoE import MoE_model
-from .ML_routines import PCA_model, add_extra_features, jac_extra_features
-from .NN_model import NeuralNetwork, PcaData
+from .ML_routines import PCA_model, add_extra_features, jac_extra_features, augment_features
 from scipy.special import factorial as fact
 
 
@@ -1158,7 +1157,7 @@ class mode_generator_base():
 
 			#amplitude and phase of the mode (maximum of amp at t=0)
 		if isinstance(self, mode_generator_NN):
-				#FIXME: make this consistent and not that random
+				#FIXME: make this consistent and not super random as it is now
 			nu = theta_std[:,0]/(1 + theta_std[:,0])**2
 			phi_diff = {(2,2):0, (2,1):np.pi/2, (3,3): -np.pi/2, (4,4):np.pi, (5,5): np.pi/2}			
 		else:
@@ -1254,9 +1253,9 @@ class mode_generator_base():
 
 class mode_generator_NN(mode_generator_base):
 
-	def load(self, folder, verbose = False, frozen=False, batch_size=1):
+	def load(self, folder, verbose = False, batch_size=10):
 		'''
-			collects all relevant pca models, features and NN models.
+		collects all relevant pca models, features and NN models.
 		'''
 		if not os.path.isdir(folder):
 			raise RuntimeError("Unable to load folder "+folder+": no such directory!")
@@ -1270,7 +1269,7 @@ class mode_generator_NN(mode_generator_base):
 		if not folder.endswith('/'):
 			folder = folder + "/"
 
-		self.frozen = frozen
+		self.batch_size = batch_size
 		#loading PCA
 		self.amp_PCA = PCA_model()
 		self.amp_PCA.load_model(folder+"amp_PCA_model.dat")
@@ -1288,57 +1287,20 @@ class mode_generator_NN(mode_generator_base):
 		with open(folder+'ph_2res_features.txt', 'r') as file:
 			self.ph_2res_features = file.readline().split(", ")
 
-		if not frozen:
-			n_feat_amp = PcaData.augment_features_2([1,1,1], self.amp_features).shape[1]
-			n_feat_ph_2 = PcaData.augment_features_2([1,1,1], self.ph_2_features).shape[1]
-			n_feat_ph_3456 = PcaData.augment_features_2([1,1,1], self.ph_3456_features).shape[1]
-			n_feat_ph_2res = PcaData.augment_features_2([1,1,1], self.ph_2res_features).shape[1]
-			self.model_amp = tf.function(keras_models.load_model(folder+'model_amp.h5', custom_objects=None, compile=False),
-				input_signature=(tf.TensorSpec(shape=[None, n_feat_amp], dtype=tf.float64),))
-			self.model_ph_2 = tf.function(keras_models.load_model(folder+'model_ph_2.h5', custom_objects=None, compile=False),
-				input_signature=(tf.TensorSpec(shape=[None, n_feat_ph_2], dtype=tf.float64),))
-			self.model_ph_3456 = tf.function(keras_models.load_model(folder+'model_ph_3456.h5', custom_objects=None, compile=False),
-				input_signature=(tf.TensorSpec(shape=[None, n_feat_ph_3456], dtype=tf.float64),))
-			self.model_ph_2res = tf.function(keras_models.load_model(folder+'model_ph_2res.h5', custom_objects=None, compile=False),
-				input_signature=(tf.TensorSpec(shape=[None, n_feat_ph_2res], dtype=tf.float64),))
-			#self.model_amp = NeuralNetwork.load_model(folder+"model_amp",as_h5 = True)
-			#self.model_ph_2 = NeuralNetwork.load_model(folder+"model_ph_2", as_h5 = True)
-			#self.model_ph_3456 = NeuralNetwork.load_model(folder+"model_ph_3456", as_h5 = True)
-			#self.model_ph_2res = NeuralNetwork.load_model(folder+"model_ph_2res", as_h5 = True)
-		else:
-			#frozen graph optimization, of course it is not optimzal to create the frozen models
-			#inside of the load function.
-			
-			model_amp = NeuralNetwork.load_model(folder+"model_amp",as_h5 = True)
-			model_ph_2 = NeuralNetwork.load_model(folder+"model_ph_2", as_h5 = True)
-			model_ph_3456 = NeuralNetwork.load_model(folder+"model_ph_3456", as_h5 = True)
-			model_ph_2res = NeuralNetwork.load_model(folder+"model_ph_2res", as_h5 = True)
-			
-			print("amp_model input shape = ", model_amp.inputs[0].shape)
-			full_model_amp = tf.function(lambda x : model_amp(x))
-			full_model_amp = full_model_amp.get_concrete_function(
-				tf.TensorSpec(shape=[None,18], dtype=model_amp.inputs[0].dtype))
-			self.model_amp = convert_variables_to_constants_v2(full_model_amp)
-			#self.model_amp.graph.as_graph_def()
-			
-			full_model_ph_2 = tf.function(lambda x : model_ph_2(x))
-			full_model_ph_2 = full_model_ph_2.get_concrete_function(
-				tf.TensorSpec(model_ph_2.inputs[0].shape,model_ph_2.inputs[0].dtype))
-			self.model_ph_2 = convert_variables_to_constants_v2(full_model_ph_2)
-			#self.model_ph_2.graph.as_graph_def()
-			
-			full_model_ph_3456 = tf.function(lambda x : model_ph_3456(x))
-			full_model_ph_3456 = full_model_ph_3456.get_concrete_function(
-				tf.TensorSpec(model_ph_3456.inputs[0].shape, model_ph_3456.inputs[0].dtype))
-			self.model_ph_3456 = convert_variables_to_constants_v2(full_model_ph_3456)
-			#self.model_ph_3456.graph.as_graph_def()
-			
-			full_model_ph_2res = tf.function(lambda x : model_ph_2res(x))
-			full_model_ph_2res = full_model_ph_2res.get_concrete_function(
-				tf.TensorSpec(model_ph_2res.inputs[0].shape, model_ph_2res.inputs[0].dtype))
-			self.model_ph_2res = convert_variables_to_constants_v2(full_model_ph_2res)
-			#self.model_ph_2res.graph.as_graph_def()
-
+			#Loading the models for the various components
+		n_feat_amp = augment_features([1,1,1], self.amp_features).shape[1]
+		n_feat_ph_2 = augment_features([1,1,1], self.ph_2_features).shape[1]
+		n_feat_ph_3456 = augment_features([1,1,1], self.ph_3456_features).shape[1]
+		n_feat_ph_2res = augment_features([1,1,1], self.ph_2res_features).shape[1]
+		self.model_amp = tf.function(keras_models.load_model(folder+'model_amp.h5', custom_objects=None, compile=False),
+			input_signature=(tf.TensorSpec(shape=[None, n_feat_amp], dtype=tf.float64),))
+		self.model_ph_2 = tf.function(keras_models.load_model(folder+'model_ph_2.h5', custom_objects=None, compile=False),
+			input_signature=(tf.TensorSpec(shape=[None, n_feat_ph_2], dtype=tf.float64),))
+		self.model_ph_3456 = tf.function(keras_models.load_model(folder+'model_ph_3456.h5', custom_objects=None, compile=False),
+			input_signature=(tf.TensorSpec(shape=[None, n_feat_ph_3456], dtype=tf.float64),))
+		self.model_ph_2res = tf.function(keras_models.load_model(folder+'model_ph_2res.h5', custom_objects=None, compile=False),
+			input_signature=(tf.TensorSpec(shape=[None, n_feat_ph_2res], dtype=tf.float64),))
+		
 		self.res_coefficients = np.genfromtxt(folder+"res_coefficients.txt")
 		verboseprint("mode generator loaded succesfully")
 
@@ -1356,9 +1318,8 @@ class mode_generator_NN(mode_generator_base):
 			amp,ph (N,D)	desidered amplitude and phase
 		"""
 		theta = np.atleast_2d(np.asarray(theta))
-		batch_size = 20
-		if theta.shape[0]> batch_size:
-			coeff_list = [self.get_red_coefficients(theta[i:i+batch_size]) for i in range(0, len(theta),batch_size)]
+		if theta.shape[0]> self.batch_size:
+			coeff_list = [self.get_red_coefficients(theta[i:i+batch_size]) for i in range(0, len(theta), self.batch_size)]
 			rec_PCA_amp = np.concatenate([c[0] for c in coeff_list], axis = 0)
 			rec_PCA_ph = np.concatenate([c[1] for c in coeff_list], axis = 0)
 		else:
@@ -1373,32 +1334,24 @@ class mode_generator_NN(mode_generator_base):
 	def get_red_coefficients(self, theta):
 		#Utilize bigger batch_size by loading in multiple theta_vectors. But... architecture of mode_generator
 		#has to be changed.
-		amp_theta = PcaData.augment_features_2(theta, self.amp_features)
-		ph_2_theta = PcaData.augment_features_2(theta, self.ph_2_features)
-		ph_3456_theta = PcaData.augment_features_2(theta, self.ph_3456_features)
-		ph_2res_theta = PcaData.augment_features_2(theta, self.ph_2res_features)
+		amp_theta = augment_features(theta, self.amp_features)
+		ph_2_theta = augment_features(theta, self.ph_2_features)
+		ph_3456_theta = augment_features(theta, self.ph_3456_features)
+		ph_2res_theta = augment_features(theta, self.ph_2res_features)
 		
 		amp_pred = np.zeros((amp_theta.shape[0], self.amp_PCA.get_dimensions()[1]))
 		ph_pred = np.zeros((ph_2_theta.shape[0], self.ph_PCA.get_dimensions()[1]))
 		
-		if not self.frozen:
-			#amp_pred[:,:4] = self.model_amp.predict(amp_theta, verbose=0)
-			#ph_2_pred = self.model_ph_2.predict(ph_2_theta, verbose=0)
-			#ph_3456_pred = self.model_ph_3456.predict(ph_3456_theta, verbose=0)
-			#ph_2res_pred = self.model_ph_2res.predict(ph_2res_theta, verbose=0)
+		#amp_pred[:,:4] = self.model_amp.predict(amp_theta, verbose=0)
+		#ph_2_pred = self.model_ph_2.predict(ph_2_theta, verbose=0)
+		#ph_3456_pred = self.model_ph_3456.predict(ph_3456_theta, verbose=0)
+		#ph_2res_pred = self.model_ph_2res.predict(ph_2res_theta, verbose=0)
 
-			amp_pred[:,:4] = self.model_amp(amp_theta).numpy()
-			ph_2_pred = self.model_ph_2(ph_2_theta).numpy()
-			ph_3456_pred = self.model_ph_3456(ph_3456_theta).numpy()
-			ph_2res_pred = self.model_ph_2res(ph_2res_theta).numpy()
+		amp_pred[:,:4] = self.model_amp(amp_theta).numpy()
+		ph_2_pred = self.model_ph_2(ph_2_theta).numpy()
+		ph_3456_pred = self.model_ph_3456(ph_3456_theta).numpy()
+		ph_2res_pred = self.model_ph_2res(ph_2res_theta).numpy()
 			
-		else: #does not work 
-			amp_theta = np.moveaxis(amp_theta,0,-1)
-			amp_pred[:,:4] = self.model_amp(tf.convert_to_tensor(amp_theta[0],dtype=tf.float32))
-			ph_2_pred = self.model_ph_2(tf.convert_to_tensor(ph_2_theta[0],dtype=tf.float32))
-			ph_3456_pred = self.model_ph_3456(tf.convert_to_tensor(ph_3456_theta[0],dtype=tf.float32))
-			ph_2res_pred = self.model_ph_2res(tf.convert_to_tensor(ph_2res_theta[0],dtype=tf.float32))
-		
 		ph_2res_pred[:,0]*=self.res_coefficients[0]
 		ph_2res_pred[:,1]*=self.res_coefficients[1]
 		

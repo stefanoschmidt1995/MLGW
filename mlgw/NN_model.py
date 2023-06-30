@@ -6,7 +6,7 @@ import os
 import sys
 import time
 
-from .ML_routines import PCA_model
+from .ML_routines import PCA_model, augment_features
 
 class PcaData:
 	def __init__(self, PCA_data_location, PC_comp, quant, modes=[], features=[], ratio=1):
@@ -57,9 +57,15 @@ class PcaData:
 			self.train_var = train_var[train_indc][:,PC_comp]
 			self.test_var = test_var[test_indc][:,PC_comp]
 
-		self.augment_features()
-	
+		#self.augment_features()
+		self.train_theta = augment_features(self.train_theta, features = self.features)
+		self.test_theta = augment_features(self.test_theta, features = self.features)
+
 	def augment_features(self, theta = [], features = []):
+		"""
+		Performs feature augmentation for the neural network model
+		"""
+		#FIXME: this function is deprecated: we must remove it!
 		ret = True
 		if len(theta)==0: #augment features of theta_vectors of self
 			train_theta = self.train_theta
@@ -68,34 +74,34 @@ class PcaData:
 		else:
 			train_theta = theta
 			test_theta = theta #dummy array
-		
+			
 		if len(features) == 0:
 			features = self.features
 
-		#BEWARE OF ORDER
+			#BEWARE OF ORDER
 		if "2nd_poly" in features:
 			for x in ["00","11","22","01","02","12"]:
 				train_theta = np.c_[train_theta, train_theta[:,int(x[0])]*train_theta[:,int(x[1])]]
 				test_theta = np.c_[test_theta, test_theta[:,int(x[0])]*test_theta[:,int(x[1])]]
-				
+					
 		if "sym_mas" in features:
 			train_theta = np.c_[train_theta, train_theta[:,0] / (1+train_theta[:,0]**2)]
 			test_theta = np.c_[test_theta,  test_theta[:,0] / (1+test_theta[:,0]**2)]
-		
+			
 		if "eff_spin" in features:
 			train_theta = np.c_[train_theta, (train_theta[:,1] + train_theta[:,0]*train_theta[:,2]) / (1 + train_theta[:,0])]
 			test_theta = np.c_[test_theta, (test_theta[:,1] + test_theta[:,0]*test_theta[:,2]) / (1 + test_theta[:,0])]
-			
+				
 		if "eff_spin_powers" in features:
 			for x in [1,2,3]:
 				train_theta = np.c_[train_theta, ( (train_theta[:,1] + train_theta[:,0]*train_theta[:,2]) / (1 + train_theta[:,0]) )**x ]
 				test_theta = np.c_[test_theta, ( (test_theta[:,1] + test_theta[:,0]*test_theta[:,2]) / (1 + test_theta[:,0]) )**x ]
-		
+			
 		if "sym_mas_powers" in features:
 			for x in [1,2,3,4]:
 				train_theta = np.c_[train_theta, (train_theta[:,0] / (1+train_theta[:,0]**2))**x]
 				test_theta = np.c_[test_theta,  (test_theta[:,0] / (1+test_theta[:,0]**2))**x]
-		
+			
 		if "eff_spin_sym_mas_2nd_poly" in features:
 			eff_spin_train = (train_theta[:,1] + train_theta[:,0]*train_theta[:,2]) / (1 + train_theta[:,0])
 			eff_spin_test = (test_theta[:,1] + test_theta[:,0]*test_theta[:,2]) / (1 + test_theta[:,0])
@@ -106,7 +112,7 @@ class PcaData:
 			for x in ["00","11","01"]:
 				train_theta = np.c_[train_theta, train[:,int(x[0])] * train[:,int(x[1])]]
 				test_theta = np.c_[test_theta, test[:,int(x[0])] * test[:,int(x[1])]]
-		
+			
 		if "eff_spin_sym_mas_3rd_poly" in features:
 			eff_spin_train = (train_theta[:,1] + train_theta[:,0]*train_theta[:,2]) / (1 + train_theta[:,0])
 			eff_spin_test = (test_theta[:,1] + test_theta[:,0]*test_theta[:,2]) / (1 + test_theta[:,0])
@@ -117,7 +123,7 @@ class PcaData:
 			for x in ["000","111","001","011"]:
 				train_theta = np.c_[train_theta, train[:,int(x[0])] * train[:,int(x[1])] * train[:,int(x[2])]]
 				test_theta = np.c_[test_theta, test[:,int(x[0])] * test[:,int(x[1])] * test[:,int(x[2])]]
-		
+			
 		if "eff_spin_sym_mas_4th_poly" in features:
 			eff_spin_train = (train_theta[:,1] + train_theta[:,0]*train_theta[:,2]) / (1 + train_theta[:,0])
 			eff_spin_test = (test_theta[:,1] + test_theta[:,0]*test_theta[:,2]) / (1 + test_theta[:,0])
@@ -128,43 +134,43 @@ class PcaData:
 			for x in ["0000","0001","0011","0111","1111"]:
 				train_theta = np.c_[train_theta, train[:,int(x[0])] * train[:,int(x[1])] * train[:,int(x[2])] * train[:,int(x[3])]]
 				test_theta = np.c_[test_theta, test[:,int(x[0])] * test[:,int(x[1])] * test[:,int(x[2])] * test[:,int(x[3])]]
-		
+			
 		if "chirp" in features:
 			train_theta = np.c_[train_theta, (train_theta[:,0] / (1+train_theta[:,0]**2))**(3/5)]
 			test_theta = np.c_[test_theta,  (test_theta[:,0] / (1+test_theta[:,0]**2))**(3/5)]
-		
+			
 		if "1_inverse" in features:
 			for x in ["0","1","2"]:
 				train_theta = np.c_[train_theta, 1/train_theta[:,int(x[0])]]
 				test_theta = np.c_[test_theta, 1/test_theta[:,int(x[0])]]
-				
+					
 		if "q_cube" in features:
 			train_theta = np.c_[train_theta, train_theta[:,0]**3]
 			test_theta = np.c_[test_theta, test_theta[:,0]**3]
-		
+			
 		if "q_quart" in features:
 			train_theta = np.c_[train_theta, train_theta[:,0]**4]
 			test_theta = np.c_[test_theta, test_theta[:,0]**4]
-		
+			
 		if "q_min1inverse" in features:
 			for x in ["0"]:
 				train_theta = np.c_[train_theta, 1/(train_theta[:,int(x[0])] - 1)]
 				test_theta = np.c_[test_theta, 1/(test_theta[:,int(x[0])] - 1)]
-		
+			
 		if "q_squared" in features:
 			for x in ["00"]:
 				train_theta = np.c_[train_theta, train_theta[:,int(x[0])]*train_theta[:,int(x[1])]]
 				test_theta = np.c_[test_theta, test_theta[:,int(x[0])]*test_theta[:,int(x[1])]]
-		
+			
 		if "q_inverse" in features:
 			for x in ["0"]:
 				train_theta = np.c_[train_theta, 1/train_theta[:,int(x[0])]]
 				test_theta = np.c_[test_theta, 1/test_theta[:,int(x[0])]]
-		
+			
 		if "log" in features:
 			train_theta = np.c_[train_theta, np.log(train_theta[:,0])]
 			test_theta = np.c_[test_theta, np.log(test_theta[:,0])]
-		
+			
 		if "tan" in features:
 			train_theta = np.c_[train_theta, np.tan((np.pi/2) * train_theta[:,1])]
 			train_theta = np.c_[train_theta, np.tan((np.pi/2) * train_theta[:,2])]
@@ -176,82 +182,6 @@ class PcaData:
 		else:
 			self.train_theta = train_theta
 			self.test_theta = test_theta
-
-	def augment_features_2(theta = [], features = []):
-		theta = np.atleast_2d(np.asarray(theta))
-		if "2nd_poly" in features:
-			for x in ["00","11","22","01","02","12"]:
-				theta = np.c_[theta, theta[:,int(x[0])]*theta[:,int(x[1])]]
-				
-		if "sym_mas" in features:
-			theta = np.c_[theta, theta[:,0] / (1+theta[:,0]**2)] #not calculated correctly
-		
-		if "eff_spin" in features:
-			theta = np.c_[theta, (theta[:,1] + theta[:,0]*theta[:,2]) / (1 + theta[:,0])]
-			
-		if "eff_spin_powers" in features:
-			for x in [1,2,3]:
-				theta = np.c_[theta, ( (theta[:,1] + theta[:,0]*theta[:,2]) / (1 + theta[:,0]) )**x ]
-		
-		if "sym_mas_powers" in features:
-			for x in [1,2,3,4]:
-				theta = np.c_[theta, (theta[:,0] / (1+theta[:,0]**2))**x]
-		
-		if "eff_spin_sym_mas_2nd_poly" in features:
-			eff_spin = (theta[:,1] + theta[:,0]*theta[:,2]) / (1 + theta[:,0])
-			sym_mas = theta[:,0] / (1+theta[:,0]**2)
-			train = np.c_[sym_mas, eff_spin]
-			for x in ["00","11","01"]:
-				theta = np.c_[theta, train[:,int(x[0])] * train[:,int(x[1])]]
-		
-		if "eff_spin_sym_mas_3rd_poly" in features:
-			eff_spin = (theta[:,1] + theta[:,0]*theta[:,2]) / (1 + theta[:,0])
-			sym_mas = theta[:,0] / (1+theta[:,0]**2)
-			train = np.c_[sym_mas, eff_spin]
-			for x in ["000","111","001","011"]:
-				theta = np.c_[theta, train[:,int(x[0])] * train[:,int(x[1])] * train[:,int(x[2])]]
-		
-		if "eff_spin_sym_mas_4th_poly" in features:
-			eff_spin = (theta[:,1] + theta[:,0]*theta[:,2]) / (1 + theta[:,0])
-			sym_mas = theta[:,0] / (1+theta[:,0]**2)
-			train = np.c_[sym_mas, eff_spin]
-			for x in ["0000","0001","0011","0111","1111"]:
-				theta = np.c_[theta, train[:,int(x[0])] * train[:,int(x[1])] * train[:,int(x[2])] * train[:,int(x[3])]]
-		
-		if "chirp" in features:
-			theta = np.c_[theta, (theta[:,0] / (1+theta[:,0]**2))**(3/5)]
-		
-		if "1_inverse" in features:
-			for x in ["0","1","2"]:
-				theta = np.c_[theta, 1/theta[:,int(x[0])]]
-				
-		if "q_cube" in features:
-			theta = np.c_[theta, theta[:,0]**3]
-		
-		if "q_quart" in features:
-			theta = np.c_[theta, theta[:,0]**4]
-		
-		if "q_min1inverse" in features:
-			for x in ["0"]:
-				theta = np.c_[theta, 1/(theta[:,int(x[0])] - 1)]
-		
-		if "q_squared" in features:
-			for x in ["00"]:
-				theta = np.c_[theta, theta[:,int(x[0])]*theta[:,int(x[1])]]
-		
-		if "q_inverse" in features:
-			for x in ["0"]:
-				theta = np.c_[theta, 1/theta[:,int(x[0])]]
-		
-		if "log" in features:
-			theta = np.c_[theta, np.log(theta[:,0])]
-		
-		if "tan" in features:
-			theta = np.c_[theta, np.tan((np.pi/2) * theta[:,1])]
-			theta = np.c_[theta, np.tan((np.pi/2) * theta[:,2])]
-		
-		return theta
-
 	
 	def compute_WF(amp, ph, ratio=1, ph_shift = []):
 		(N,D) = amp.shape

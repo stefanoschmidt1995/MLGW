@@ -1,0 +1,3 @@
+# Examples
+
+In this folder, you can find useful examples on how to do useful stuff with ``mlgw``: you will find out how to generate waveforms, how to train a new model, how to visualize how a WF changes with different parameters etc...

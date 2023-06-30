@@ -1,6 +1,11 @@
-###################
-#	Interactive plot to display in real time the WF dependence on the physical parameters.
-###################
+"""
+Interactive plot to display in real time the WF dependence on the physical parameters.
+
+Run it from terminal with:
+	python play_WF.py
+	
+Have fun!
+"""
 
 import numpy as np
 import matplotlib.pyplot as plt

@@ -11,8 +11,9 @@ Version 2 is suited to deal with an arbitrary numbers of modes, while at the sam
 
 To generate a WF:
 ```Python
-import mlgw.GW_generator as generator
-generator = generator.GW_generator() #creating an istance of the generator
+import mlgw
+import numpy as np
+generator = mlgw.GW_generator() #creating an istance of the generator
 theta = np.array([20,10,0.5,-0.3, 1.43, 1.3, 2.3]) #physical parameters [m1,m2,s1,s2, d_L, iota, phi]
 times = np.linspace(-8,0.02, 100000) #time grid at which waves shall be evaluated
 h_p, h_c = generator.get_WF(theta, times) #returns amplitude and phase of the wave

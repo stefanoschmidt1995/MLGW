@@ -442,6 +442,84 @@ jac_extra_features
 
 	return jac
 
+def augment_features(theta, features = []):
+	"""
+	Performs feature augmentation for the neural network model
+	"""
+	#FIXME: this function needs to be refactored more nicely!
+	theta = np.atleast_2d(np.asarray(theta))
+	if "2nd_poly" in features:
+		for x in ["00","11","22","01","02","12"]:
+			theta = np.c_[theta, theta[:,int(x[0])]*theta[:,int(x[1])]]
+				
+	if "sym_mas" in features:
+		theta = np.c_[theta, theta[:,0] / (1+theta[:,0]**2)] #not calculated correctly
+	
+	if "eff_spin" in features:
+		theta = np.c_[theta, (theta[:,1] + theta[:,0]*theta[:,2]) / (1 + theta[:,0])]
+			
+	if "eff_spin_powers" in features:
+		for x in [1,2,3]:
+			theta = np.c_[theta, ( (theta[:,1] + theta[:,0]*theta[:,2]) / (1 + theta[:,0]) )**x ]
+		
+	if "sym_mas_powers" in features:
+		for x in [1,2,3,4]:
+			theta = np.c_[theta, (theta[:,0] / (1+theta[:,0]**2))**x]
+		
+	if "eff_spin_sym_mas_2nd_poly" in features:
+		eff_spin = (theta[:,1] + theta[:,0]*theta[:,2]) / (1 + theta[:,0])
+		sym_mas = theta[:,0] / (1+theta[:,0]**2)
+		train = np.c_[sym_mas, eff_spin]
+		for x in ["00","11","01"]:
+			theta = np.c_[theta, train[:,int(x[0])] * train[:,int(x[1])]]
+		
+	if "eff_spin_sym_mas_3rd_poly" in features:
+		eff_spin = (theta[:,1] + theta[:,0]*theta[:,2]) / (1 + theta[:,0])
+		sym_mas = theta[:,0] / (1+theta[:,0]**2)
+		train = np.c_[sym_mas, eff_spin]
+		for x in ["000","111","001","011"]:
+			theta = np.c_[theta, train[:,int(x[0])] * train[:,int(x[1])] * train[:,int(x[2])]]
+		
+	if "eff_spin_sym_mas_4th_poly" in features:
+		eff_spin = (theta[:,1] + theta[:,0]*theta[:,2]) / (1 + theta[:,0])
+		sym_mas = theta[:,0] / (1+theta[:,0]**2)
+		train = np.c_[sym_mas, eff_spin]
+		for x in ["0000","0001","0011","0111","1111"]:
+			theta = np.c_[theta, train[:,int(x[0])] * train[:,int(x[1])] * train[:,int(x[2])] * train[:,int(x[3])]]
+	
+	if "chirp" in features:
+		theta = np.c_[theta, (theta[:,0] / (1+theta[:,0]**2))**(3/5)]
+		
+	if "1_inverse" in features:
+		for x in ["0","1","2"]:
+			theta = np.c_[theta, 1/theta[:,int(x[0])]]
+				
+	if "q_cube" in features:
+		theta = np.c_[theta, theta[:,0]**3]
+		
+	if "q_quart" in features:
+		theta = np.c_[theta, theta[:,0]**4]
+		
+	if "q_min1inverse" in features:
+		for x in ["0"]:
+			theta = np.c_[theta, 1/(theta[:,int(x[0])] - 1)]
+		
+	if "q_squared" in features:
+		for x in ["00"]:
+			theta = np.c_[theta, theta[:,int(x[0])]*theta[:,int(x[1])]]
+		
+	if "q_inverse" in features:
+		for x in ["0"]:
+			theta = np.c_[theta, 1/theta[:,int(x[0])]]
+		
+	if "log" in features:
+		theta = np.c_[theta, np.log(theta[:,0])]
+		
+	if "tan" in features:
+		theta = np.c_[theta, np.tan((np.pi/2) * theta[:,1])]
+		theta = np.c_[theta, np.tan((np.pi/2) * theta[:,2])]
+		
+	return theta
 
 
 
