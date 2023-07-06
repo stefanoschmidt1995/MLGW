@@ -1,0 +1,137 @@
+\documentclass[twocolumn,showpacs,preprintnumbers,nofootinbib,prd,
+superscriptaddress,10pt]{revtex4-1}
+
+\usepackage{amsmath,amssymb}
+\usepackage{amsfonts}
+\usepackage[normalem]{ulem}
+\usepackage{textcomp}
+\usepackage{hyperref}
+\usepackage{enumitem}
+\usepackage{bm}
+\usepackage{afterpage}
+\usepackage{graphicx}
+\usepackage{psfrag}
+\usepackage{mathtools}
+\usepackage{tensor}
+\usepackage{layouts}
+\usepackage{DejaVuSans}
+\usepackage{epstopdf}
+\usepackage[usenames,dvipsnames]{xcolor}
+\usepackage[utf8]{inputenc}
+\usepackage{multirow}
+\usepackage{rotating}
+\usepackage{tabularx}
+\usepackage{ragged2e}
+\usepackage{blindtext}
+\usepackage{graphicx}
+\usepackage{siunitx}
+	\sisetup{output-decimal-marker={.}}
+	
+	%some math symbols
+\newcommand{\R}{\mathbb{R}}
+\newcommand{\N}{\mathbb{N}}
+\DeclareMathOperator{\sign}{sign}
+\renewcommand{\d}[1]{\ensuremath{\operatorname{d}\!{#1}}}
+%argmin and argmax
+\DeclareMathOperator*{\argmax}{arg\,max}
+\DeclareMathOperator*{\argmin}{arg\,min}
+
+% comments command
+\newcommand{\stefano}[1]{{\textcolor{red}{\texttt{S: #1}} }}
+\newcommand{\tim}[1]{{\textcolor{green}{\texttt{T: #1}} }}
+\newcommand{\chinmay}[1]{{\textcolor{blue}{\texttt{C: #1}} }}
+\newcommand{\oldnewtxt}[2]{\sout{#1}\textcolor{red}{#2}}
+
+\begin{document}
+
+	%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% ABSTRACT
+\begin{abstract}
+
+WRITEME
+
+\end{abstract}
+	
+	%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% TITLE
+	\title{mlgw NN}
+	\author{Tim \surname{Grimbergen}}
+        \affiliation{Institute for Gravitational and Subatomic Physics (GRASP),
+		Utrecht University, Princetonplein 1, 3584 CC Utrecht, The Netherlands}
+	%
+	\author{Stefano \surname{Schmidt}}
+		\email{s.schmidt@uu.nl}
+        \affiliation{Institute for Gravitational and Subatomic Physics (GRASP),
+		Utrecht University, Princetonplein 1, 3584 CC Utrecht, The Netherlands}
+        \affiliation{Nikhef, Science Park 105, 1098 XG, Amsterdam, The Netherlands}
+	%
+	\author{Chinmay \surname{Kalaghatgi}}
+        \affiliation{Institute for Gravitational and Subatomic Physics (GRASP),
+		Utrecht University, Princetonplein 1, 3584 CC Utrecht, The Netherlands}
+        \affiliation{Nikhef, Science Park 105, 1098 XG, Amsterdam, The Netherlands}
+	%
+	\author{Chris \surname{van den Broeck}}
+        \affiliation{Institute for Gravitational and Subatomic Physics (GRASP),
+		Utrecht University, Princetonplein 1, 3584 CC Utrecht, The Netherlands}
+        \affiliation{Nikhef, Science Park 105, 1098 XG, Amsterdam, The Netherlands}
+	\maketitle
+
+	%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% BODY  
+\section{Introduction}
+\label{sec:intro}
+\blindtext \cite{Schmidt:2020yuu}
+
+%%%%%%%%%%%%%%%%%%%
+\section{The new model}
+\label{sec:model}
+\blindtext
+
+\subsection{Dimensionality reduction}
+\label{sec:PCA}
+
+\subsection{Neural network regression}
+\label{sec:NN}
+
+%%%%%%%%%%%%%%%%%%%
+\section{Performance study}
+\label{sec:performance}
+\blindtext
+\subsection{Hyperparameter optimization}
+\label{sec:hyperparameter}
+
+\subsection{Accuracy study}
+\label{sec:accuracy}
+\begin{itemize}
+	\item mode by mode
+	\item overall
+\end{itemize}
+
+\subsection{Timing study}
+\label{sec:timing}
+
+%%%%%%%%%%%%%%%%%%%
+
+\section{Final remarks and future prospects}
+\label{sec:end}
+\blindtext
+
+
+	%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% END & BIB
+
+
+        \begin{acknowledgments}
+          %
+          This research has made use of data, software and/or web tools obtained 
+          from the Gravitational Wave Open Science Center (https://www.gw-openscience.org), 
+          a service of LIGO Laboratory, the LIGO Scientific Collaboration and the 
+          Virgo Collaboration. LIGO is funded by the U.S. National Science Foundation. 
+          Virgo is funded by the French Centre National de Recherche Scientifique (CNRS), 
+          the Italian Istituto Nazionale della Fisica Nucleare (INFN) and the 
+          Dutch Nikhef, with contributions by Polish and Hungarian institutes.
+        \end{acknowledgments}
+
+	\bibliography{biblio.bib}
+	\bibliographystyle{ieeetr}
+
+\end{document}
+
+
+
