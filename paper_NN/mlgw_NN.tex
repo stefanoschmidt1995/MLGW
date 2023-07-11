@@ -77,7 +77,40 @@ WRITEME
 	%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% BODY  
 \section{Introduction}
 \label{sec:intro}
-\blindtext \cite{Schmidt:2020yuu}
+
+With almost a hundred of confirmed detections, Gravitational Waves (GW) astronomy is entering a mature state, where many loud GW events will force the scientific community to develop a fast analysis to deliver precision measurement. The recent transient catalogue GWTC-3 \cite{} is the latest achievment of the effort carried on by the LIGO-Virgo-KAGRA collaboration and it relies on both instrument and data analysis development.
+
+A crucial element of the data analysis is the ability to generate accurate prediction of the GW signal emitted by a Binary Black Hole (BBH) system. Such waveforms are used for the expensive bayesian estimation of the parameters characterizing a BBH: the analysis of a single event requires the online generation of up to a billions of waveform.
+As we move towards the next generation of detectors, it is mandatory to deploy accurate waveform models, that are fast and, at the same time, incorporates many phyics effect. Failing to do this may lead to systematic errors in the parameter recovery, due to a bad modelling of the source.
+This is challenging since, speed and accuracy are often at trade.
+
+One importante piece for a realistic BBH signal is the inclusion of the Higher Order Modes (HMs) of the multipole expansion of the waveform. For mass symmetric systems, the leading mode is orders of magnitude larger and including HMs doesn't affect the parameter estimation. On the other hand, it has been shown \cite{} that HMs are obervable in very asymmetric binary systems, hence the need to include them to avoid any bias.
+
+Throughout decades of developments, two families of models have been developed, both being able to incorporate HMs.
+One family relies on the Effective One Body (EOB) formalism, which maps the complicated general relativistic binary system into the problem governed by an effective Hamiltonian. EOB models tend to be accurate but are quite costly to evaluate, since for each waveform one needs to solve the hamiltonian equation of motion.
+On the other hand, the phenomenological waveforms are based on analytical expressions (within the post-newtonian formalism). They tend to be faster to evaluate, but don't achieve the same accuracy.
+Both families, EOB and phenomenological, need to be calibrated with Numerical Relativity waveform, computed by solving directly the Einstein equations. The calibration makes sure that a model retains its accuracy even close to merger, where an approximate treatment, such as the post-newtonian or EOB formalism are not applicable anymore.
+
+Besides the standard families, surrogate waveform models have been developed for years with the intent of reproducing the output of a target model and of making feasible the usage of the underlying model. Several surrogates have been developed to accelarate several EOB models \cite{}, even including HMs. While traditional surrogate models \cite{} builds an empirical interpolant on the waveform space, a more modern approach relies on performing a regression using Machine Learning techniques \cite{}.
+
+Among others, \cite{Schmidt:2020yuu} introduced a Machine Learning surrogate model, based on a dimensionality reduction scheme followed by a regression. In this work, we extend such model to HMs and we improve the accuracy of the regression. Our model marks a step towards the development of a fast, yet precise, waveform model, by achieving state-of-the-art accuracy and speed, and will enable the accurate analysis of the next generation detectors' data.
+
+We train our model on the widely used approximant \texttt{IMRPhenomTHM} \stefano{probably we should really make it on an EOB model. The speed up will be much large, making a stronger case for our paper.} and we achieve a ??\% faithful when averaged across a wide range in the parameter space.
+Our experiments showed that our model offers a substantial speed up with respect to the original model, matching the speed of the state-of-the-art surrogate models.
+
+This paper is organized as follows. In Sec.~\ref{sec:model} we introduce the details of the model presented here, stressing the differences with the model in  \cite{Schmidt:2020yuu}.
+Sec.~\ref{sec:performance} is devoted to the validation of our model: we will motivate our choice of several hyperparameters and perform an accuracy a speed study. Finally, we analyse the GW event GW150914, showing that our model does not introduce any bias with respect to the training model.
+In Sec.~\ref{sec:end}, we present some final remarks and highlight future perspective.
+
+\begin{itemize}
+	\item Usual crap about GW astronomy + need for speed and accuracy
+	\item BBH waveform models: predict GR but they are not fast enough
+	\item Surrogates
+	\item ML surrogate
+\end{itemize}
+
+
+ \cite{Schmidt:2020yuu}
 
 %%%%%%%%%%%%%%%%%%%
 \section{Building the model}
@@ -110,7 +143,7 @@ and, for each mode, we perform a regression for amplitude and phase separately. 
 \begin{enumerate}[label=(\alph*)]
 	\item a suitable vector representation of the regression target by choosing a fixed time grid
 	\item a Principal Component Analysis (PCA) model to reduce the dimensionality of each waveform
-	\item a Neural Network (NN) regression to learn the dependence on $\boldsymbol{\vartheta}$ of the reduced waveform
+	\item an Artificial Neural Network (ANN) regression to learn the dependence on $\boldsymbol{\vartheta}$ of the reduced waveform
 \end{enumerate}
 
 While the first two elements are unchanged from the previous work, the NN regression is first introduced here. Indeed a NN has more representation power than the Mixture of Experts (MoE) model \cite{Jacobs1991AdaptiveMoE}, used in \cite{Schmidt:2020yuu}: the change was needed to achieve better accuracy for the model.
@@ -145,13 +178,87 @@ It is an approximately invertible linear mapping between a vector $\boldsymbol{f
 	\mathbf{g} = H (\mathbf{f} - \boldsymbol{\mu}) \label{eq:PCA_reduction_model}\\
 	\mathbf{f} = H^T \mathbf{g} + \boldsymbol{\mu} \label{eq:PCA_reconstruction_model}
 \end{align}
-where $\boldsymbol{\mu} \in \R^D$ and $H$ is a $K \times D$ matrix. Their value is set by looking at the dataset, as described in \cite[Sec. 12]{murphy2012machine}.
+where $\boldsymbol{\mu} \in \R^D$ and $H$ is a $K \times D$ matrix. The rows $H_{i:}$ of $H$, also called {\it Principal Components} (PC), form an orthonormal set of vector, i.e. it holds ${\sum_{k=1}^D H_{ik} H_{jk} = \delta_{ij}}$.
+The PCs are the first K eigenvectors of the $D \times D$ covariance matrix of the dataset, as described in \cite[Sec. 12]{murphy2012machine}.
+
+One can have a deeper insight on PCA considering the following formula for the reconstructed vector $\mathbf{f}$ (setting $\boldsymbol{\mu}=0$ without loss of generality):
+\begin{equation} \label{eq:perturbative_exp}
+	\mathbf{f} = \sum_{i=1}^K \langle \mathbf{f} | H_{i:} \rangle \; H_{i:}
+\end{equation}
+%
+where $\langle \cdot | \cdot \rangle$ is the usual scalar product.
+
+Since less important PCs are more orthogonal to data, the typical magnitude of $g_i = \langle \mathbf{f} | H_{i:} \rangle$ decreases as $i$ increases.\footnote{For this reason PCA can be seen as a perturbative expansion on the basis vectors $H_{i:}$, where the accuracy is roughly measured by the eigenvalues of the first neglected PC. Increasing the number K of PCs considered increases the accuracy of the model (but also the complexity of the model).}.
+As a consequence, the regression for a lower order PC needs to be more accurate than the one for the higher order PC. This will be taken care by a suitable choice for the loss function for the regression (see next section).
 
 
 \subsection{Neural network regression}
 \label{sec:NN}
 
-A neural network is a function
+An Artificial Neural Network (ANN) is a popular regression model, consisting in a powerful parametric function, whose parameters (or weights), when properly set, can represent a large variety of relations between inputs and output.
+An ANN is built by stacking together $N_\text{L}$ layers in such a way the the input of one is the output of the following. Each layer is a function $L: \R^D \rightarrow \R^{D^\prime} $ and has the following functional form
+
+\begin{equation}
+	\boldsymbol{y} = a(W\boldsymbol{x})
+\end{equation}
+%
+Where W is $D^\prime \times D$ matrix and $a$ is an activation function that acts elementwise on the a vector.
+Each component $y_i$ of the output of the layer is called node and the number of nodes is a tunable parameter, controlling the representative power of the layer.
+
+An ANN $\mathcal{N}$ is obtained by composing $N_\text{L}$ different layers (each with a suitable number of nodes):
+%
+\begin{equation}
+	\mathcal{N}_W = L_{N_\text{L}} \circ \hdots \circ L_2 \circ L_1
+\end{equation}
+%
+where we denote by $W$ the set of all the parameters the ANN depends on.
+
+The number of layers, together with the number of nodes per layer are hyperparameters that needs to be carefully chosen, to balance model accuracy and model complexity.
+Another sensibile choice is the activation function: several possible choices are possible, the most popular being the {\it sigmoid}, the hyperbolic tangent or the so called ReLU function. In our work, we consider ???? function.
+
+Once the ANN is set up, we need to set its weights to the values that achieve our regression task.
+This procedure is called training, where we minimise a loss function with respect to the weights $\boldsymbol{W}$ of the model.
+The loss function depends on the dataset at hand ${\{\boldsymbol{x}_i, \boldsymbol{y}_i\}_i}$.
+Mathematically, the weights are given by:
+%
+\begin{equation}\label{eq:loss_general}
+	\boldsymbol{W} = \argmin_W \mathcal{L}(W; \{\boldsymbol{x}_i, \boldsymbol{y}_i\}_i)
+\end{equation}
+
+The minimisation of the loss function is performed by stochastic gradient descent (SGD), which relies on the gradients $\partial_W \mathcal{L}$ of the loss function. The gradients are computing through the backpropagation algorithm \cite{}.
+
+To perform our regression $\theta \longmapsto \boldsymbol{g}$, we employ an ensemble of networks, that suitably combined delivers accurate results.
+To improve the representative power or the ANN, we employ feature augmentation on the vector $\boldsymbol{\vartheta} = (q, s_1, s_2)$, effectively using the augmented vector $\tilde{\boldsymbol{\vartheta}}$ as input for the regression. The features added needs to be chosen with a validation process: this will be discussed in the next section.
+
+For the amplitude $\boldsymbol{A}_{\ell m}$ of each mode, we employ a single ANN $\mathcal{N}_{A_{\ell m}}$.
+The predicted amplitude $\hat{\boldsymbol{A}}_{\ell m}$, including the PCA reconstruction, has the following form:
+\begin{equation}
+	\hat{\boldsymbol{A}}_{\ell m}(\boldsymbol{\vartheta}) = H_{A_{\ell m}}^T \mathcal{N}_{A_{\ell m}}(\tilde{\boldsymbol{\vartheta}}) + \boldsymbol{\mu}_{A_{\ell m}}
+\end{equation}
+
+For the phase $\boldsymbol{\phi}_{\ell m}$, we employ one ANN $\mathcal{N}_{\phi_{\ell m}\text{- 12}}$ only to predict the first two PCA components.
+Another ANN will take care of the remaining components $\mathcal{N}_{\phi_{\ell m}\text{- 2:K}}$.
+On top of this, we build an additional ANN $\mathcal{N}_{\phi_{\ell m}\text{- residual}}$ to target the residual of the predictions of $\mathcal{N}_{\phi_{\ell m}\text{- 12}}$.
+Such scheme make sure that the first two PC are predicted with much larger accuracy than the others. This is needed since in the reconstructed WF depends largely on the first two components, hence a small fractional error can potentially have a large impact on the overall accuracy.
+
+The predicted phase $\hat{\boldsymbol{\phi}}_{\ell m}$ is then given by:
+%
+\begin{equation}
+	\hat{\boldsymbol{\phi}}_{\ell m}(\boldsymbol{\vartheta}) = \boldsymbol{\mu}_{\phi_{\ell m}} + H_{\phi_{\ell m}}^T 
+	\begin{pmatrix}
+        \mathcal{N}_{\phi_{\ell m}\text{- 12}}(\tilde{\boldsymbol{\vartheta}}) + \mathcal{N}_{\phi_{\ell m}\text{- residual}}(\tilde{\boldsymbol{\vartheta}}) \\
+        \mathcal{N}_{\phi_{\ell m}\text{- 2:K}}(\tilde{\boldsymbol{\vartheta}}) \hfill
+	 \end{pmatrix}.
+\end{equation}
+
+
+We train our model using the PCA dataset, obtained by PCA reducing the training set. Each ANN is trained using the following loss function:
+\begin{equation}
+	\mathcal{L} = \frac{1}{N} \sum_{i=1}^N \Bigl((\mathcal{N}(\boldsymbol{\vartheta}_i) - \boldsymbol{y}_i)}\boldsymbol{w} \Bigr)^2
+\end{equation}
+%
+where $\boldsymbol{y}_i$ is the regression target of each network and the $\boldsymbol{w} \in \R^K$ is a vector of weights. The multiplication is performed elementwise.
+The role of $\boldsymbol{w}$ is to weight differently contribution from different PCs: this allows us to take into account the fact that the contribution of different PC to the reconstructed waveform can vary of different order of magnitude.
 
 %%%%%%%%%%%%%%%%%%%
 \section{Performance study}

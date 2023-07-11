@@ -1,14 +1,23 @@
-all: mlgw_NN.pdf
+DOCNAME=mlgw_NN
 
-mlgw_NN.pdf: mlgw_NN.tex mlgw_NN.bbl mlgw_NN.aux
-	pdflatex -synctex=1 -interaction=nonstopmode "mlgw_NN".tex
+all: $(DOCNAME).pdf
 
-mlgw_NN.aux:
-	pdflatex -synctex=1 -interaction=nonstopmode "mlgw_NN".tex
+$(DOCNAME).pdf: $(DOCNAME).tex biblio
+	-pdflatex -synctex=1 -interaction=nonstopmode $(DOCNAME).tex
+	-pdflatex -synctex=1 -interaction=nonstopmode $(DOCNAME).tex
 
-mlgw_NN.bbl: mlgw_NN.aux
-	bibtex "mlgw_NN".aux
+biblio: biblio.bib
+	-pdflatex -synctex=1 -interaction=nonstopmode $(DOCNAME).tex
+	bibtex $(DOCNAME).aux
 
-clean:
-	rm -f mlgw_NN.bbl mlgw_NN.out mlgw_NNNotes.bib mlgw_NN.aux mlgw_NN.log mlgw_NN.blg mlgw_NN.toc mlgw_NN.synctex.gz mlgw_NN.pdf
-	rm -rf scripts/__pycache__
+submit:
+	bash my_submission_tarb.sh $(DOCNAME).tex biblio.bib $(DOCNAME).bbl img
+
+remove:
+	rm -f $(DOCNAME).bbl $(DOCNAME).out $(DOCNAME)Notes.bib $(DOCNAME).aux $(DOCNAME).log $(DOCNAME).blg $(DOCNAME).toc $(DOCNAME).synctex.gz
+
+clean: remove
+	rm $(DOCNAME).pdf
+	
+
+#The command pdflatex may fail: we need to put a dash - in fron of the instruction, to make sure the makefile doesn't stop after failure
