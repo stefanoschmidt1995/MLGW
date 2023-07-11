@@ -14,6 +14,7 @@ Module ML_routines.py
 import scipy.stats, scipy.linalg
 import numpy as np
 import warnings
+from itertools import combinations_with_replacement
 
 ################# PCA class
 class PCA_model:
@@ -441,6 +442,41 @@ jac_extra_features
 		jac[:,:,log_list] = np.divide(jac[:,:,log_list],np.exp(data[:,None,log_list]))
 
 	return jac
+
+def augment_features_plynomial(theta, features = [], order = 0):
+	"""
+	Given features and order it computes all the polynomial features
+	"""
+	theta = np.atleast_2d(theta)
+	
+	if not (features and order):
+		return theta
+	
+	feat_list = []
+	for i in range(0,order):
+		feat_list.extend(combinations_with_replacement(features, i+1))
+	
+	feat_vals = {}
+	for f in features:
+		if f == 'eta':
+			val = theta[:,0] / (1+theta[:,0])**2
+		elif f == 'chieff':
+			#chieff = (m1*s1+m2*s2)/(m1+m2) = (q*s1+s2)/(1+q)
+			val = (theta[:,0]*theta[:,1] + theta[:,2]) / (1 + theta[:,0])
+		else:
+			raise ValueError("Feature not recognized: please consider submitting a patch to add support for your favoutite feature.")	
+		feat_vals[f] = val
+	
+	feats_to_add = []
+	for feats in feat_list:
+		val = 1
+		for f in feats:
+			val *= feat_vals[f]
+		feats_to_add.append(val[:,None])
+	
+	return np.concatenate([theta, *feats_to_add], axis = 1)
+	
+	
 
 def augment_features(theta, features = []):
 	"""
