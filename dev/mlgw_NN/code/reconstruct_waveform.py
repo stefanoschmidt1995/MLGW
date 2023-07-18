@@ -1,6 +1,6 @@
 import sys
 import os
-sys.path.append(os.path.join(os.path.dirname(os.path.dirname(sys.path[0])),'MLGW-master','mlgw_v2')) #ugly way of adding mlgw_v2
+sys.path.insert(1,os.path.join(os.path.dirname(os.path.dirname(os.path.dirname(sys.path[0]))),'mlgw'))
 os.environ['TF_CPP_MIN_LOG_LEVEL'] = '2'
 
 import pycbc.filter
@@ -8,7 +8,7 @@ from pycbc.types import timeseries
 import time
 from sklearn.metrics import mean_squared_error #not used but need for error resolve
 import numpy as np
-from GW_generator_NN import GW_generator_NN
+from GW_generator import GW_generator
 from GW_helper import generate_waveform, compute_optimal_mismatch
 import matplotlib.pyplot as plt
 import tensorflow as tf
@@ -32,16 +32,16 @@ def get_random_antenna_patterns():
 
 	return F_p, F_c
 
-model_loc = "../default_models/test_full/"
-save_loc = "../save_data/" #provide location to save data to
+model_loc = "../new_models/test_full_models/"
+save_loc = "../save_full_WF_data/" #provide location to save data to
 to_save = True
-time_batch = True
+time_batch = False
 save_fig = True
 new_mismatch = True
 
-gen_NN = GW_generator_NN(folder = model_loc, frozen=False)
+gen_NN = GW_generator(folder = model_loc, isNN=True)
 
-N = 10000
+N = 10
 batch_size = 200
 f_min = 15
 #t_coal = 1.8905370620077373
@@ -84,7 +84,7 @@ for i in range(N): #this is effectively the case batch_size = 1
 	
 	t = time.time()
 	theta[6] = np.pi/2 - theta[6]
-	h_p_pred, h_c_pred = gen_NN.get_WF(theta, times, [(2,2),(3,3),(2,1),(4,4),(5,5)])
+	h_p_pred, h_c_pred = gen_NN.get_WF(theta, times, [(2,2)])
 	#h_p_pred = np.array([np.random.uniform() for _ in range((len(times)))]) #for line profiler purposes
 	#h_c_pred = np.array([np.random.uniform() for _ in range((len(times)))])
 	time_comp[i,1] = time.time()-t
@@ -127,10 +127,13 @@ for i in range(N): #this is effectively the case batch_size = 1
 #plt.legend()
 #plt.savefig("./test_figures_3/full/true_pred22.png")
 if save_fig:
+	save_dir_name = str(N)+"test_WF"
+	os.mkdir(save_loc+save_dir_name)
+	os.mkdir(save_loc+save_dir_name+'/figures')
 	plt.figure(figsize=(6,4))
 	plt.scatter(param_list[:,0], np.log(F)/np.log(10))
 	plt.title("mismatch median: " + str(np.median(F)))
-	plt.savefig("./test_figures_7/full/mismatch_massratio"+str(N)+".png")
+	plt.savefig(save_loc+save_dir_name+"/figures/mismatch_massratio"+str(N)+".png")
 	plt.xlim(1,10)
 	plt.xlabel("mass_ratio q")
 	plt.ylabel("log(F)")
@@ -140,19 +143,19 @@ if save_fig:
 	plt.title("Speed up histogram: median = "+str(np.median(time_comp[:,0] / time_comp[:,1])))
 	plt.hist(time_comp[:,0] / time_comp[:,1], rwidth=1, bins = N)
 	plt.xlabel("t_true / t_model")
-	plt.savefig("./test_figures_7/full/speed_up_histogram"+str(N)+".png")
+	plt.savefig(save_loc+save_dir_name+"/figures/speed_up_histogram"+str(N)+".png")
 	plt.close()
 
 	plt.figure(figsize=(8,5))
 	plt.title("Mismatch Histogram: median = "+str(np.median(F)))
 	plt.hist(np.log(F)/ np.log(10), rwidth=1, bins = int(np.sqrt(N)), range=(-7,0))
 	plt.xlabel("log(mismatch)")
-	plt.savefig("./test_figures_7/full/mismatch_histogram"+str(N)+".png")
+	plt.savefig(save_loc+save_dir_name+"/figures/mismatch_histogram"+str(N)+".png")
 	plt.close()
 
 	plt.figure(figsize=(6,4))
 	plt.scatter(start_times, np.log(F)/np.log(10))
-	plt.savefig("./test_figures_7/full/mismatch_starttime"+str(N)+".png")
+	plt.savefig(save_loc+save_dir_name+"/figures/mismatch_starttime"+str(N)+".png")
 	plt.xlabel("start_times")
 	plt.ylabel("log(F)")
 	plt.close()
@@ -171,8 +174,6 @@ if time_batch:
 		full_batch_time_short += time.time()-t
 
 #print([len(data_times[row]) for row in range(N)])
-save_dir_name = str(N)+"test_WF"
-os.mkdir(save_loc+save_dir_name)
 
 if to_save:
 	np.savetxt(save_loc+save_dir_name + "/short_time_grid", short_time_grid)
