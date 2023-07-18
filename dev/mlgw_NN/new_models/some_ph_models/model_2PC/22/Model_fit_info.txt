@@ -1,0 +1,10 @@
+Model for [0,1]PCs for ph
+Trained on dataset: /home/tim.grimbergen/PCA_Data/8_8_HM_spin/22/
+created model with params: 
+layer_list : [50,50]
+optimizer : Nadam with learning rate 0.0001
+activation : sigmoid
+batch_size : 128
+schedulers : exponential with decay rate -0.0003
+The MSE of principal component 0 of the fit is: 2.304391707227588e-08
+The MSE of principal component 1 of the fit is: 5.43375621960149e-07
