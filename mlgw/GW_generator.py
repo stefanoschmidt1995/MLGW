@@ -24,8 +24,9 @@ import tensorflow as tf
 from tensorflow.keras import models as keras_models
 import inspect
 sys.path.insert(1, os.path.dirname(__file__)) 	#adding to path folder where mlgw package is installed (ugly?)
-from .EM_MoE import MoE_model
-from .ML_routines import PCA_model, add_extra_features, jac_extra_features, augment_features
+#from .EM_MoE import MoE_model #WARNING commented out 
+from ML_routines import PCA_model, add_extra_features, jac_extra_features, augment_features_general
+from NN_model_improved import load_models_from_directories
 from scipy.special import factorial as fact
 
 
@@ -105,7 +106,7 @@ GW_generator
 	Some default models are already included in the package.
 	"""
 
-	def __init__(self, folder = 0, verbose = False):
+	def __init__(self, folder = 0, verbose = False, isNN=False):
 		"""
 	__init__
 	========
@@ -126,7 +127,7 @@ GW_generator
 				folder = os.path.dirname(inspect.getfile(GW_generator))+"/TD_models/model_"+str(folder)
 				if not os.path.isdir(folder):
 					raise RuntimeError("Given value {0} for pre-fitted model is not valid. Available models are:\n{1}".format(str(int_folder), list_models(False)))
-			self.load(folder, verbose)
+			self.load(folder, verbose, isNN = isNN)
 		return
 
 	def __extract_mode(self, folder):
@@ -151,7 +152,7 @@ GW_generator
 			return None
 		return lm
 
-	def load(self, folder, verbose = False):
+	def load(self, folder, verbose = False, isNN=False):
 		"""
 	load
 	====
@@ -194,7 +195,7 @@ GW_generator
 				self.mode_dict[lm] = len(self.modes)
 
 					#Checking for the type of mode generator (FIXME: make this better! How to know which generator to use?)
-				if glob.glob(folder+mode+'/*h5'):
+				if isNN:
 					self.modes.append(mode_generator_NN(lm, folder+mode)) #loads mode_generator
 				else:
 					self.modes.append(mode_generator_MoE(lm, folder+mode)) #loads mode_generator
@@ -1272,11 +1273,20 @@ class mode_generator_NN(mode_generator_base):
 		self.batch_size = batch_size
 		#loading PCA
 		self.amp_PCA = PCA_model()
-		self.amp_PCA.load_model(folder+"amp_PCA_model.dat")
+		self.amp_PCA.load_model(folder+"amp/amp_PCA_model.dat")
 		self.ph_PCA = PCA_model()
-		self.ph_PCA.load_model(folder+"ph_PCA_model.dat")
+		self.ph_PCA.load_model(folder+"ph/ph_PCA_model.dat")
 		self.times = np.loadtxt(folder+"times.dat")
-
+		
+		amp_directories = [folder+'amp/'+dir_name for dir_name in os.listdir(folder+'amp') if os.path.isdir(folder+'amp/'+dir_name)]
+		ph_directories = [folder+'ph/'+dir_name for dir_name in os.listdir(folder+'ph') if os.path.isdir(folder+'ph/'+dir_name)]
+		
+		#new way of loading in models (make them tf.functions?)
+		using_ph, using_amp, self.ph_models, self.ph_models_res, self.amp_models, amp_modeled_comps, ph_modeled_comps, self.ph_modeled_comps_res = load_models_from_directories(amp_directories, ph_directories)
+		if not (using_ph and using_amp):
+			raise RuntimeError("Please supply both amplitude and phase models!")
+		
+		''' #old way of loading in the models
 		with open(folder+'amp_features.txt', 'r') as file:
 			self.amp_features = file.readline().split(", ")
 			#print(self.amp_features)
@@ -1303,6 +1313,7 @@ class mode_generator_NN(mode_generator_base):
 		
 		self.res_coefficients = np.genfromtxt(folder+"res_coefficients.txt")
 		verboseprint("mode generator loaded succesfully")
+		'''
 
 	#@do_profile(follow=[])
 	def get_raw_mode(self, theta):
@@ -1332,8 +1343,22 @@ class mode_generator_NN(mode_generator_base):
 
 	#@do_profile(follow=[])
 	def get_red_coefficients(self, theta):
-		#Utilize bigger batch_size by loading in multiple theta_vectors. But... architecture of mode_generator
-		#has to be changed.
+		#new way
+		amp_pred = np.zeros((theta.shape[0], self.amp_PCA.get_dimensions()[1]))
+		ph_pred = np.zeros((theta.shape[0], self.ph_PCA.get_dimensions()[1]))
+		
+		for comps in self.amp_models.keys():
+			amp_pred[:,list(comps)] = self.amp_models[comps].predict(theta)
+		
+		for comps in self.ph_models.keys():
+			ph_pred[:,list(comps)] = self.ph_models[comps].predict(theta)
+        
+		for comps in self.ph_models_res.keys():
+			cur_pred = self.ph_models_res[comps].predict(theta)
+			for k in comps:
+				ph_pred[:,k] += cur_pred[:,k]*self.ph_modeled_comps_res[k]
+		
+		'''#old way
 		amp_theta = augment_features(theta, self.amp_features)
 		ph_2_theta = augment_features(theta, self.ph_2_features)
 		ph_3456_theta = augment_features(theta, self.ph_3456_features)
@@ -1357,6 +1382,7 @@ class mode_generator_NN(mode_generator_base):
 		
 		ph_2_pred += ph_2res_pred
 		ph_pred[:,:6] = np.concatenate((ph_2_pred,ph_3456_pred), axis=1)
+		'''
 		return amp_pred, ph_pred
 
 class mode_generator_MoE(mode_generator_base):

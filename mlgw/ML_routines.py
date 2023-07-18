@@ -443,53 +443,22 @@ jac_extra_features
 
 	return jac
 
-def augment_features_plynomial(theta, features = [], order = 0):
-	"""
-	Given features and order it computes all the polynomial features
-	"""
-	theta = np.atleast_2d(theta)
-	
-	if not (features and order):
-		return theta
-	
-	feat_list = []
-	for i in range(0,order):
-		feat_list.extend(combinations_with_replacement(features, i+1))
-	
-	feat_vals = {}
-	for f in features:
-		if f == 'eta':
-			val = theta[:,0] / (1+theta[:,0])**2
-		elif f == 'chieff':
-			#chieff = (m1*s1+m2*s2)/(m1+m2) = (q*s1+s2)/(1+q)
-			val = (theta[:,0]*theta[:,1] + theta[:,2]) / (1 + theta[:,0])
-		else:
-			raise ValueError("Feature not recognized: please consider submitting a patch to add support for your favoutite feature.")	
-		feat_vals[f] = val
-	
-	feats_to_add = []
-	for feats in feat_list:
-		val = 1
-		for f in feats:
-			val *= feat_vals[f]
-		feats_to_add.append(val[:,None])
-	
-	return np.concatenate([theta, *feats_to_add], axis = 1)
-	
-	
-
 def augment_features(theta, features = []):
 	"""
 	Performs feature augmentation for the neural network model
 	"""
 	#FIXME: this function needs to be refactored more nicely!
+	allowed_features = set(["2nd_poly","sym_mas","eff_spin","eff_spin_powers","sym_mas_powers", "eff_spin_sym_mas_2nd_poly", "eff_spin_sym_mas_3rd_poly", "eff_spin_sym_mas_4th_poly", "chirp", "1_inverse", "q_cube", "q_quart", "q_min1inverse", "q_squared", "q_inverse", "log", "tan"])
+	if any([feat not in allowed_features for feat in features]):
+		raise RuntimeError("Not all inputted features are allowed!")
+	
 	theta = np.atleast_2d(np.asarray(theta))
 	if "2nd_poly" in features:
 		for x in ["00","11","22","01","02","12"]:
 			theta = np.c_[theta, theta[:,int(x[0])]*theta[:,int(x[1])]]
 				
 	if "sym_mas" in features:
-		theta = np.c_[theta, theta[:,0] / (1+theta[:,0]**2)] #not calculated correctly
+		theta = np.c_[theta, theta[:,0] / ((1+theta[:,0])**2)] #not calculated correctly
 	
 	if "eff_spin" in features:
 		theta = np.c_[theta, (theta[:,1] + theta[:,0]*theta[:,2]) / (1 + theta[:,0])]
@@ -500,25 +469,25 @@ def augment_features(theta, features = []):
 		
 	if "sym_mas_powers" in features:
 		for x in [1,2,3,4]:
-			theta = np.c_[theta, (theta[:,0] / (1+theta[:,0]**2))**x]
+			theta = np.c_[theta, (theta[:,0] / ((1+theta[:,0])**2))**x]
 		
 	if "eff_spin_sym_mas_2nd_poly" in features:
 		eff_spin = (theta[:,1] + theta[:,0]*theta[:,2]) / (1 + theta[:,0])
-		sym_mas = theta[:,0] / (1+theta[:,0]**2)
+		sym_mas = theta[:,0] / ((1+theta[:,0])**2)
 		train = np.c_[sym_mas, eff_spin]
 		for x in ["00","11","01"]:
 			theta = np.c_[theta, train[:,int(x[0])] * train[:,int(x[1])]]
 		
 	if "eff_spin_sym_mas_3rd_poly" in features:
 		eff_spin = (theta[:,1] + theta[:,0]*theta[:,2]) / (1 + theta[:,0])
-		sym_mas = theta[:,0] / (1+theta[:,0]**2)
+		sym_mas = theta[:,0] / ((1+theta[:,0])**2)
 		train = np.c_[sym_mas, eff_spin]
 		for x in ["000","111","001","011"]:
 			theta = np.c_[theta, train[:,int(x[0])] * train[:,int(x[1])] * train[:,int(x[2])]]
 		
 	if "eff_spin_sym_mas_4th_poly" in features:
 		eff_spin = (theta[:,1] + theta[:,0]*theta[:,2]) / (1 + theta[:,0])
-		sym_mas = theta[:,0] / (1+theta[:,0]**2)
+		sym_mas = theta[:,0] / ((1+theta[:,0])**2)
 		train = np.c_[sym_mas, eff_spin]
 		for x in ["0000","0001","0011","0111","1111"]:
 			theta = np.c_[theta, train[:,int(x[0])] * train[:,int(x[1])] * train[:,int(x[2])] * train[:,int(x[3])]]
@@ -558,10 +527,53 @@ def augment_features(theta, features = []):
 	return theta
 
 
+def augment_features_plynomial(theta, features = [], order = 0):
+	"""
+	Given features and order it computes all the polynomial features
+	"""
+	theta = np.atleast_2d(theta)
+	
+	if not (features and order):
+		return theta
+	
+	feat_list = []
+	for i in range(0,order):
+		feat_list.extend(combinations_with_replacement(features, i+1))
+	
+	feat_vals = {}
+	for f in features:
+		if f == 'eta':
+			val = theta[:,0] / (1+theta[:,0])**2
+		elif f == 'chieff':
+			#chieff = (m1*s1+m2*s2)/(m1+m2) = (q*s1+s2)/(1+q)
+			val = (theta[:,0]*theta[:,1] + theta[:,2]) / (1 + theta[:,0])
+		elif f == 'q':
+			val = theta[:,0]
+		elif f == 's1':
+			val = theta[:,1]
+		elif f == 's2':
+			val = theta[:,2]
+		else:
+			raise ValueError("Feature not recognized: please consider submitting a patch to add support for your favoutite feature.")	
+		feat_vals[f] = val
+	
+	feats_to_add = []
+	for feats in feat_list:
+		val = 1
+		for f in feats:
+			val *= feat_vals[f]
+		feats_to_add.append(val[:,None])
+	
+	return np.concatenate([theta, *feats_to_add], axis = 1)
 
-
-
-
+def augment_features_general(theta, feature_list=[]): 
+	#would be faster if it just appended and not make a new list each time?
+	for feat in feature_list:
+		if isinstance(feat, str):
+			theta = augment_features(theta, [feat])
+		if isinstance(feat, tuple):
+			theta = augment_features_plynomial(theta, features=feat[0], order=feat[1])
+	return theta
 
 
 

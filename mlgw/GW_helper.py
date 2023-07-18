@@ -209,10 +209,10 @@ create_dataset_TD
 		prefactor = 4.7864188273360336e-20 # G/c^2*(M_sun/Mpc)
 
 			#checking that all is good with modes
-		if approximant == "SEOBNRv4HM":
+		if approximant == "SEOBNRv4PHM":
 			for mode in modes:
 				if mode not in [(2,2),(2,1), (3,3), (4,4), (5,5)]:
-					raise ValueError("Currently SEOBNRv4HM approximants do not implement the chosen HM")
+					raise ValueError("Currently SEOBNRv4PHM approximants do not implement the chosen HM")
 		elif approximant != "IMRPhenomTPHM":
 			if modes != [(2,2)]:
 				raise ValueError("The chosen lal approximant does not implement HMs")
@@ -289,7 +289,16 @@ create_dataset_TD
 		elif m2_range is not None:
 			m2 = float(m2_range)
 		if isinstance(q_range, tuple):
-			q = np.random.uniform(q_range[0],q_range[1])
+			#q = np.random.uniform(q_range[0],q_range[1]) #uniform q distribution
+			
+			#biased q distribution for the boundaries
+			x = np.random.uniform()
+			if x < 0.3:
+				q = np.min(np.random.uniform(low=q_range[0],high=q_range[1],size=5))
+			elif 0.3 <= x < 0.8:
+				q = np.random.uniform(low=q_range[0],high=q_range[1])
+			else:
+				q = np.max(np.random.uniform(low=q_range[0],high=q_range[1],size=4))
 		else:
 			q = float(q_range)
 		if isinstance(s1_range, tuple):
@@ -370,9 +379,9 @@ create_dataset_TD
 					time_full = np.linspace(0.0, sp.mode.data.length*t_step, sp.mode.data.length) #time grid at which wave is computed
 					argpeak = locate_peak(amp_22) #aligned at the peak of the 22
 				sp = sp.next
-		elif approximant == "IMRPhenomTPHM" or approximant == "SEOBNRv4HM":
+		elif approximant == "IMRPhenomTPHM" or approximant == "SEOBNRv4PHM":
 			#https://lscsoft.docs.ligo.org/lalsuite/lalsimulation/test___s_e_o_b_n_rv4_p_h_m__vs__4_h_m__ringdown_8py_source.html
-			#approx = lalsim.SEOBNRv4PHM #DEBUG
+			approx = lalsim.SEOBNRv4PHM if approximant == "SEOBNRv4PHM" else lalsim.IMRPhenomTPHM
 			hlm = lalsim.SimInspiralChooseTDModes(0.,
 				t_step,
 				m1*lalsim.lal.MSUN_SI,
@@ -388,7 +397,7 @@ create_dataset_TD
 				1e6*lalsim.lal.PC_SI,
 				LALpars,
 				5,			#lmax
-				lalsim.IMRPhenomTPHM
+				approx
 			)
 			amp_prefactor = prefactor*(m1+m2)/1.
 			for i, lm in enumerate(modes):
