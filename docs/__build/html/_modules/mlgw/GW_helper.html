@@ -1,0 +1,1129 @@
+
+
+<!DOCTYPE html>
+
+
+<html lang="en" >
+
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>mlgw.GW_helper &#8212; mlgw 3.0.0 documentation</title>
+  
+  
+  
+  <script data-cfasync="false">
+    document.documentElement.dataset.mode = localStorage.getItem("mode") || "";
+    document.documentElement.dataset.theme = localStorage.getItem("theme") || "light";
+  </script>
+  
+  <!-- Loaded before other Sphinx assets -->
+  <link href="../../_static/styles/theme.css?digest=e353d410970836974a52" rel="stylesheet" />
+<link href="../../_static/styles/bootstrap.css?digest=e353d410970836974a52" rel="stylesheet" />
+<link href="../../_static/styles/pydata-sphinx-theme.css?digest=e353d410970836974a52" rel="stylesheet" />
+
+  
+  <link href="../../_static/vendor/fontawesome/6.1.2/css/all.min.css?digest=e353d410970836974a52" rel="stylesheet" />
+  <link rel="preload" as="font" type="font/woff2" crossorigin href="../../_static/vendor/fontawesome/6.1.2/webfonts/fa-solid-900.woff2" />
+<link rel="preload" as="font" type="font/woff2" crossorigin href="../../_static/vendor/fontawesome/6.1.2/webfonts/fa-brands-400.woff2" />
+<link rel="preload" as="font" type="font/woff2" crossorigin href="../../_static/vendor/fontawesome/6.1.2/webfonts/fa-regular-400.woff2" />
+
+    <link rel="stylesheet" type="text/css" href="../../_static/pygments.css" />
+    <link rel="stylesheet" href="../../_static/styles/sphinx-book-theme.css?digest=14f4ca6b54d191a8c7657f6c759bf11a5fb86285" type="text/css" />
+  
+  <!-- Pre-loaded scripts that we'll load fully later -->
+  <link rel="preload" as="script" href="../../_static/scripts/bootstrap.js?digest=e353d410970836974a52" />
+<link rel="preload" as="script" href="../../_static/scripts/pydata-sphinx-theme.js?digest=e353d410970836974a52" />
+
+    <script data-url_root="../../" id="documentation_options" src="../../_static/documentation_options.js"></script>
+    <script src="../../_static/doctools.js"></script>
+    <script src="../../_static/sphinx_highlight.js"></script>
+    <script src="../../_static/scripts/sphinx-book-theme.js?digest=5a5c038af52cf7bc1a1ec88eea08e6366ee68824"></script>
+    <script>DOCUMENTATION_OPTIONS.pagename = '_modules/mlgw/GW_helper';</script>
+    <link rel="author" title="About these documents" href="../../about.html" />
+    <link rel="index" title="Index" href="../../genindex.html" />
+    <link rel="search" title="Search" href="../../search.html" />
+  <meta name="viewport" content="width=device-width, initial-scale=1"/>
+  <meta name="docsearch:language" content="en"/>
+  </head>
+  
+  
+  <body data-bs-spy="scroll" data-bs-target=".bd-toc-nav" data-offset="180" data-bs-root-margin="0px 0px -60%" data-default-mode="">
+
+  
+  
+  <a class="skip-link" href="#main-content">Skip to main content</a>
+  
+  <input type="checkbox"
+          class="sidebar-toggle"
+          name="__primary"
+          id="__primary"/>
+  <label class="overlay overlay-primary" for="__primary"></label>
+  
+  <input type="checkbox"
+          class="sidebar-toggle"
+          name="__secondary"
+          id="__secondary"/>
+  <label class="overlay overlay-secondary" for="__secondary"></label>
+  
+  <div class="search-button__wrapper">
+    <div class="search-button__overlay"></div>
+    <div class="search-button__search-container">
+<form class="bd-search d-flex align-items-center"
+      action="../../search.html"
+      method="get">
+  <i class="fa-solid fa-magnifying-glass"></i>
+  <input type="search"
+         class="form-control"
+         name="q"
+         id="search-input"
+         placeholder="Search..."
+         aria-label="Search..."
+         autocomplete="off"
+         autocorrect="off"
+         autocapitalize="off"
+         spellcheck="false"/>
+  <span class="search-button__kbd-shortcut"><kbd class="kbd-shortcut__modifier">Ctrl</kbd>+<kbd>K</kbd></span>
+</form></div>
+  </div>
+  
+    <nav class="bd-header navbar navbar-expand-lg bd-navbar">
+    </nav>
+  
+  <div class="bd-container">
+    <div class="bd-container__inner bd-page-width">
+      
+      <div class="bd-sidebar-primary bd-sidebar">
+        
+
+  
+  <div class="sidebar-header-items sidebar-primary__section">
+    
+    
+    
+    
+  </div>
+  
+    <div class="sidebar-primary-items__start sidebar-primary__section">
+        <div class="sidebar-primary-item">
+  
+
+<a class="navbar-brand logo" href="../../index.html">
+  
+  
+  
+  
+  
+    <p class="title logo__title">mlgw 3.0.0 documentation</p>
+  
+</a></div>
+        <div class="sidebar-primary-item"><nav class="bd-links" id="bd-docs-nav" aria-label="Main">
+    <div class="bd-toc-item navbar-nav active">
+        <p aria-level="2" class="caption" role="heading"><span class="caption-text">Usage</span></p>
+<ul class="nav bd-sidenav">
+<li class="toctree-l1"><a class="reference internal" href="../../usage/install.html">Installing <code class="docutils literal notranslate"><span class="pre">mlgw</span></code></a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../usage/overview.html">What <code class="docutils literal notranslate"><span class="pre">mlgw</span></code> can do for you</a></li>
+</ul>
+<p aria-level="2" class="caption" role="heading"><span class="caption-text">API reference</span></p>
+<ul class="nav bd-sidenav">
+<li class="toctree-l1"><a class="reference internal" href="../../api_reference/GW_generator.html">Module GW_generator.py</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../api_reference/NN_model.html">Module NN_model.py</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../api_reference/EM_MoE.html">Module EM_MoE.py</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../api_reference/ML_routines.html">Module ML_routines.py</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../api_reference/GW_helper.html">Module GW_helper.py</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../api_reference/fit_model.html">Module fit_model.py</a></li>
+</ul>
+<p aria-level="2" class="caption" role="heading"><span class="caption-text">About</span></p>
+<ul class="nav bd-sidenav">
+<li class="toctree-l1"><a class="reference internal" href="../../about.html">About</a></li>
+</ul>
+
+    </div>
+</nav></div>
+    </div>
+  
+  
+  <div class="sidebar-primary-items__end sidebar-primary__section">
+  </div>
+  
+  <div id="rtd-footer-container"></div>
+
+
+      </div>
+      
+      <main id="main-content" class="bd-main">
+        
+        
+
+<div class="sbt-scroll-pixel-helper"></div>
+
+          <div class="bd-content">
+            <div class="bd-article-container">
+              
+              <div class="bd-header-article">
+<div class="header-article-items header-article__inner">
+  
+    <div class="header-article-items__start">
+      
+        <div class="header-article-item"><label class="sidebar-toggle primary-toggle btn btn-sm" for="__primary" title="Toggle primary sidebar" data-bs-placement="bottom" data-bs-toggle="tooltip">
+  <span class="fa-solid fa-bars"></span>
+</label></div>
+      
+    </div>
+  
+  
+    <div class="header-article-items__end">
+      
+        <div class="header-article-item">
+
+<div class="article-header-buttons">
+
+
+
+<button onclick="toggleFullScreen()"
+  class="btn btn-sm btn-fullscreen-button"
+  title="Fullscreen mode"
+  data-bs-placement="bottom" data-bs-toggle="tooltip"
+>
+  
+
+<span class="btn__icon-container">
+  <i class="fas fa-expand"></i>
+  </span>
+
+</button>
+
+
+<script>
+document.write(`
+  <button class="theme-switch-button btn btn-sm btn-outline-primary navbar-btn rounded-circle" title="light/dark" aria-label="light/dark" data-bs-placement="bottom" data-bs-toggle="tooltip">
+    <span class="theme-switch" data-mode="light"><i class="fa-solid fa-sun"></i></span>
+    <span class="theme-switch" data-mode="dark"><i class="fa-solid fa-moon"></i></span>
+    <span class="theme-switch" data-mode="auto"><i class="fa-solid fa-circle-half-stroke"></i></span>
+  </button>
+`);
+</script>
+
+<script>
+document.write(`
+  <button class="btn btn-sm navbar-btn search-button search-button__button" title="Search" aria-label="Search" data-bs-placement="bottom" data-bs-toggle="tooltip">
+    <i class="fa-solid fa-magnifying-glass"></i>
+  </button>
+`);
+</script>
+
+</div></div>
+      
+    </div>
+  
+</div>
+</div>
+              
+              
+
+<div id="jb-print-docs-body" class="onlyprint">
+    <h1></h1>
+    <!-- Table of contents -->
+    <div id="print-main-content">
+        <div id="jb-print-toc">
+            
+        </div>
+    </div>
+</div>
+
+              
+                
+<div id="searchbox"></div>
+                <article class="bd-article" role="main">
+                  
+  <h1>Source code for mlgw.GW_helper</h1><div class="highlight"><pre>
+<span></span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">Module GW_helper.py</span>
+<span class="sd">===================</span>
+<span class="sd">	Various routines for performing some tasks regarding GW signals:</span>
+<span class="sd">		Mismatch computation</span>
+<span class="sd">			function compute_mismatch: computes the mismatch between two sets of wave (useful for seeing how important is reconstruction error)</span>
+<span class="sd">		Scalar product computation</span>
+<span class="sd">			function compute_scalar: computes the Wigner scalar product between two GW waveforms</span>
+<span class="sd">		Optimal mismatch computation:</span>
+<span class="sd">			function compute_optimal_mismatch: computes the optimal mismatch between two waves (i.e. by minimizing the mismatch w.r.t. the alignment)</span>
+<span class="sd">		Dataset creation Time Domain</span>
+<span class="sd">			function create_dataset_TD: creates a dataset of GW in time domain.</span>
+<span class="sd">		Dataset creation Frequency Domain</span>
+<span class="sd">			function create_dataset_FD: creates a dataset of GW in frequency domain.</span>
+<span class="sd">&quot;&quot;&quot;</span>
+<span class="c1">#################</span>
+
+<span class="kn">import</span> <span class="nn">numpy</span> <span class="k">as</span> <span class="nn">np</span>
+<span class="kn">import</span> <span class="nn">os.path</span>
+<span class="kn">import</span> <span class="nn">matplotlib.pyplot</span> <span class="k">as</span> <span class="nn">plt</span> <span class="c1">#debug</span>
+<span class="kn">import</span> <span class="nn">warnings</span>
+<span class="kn">import</span> <span class="nn">scipy.signal</span>
+
+<span class="c1">################# Overlap related stuff</span>
+<span class="k">def</span> <span class="nf">overlap</span><span class="p">(</span><span class="n">amp_1</span><span class="p">,</span> <span class="n">ph_1</span><span class="p">,</span> <span class="n">amp_2</span><span class="p">,</span> <span class="n">ph_2</span><span class="p">,</span> <span class="n">df</span><span class="p">,</span> <span class="n">low_freq</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span> <span class="n">high_freq</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span> <span class="n">PSD</span> <span class="o">=</span> <span class="kc">None</span><span class="p">):</span>
+		<span class="c1">#it works only for input shapes (D,)</span>
+	<span class="n">w1</span> <span class="o">=</span> <span class="n">amp_1</span><span class="o">*</span><span class="n">np</span><span class="o">.</span><span class="n">exp</span><span class="p">(</span><span class="mi">1</span><span class="n">j</span><span class="o">*</span><span class="n">ph_1</span><span class="p">)</span>
+	<span class="n">w2</span> <span class="o">=</span> <span class="n">amp_2</span><span class="o">*</span><span class="n">np</span><span class="o">.</span><span class="n">exp</span><span class="p">(</span><span class="mi">1</span><span class="n">j</span><span class="o">*</span><span class="n">ph_2</span><span class="p">)</span>
+	
+	<span class="k">if</span> <span class="n">PSD</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+		<span class="n">PSD</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">ones</span><span class="p">((</span><span class="n">amp_1</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">],))</span>
+	<span class="k">if</span> <span class="n">low_freq</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="ow">and</span> <span class="n">high_freq</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+		<span class="n">kmin</span><span class="p">,</span> <span class="n">kmax</span> <span class="o">=</span> <span class="n">get_low_high_freq_index</span><span class="p">(</span><span class="n">low_freq</span><span class="p">,</span> <span class="n">high_freq</span><span class="p">,</span> <span class="n">df</span><span class="p">)</span>
+	<span class="k">else</span><span class="p">:</span>
+		<span class="n">kmin</span> <span class="o">=</span><span class="mi">0</span>
+		<span class="n">kmax</span> <span class="o">=</span> <span class="n">w1</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
+	<span class="n">w1</span> <span class="o">=</span> <span class="n">w1</span><span class="p">[</span><span class="n">kmin</span><span class="p">:</span><span class="n">kmax</span><span class="p">]</span>
+	<span class="n">w2</span> <span class="o">=</span> <span class="n">w2</span><span class="p">[</span><span class="n">kmin</span><span class="p">:</span><span class="n">kmax</span><span class="p">]</span>
+	
+	<span class="n">overlap</span> <span class="o">=</span> <span class="mf">2.0</span><span class="o">*</span><span class="n">df</span><span class="o">*</span><span class="n">np</span><span class="o">.</span><span class="n">sum</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">divide</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">conj</span><span class="p">(</span><span class="n">w1</span><span class="p">)</span><span class="o">*</span><span class="n">w2</span><span class="o">+</span><span class="n">np</span><span class="o">.</span><span class="n">conj</span><span class="p">(</span><span class="n">w2</span><span class="p">)</span><span class="o">*</span><span class="n">w1</span><span class="p">,</span><span class="n">PSD</span><span class="p">))</span><span class="o">.</span><span class="n">real</span>
+<span class="c1">#	overlap = 4.0*df*np.sum(np.divide(np.conj(w1)*w2,PSD)).real</span>
+	<span class="k">return</span> <span class="n">overlap</span>
+
+<div class="viewcode-block" id="compute_scalar"><a class="viewcode-back" href="../../api_reference/GW_helper.html#mlgw.GW_helper.compute_scalar">[docs]</a><span class="k">def</span> <span class="nf">compute_scalar</span><span class="p">(</span><span class="n">amp_1</span><span class="p">,</span> <span class="n">ph_1</span><span class="p">,</span> <span class="n">amp_2</span><span class="p">,</span> <span class="n">ph_2</span><span class="p">,</span> <span class="n">df</span><span class="p">,</span> <span class="n">S</span> <span class="o">=</span> <span class="kc">None</span><span class="p">):</span>
+	<span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">compute_scalar</span>
+<span class="sd">==============</span>
+<span class="sd">	Computes an approximation to the Wigner scalar product for the two given GW.</span>
+<span class="sd">		&lt;h_1,h_2&gt; = 4 Re[integral df h_1*(f) h_2(f)/S(f) ] ~ 4 Re sum[amp_1*(f_i) amp_2(f_i) exp(i*(ph_2(f_i)-ph_1(f_i)))/S(f_i) ] / D</span>
+<span class="sd">	Input:</span>
+<span class="sd">		amp_1/ph_1 (N,D)	amplitude/phase vector for wave 1 in Fourier space sampled in D uniform points within the domain</span>
+<span class="sd">		amp_2/ph_2 (N,D)	amplitude/phase vector for wave 2 in Fourier space sampled in D uniform points within the domain</span>
+<span class="sd">		df	()/(N,)			distance in the domain between two sampled points (can be uniform or different for each data point)</span>
+<span class="sd">		S (N,D)				noise power spectral density sampled in D uniform points within the domain (if None there is no noise)</span>
+<span class="sd">	Output:</span>
+<span class="sd">		scalar (N,)	Wigner scalar product for the two waves</span>
+<span class="sd">	&quot;&quot;&quot;</span>
+		<span class="c1">#getting waves</span>
+	<span class="n">w1</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">multiply</span><span class="p">(</span><span class="n">amp_1</span><span class="p">,</span><span class="n">np</span><span class="o">.</span><span class="n">exp</span><span class="p">(</span><span class="mi">1</span><span class="n">j</span><span class="o">*</span><span class="n">ph_1</span><span class="p">))</span>
+	<span class="n">w2</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">multiply</span><span class="p">(</span><span class="n">amp_2</span><span class="p">,</span><span class="n">np</span><span class="o">.</span><span class="n">exp</span><span class="p">(</span><span class="mi">1</span><span class="n">j</span><span class="o">*</span><span class="n">ph_2</span><span class="p">))</span>
+
+		<span class="c1">#checking for noise</span>
+	<span class="k">if</span> <span class="n">S</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+		<span class="n">S</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">ones</span><span class="p">(</span><span class="n">w1</span><span class="o">.</span><span class="n">shape</span><span class="p">)</span>
+	<span class="k">else</span><span class="p">:</span>
+		<span class="k">if</span> <span class="n">S</span><span class="o">.</span><span class="n">shape</span> <span class="o">!=</span> <span class="n">w1</span><span class="o">.</span><span class="n">shape</span><span class="p">:</span>
+			<span class="k">raise</span> <span class="ne">TypeError</span><span class="p">(</span><span class="s1">&#39;Noise doesn</span><span class="se">\&#39;</span><span class="s1">t have the shape of data (&#39;</span><span class="o">+</span><span class="nb">str</span><span class="p">(</span><span class="n">amp_1</span><span class="o">.</span><span class="n">shape</span><span class="p">)</span><span class="o">+</span><span class="s1">&#39;)&#39;</span><span class="p">)</span>
+			<span class="k">return</span> <span class="kc">None</span>
+
+	<span class="k">if</span> <span class="n">w1</span><span class="o">.</span><span class="n">ndim</span> <span class="o">&lt;</span> <span class="mi">2</span> <span class="ow">and</span> <span class="n">w2</span><span class="o">.</span><span class="n">ndim</span> <span class="o">&lt;</span> <span class="mi">2</span><span class="p">:</span>
+		<span class="n">product</span> <span class="o">=</span> <span class="mf">4.0</span><span class="o">*</span><span class="n">np</span><span class="o">.</span><span class="n">multiply</span><span class="p">(</span><span class="n">df</span><span class="p">,</span><span class="n">np</span><span class="o">.</span><span class="n">sum</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">divide</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">conj</span><span class="p">(</span><span class="n">w1</span><span class="p">)</span><span class="o">*</span><span class="n">w2</span><span class="p">,</span><span class="n">S</span><span class="p">)))</span><span class="o">.</span><span class="n">real</span>
+	<span class="k">else</span><span class="p">:</span>	
+		<span class="n">product</span> <span class="o">=</span> <span class="mf">4.0</span><span class="o">*</span><span class="n">np</span><span class="o">.</span><span class="n">multiply</span><span class="p">(</span><span class="n">df</span><span class="p">,</span><span class="n">np</span><span class="o">.</span><span class="n">sum</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">divide</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">conj</span><span class="p">(</span><span class="n">w1</span><span class="p">)</span><span class="o">*</span><span class="n">w2</span><span class="p">,</span><span class="n">S</span><span class="p">),</span> <span class="n">axis</span> <span class="o">=</span> <span class="mi">1</span><span class="p">))</span><span class="o">.</span><span class="n">real</span>
+	
+	<span class="k">return</span> <span class="n">product</span><span class="o">.</span><span class="n">real</span></div>
+
+
+<div class="viewcode-block" id="compute_mismatch"><a class="viewcode-back" href="../../api_reference/GW_helper.html#mlgw.GW_helper.compute_mismatch">[docs]</a><span class="k">def</span> <span class="nf">compute_mismatch</span><span class="p">(</span><span class="n">amp_1</span><span class="p">,</span> <span class="n">ph_1</span><span class="p">,</span> <span class="n">amp_2</span><span class="p">,</span> <span class="n">ph_2</span><span class="p">,</span> <span class="n">S</span> <span class="o">=</span> <span class="kc">None</span><span class="p">):</span>
+	<span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">compute_mismatch</span>
+<span class="sd">================</span>
+<span class="sd">	Compute mismatch F between the waves given in input. Mismatch is computed with the formula</span>
+<span class="sd">		F = 1-&lt;h_1,h_2&gt;/sqrt(&lt;h_1,h_1&gt;&lt;h_2,h_2&gt;)</span>
+<span class="sd">	with &lt;,&gt; being the Wigner scalar product for GW.</span>
+<span class="sd">	Warning: waves must be aligned. Please use compute_optimal_mismatch for unaligned waves.</span>
+<span class="sd">	Input:</span>
+<span class="sd">		amp_1/ph_1 (N,D)	amplitude/phase vector for wave 1 in Fourier space sampled in D uniform points within the domain</span>
+<span class="sd">		amp_2/ph_2 (N,D)	amplitude/phase vector for wave 1 in Fourier space sampled in D uniform points within the domain</span>
+<span class="sd">		S (D,)				noise power spectral density sampled in D uniform points within the domain (if None there is no noise)</span>
+<span class="sd">	Output:</span>
+<span class="sd">		F (N,)	Mismatch between waves computed element-wise (i.e. F[i] holds mismatch between h_1[i,:] and h_2[i,:])</span>
+<span class="sd">	&quot;&quot;&quot;</span>
+		<span class="c1">#checking if data make sense</span>
+	<span class="k">if</span> <span class="nb">len</span><span class="p">({</span><span class="n">amp_1</span><span class="o">.</span><span class="n">shape</span><span class="p">,</span> <span class="n">ph_1</span><span class="o">.</span><span class="n">shape</span><span class="p">,</span> <span class="n">amp_2</span><span class="o">.</span><span class="n">shape</span><span class="p">,</span> <span class="n">ph_2</span><span class="o">.</span><span class="n">shape</span><span class="p">})</span> <span class="o">==</span> <span class="mi">1</span><span class="p">:</span> <span class="c1">#python set contains unique values</span>
+		<span class="k">if</span> <span class="n">amp_1</span><span class="o">.</span><span class="n">ndim</span> <span class="o">==</span> <span class="mi">1</span><span class="p">:</span>
+			<span class="n">amp_1</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">reshape</span><span class="p">(</span><span class="n">amp_1</span><span class="p">,</span> <span class="p">(</span><span class="mi">1</span><span class="p">,</span><span class="n">amp_1</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">]))</span>
+			<span class="n">amp_2</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">reshape</span><span class="p">(</span><span class="n">amp_2</span><span class="p">,</span> <span class="p">(</span><span class="mi">1</span><span class="p">,</span><span class="n">amp_2</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">]))</span>
+			<span class="n">ph_1</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">reshape</span><span class="p">(</span><span class="n">ph_1</span><span class="p">,</span> <span class="p">(</span><span class="mi">1</span><span class="p">,</span><span class="n">ph_1</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">]))</span>
+			<span class="n">ph_2</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">reshape</span><span class="p">(</span><span class="n">ph_2</span><span class="p">,</span> <span class="p">(</span><span class="mi">1</span><span class="p">,</span><span class="n">ph_2</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">]))</span>
+		<span class="n">D</span> <span class="o">=</span> <span class="n">amp_1</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span>
+		<span class="n">N</span> <span class="o">=</span> <span class="n">amp_1</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
+	<span class="k">else</span><span class="p">:</span>
+		<span class="k">raise</span> <span class="ne">TypeError</span><span class="p">(</span><span class="s1">&#39;Data don</span><span class="se">\&#39;</span><span class="s1">t have the same shape&#39;</span><span class="p">)</span>
+		<span class="k">return</span> <span class="kc">None</span>
+
+		<span class="c1">#computing mismatch vector</span>
+	<span class="n">df</span> <span class="o">=</span> <span class="mf">1.</span> <span class="c1">#nothing depends on df so we can set it arbitrarly</span>
+	<span class="n">F</span> <span class="o">=</span> <span class="n">compute_scalar</span><span class="p">(</span><span class="n">amp_1</span><span class="p">,</span> <span class="n">ph_1</span><span class="p">,</span> <span class="n">amp_2</span><span class="p">,</span> <span class="n">ph_2</span><span class="p">,</span> <span class="n">df</span><span class="p">,</span> <span class="n">S</span><span class="p">)</span>
+	<span class="n">div_factor</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">sqrt</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">multiply</span><span class="p">(</span><span class="n">compute_scalar</span><span class="p">(</span><span class="n">amp_2</span><span class="p">,</span> <span class="n">ph_2</span><span class="p">,</span> <span class="n">amp_2</span><span class="p">,</span> <span class="n">ph_2</span><span class="p">,</span> <span class="n">df</span><span class="p">,</span> <span class="n">S</span><span class="p">),</span> <span class="n">compute_scalar</span><span class="p">(</span><span class="n">amp_1</span><span class="p">,</span> <span class="n">ph_1</span><span class="p">,</span> <span class="n">amp_1</span><span class="p">,</span> <span class="n">ph_1</span><span class="p">,</span> <span class="n">df</span><span class="p">,</span> <span class="n">S</span><span class="p">)))</span>
+	<span class="n">np</span><span class="o">.</span><span class="n">divide</span><span class="p">(</span><span class="n">F</span><span class="p">,</span> <span class="n">div_factor</span><span class="p">,</span> <span class="n">out</span> <span class="o">=</span> <span class="n">F</span><span class="p">)</span>
+	<span class="k">return</span> <span class="mi">1</span><span class="o">-</span><span class="n">F</span></div>
+
+<div class="viewcode-block" id="compute_optimal_mismatch"><a class="viewcode-back" href="../../api_reference/GW_helper.html#mlgw.GW_helper.compute_optimal_mismatch">[docs]</a><span class="k">def</span> <span class="nf">compute_optimal_mismatch</span><span class="p">(</span><span class="n">h1</span><span class="p">,</span><span class="n">h2</span><span class="p">,</span> <span class="n">optimal</span> <span class="o">=</span> <span class="kc">True</span><span class="p">,</span> <span class="n">return_F</span> <span class="o">=</span> <span class="kc">True</span><span class="p">):</span>
+	<span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">compute_optimal_mismatch</span>
+<span class="sd">========================</span>
+<span class="sd">	Computes the optimal mismatch/overlap between two complex waveforms by performing the minimization:</span>
+<span class="sd">		F = min_phi F[h1, h2*exp(1j*phi)]</span>
+<span class="sd">	After the computation, h1 and h2*exp(1j*phi) are optimally aligned.</span>
+<span class="sd">	Input:</span>
+<span class="sd">		h1 (N,D)/(D,)	complex wave</span>
+<span class="sd">		h2 (N,D)/(D,)	complex wave</span>
+<span class="sd">		optimal			whether to optimize w.r.t. a constant phase</span>
+<span class="sd">		return_F		whether to reteurn mismatch or overlap</span>
+<span class="sd">	Output:</span>
+<span class="sd">		F_optimal (N,)/()		optimal mismatch/overlap</span>
+<span class="sd">		phi_optimal (N,)/()		optimal phi which aligns the two waves</span>
+<span class="sd">	&quot;&quot;&quot;</span>
+	<span class="k">assert</span> <span class="n">h1</span><span class="o">.</span><span class="n">shape</span> <span class="o">==</span> <span class="n">h2</span><span class="o">.</span><span class="n">shape</span>
+	<span class="k">if</span> <span class="n">h1</span><span class="o">.</span><span class="n">ndim</span> <span class="o">==</span> <span class="mi">1</span><span class="p">:</span>
+		<span class="n">h1</span> <span class="o">=</span> <span class="n">h1</span><span class="p">[</span><span class="n">np</span><span class="o">.</span><span class="n">newaxis</span><span class="p">,:]</span> <span class="c1">#(1,D)</span>
+		<span class="n">h2</span> <span class="o">=</span> <span class="n">h2</span><span class="p">[</span><span class="n">np</span><span class="o">.</span><span class="n">newaxis</span><span class="p">,:]</span> <span class="c1">#(1,D)</span>
+
+	<span class="n">scalar</span> <span class="o">=</span> <span class="k">lambda</span> <span class="n">h1_</span><span class="p">,</span> <span class="n">h2_</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">sum</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">multiply</span><span class="p">(</span><span class="n">h1_</span><span class="p">,</span><span class="n">np</span><span class="o">.</span><span class="n">conj</span><span class="p">(</span><span class="n">h2_</span><span class="p">)),</span> <span class="n">axis</span> <span class="o">=</span> <span class="mi">1</span><span class="p">)</span><span class="o">/</span><span class="n">h1_</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span> <span class="c1">#(N,)</span>
+
+	<span class="n">norm_factor</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">sqrt</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">multiply</span><span class="p">(</span><span class="n">scalar</span><span class="p">(</span><span class="n">h1</span><span class="p">,</span><span class="n">h1</span><span class="p">)</span><span class="o">.</span><span class="n">real</span><span class="p">,</span> <span class="n">scalar</span><span class="p">(</span><span class="n">h2</span><span class="p">,</span><span class="n">h2</span><span class="p">)</span><span class="o">.</span><span class="n">real</span><span class="p">))</span>
+	<span class="k">if</span> <span class="n">optimal</span><span class="p">:</span>
+		<span class="n">overlap</span> <span class="o">=</span> <span class="n">scalar</span><span class="p">(</span><span class="n">h1</span><span class="p">,</span><span class="n">h2</span><span class="p">)</span> <span class="c1">#(N,)</span>
+		<span class="n">phi_optimal</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">angle</span><span class="p">(</span><span class="n">overlap</span><span class="p">)</span> <span class="c1">#(N,)</span>
+	<span class="k">else</span><span class="p">:</span>
+		<span class="n">phi_optimal</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">(</span><span class="n">norm_factor</span><span class="o">.</span><span class="n">shape</span><span class="p">)</span>
+	<span class="n">overlap</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">divide</span><span class="p">(</span><span class="n">scalar</span><span class="p">(</span><span class="n">h1</span><span class="p">,(</span><span class="n">h2</span><span class="o">.</span><span class="n">T</span><span class="o">*</span><span class="n">np</span><span class="o">.</span><span class="n">exp</span><span class="p">(</span><span class="mi">1</span><span class="n">j</span><span class="o">*</span><span class="n">phi_optimal</span><span class="p">))</span><span class="o">.</span><span class="n">T</span><span class="p">),</span> <span class="n">norm_factor</span><span class="p">)</span>
+	<span class="n">overlap</span> <span class="o">=</span> <span class="n">overlap</span><span class="o">.</span><span class="n">real</span>
+	
+	<span class="k">if</span> <span class="n">return_F</span><span class="p">:</span>
+		<span class="k">return</span> <span class="mi">1</span><span class="o">-</span><span class="n">overlap</span><span class="p">,</span> <span class="n">phi_optimal</span>
+	<span class="k">if</span> <span class="ow">not</span> <span class="n">return_F</span><span class="p">:</span>
+		<span class="k">return</span> <span class="n">overlap</span><span class="p">,</span> <span class="n">phi_optimal</span></div>
+
+
+
+<span class="c1">################# Dataset related stuff</span>
+
+<div class="viewcode-block" id="create_dataset_TD"><a class="viewcode-back" href="../../api_reference/GW_helper.html#mlgw.GW_helper.create_dataset_TD">[docs]</a><span class="k">def</span> <span class="nf">create_dataset_TD</span><span class="p">(</span><span class="n">N_data</span><span class="p">,</span> <span class="n">N_grid</span><span class="p">,</span> <span class="n">modes</span><span class="p">,</span> <span class="n">basefilename</span><span class="p">,</span>  <span class="n">t_coal</span> <span class="o">=</span> <span class="mf">0.5</span><span class="p">,</span> <span class="n">q_range</span> <span class="o">=</span> <span class="p">(</span><span class="mf">1.</span><span class="p">,</span><span class="mf">5.</span><span class="p">),</span> <span class="n">m2_range</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span> <span class="n">s1_range</span> <span class="o">=</span> <span class="p">(</span><span class="o">-</span><span class="mf">0.8</span><span class="p">,</span><span class="mf">0.8</span><span class="p">),</span> <span class="n">s2_range</span> <span class="o">=</span> <span class="p">(</span><span class="o">-</span><span class="mf">0.8</span><span class="p">,</span><span class="mf">0.8</span><span class="p">),</span> <span class="n">t_step</span> <span class="o">=</span> <span class="mf">1e-5</span><span class="p">,</span> <span class="n">alpha</span> <span class="o">=</span> <span class="mf">0.35</span><span class="p">,</span> <span class="n">approximant</span> <span class="o">=</span> <span class="s2">&quot;SEOBNRv2_opt&quot;</span><span class="p">,</span> <span class="n">path_TEOBResumS</span> <span class="o">=</span> <span class="kc">None</span><span class="p">):</span>
+	<span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">create_dataset_TD</span>
+<span class="sd">=================</span>
+<span class="sd">	Create datasets for training a ML model to fit GW modes in time domain. Each dataset is saved in a different file (basefilename.mode).</span>
+<span class="sd">	The dataset consists in 3 parameters theta=(q, spin1z, spin2z) associated to the modes computed in time domain for a grid of N_grid points in the range given by the user.</span>
+<span class="sd">	More specifically, data are stored in 3 vectors:</span>
+<span class="sd">		theta_vector	vector holding source parameters q, spin1, spin2</span>
+<span class="sd">		amp_vector		vector holding amplitudes for each source evaluated at some discrete grid points</span>
+<span class="sd">		ph_vector		vector holding phase for each source evaluated at some discrete grid points</span>
+<span class="sd">	This routine add N_data data to filename if one is specified (if file is not empty it must contain data with the same N_grid); otherwise the datasets are returned as np vectors. </span>
+<span class="sd">	Values of q and m2 as well as spins are drawn randomly in the range given by the user: it holds m1 = q *m2 M_sun.</span>
+<span class="sd">	The waveforms are computed with a time step t_step; starting from a time in reduced grid tau min (s/M_Sun). Waves are given in a rescaled time grid (i.e. t/m_tot) with N_grid points: t=0 occurs when the 22 mode has a peak. A higher density of grid points is placed close to the merger.</span>
+<span class="sd">	Dataset is generated either with an implementation of TEOBResumS (a path to a local installation of TEOBResumS should be provided) either with SEOBNRv4HM (lalsuite installation required). It can be given an TD lal approximant with no HM; in this case, only the 22 mode can be generated.</span>
+<span class="sd">	Datasets can be loaded with load_dataset.</span>
+<span class="sd">	Input:</span>
+<span class="sd">		N_data				size of dataset</span>
+<span class="sd">		N_grid				number of grid points to evaluate</span>
+<span class="sd">		modes []			list of modes (each a (l,m) tuple) to generate and fill the dataset with				</span>
+<span class="sd">		basefilename		basename of the file to save dataset in (each dataset is saved in basefilename.lm)</span>
+<span class="sd">		t_coal				time to coalescence to start computation from (measured in reduced grid)</span>
+<span class="sd">		q_range				tuple with range for random q values. if single value, q is kept fixed at that value</span>
+<span class="sd">		m2_range			tuple with range for random m2 values. if single value, m2 is kept fixed at that value. If None, m2 will be chosen s.t. m_tot = m1+m2 = 20. M_sun</span>
+<span class="sd">		spin_mag_max_1		tuple with range for random spin #1 values. if single value, s1 is kept fixed at that value</span>
+<span class="sd">		spin_mag_max_2		tuple with range for random spin #1 values. if single value, s2 is kept fixed at that value</span>
+<span class="sd">		t_step				time step to generate the wave with</span>
+<span class="sd">		approximant			string for the approximant model to be used (in lal convention; to be used only if lal is to be used)</span>
+<span class="sd">		alpha				distorsion factor for time grid. (In range (0,1], when it&#39;s close to 0, more grid points are around merger)</span>
+<span class="sd">		approximant			lal approximant to be used for generating the modes, or &quot;TEOBResumS&quot; (in the latter case a local installation must be provided by the argument path_TEOBResumS) </span>
+<span class="sd">		path_TEOBResumS		path to a local installation of TEOBResumS with routine &#39;EOBRun_module&#39; (has effect only if approximant is &quot;TEOBResumS&quot;)</span>
+<span class="sd">	&quot;&quot;&quot;</span>
+	<span class="c1">#TODO: create a function get modes, wrapper to ChooseTDModes: you can call it from here to get the modes</span>
+	<span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">modes</span><span class="p">,</span><span class="nb">tuple</span><span class="p">):</span>
+		<span class="n">modes</span> <span class="o">=</span> <span class="p">[</span><span class="n">modes</span><span class="p">]</span>
+	<span class="k">if</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">modes</span><span class="p">,</span><span class="nb">list</span><span class="p">):</span>
+		<span class="k">raise</span> <span class="ne">TypeError</span><span class="p">(</span><span class="s2">&quot;Wrong kind of mode </span><span class="si">{}</span><span class="s2"> given. Expected a list [(l,m)]&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">modes</span><span class="p">))</span>
+
+	<span class="k">if</span> <span class="n">approximant</span> <span class="o">==</span> <span class="s2">&quot;TEOBResumS&quot;</span><span class="p">:</span>
+		<span class="c1">#see https://bitbucket.org/eob_ihes/teobresums/src/development/ for the implementation of TEOBResumS</span>
+		<span class="k">if</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">path_TEOBResumS</span><span class="p">,</span> <span class="nb">str</span><span class="p">):</span>
+			<span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;Missing path to TEOBResumS: unable to continue&quot;</span><span class="p">)</span>
+		<span class="k">try</span><span class="p">:</span>
+			<span class="kn">import</span> <span class="nn">sys</span>
+			<span class="n">sys</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">path_TEOBResumS</span><span class="p">)</span> <span class="c1">#path to local installation of TEOBResumS</span>
+			<span class="kn">import</span> <span class="nn">EOBRun_module</span>
+		<span class="k">except</span><span class="p">:</span>
+			<span class="k">raise</span> <span class="ne">RuntimeError</span><span class="p">(</span><span class="s2">&quot;No valid imput source for module &#39;EOBRun_module&#39; for TEOBResumS. Unable to continue.&quot;</span><span class="p">)</span>
+	<span class="k">else</span><span class="p">:</span>
+		<span class="k">try</span><span class="p">:</span>
+			<span class="kn">import</span> <span class="nn">lal</span>
+			<span class="kn">import</span> <span class="nn">lalsimulation</span> <span class="k">as</span> <span class="nn">lalsim</span>
+		<span class="k">except</span><span class="p">:</span>
+			<span class="k">raise</span> <span class="ne">RuntimeError</span><span class="p">(</span><span class="s2">&quot;Impossible to load lal and lalsimulation: try pip install lalsuite&quot;</span><span class="p">)</span>
+		<span class="n">LALpars</span> <span class="o">=</span> <span class="n">lal</span><span class="o">.</span><span class="n">CreateDict</span><span class="p">()</span>
+		<span class="n">approx</span> <span class="o">=</span> <span class="n">lalsim</span><span class="o">.</span><span class="n">SimInspiralGetApproximantFromString</span><span class="p">(</span><span class="n">approximant</span><span class="p">)</span>
+		<span class="n">prefactor</span> <span class="o">=</span> <span class="mf">4.7864188273360336e-20</span> <span class="c1"># G/c^2*(M_sun/Mpc)</span>
+
+			<span class="c1">#checking that all is good with modes</span>
+		<span class="k">if</span> <span class="n">approximant</span> <span class="o">==</span> <span class="s2">&quot;SEOBNRv4PHM&quot;</span><span class="p">:</span>
+			<span class="k">for</span> <span class="n">mode</span> <span class="ow">in</span> <span class="n">modes</span><span class="p">:</span>
+				<span class="k">if</span> <span class="n">mode</span> <span class="ow">not</span> <span class="ow">in</span> <span class="p">[(</span><span class="mi">2</span><span class="p">,</span><span class="mi">2</span><span class="p">),(</span><span class="mi">2</span><span class="p">,</span><span class="mi">1</span><span class="p">),</span> <span class="p">(</span><span class="mi">3</span><span class="p">,</span><span class="mi">3</span><span class="p">),</span> <span class="p">(</span><span class="mi">4</span><span class="p">,</span><span class="mi">4</span><span class="p">),</span> <span class="p">(</span><span class="mi">5</span><span class="p">,</span><span class="mi">5</span><span class="p">)]:</span>
+					<span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;Currently SEOBNRv4PHM approximants do not implement the chosen HM&quot;</span><span class="p">)</span>
+		<span class="k">elif</span> <span class="n">approximant</span> <span class="o">!=</span> <span class="s2">&quot;IMRPhenomTPHM&quot;</span><span class="p">:</span>
+			<span class="k">if</span> <span class="n">modes</span> <span class="o">!=</span> <span class="p">[(</span><span class="mi">2</span><span class="p">,</span><span class="mi">2</span><span class="p">)]:</span>
+				<span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;The chosen lal approximant does not implement HMs&quot;</span><span class="p">)</span>
+
+		
+
+		<span class="c1">#checking if N_grid is fine</span>
+	<span class="k">if</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">N_grid</span><span class="p">,</span> <span class="nb">int</span><span class="p">):</span>
+		<span class="k">raise</span> <span class="ne">TypeError</span><span class="p">(</span><span class="s2">&quot;N_grid is &quot;</span><span class="o">+</span><span class="nb">str</span><span class="p">(</span><span class="nb">type</span><span class="p">(</span><span class="n">N_grid</span><span class="p">))</span><span class="o">+</span><span class="s2">&quot;! Expected to be a int.&quot;</span><span class="p">)</span>
+
+	<span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">m2_range</span><span class="p">,</span> <span class="nb">tuple</span><span class="p">):</span>
+		<span class="n">D_theta</span> <span class="o">=</span> <span class="mi">4</span> <span class="c1">#m2 must be included as a feature</span>
+	<span class="k">else</span><span class="p">:</span>
+		<span class="n">D_theta</span> <span class="o">=</span> <span class="mi">3</span>
+
+		<span class="c1">######setting the time grid</span>
+	<span class="n">time_grid_list</span> <span class="o">=</span> <span class="p">[]</span>
+	<span class="n">t_end_list</span> <span class="o">=</span> <span class="p">[]</span>
+	<span class="k">if</span> <span class="n">approximant</span> <span class="o">==</span> <span class="s2">&quot;TEOBResumS&quot;</span><span class="p">:</span>
+		<span class="n">modes_to_k</span> <span class="o">=</span> <span class="k">lambda</span> <span class="n">modes</span><span class="p">:[</span><span class="nb">int</span><span class="p">(</span><span class="n">x</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">*</span><span class="p">(</span><span class="n">x</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">-</span><span class="mi">1</span><span class="p">)</span><span class="o">/</span><span class="mi">2</span> <span class="o">+</span> <span class="n">x</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span><span class="o">-</span><span class="mi">2</span><span class="p">)</span> <span class="k">for</span> <span class="n">x</span> <span class="ow">in</span> <span class="n">modes</span><span class="p">]</span> <span class="c1"># [(l,m)] -&gt; [k]</span>
+		<span class="n">k_modes</span> <span class="o">=</span> <span class="n">modes_to_k</span><span class="p">(</span><span class="n">modes</span><span class="p">)</span>
+			<span class="c1">#setting a list of time grids</span>
+		<span class="k">for</span> <span class="n">mode</span> <span class="ow">in</span> <span class="n">modes</span><span class="p">:</span>
+				<span class="c1">#ugly setting of t_end in TEOBResumS: required to kill bad features after merger</span>
+			<span class="k">if</span> <span class="n">mode</span> <span class="o">==</span> <span class="p">(</span><span class="mi">2</span><span class="p">,</span><span class="mi">2</span><span class="p">):</span>
+				<span class="n">t_end</span> <span class="o">=</span> <span class="mf">5.2e-4</span> <span class="c1">#estimated maximum time for ringdown: WF will be killed after that time</span>
+			<span class="k">elif</span> <span class="n">mode</span> <span class="o">==</span> <span class="p">(</span><span class="mi">2</span><span class="p">,</span><span class="mi">1</span><span class="p">)</span> <span class="ow">or</span> <span class="n">mode</span> <span class="o">==</span> <span class="p">(</span><span class="mi">3</span><span class="p">,</span><span class="mi">3</span><span class="p">):</span> <span class="c1">#special treatment for 21 and 33</span>
+				<span class="n">t_end</span> <span class="o">=</span> <span class="mf">1e-6</span>
+			<span class="k">else</span><span class="p">:</span>
+				<span class="n">t_end</span> <span class="o">=</span> <span class="mf">3e-5</span> <span class="c1">#for other modes</span>
+			<span class="n">t_end_list</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">t_end</span><span class="p">)</span>
+	<span class="k">else</span><span class="p">:</span>
+		<span class="k">for</span> <span class="n">mode</span> <span class="ow">in</span> <span class="n">modes</span><span class="p">:</span>
+			<span class="n">t_end_list</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="mf">5.2e-4</span><span class="p">)</span>
+
+	<span class="nb">print</span><span class="p">(</span><span class="s2">&quot;Generating modes: &quot;</span><span class="o">+</span><span class="nb">str</span><span class="p">(</span><span class="n">modes</span><span class="p">))</span>
+
+		<span class="c1">#creating time_grid</span>
+	<span class="k">for</span> <span class="n">i</span><span class="p">,</span><span class="n">mode</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">modes</span><span class="p">):</span>
+		<span class="n">time_grid</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">linspace</span><span class="p">(</span><span class="o">-</span><span class="n">np</span><span class="o">.</span><span class="n">power</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">abs</span><span class="p">(</span><span class="n">t_coal</span><span class="p">),</span> <span class="n">alpha</span><span class="p">),</span> <span class="n">np</span><span class="o">.</span><span class="n">power</span><span class="p">(</span><span class="n">t_end_list</span><span class="p">[</span><span class="n">i</span><span class="p">],</span> <span class="n">alpha</span><span class="p">),</span> <span class="n">N_grid</span><span class="p">)</span>
+		<span class="n">time_grid</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">multiply</span><span class="p">(</span> <span class="n">np</span><span class="o">.</span><span class="n">sign</span><span class="p">(</span><span class="n">time_grid</span><span class="p">)</span> <span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">power</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">abs</span><span class="p">(</span><span class="n">time_grid</span><span class="p">),</span> <span class="mf">1.</span><span class="o">/</span><span class="n">alpha</span><span class="p">))</span>
+
+			<span class="c1">#adding 0 to time grid</span>
+		<span class="n">index_0</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">argmin</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">abs</span><span class="p">(</span><span class="n">time_grid</span><span class="p">))</span>
+		<span class="n">time_grid</span><span class="p">[</span><span class="n">index_0</span><span class="p">]</span> <span class="o">=</span> <span class="mf">0.</span> <span class="c1">#0 is alway set in the grid</span>
+
+		<span class="n">time_grid_list</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">time_grid</span><span class="p">)</span>
+
+		<span class="c1">#setting t_coal_freq for generating a waves</span>
+	<span class="k">if</span> <span class="n">np</span><span class="o">.</span><span class="n">abs</span><span class="p">(</span><span class="n">t_coal</span><span class="p">)</span> <span class="o">&lt;</span> <span class="mf">0.05</span><span class="p">:</span>
+		<span class="n">t_coal_freq</span> <span class="o">=</span> <span class="mf">0.05</span>
+	<span class="k">else</span><span class="p">:</span>
+		<span class="n">t_coal_freq</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">abs</span><span class="p">(</span><span class="n">t_coal</span><span class="p">)</span>
+
+
+		<span class="c1">#####create a list of buffer to save the WFs</span>
+	<span class="n">buff_list</span> <span class="o">=</span> <span class="p">[]</span>
+	<span class="k">for</span> <span class="n">i</span><span class="p">,</span> <span class="n">mode</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">modes</span><span class="p">):</span>
+		<span class="n">filename</span> <span class="o">=</span> <span class="n">basefilename</span><span class="o">+</span><span class="s1">&#39;.&#39;</span><span class="o">+</span><span class="nb">str</span><span class="p">(</span><span class="n">mode</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span><span class="o">+</span><span class="nb">str</span><span class="p">(</span><span class="n">mode</span><span class="p">[</span><span class="mi">1</span><span class="p">])</span>
+		<span class="k">if</span> <span class="ow">not</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">isfile</span><span class="p">(</span><span class="n">filename</span><span class="p">):</span> <span class="c1">#file doesn&#39;t exist: must be created with proper header</span>
+			<span class="n">filebuff</span> <span class="o">=</span> <span class="nb">open</span><span class="p">(</span><span class="n">filename</span><span class="p">,</span><span class="s1">&#39;w&#39;</span><span class="p">)</span>
+			<span class="nb">print</span><span class="p">(</span><span class="s2">&quot;New file &quot;</span><span class="p">,</span> <span class="n">filename</span><span class="p">,</span> <span class="s2">&quot; created&quot;</span><span class="p">)</span>
+			<span class="n">time_header</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">concatenate</span><span class="p">((</span><span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">((</span><span class="mi">3</span><span class="p">,)),</span> <span class="n">time_grid_list</span><span class="p">[</span><span class="n">i</span><span class="p">],</span> <span class="n">time_grid_list</span><span class="p">[</span><span class="n">i</span><span class="p">])</span> <span class="p">)[</span><span class="kc">None</span><span class="p">,:]</span>
+			<span class="n">np</span><span class="o">.</span><span class="n">savetxt</span><span class="p">(</span><span class="n">filebuff</span><span class="p">,</span> <span class="n">time_header</span><span class="p">,</span> <span class="n">header</span> <span class="o">=</span> <span class="s2">&quot;#Mode:&quot;</span><span class="o">+</span> <span class="nb">str</span><span class="p">(</span><span class="n">mode</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span><span class="o">+</span><span class="nb">str</span><span class="p">(</span><span class="n">mode</span><span class="p">[</span><span class="mi">1</span><span class="p">])</span> <span class="o">+</span><span class="s2">&quot;</span><span class="se">\n</span><span class="s2"># row: theta &quot;</span><span class="o">+</span><span class="nb">str</span><span class="p">(</span><span class="n">D_theta</span><span class="p">)</span><span class="o">+</span><span class="s2">&quot; | amp (None,&quot;</span><span class="o">+</span><span class="nb">str</span><span class="p">(</span><span class="n">N_grid</span><span class="p">)</span><span class="o">+</span><span class="s2">&quot;)| ph (None,&quot;</span><span class="o">+</span><span class="nb">str</span><span class="p">(</span><span class="n">N_grid</span><span class="p">)</span><span class="o">+</span><span class="s2">&quot;)</span><span class="se">\n</span><span class="s2"># N_grid = &quot;</span><span class="o">+</span><span class="nb">str</span><span class="p">(</span><span class="n">N_grid</span><span class="p">)</span><span class="o">+</span><span class="s2">&quot; | t_coal =&quot;</span><span class="o">+</span><span class="nb">str</span><span class="p">(</span><span class="n">t_coal</span><span class="p">)</span><span class="o">+</span><span class="s2">&quot; | t_step =&quot;</span><span class="o">+</span><span class="nb">str</span><span class="p">(</span><span class="n">t_step</span><span class="p">)</span><span class="o">+</span><span class="s2">&quot; | q_range = &quot;</span><span class="o">+</span><span class="nb">str</span><span class="p">(</span><span class="n">q_range</span><span class="p">)</span><span class="o">+</span><span class="s2">&quot; | m2_range = &quot;</span><span class="o">+</span><span class="nb">str</span><span class="p">(</span><span class="n">m2_range</span><span class="p">)</span><span class="o">+</span><span class="s2">&quot; | s1_range = &quot;</span><span class="o">+</span><span class="nb">str</span><span class="p">(</span><span class="n">s1_range</span><span class="p">)</span><span class="o">+</span><span class="s2">&quot; | s2_range = &quot;</span><span class="o">+</span><span class="nb">str</span><span class="p">(</span><span class="n">s2_range</span><span class="p">),</span> <span class="n">newline</span> <span class="o">=</span> <span class="s1">&#39;</span><span class="se">\n</span><span class="s1">&#39;</span><span class="p">)</span>
+		<span class="k">else</span><span class="p">:</span>
+			<span class="n">filebuff</span> <span class="o">=</span> <span class="nb">open</span><span class="p">(</span><span class="n">filename</span><span class="p">,</span><span class="s1">&#39;a&#39;</span><span class="p">)</span>
+		<span class="n">buff_list</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">filebuff</span><span class="p">)</span>
+
+		<span class="c1">#####creating WFs</span>
+	<span class="k">for</span> <span class="n">n_WF</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">N_data</span><span class="p">):</span>
+			<span class="c1">#setting value for data</span>
+		<span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">m2_range</span><span class="p">,</span> <span class="nb">tuple</span><span class="p">):</span>
+			<span class="n">m2</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">uniform</span><span class="p">(</span><span class="n">m2_range</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span><span class="n">m2_range</span><span class="p">[</span><span class="mi">1</span><span class="p">])</span>
+		<span class="k">elif</span> <span class="n">m2_range</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+			<span class="n">m2</span> <span class="o">=</span> <span class="nb">float</span><span class="p">(</span><span class="n">m2_range</span><span class="p">)</span>
+		<span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">q_range</span><span class="p">,</span> <span class="nb">tuple</span><span class="p">):</span>
+			<span class="c1">#q = np.random.uniform(q_range[0],q_range[1]) #uniform q distribution</span>
+			
+			<span class="c1">#biased q distribution for the boundaries</span>
+			<span class="n">x</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">uniform</span><span class="p">()</span>
+			<span class="k">if</span> <span class="n">x</span> <span class="o">&lt;</span> <span class="mf">0.3</span><span class="p">:</span>
+				<span class="n">q</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">min</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">uniform</span><span class="p">(</span><span class="n">low</span><span class="o">=</span><span class="n">q_range</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span><span class="n">high</span><span class="o">=</span><span class="n">q_range</span><span class="p">[</span><span class="mi">1</span><span class="p">],</span><span class="n">size</span><span class="o">=</span><span class="mi">5</span><span class="p">))</span>
+			<span class="k">elif</span> <span class="mf">0.3</span> <span class="o">&lt;=</span> <span class="n">x</span> <span class="o">&lt;</span> <span class="mf">0.8</span><span class="p">:</span>
+				<span class="n">q</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">uniform</span><span class="p">(</span><span class="n">low</span><span class="o">=</span><span class="n">q_range</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span><span class="n">high</span><span class="o">=</span><span class="n">q_range</span><span class="p">[</span><span class="mi">1</span><span class="p">])</span>
+			<span class="k">else</span><span class="p">:</span>
+				<span class="n">q</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">max</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">uniform</span><span class="p">(</span><span class="n">low</span><span class="o">=</span><span class="n">q_range</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span><span class="n">high</span><span class="o">=</span><span class="n">q_range</span><span class="p">[</span><span class="mi">1</span><span class="p">],</span><span class="n">size</span><span class="o">=</span><span class="mi">4</span><span class="p">))</span>
+		<span class="k">else</span><span class="p">:</span>
+			<span class="n">q</span> <span class="o">=</span> <span class="nb">float</span><span class="p">(</span><span class="n">q_range</span><span class="p">)</span>
+		<span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">s1_range</span><span class="p">,</span> <span class="nb">tuple</span><span class="p">):</span>
+			<span class="n">spin1z</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">uniform</span><span class="p">(</span><span class="n">s1_range</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span><span class="n">s1_range</span><span class="p">[</span><span class="mi">1</span><span class="p">])</span>
+		<span class="k">else</span><span class="p">:</span>
+			<span class="n">spin1z</span> <span class="o">=</span> <span class="nb">float</span><span class="p">(</span><span class="n">s1_range</span><span class="p">)</span>
+		<span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">s2_range</span><span class="p">,</span> <span class="nb">tuple</span><span class="p">):</span>
+			<span class="n">spin2z</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">uniform</span><span class="p">(</span><span class="n">s2_range</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span><span class="n">s2_range</span><span class="p">[</span><span class="mi">1</span><span class="p">])</span>
+		<span class="k">else</span><span class="p">:</span>
+			<span class="n">spin2z</span> <span class="o">=</span> <span class="nb">float</span><span class="p">(</span><span class="n">s2_range</span><span class="p">)</span>
+
+		<span class="k">if</span> <span class="n">m2_range</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+			<span class="n">m2</span> <span class="o">=</span> <span class="mf">20.</span> <span class="o">/</span> <span class="p">(</span><span class="mi">1</span><span class="o">+</span><span class="n">q</span><span class="p">)</span>
+			<span class="n">m1</span> <span class="o">=</span> <span class="n">q</span> <span class="o">*</span> <span class="n">m2</span>
+		<span class="k">else</span><span class="p">:</span>
+			<span class="n">m1</span> <span class="o">=</span> <span class="n">q</span><span class="o">*</span> <span class="n">m2</span>
+		<span class="n">nu</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">divide</span><span class="p">(</span><span class="n">q</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">square</span><span class="p">(</span><span class="mi">1</span><span class="o">+</span><span class="n">q</span><span class="p">))</span> <span class="c1">#symmetric mass ratio</span>
+
+			<span class="c1">#computing f_min</span>
+		<span class="n">f_min</span> <span class="o">=</span> <span class="mf">.9</span><span class="o">*</span> <span class="p">((</span><span class="mi">151</span><span class="o">*</span><span class="p">(</span><span class="n">t_coal_freq</span><span class="p">)</span><span class="o">**</span><span class="p">(</span><span class="o">-</span><span class="mf">3.</span><span class="o">/</span><span class="mf">8.</span><span class="p">)</span> <span class="o">*</span> <span class="p">(((</span><span class="mi">1</span><span class="o">+</span><span class="n">q</span><span class="p">)</span><span class="o">**</span><span class="mi">2</span><span class="p">)</span><span class="o">/</span><span class="n">q</span><span class="p">)</span><span class="o">**</span><span class="p">(</span><span class="mf">3.</span><span class="o">/</span><span class="mf">8.</span><span class="p">))</span><span class="o">/</span><span class="p">(</span><span class="n">m1</span><span class="o">+</span><span class="n">m2</span><span class="p">))</span>
+		 <span class="c1">#in () there is the right scaling formula for frequency in order to get always the right reduced time</span>
+		 <span class="c1">#this should be multiplied by a prefactor (~1) for dealing with some small variation due to spins</span>
+
+		<span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">m2_range</span><span class="p">,</span> <span class="nb">tuple</span><span class="p">):</span>
+			<span class="n">temp_theta</span> <span class="o">=</span> <span class="p">[</span><span class="n">m1</span><span class="p">,</span> <span class="n">m2</span><span class="p">,</span> <span class="n">spin1z</span><span class="p">,</span> <span class="n">spin2z</span><span class="p">]</span>		
+		<span class="k">else</span><span class="p">:</span>
+			<span class="n">temp_theta</span> <span class="o">=</span> <span class="p">[</span><span class="n">m1</span><span class="o">/</span><span class="n">m2</span><span class="p">,</span> <span class="n">spin1z</span><span class="p">,</span> <span class="n">spin2z</span><span class="p">]</span>
+
+			<span class="c1">#getting the wave</span>
+			<span class="c1">#output of the if:</span>
+				<span class="c1">#amp_list, ph_list (same order as in modes)</span>
+				<span class="c1">#time_full, argpeak</span>
+		<span class="n">amp_list</span><span class="p">,</span> <span class="n">ph_list</span> <span class="o">=</span> <span class="p">[</span><span class="kc">None</span> <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">modes</span><span class="p">))],[</span><span class="kc">None</span> <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">modes</span><span class="p">))]</span>
+		<span class="k">if</span> <span class="n">approximant</span> <span class="o">==</span> <span class="s2">&quot;TEOBResumS&quot;</span><span class="p">:</span> <span class="c1">#using TEOBResumS</span>
+			<span class="n">pars</span> <span class="o">=</span> <span class="p">{</span>
+				<span class="s1">&#39;M&#39;</span>                  <span class="p">:</span> <span class="n">m1</span><span class="o">+</span><span class="n">m2</span><span class="p">,</span>
+				<span class="s1">&#39;q&#39;</span>                  <span class="p">:</span> <span class="n">m1</span><span class="o">/</span><span class="n">m2</span><span class="p">,</span>
+				<span class="s1">&#39;Lambda1&#39;</span>            <span class="p">:</span> <span class="mf">0.</span><span class="p">,</span>
+				<span class="s1">&#39;Lambda2&#39;</span>            <span class="p">:</span> <span class="mf">0.</span><span class="p">,</span>     
+				<span class="s1">&#39;chi1&#39;</span>               <span class="p">:</span> <span class="n">spin1z</span><span class="p">,</span>
+				<span class="s1">&#39;chi2&#39;</span>               <span class="p">:</span> <span class="n">spin2z</span><span class="p">,</span>
+				<span class="s1">&#39;domain&#39;</span>             <span class="p">:</span> <span class="mi">0</span><span class="p">,</span>      <span class="c1"># TD</span>
+				<span class="s1">&#39;arg_out&#39;</span>            <span class="p">:</span> <span class="mi">1</span><span class="p">,</span>      <span class="c1"># Output hlm/hflm. Default = 0</span>
+				<span class="s1">&#39;use_mode_lm&#39;</span>        <span class="p">:</span> <span class="nb">list</span><span class="p">(</span><span class="nb">set</span><span class="p">(</span><span class="n">k_modes</span> <span class="o">+</span> <span class="p">[</span><span class="mi">1</span><span class="p">])),</span>      <span class="c1"># List of modes to use/output through EOBRunPy (added 22 mode in case there isn&#39;t)</span>
+				<span class="c1">#&#39;srate_interp&#39;       : 1./t_step,  # srate at which to interpolate. Default = 4096.</span>
+				<span class="s1">&#39;use_geometric_units&#39;</span><span class="p">:</span> <span class="mi">0</span><span class="p">,</span>      <span class="c1"># Output quantities in geometric units. Default = 1</span>
+				<span class="s1">&#39;initial_frequency&#39;</span>  <span class="p">:</span> <span class="n">f_min</span><span class="p">,</span>   <span class="c1"># in Hz if use_geometric_units = 0, else in geometric units</span>
+				<span class="s1">&#39;interp_uniform_grid&#39;</span><span class="p">:</span> <span class="mi">0</span><span class="p">,</span>      <span class="c1"># Interpolate mode by mode on a uniform grid. Default = 0 (no interpolation)</span>
+				<span class="s1">&#39;distance&#39;</span><span class="p">:</span> <span class="mf">1.</span><span class="p">,</span>
+				<span class="s1">&#39;inclination&#39;</span><span class="p">:</span><span class="mf">0.</span><span class="p">,</span>
+			<span class="p">}</span>
+			<span class="n">time_full</span><span class="p">,</span> <span class="n">h_p</span><span class="p">,</span> <span class="n">h_c</span><span class="p">,</span> <span class="n">hlm</span> <span class="o">=</span> <span class="n">EOBRun_module</span><span class="o">.</span><span class="n">EOBRunPy</span><span class="p">(</span><span class="n">pars</span><span class="p">)</span>
+			<span class="k">for</span> <span class="n">i</span><span class="p">,</span> <span class="n">k_mode</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">k_modes</span><span class="p">):</span>
+				<span class="n">temp_amp</span> <span class="o">=</span> <span class="n">hlm</span><span class="p">[</span><span class="nb">str</span><span class="p">(</span><span class="n">k_mode</span><span class="p">)][</span><span class="mi">0</span><span class="p">]</span><span class="o">*</span><span class="n">nu</span> <span class="c1">#TEOBResumS has weird conventions on the modes</span>
+				<span class="n">temp_ph</span> <span class="o">=</span> <span class="n">hlm</span><span class="p">[</span><span class="nb">str</span><span class="p">(</span><span class="n">k_mode</span><span class="p">)][</span><span class="mi">1</span><span class="p">]</span>
+				<span class="n">amp_list</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="o">=</span> <span class="n">temp_amp</span>
+				<span class="n">ph_list</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="o">=</span> <span class="n">temp_ph</span>
+			<span class="n">argpeak</span> <span class="o">=</span> <span class="n">locate_peak</span><span class="p">(</span><span class="n">hlm</span><span class="p">[</span><span class="s1">&#39;1&#39;</span><span class="p">][</span><span class="mi">0</span><span class="p">]</span><span class="o">*</span><span class="n">nu</span><span class="p">)</span> <span class="c1">#aligned at the peak of the 22</span>
+
+		<span class="k">elif</span> <span class="n">approximant</span> <span class="o">==</span> <span class="s2">&quot;SEOBNRv4HM:old&quot;</span><span class="p">:</span> <span class="c1">#using SEOBNRv4HM</span>
+			<span class="n">nqcCoeffsInput</span><span class="o">=</span><span class="n">lal</span><span class="o">.</span><span class="n">CreateREAL8Vector</span><span class="p">(</span><span class="mi">10</span><span class="p">)</span>
+			<span class="n">sp</span><span class="p">,</span> <span class="n">dyn</span><span class="p">,</span> <span class="n">dynHi</span> <span class="o">=</span> <span class="n">lalsim</span><span class="o">.</span><span class="n">SimIMRSpinAlignedEOBModes</span><span class="p">(</span><span class="n">t_step</span><span class="p">,</span> <span class="n">m1</span><span class="o">*</span><span class="n">lal</span><span class="o">.</span><span class="n">MSUN_SI</span><span class="p">,</span> <span class="n">m2</span><span class="o">*</span><span class="n">lal</span><span class="o">.</span><span class="n">MSUN_SI</span><span class="p">,</span> <span class="n">f_min</span><span class="p">,</span> <span class="mf">1e6</span><span class="o">*</span><span class="n">lal</span><span class="o">.</span><span class="n">PC_SI</span><span class="p">,</span> <span class="n">spin1z</span><span class="p">,</span> <span class="n">spin2z</span><span class="p">,</span><span class="mi">41</span><span class="p">,</span> <span class="mf">0.</span><span class="p">,</span> <span class="mf">0.</span><span class="p">,</span> <span class="mf">0.</span><span class="p">,</span><span class="mf">0.</span><span class="p">,</span><span class="mf">0.</span><span class="p">,</span><span class="mf">0.</span><span class="p">,</span><span class="mf">0.</span><span class="p">,</span><span class="mf">0.</span><span class="p">,</span><span class="mf">1.</span><span class="p">,</span><span class="mf">1.</span><span class="p">,</span><span class="n">nqcCoeffsInput</span><span class="p">,</span> <span class="mi">0</span><span class="p">)</span>
+			<span class="n">amp_prefactor</span> <span class="o">=</span> <span class="n">prefactor</span><span class="o">*</span><span class="p">(</span><span class="n">m1</span><span class="o">+</span><span class="n">m2</span><span class="p">)</span><span class="o">/</span><span class="mf">1.</span> <span class="c1"># G/c^2 (M / d_L)</span>
+			<span class="k">while</span> <span class="n">sp</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+				<span class="n">lm</span> <span class="o">=</span> <span class="p">(</span><span class="n">sp</span><span class="o">.</span><span class="n">l</span><span class="p">,</span> <span class="n">sp</span><span class="o">.</span><span class="n">m</span><span class="p">)</span>
+				<span class="k">if</span> <span class="n">lm</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">modes</span><span class="p">:</span> <span class="c1">#skipping a non-necessary mode</span>
+					<span class="k">continue</span>
+				<span class="k">else</span><span class="p">:</span> <span class="c1">#computing index and saving the mode</span>
+					<span class="n">i</span> <span class="o">=</span> <span class="n">modes</span><span class="o">.</span><span class="n">index</span><span class="p">(</span><span class="n">lm</span><span class="p">)</span>
+					<span class="n">hlm</span> <span class="o">=</span> <span class="n">sp</span><span class="o">.</span><span class="n">mode</span><span class="o">.</span><span class="n">data</span><span class="o">.</span><span class="n">data</span> <span class="c1">#complex mode vector</span>
+					<span class="n">temp_amp</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">abs</span><span class="p">(</span><span class="n">hlm</span><span class="p">)</span><span class="o">/</span> <span class="n">amp_prefactor</span> <span class="o">/</span> <span class="n">nu</span> <span class="c1">#scaling with the convention of SEOB</span>
+					<span class="n">temp_ph</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">unwrap</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">angle</span><span class="p">(</span><span class="n">hlm</span><span class="p">))</span>
+					<span class="n">amp_list</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="o">=</span> <span class="n">temp_amp</span>
+					<span class="n">ph_list</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="o">=</span> <span class="n">temp_ph</span>
+
+				<span class="k">if</span> <span class="p">(</span><span class="n">sp</span><span class="o">.</span><span class="n">l</span><span class="p">,</span> <span class="n">sp</span><span class="o">.</span><span class="n">m</span><span class="p">)</span> <span class="o">==</span> <span class="p">(</span><span class="mi">2</span><span class="p">,</span><span class="mi">2</span><span class="p">):</span> <span class="c1">#get grid</span>
+					<span class="n">amp_22</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">abs</span><span class="p">(</span><span class="n">sp</span><span class="o">.</span><span class="n">mode</span><span class="o">.</span><span class="n">data</span><span class="o">.</span><span class="n">data</span><span class="p">)</span> <span class="c1">#amp of 22 mode (for time grid alignment)</span>
+					<span class="n">time_full</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">linspace</span><span class="p">(</span><span class="mf">0.0</span><span class="p">,</span> <span class="n">sp</span><span class="o">.</span><span class="n">mode</span><span class="o">.</span><span class="n">data</span><span class="o">.</span><span class="n">length</span><span class="o">*</span><span class="n">t_step</span><span class="p">,</span> <span class="n">sp</span><span class="o">.</span><span class="n">mode</span><span class="o">.</span><span class="n">data</span><span class="o">.</span><span class="n">length</span><span class="p">)</span> <span class="c1">#time grid at which wave is computed</span>
+					<span class="n">argpeak</span> <span class="o">=</span> <span class="n">locate_peak</span><span class="p">(</span><span class="n">amp_22</span><span class="p">)</span> <span class="c1">#aligned at the peak of the 22</span>
+				<span class="n">sp</span> <span class="o">=</span> <span class="n">sp</span><span class="o">.</span><span class="n">next</span>
+		<span class="k">elif</span> <span class="n">approximant</span> <span class="o">==</span> <span class="s2">&quot;IMRPhenomTPHM&quot;</span> <span class="ow">or</span> <span class="n">approximant</span> <span class="o">==</span> <span class="s2">&quot;SEOBNRv4PHM&quot;</span><span class="p">:</span>
+			<span class="c1">#https://lscsoft.docs.ligo.org/lalsuite/lalsimulation/test___s_e_o_b_n_rv4_p_h_m__vs__4_h_m__ringdown_8py_source.html</span>
+			<span class="n">approx</span> <span class="o">=</span> <span class="n">lalsim</span><span class="o">.</span><span class="n">SEOBNRv4PHM</span> <span class="k">if</span> <span class="n">approximant</span> <span class="o">==</span> <span class="s2">&quot;SEOBNRv4PHM&quot;</span> <span class="k">else</span> <span class="n">lalsim</span><span class="o">.</span><span class="n">IMRPhenomTPHM</span>
+			<span class="n">hlm</span> <span class="o">=</span> <span class="n">lalsim</span><span class="o">.</span><span class="n">SimInspiralChooseTDModes</span><span class="p">(</span><span class="mf">0.</span><span class="p">,</span>
+				<span class="n">t_step</span><span class="p">,</span>
+				<span class="n">m1</span><span class="o">*</span><span class="n">lalsim</span><span class="o">.</span><span class="n">lal</span><span class="o">.</span><span class="n">MSUN_SI</span><span class="p">,</span>
+				<span class="n">m2</span><span class="o">*</span><span class="n">lalsim</span><span class="o">.</span><span class="n">lal</span><span class="o">.</span><span class="n">MSUN_SI</span><span class="p">,</span>
+				<span class="mf">0.</span><span class="p">,</span>
+				<span class="mf">0.</span><span class="p">,</span>
+				<span class="n">spin1z</span><span class="p">,</span>
+				<span class="mf">0.</span><span class="p">,</span>
+				<span class="mf">0.</span><span class="p">,</span>
+				<span class="n">spin2z</span><span class="p">,</span>
+				<span class="n">f_min</span><span class="p">,</span>
+				<span class="n">f_min</span><span class="p">,</span>
+				<span class="mf">1e6</span><span class="o">*</span><span class="n">lalsim</span><span class="o">.</span><span class="n">lal</span><span class="o">.</span><span class="n">PC_SI</span><span class="p">,</span>
+				<span class="n">LALpars</span><span class="p">,</span>
+				<span class="mi">5</span><span class="p">,</span>			<span class="c1">#lmax</span>
+				<span class="n">approx</span>
+			<span class="p">)</span>
+			<span class="n">amp_prefactor</span> <span class="o">=</span> <span class="n">prefactor</span><span class="o">*</span><span class="p">(</span><span class="n">m1</span><span class="o">+</span><span class="n">m2</span><span class="p">)</span><span class="o">/</span><span class="mf">1.</span>
+			<span class="k">for</span> <span class="n">i</span><span class="p">,</span> <span class="n">lm</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">modes</span><span class="p">):</span>
+				<span class="c1">#{(2,2): lal.ts} </span>
+				<span class="n">temp_hlm</span> <span class="o">=</span> <span class="n">lalsim</span><span class="o">.</span><span class="n">SphHarmTimeSeriesGetMode</span><span class="p">(</span><span class="n">hlm</span><span class="p">,</span> <span class="n">lm</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="n">lm</span><span class="p">[</span><span class="mi">1</span><span class="p">])</span><span class="o">.</span><span class="n">data</span><span class="o">.</span><span class="n">data</span>
+				<span class="n">temp_amp</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">abs</span><span class="p">(</span><span class="n">temp_hlm</span><span class="p">)</span><span class="o">/</span> <span class="n">amp_prefactor</span> <span class="o">/</span> <span class="n">nu</span> <span class="c1">#check that this conventions are for every lal part</span>
+				<span class="n">temp_ph</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">unwrap</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">angle</span><span class="p">(</span><span class="n">temp_hlm</span><span class="p">))</span>
+				<span class="n">amp_list</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="o">=</span> <span class="n">temp_amp</span>
+				<span class="n">ph_list</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="o">=</span> <span class="n">temp_ph</span>
+				<span class="k">if</span> <span class="p">(</span><span class="n">lm</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="n">lm</span><span class="p">[</span><span class="mi">1</span><span class="p">])</span> <span class="o">==</span> <span class="p">(</span><span class="mi">2</span><span class="p">,</span><span class="mi">2</span><span class="p">):</span> <span class="c1">#get grid</span>
+					<span class="n">argpeak</span> <span class="o">=</span> <span class="n">locate_peak</span><span class="p">(</span><span class="n">temp_amp</span><span class="p">)</span> <span class="c1">#aligned at the peak of the 22</span>
+			<span class="n">time_full</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">linspace</span><span class="p">(</span><span class="mf">0.0</span><span class="p">,</span> <span class="nb">len</span><span class="p">(</span><span class="n">temp_amp</span><span class="p">)</span><span class="o">*</span><span class="n">t_step</span><span class="p">,</span> <span class="nb">len</span><span class="p">(</span><span class="n">temp_amp</span><span class="p">))</span> <span class="c1">#time grid at which wave is computed</span>
+
+		<span class="k">else</span><span class="p">:</span> <span class="c1">#another lal approximant (only 22 mode)</span>
+			<span class="n">hp</span><span class="p">,</span> <span class="n">hc</span> <span class="o">=</span> <span class="n">lalsim</span><span class="o">.</span><span class="n">SimInspiralChooseTDWaveform</span><span class="p">(</span> <span class="c1">#where is its definition and documentation????</span>
+				<span class="n">m1</span><span class="o">*</span><span class="n">lalsim</span><span class="o">.</span><span class="n">lal</span><span class="o">.</span><span class="n">MSUN_SI</span><span class="p">,</span> <span class="c1">#m1</span>
+				<span class="n">m2</span><span class="o">*</span><span class="n">lalsim</span><span class="o">.</span><span class="n">lal</span><span class="o">.</span><span class="n">MSUN_SI</span><span class="p">,</span> <span class="c1">#m2</span>
+				<span class="mf">0.</span><span class="p">,</span> <span class="mf">0.</span><span class="p">,</span> <span class="n">spin1z</span><span class="p">,</span> <span class="c1">#spin vector 1</span>
+				<span class="mf">0.</span><span class="p">,</span> <span class="mf">0.</span><span class="p">,</span> <span class="n">spin2z</span><span class="p">,</span> <span class="c1">#spin vector 2</span>
+				<span class="mf">1e6</span><span class="o">*</span><span class="n">lalsim</span><span class="o">.</span><span class="n">lal</span><span class="o">.</span><span class="n">PC_SI</span><span class="p">,</span> <span class="c1">#distance to source</span>
+				<span class="mf">0.</span><span class="p">,</span> <span class="c1">#inclination</span>
+				<span class="mf">0.</span><span class="p">,</span> <span class="c1">#phi</span>
+				<span class="mf">0.</span><span class="p">,</span> <span class="c1">#longAscNodes</span>
+				<span class="mf">0.</span><span class="p">,</span> <span class="c1">#eccentricity</span>
+				<span class="mf">0.</span><span class="p">,</span> <span class="c1">#meanPerAno</span>
+				<span class="n">t_step</span><span class="p">,</span> <span class="c1"># time incremental step</span>
+				<span class="n">f_min</span><span class="p">,</span> <span class="c1"># lowest value of freq</span>
+				<span class="n">f_min</span><span class="p">,</span> <span class="c1">#some reference value of freq (??)</span>
+				<span class="n">LALpars</span><span class="p">,</span> <span class="c1">#some lal dictionary</span>
+				<span class="n">approx</span> <span class="c1">#approx method for the model</span>
+			<span class="p">)</span>
+			<span class="n">h_p</span><span class="p">,</span> <span class="n">h_c</span> <span class="o">=</span>  <span class="n">hp</span><span class="o">.</span><span class="n">data</span><span class="o">.</span><span class="n">data</span><span class="p">,</span> <span class="n">hc</span><span class="o">.</span><span class="n">data</span><span class="o">.</span><span class="n">data</span>
+			<span class="n">time_full</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">linspace</span><span class="p">(</span><span class="mf">0.0</span><span class="p">,</span> <span class="n">hp</span><span class="o">.</span><span class="n">data</span><span class="o">.</span><span class="n">length</span><span class="o">*</span><span class="n">t_step</span><span class="p">,</span> <span class="n">hp</span><span class="o">.</span><span class="n">data</span><span class="o">.</span><span class="n">length</span><span class="p">)</span> <span class="c1">#time grid at which wave is computed</span>
+			<span class="n">amp_prefactor</span> <span class="o">=</span> <span class="n">prefactor</span><span class="o">*</span><span class="p">(</span><span class="n">m1</span><span class="o">+</span><span class="n">m2</span><span class="p">)</span><span class="o">/</span><span class="mf">1.</span> <span class="c1"># G/c^2 (M / d_L)</span>
+			<span class="n">temp_amp</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">sqrt</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">square</span><span class="p">(</span><span class="n">h_p</span><span class="p">)</span><span class="o">+</span><span class="n">np</span><span class="o">.</span><span class="n">square</span><span class="p">(</span><span class="n">h_c</span><span class="p">))</span> <span class="o">/</span> <span class="n">amp_prefactor</span> <span class="o">/</span> <span class="p">(</span><span class="mi">4</span><span class="o">*</span><span class="n">np</span><span class="o">.</span><span class="n">sqrt</span><span class="p">(</span><span class="mi">5</span><span class="o">/</span><span class="p">(</span><span class="mi">64</span><span class="o">*</span><span class="n">np</span><span class="o">.</span><span class="n">pi</span><span class="p">)))</span>
+			<span class="n">temp_ph</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">unwrap</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">arctan2</span><span class="p">(</span><span class="n">h_c</span><span class="p">,</span><span class="n">h_p</span><span class="p">))</span>
+			<span class="n">amp_list</span> <span class="o">=</span> <span class="p">[</span><span class="n">temp_amp</span><span class="p">]</span>
+			<span class="n">ph_list</span> <span class="o">=</span> <span class="p">[</span><span class="n">temp_ph</span><span class="p">]</span>
+			<span class="n">argpeak</span> <span class="o">=</span> <span class="n">locate_peak</span><span class="p">(</span><span class="n">temp_amp</span><span class="p">)</span> <span class="c1">#aligned at the peak of the 22</span>
+
+			<span class="c1">#setting time grid</span>
+		<span class="n">t_peak</span> <span class="o">=</span> <span class="n">time_full</span><span class="p">[</span><span class="n">argpeak</span><span class="p">]</span>
+		<span class="n">time_full</span> <span class="o">=</span> <span class="p">(</span><span class="n">time_full</span> <span class="o">-</span> <span class="n">t_peak</span><span class="p">)</span><span class="o">/</span><span class="p">(</span><span class="n">m1</span><span class="o">+</span><span class="n">m2</span><span class="p">)</span> <span class="c1">#grid is scaled to standard grid</span>
+
+			<span class="c1">#computing waves to the chosen std grid and saving to file</span>
+		<span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">amp_list</span><span class="p">)):</span>
+			<span class="n">temp_amp</span><span class="p">,</span> <span class="n">temp_ph</span> <span class="o">=</span> <span class="n">amp_list</span><span class="p">[</span><span class="n">i</span><span class="p">],</span> <span class="n">ph_list</span><span class="p">[</span><span class="n">i</span><span class="p">]</span>
+			<span class="n">temp_amp</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">interp</span><span class="p">(</span><span class="n">time_grid_list</span><span class="p">[</span><span class="n">i</span><span class="p">],</span> <span class="n">time_full</span><span class="p">,</span> <span class="n">temp_amp</span><span class="p">)</span>
+			<span class="n">temp_ph</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">interp</span><span class="p">(</span><span class="n">time_grid_list</span><span class="p">[</span><span class="n">i</span><span class="p">],</span> <span class="n">time_full</span><span class="p">,</span> <span class="n">temp_ph</span><span class="p">)</span>
+			<span class="n">temp_ph</span> <span class="o">=</span> <span class="n">temp_ph</span> <span class="o">-</span> <span class="n">temp_ph</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="c1">#all phases are shifted by a constant to make sure every wave has 0 phase at beginning of grid</span>
+
+			<span class="k">if</span> <span class="kc">False</span><span class="p">:</span>
+				<span class="c1">#TODO: remove this shit!!</span>
+				<span class="n">plt</span><span class="o">.</span><span class="n">figure</span><span class="p">()</span>
+				<span class="n">plt</span><span class="o">.</span><span class="n">plot</span><span class="p">(</span><span class="n">time_grid_list</span><span class="p">[</span><span class="n">i</span><span class="p">],</span> <span class="n">temp_amp_</span><span class="p">,</span><span class="s1">&#39;o&#39;</span><span class="p">,</span> <span class="n">ms</span> <span class="o">=</span> <span class="mi">2</span><span class="p">)</span>
+				<span class="n">plt</span><span class="o">.</span><span class="n">plot</span><span class="p">(</span><span class="n">time_full</span><span class="p">,</span> <span class="n">temp_amp</span><span class="p">)</span>
+				<span class="n">plt</span><span class="o">.</span><span class="n">xlim</span><span class="p">([</span><span class="o">-</span><span class="mf">0.00015</span><span class="p">,</span><span class="mf">0.00015</span><span class="p">])</span>
+				<span class="n">plt</span><span class="o">.</span><span class="n">show</span><span class="p">()</span>
+
+			<span class="n">to_save</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">concatenate</span><span class="p">((</span><span class="n">temp_theta</span><span class="p">,</span> <span class="n">temp_amp</span><span class="p">,</span> <span class="n">temp_ph</span><span class="p">))[</span><span class="kc">None</span><span class="p">,:]</span> <span class="c1">#(1,D)</span>
+			<span class="n">np</span><span class="o">.</span><span class="n">savetxt</span><span class="p">(</span><span class="n">buff_list</span><span class="p">[</span><span class="n">i</span><span class="p">],</span> <span class="n">to_save</span><span class="p">)</span>
+
+			<span class="c1">#user communication</span>
+		<span class="k">if</span> <span class="n">n_WF</span><span class="o">%</span><span class="mi">50</span> <span class="o">==</span> <span class="mi">0</span> <span class="ow">and</span> <span class="n">n_WF</span> <span class="o">!=</span> <span class="mi">0</span><span class="p">:</span>
+		<span class="c1">#if n_WF%1 == 0 and n_WF != 0: #debug</span>
+			<span class="nb">print</span><span class="p">(</span><span class="s2">&quot;Generated WF &quot;</span><span class="p">,</span> <span class="n">n_WF</span><span class="p">)</span>
+
+	<span class="k">if</span> <span class="n">filename</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+		<span class="k">return</span> <span class="n">theta_vector</span><span class="p">,</span> <span class="n">amp_dataset</span><span class="o">.</span><span class="n">real</span><span class="p">,</span> <span class="n">ph_dataset</span><span class="o">.</span><span class="n">real</span><span class="p">,</span> <span class="n">time_grid</span>
+	<span class="k">else</span><span class="p">:</span>
+		<span class="n">filebuff</span><span class="o">.</span><span class="n">close</span><span class="p">()</span>
+		<span class="k">return</span> <span class="kc">None</span></div>
+
+<div class="viewcode-block" id="generate_mode"><a class="viewcode-back" href="../../api_reference/GW_helper.html#mlgw.GW_helper.generate_mode">[docs]</a><span class="k">def</span> <span class="nf">generate_mode</span><span class="p">(</span><span class="n">m1</span><span class="p">,</span><span class="n">m2</span><span class="p">,</span> <span class="n">s1</span><span class="o">=</span><span class="mf">0.</span><span class="p">,</span><span class="n">s2</span> <span class="o">=</span> <span class="mf">0.</span><span class="p">,</span> <span class="n">d</span><span class="o">=</span><span class="mf">1.</span><span class="p">,</span> <span class="n">t_coal</span> <span class="o">=</span> <span class="mf">0.4</span><span class="p">,</span> <span class="n">t_step</span> <span class="o">=</span> <span class="mf">5e-5</span><span class="p">,</span> <span class="n">f_min</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span> <span class="n">t_min</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span> <span class="n">verbose</span> <span class="o">=</span> <span class="kc">False</span><span class="p">,</span> <span class="n">approx</span> <span class="o">=</span> <span class="s2">&quot;IMRPhenomTPHM&quot;</span><span class="p">):</span>
+	<span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">generate_mode</span>
+<span class="sd">=============</span>
+<span class="sd">	Wrapper to lalsimulation.SimInspiralChooseTDModes() to generate modes of a waveform. Wave is not preprocessed.</span>
+<span class="sd">	Input:</span>
+<span class="sd">		m1,m2,s1,s2,d				orbital parameters</span>
+<span class="sd">		t_coal						approximate time to coalescence in reduced grid (ignored if f_min or t_min is set)</span>
+<span class="sd">		t_step						EOB integration time to be given to lal</span>
+<span class="sd">		f_min						starting frequency in Hz (if None, it will be determined by t_coal; ignored if t_min is set)</span>
+<span class="sd">		t_min						starting time in s (if None, t_coal will be returned)</span>
+<span class="sd">		verbose						whether to print messages for each wave...</span>
+<span class="sd">	Output:</span>
+<span class="sd">		times (D,)	times at which modes are evaluated</span>
+<span class="sd">		mode_dict	dictionary with the modes (each mode is a complex timeseries)</span>
+<span class="sd">	&quot;&quot;&quot;</span>
+	<span class="kn">import</span> <span class="nn">lal</span>
+	<span class="kn">import</span> <span class="nn">lalsimulation</span> <span class="k">as</span> <span class="nn">lalsim</span>
+	<span class="n">q</span> <span class="o">=</span> <span class="n">m1</span><span class="o">/</span><span class="n">m2</span>
+	<span class="n">mtot</span> <span class="o">=</span> <span class="p">(</span><span class="n">m1</span><span class="o">+</span><span class="n">m2</span><span class="p">)</span><span class="c1">#*lal.MTSUN_SI</span>
+	<span class="n">mc</span> <span class="o">=</span> <span class="p">(</span><span class="n">m1</span><span class="o">*</span><span class="n">m2</span><span class="p">)</span><span class="o">**</span><span class="p">(</span><span class="mf">3.</span><span class="o">/</span><span class="mf">5.</span><span class="p">)</span><span class="o">/</span><span class="p">(</span><span class="n">m1</span><span class="o">+</span><span class="n">m2</span><span class="p">)</span><span class="o">**</span><span class="p">(</span><span class="mf">1.</span><span class="o">/</span><span class="mf">5.</span><span class="p">)</span>
+	<span class="n">mc</span> <span class="o">/=</span> <span class="mf">1.21</span> <span class="c1">#M_c / 1.21 M_sun</span>
+
+	<span class="k">if</span> <span class="n">t_min</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+		<span class="n">f_min</span> <span class="o">=</span> <span class="mf">.8</span><span class="o">*</span> <span class="p">((</span><span class="mi">151</span><span class="o">*</span><span class="p">(</span><span class="n">t_min</span><span class="o">/</span><span class="n">mtot</span><span class="p">)</span><span class="o">**</span><span class="p">(</span><span class="o">-</span><span class="mf">3.</span><span class="o">/</span><span class="mf">8.</span><span class="p">)</span> <span class="o">*</span> <span class="p">(((</span><span class="mi">1</span><span class="o">+</span><span class="n">q</span><span class="p">)</span><span class="o">**</span><span class="mi">2</span><span class="p">)</span><span class="o">/</span><span class="n">q</span><span class="p">)</span><span class="o">**</span><span class="p">(</span><span class="mf">3.</span><span class="o">/</span><span class="mf">8.</span><span class="p">))</span><span class="o">/</span><span class="n">mtot</span><span class="p">)</span>
+
+	<span class="k">if</span> <span class="n">f_min</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+		<span class="n">f_min</span> <span class="o">=</span> <span class="mf">.9</span><span class="o">*</span> <span class="p">((</span><span class="mi">151</span><span class="o">*</span><span class="p">(</span><span class="n">t_coal</span><span class="p">)</span><span class="o">**</span><span class="p">(</span><span class="o">-</span><span class="mf">3.</span><span class="o">/</span><span class="mf">8.</span><span class="p">)</span> <span class="o">*</span> <span class="p">(((</span><span class="mi">1</span><span class="o">+</span><span class="n">q</span><span class="p">)</span><span class="o">**</span><span class="mi">2</span><span class="p">)</span><span class="o">/</span><span class="n">q</span><span class="p">)</span><span class="o">**</span><span class="p">(</span><span class="mf">3.</span><span class="o">/</span><span class="mf">8.</span><span class="p">))</span><span class="o">/</span><span class="n">mtot</span><span class="p">)</span>
+
+	<span class="k">if</span> <span class="n">verbose</span><span class="p">:</span>
+		<span class="nb">print</span><span class="p">(</span><span class="s2">&quot;Generating wave @: &quot;</span><span class="p">,</span><span class="n">m1</span><span class="p">,</span><span class="n">m2</span><span class="p">,</span><span class="n">s1</span><span class="p">,</span><span class="n">s2</span><span class="p">,</span><span class="n">d</span><span class="p">,</span> <span class="n">iota</span><span class="p">,</span> <span class="n">phi_0</span><span class="p">)</span>
+
+	<span class="n">hlm</span> <span class="o">=</span> <span class="n">lalsim</span><span class="o">.</span><span class="n">SimInspiralChooseTDModes</span><span class="p">(</span><span class="mf">0.</span><span class="p">,</span>
+				<span class="n">t_step</span><span class="p">,</span>
+				<span class="n">m1</span><span class="o">*</span><span class="n">lalsim</span><span class="o">.</span><span class="n">lal</span><span class="o">.</span><span class="n">MSUN_SI</span><span class="p">,</span>
+				<span class="n">m2</span><span class="o">*</span><span class="n">lalsim</span><span class="o">.</span><span class="n">lal</span><span class="o">.</span><span class="n">MSUN_SI</span><span class="p">,</span>
+				<span class="mf">0.</span><span class="p">,</span>
+				<span class="mf">0.</span><span class="p">,</span>
+				<span class="n">s1z</span><span class="p">,</span>
+				<span class="mf">0.</span><span class="p">,</span>
+				<span class="mf">0.</span><span class="p">,</span>
+				<span class="n">s2z</span><span class="p">,</span>
+				<span class="n">f_min</span><span class="p">,</span>
+				<span class="n">f_min</span><span class="p">,</span>
+				<span class="mf">1e6</span><span class="o">*</span><span class="n">d</span><span class="o">*</span><span class="n">lalsim</span><span class="o">.</span><span class="n">lal</span><span class="o">.</span><span class="n">PC_SI</span><span class="p">,</span>
+				<span class="n">LALpars</span><span class="p">,</span>
+				<span class="mi">5</span><span class="p">,</span>			<span class="c1">#lmax</span>
+				<span class="n">lalsim</span><span class="o">.</span><span class="n">GetApproximantFromString</span><span class="p">(</span><span class="n">approx</span><span class="p">)</span> <span class="c1">#approx method for the model</span>
+			<span class="p">)</span>
+		
+	<span class="n">mode_dict</span> <span class="o">=</span> <span class="p">{}</span>
+	<span class="k">for</span> <span class="n">l</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="mi">2</span><span class="p">,</span><span class="mi">6</span><span class="p">):</span>
+		<span class="k">for</span> <span class="n">m</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span><span class="n">l</span><span class="o">+</span><span class="mi">1</span><span class="p">):</span>
+			<span class="c1">#{(2,2): lal.ts}</span>
+			<span class="k">try</span><span class="p">:</span>
+				<span class="n">temp_hlm</span> <span class="o">=</span> <span class="n">lalsim</span><span class="o">.</span><span class="n">SphHarmTimeSeriesGetMode</span><span class="p">(</span><span class="n">hlm</span><span class="p">,</span> <span class="n">lm</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="n">lm</span><span class="p">[</span><span class="mi">1</span><span class="p">])</span><span class="o">.</span><span class="n">data</span><span class="o">.</span><span class="n">data</span>
+				<span class="n">mode_dict</span><span class="p">[(</span><span class="n">l</span><span class="p">,</span><span class="n">m</span><span class="p">)]</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="n">temp_hlm</span><span class="p">)</span>
+			<span class="k">except</span><span class="p">:</span>
+				<span class="k">continue</span>
+
+	<span class="n">amp</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">abs</span><span class="p">(</span><span class="n">mode_dict</span><span class="p">[(</span><span class="mi">2</span><span class="p">,</span><span class="mi">2</span><span class="p">)])</span>
+	<span class="n">times</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">linspace</span><span class="p">(</span><span class="mf">0.0</span><span class="p">,</span> <span class="n">amp</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">*</span><span class="n">t_step</span><span class="p">,</span> <span class="n">amp</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span>  <span class="c1">#time actually</span>
+	<span class="n">t_m</span> <span class="o">=</span>  <span class="n">times</span><span class="p">[</span><span class="n">np</span><span class="o">.</span><span class="n">argmax</span><span class="p">(</span><span class="n">amp</span><span class="p">)]</span>
+	<span class="n">times</span> <span class="o">=</span> <span class="n">times</span> <span class="o">-</span> <span class="n">t_m</span>
+
+	<span class="k">if</span> <span class="n">t_min</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+		<span class="n">arg</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">argmin</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">abs</span><span class="p">(</span><span class="n">times</span><span class="o">+</span><span class="n">t_min</span><span class="p">))</span>
+		<span class="k">for</span> <span class="n">k</span><span class="p">,</span> <span class="n">v</span> <span class="ow">in</span> <span class="n">mode_dict</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
+			<span class="n">mode_dict</span><span class="p">[</span><span class="n">k</span><span class="p">]</span> <span class="o">=</span> <span class="n">v</span><span class="p">[</span><span class="n">arg</span><span class="p">:]</span>
+		<span class="n">times</span> <span class="o">=</span> <span class="n">times</span><span class="p">[</span><span class="n">arg</span><span class="p">:]</span>
+
+	<span class="k">return</span> <span class="n">times</span><span class="p">,</span> <span class="n">mode_dict</span></div>
+
+
+<div class="viewcode-block" id="generate_waveform"><a class="viewcode-back" href="../../api_reference/GW_helper.html#mlgw.GW_helper.generate_waveform">[docs]</a><span class="k">def</span> <span class="nf">generate_waveform</span><span class="p">(</span><span class="n">m1</span><span class="p">,</span><span class="n">m2</span><span class="p">,</span> <span class="n">s1</span><span class="o">=</span><span class="mf">0.</span><span class="p">,</span><span class="n">s2</span> <span class="o">=</span> <span class="mf">0.</span><span class="p">,</span><span class="n">d</span><span class="o">=</span><span class="mf">1.</span><span class="p">,</span> <span class="n">iota</span> <span class="o">=</span> <span class="mf">0.</span><span class="p">,</span><span class="n">phi_0</span><span class="o">=</span><span class="mf">0.</span><span class="p">,</span> <span class="n">t_coal</span> <span class="o">=</span> <span class="mf">0.4</span><span class="p">,</span> <span class="n">t_step</span> <span class="o">=</span> <span class="mf">5e-5</span><span class="p">,</span> <span class="n">f_min</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span> <span class="n">t_min</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span> <span class="n">verbose</span> <span class="o">=</span> <span class="kc">False</span><span class="p">,</span> <span class="n">approx</span> <span class="o">=</span> <span class="s2">&quot;SEOBNRv2_opt&quot;</span><span class="p">):</span>
+	<span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">generate_waveform</span>
+<span class="sd">=================</span>
+<span class="sd">	Wrapper to lalsimulation.SimInspiralChooseTDWaveform() to generate a single waveform. Wave is not preprocessed.</span>
+<span class="sd">	Input:</span>
+<span class="sd">		m1,m2,s1,s2,d,iota,phi_0	orbital parameters</span>
+<span class="sd">		t_coal						approximate time to coalescence in reduced grid (ignored if f_min or t_min is set)</span>
+<span class="sd">		t_step						EOB integration time to be given to lal</span>
+<span class="sd">		f_min						starting frequency in Hz (if None, it will be determined by t_coal; ignored if t_min is set)</span>
+<span class="sd">		t_min						starting time in s (if None, t_coal will be returned)</span>
+<span class="sd">		verbose						whether to print messages for each wave...</span>
+<span class="sd">	Output:</span>
+<span class="sd">		times (D,)	times at which wave is evaluated</span>
+<span class="sd">		h_p (N,D)	plus polarization of the wave</span>
+<span class="sd">		h_c (N,D)	cross polarization of the wave</span>
+<span class="sd">	&quot;&quot;&quot;</span>
+	<span class="kn">import</span> <span class="nn">lal</span>
+	<span class="kn">import</span> <span class="nn">lalsimulation</span> <span class="k">as</span> <span class="nn">lalsim</span>
+	<span class="n">q</span> <span class="o">=</span> <span class="n">m1</span><span class="o">/</span><span class="n">m2</span>
+	<span class="n">mtot</span> <span class="o">=</span> <span class="p">(</span><span class="n">m1</span><span class="o">+</span><span class="n">m2</span><span class="p">)</span><span class="c1">#*lal.MTSUN_SI</span>
+	<span class="n">mc</span> <span class="o">=</span> <span class="p">(</span><span class="n">m1</span><span class="o">*</span><span class="n">m2</span><span class="p">)</span><span class="o">**</span><span class="p">(</span><span class="mf">3.</span><span class="o">/</span><span class="mf">5.</span><span class="p">)</span><span class="o">/</span><span class="p">(</span><span class="n">m1</span><span class="o">+</span><span class="n">m2</span><span class="p">)</span><span class="o">**</span><span class="p">(</span><span class="mf">1.</span><span class="o">/</span><span class="mf">5.</span><span class="p">)</span>
+	<span class="n">mc</span> <span class="o">/=</span> <span class="mf">1.21</span> <span class="c1">#M_c / 1.21 M_sun</span>
+
+	<span class="k">if</span> <span class="n">t_min</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+		<span class="n">f_min</span> <span class="o">=</span> <span class="mf">.8</span><span class="o">*</span> <span class="p">((</span><span class="mi">151</span><span class="o">*</span><span class="p">(</span><span class="n">t_min</span><span class="o">/</span><span class="n">mtot</span><span class="p">)</span><span class="o">**</span><span class="p">(</span><span class="o">-</span><span class="mf">3.</span><span class="o">/</span><span class="mf">8.</span><span class="p">)</span> <span class="o">*</span> <span class="p">(((</span><span class="mi">1</span><span class="o">+</span><span class="n">q</span><span class="p">)</span><span class="o">**</span><span class="mi">2</span><span class="p">)</span><span class="o">/</span><span class="n">q</span><span class="p">)</span><span class="o">**</span><span class="p">(</span><span class="mf">3.</span><span class="o">/</span><span class="mf">8.</span><span class="p">))</span><span class="o">/</span><span class="n">mtot</span><span class="p">)</span>
+
+	<span class="k">if</span> <span class="n">f_min</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+		<span class="n">f_min</span> <span class="o">=</span> <span class="mf">.9</span><span class="o">*</span> <span class="p">((</span><span class="mi">151</span><span class="o">*</span><span class="p">(</span><span class="n">t_coal</span><span class="p">)</span><span class="o">**</span><span class="p">(</span><span class="o">-</span><span class="mf">3.</span><span class="o">/</span><span class="mf">8.</span><span class="p">)</span> <span class="o">*</span> <span class="p">(((</span><span class="mi">1</span><span class="o">+</span><span class="n">q</span><span class="p">)</span><span class="o">**</span><span class="mi">2</span><span class="p">)</span><span class="o">/</span><span class="n">q</span><span class="p">)</span><span class="o">**</span><span class="p">(</span><span class="mf">3.</span><span class="o">/</span><span class="mf">8.</span><span class="p">))</span><span class="o">/</span><span class="n">mtot</span><span class="p">)</span>
+
+	<span class="k">if</span> <span class="n">verbose</span><span class="p">:</span>
+		<span class="nb">print</span><span class="p">(</span><span class="s2">&quot;Generating wave @: &quot;</span><span class="p">,</span><span class="n">m1</span><span class="p">,</span><span class="n">m2</span><span class="p">,</span><span class="n">s1</span><span class="p">,</span><span class="n">s2</span><span class="p">,</span><span class="n">d</span><span class="p">,</span> <span class="n">iota</span><span class="p">,</span> <span class="n">phi_0</span><span class="p">)</span>
+
+	<span class="n">hp</span><span class="p">,</span> <span class="n">hc</span> <span class="o">=</span> <span class="n">lalsim</span><span class="o">.</span><span class="n">SimInspiralChooseTDWaveform</span><span class="p">(</span> <span class="c1">#where is its definition and documentation????</span>
+		<span class="n">m1</span><span class="o">*</span><span class="n">lalsim</span><span class="o">.</span><span class="n">lal</span><span class="o">.</span><span class="n">MSUN_SI</span><span class="p">,</span> <span class="c1">#m1</span>
+		<span class="n">m2</span><span class="o">*</span><span class="n">lalsim</span><span class="o">.</span><span class="n">lal</span><span class="o">.</span><span class="n">MSUN_SI</span><span class="p">,</span> <span class="c1">#m2</span>
+		<span class="mf">0.</span><span class="p">,</span> <span class="mf">0.</span><span class="p">,</span> <span class="n">s1</span><span class="p">,</span> <span class="c1">#spin vector 1</span>
+		<span class="mf">0.</span><span class="p">,</span> <span class="mf">0.</span><span class="p">,</span> <span class="n">s2</span><span class="p">,</span> <span class="c1">#spin vector 2</span>
+		<span class="n">d</span><span class="o">*</span><span class="mf">1e6</span><span class="o">*</span><span class="n">lalsim</span><span class="o">.</span><span class="n">lal</span><span class="o">.</span><span class="n">PC_SI</span><span class="p">,</span> <span class="c1">#distance to source</span>
+		<span class="n">iota</span><span class="p">,</span> <span class="c1">#inclination</span>
+		<span class="n">phi_0</span><span class="p">,</span> <span class="c1">#phi</span>
+		<span class="mf">0.</span><span class="p">,</span> <span class="c1">#longAscNodes</span>
+		<span class="mf">0.</span><span class="p">,</span> <span class="c1">#eccentricity</span>
+		<span class="mf">0.</span><span class="p">,</span> <span class="c1">#meanPerAno</span>
+		<span class="n">t_step</span><span class="p">,</span> <span class="c1"># time incremental step</span>
+		<span class="n">f_min</span><span class="p">,</span> <span class="c1"># lowest value of freq</span>
+		<span class="n">f_min</span><span class="p">,</span> <span class="c1">#some reference value of freq (??)</span>
+		<span class="n">lal</span><span class="o">.</span><span class="n">CreateDict</span><span class="p">(),</span> <span class="c1">#some lal dictionary</span>
+		<span class="n">lalsim</span><span class="o">.</span><span class="n">GetApproximantFromString</span><span class="p">(</span><span class="n">approx</span><span class="p">)</span> <span class="c1">#approx method for the model</span>
+		<span class="p">)</span>
+	<span class="n">h_p</span><span class="p">,</span> <span class="n">h_c</span> <span class="o">=</span>  <span class="n">hp</span><span class="o">.</span><span class="n">data</span><span class="o">.</span><span class="n">data</span><span class="p">,</span> <span class="n">hc</span><span class="o">.</span><span class="n">data</span><span class="o">.</span><span class="n">data</span>
+	<span class="n">amp</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">sqrt</span><span class="p">(</span><span class="n">h_p</span><span class="o">**</span><span class="mi">2</span><span class="o">+</span><span class="n">h_c</span><span class="o">**</span><span class="mi">2</span><span class="p">)</span>
+	<span class="c1">#(indices, ) = np.where(amp!=0) #trimming zeros of amplitude</span>
+	<span class="c1">#h_p = h_p[indices]</span>
+	<span class="c1">#h_c = h_c[indices]</span>
+
+	<span class="n">times</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">linspace</span><span class="p">(</span><span class="mf">0.0</span><span class="p">,</span> <span class="n">h_p</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">*</span><span class="n">t_step</span><span class="p">,</span> <span class="n">h_p</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span>  <span class="c1">#time actually</span>
+	<span class="n">t_m</span> <span class="o">=</span>  <span class="n">times</span><span class="p">[</span><span class="n">np</span><span class="o">.</span><span class="n">argmax</span><span class="p">(</span><span class="n">amp</span><span class="p">)]</span>
+	<span class="n">times</span> <span class="o">=</span> <span class="n">times</span> <span class="o">-</span> <span class="n">t_m</span>
+
+	<span class="k">if</span> <span class="n">t_min</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+		<span class="n">arg</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">argmin</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">abs</span><span class="p">(</span><span class="n">times</span><span class="o">+</span><span class="n">t_min</span><span class="p">))</span>
+	<span class="k">else</span><span class="p">:</span>
+		<span class="n">arg</span><span class="o">=</span><span class="mi">0</span>
+
+	<span class="k">return</span> <span class="n">times</span><span class="p">[</span><span class="n">arg</span><span class="p">:],</span> <span class="n">h_p</span><span class="p">[</span><span class="n">arg</span><span class="p">:],</span> <span class="n">h_c</span><span class="p">[</span><span class="n">arg</span><span class="p">:]</span></div>
+
+<div class="viewcode-block" id="generate_waveform_TEOBResumS"><a class="viewcode-back" href="../../api_reference/GW_helper.html#mlgw.GW_helper.generate_waveform_TEOBResumS">[docs]</a><span class="k">def</span> <span class="nf">generate_waveform_TEOBResumS</span><span class="p">(</span><span class="n">m1</span><span class="p">,</span><span class="n">m2</span><span class="p">,</span> <span class="n">s1</span><span class="o">=</span><span class="mf">0.</span><span class="p">,</span><span class="n">s2</span> <span class="o">=</span> <span class="mf">0.</span><span class="p">,</span><span class="n">d</span><span class="o">=</span><span class="mf">1.</span><span class="p">,</span> <span class="n">iota</span> <span class="o">=</span> <span class="mf">0.</span><span class="p">,</span> <span class="n">t_coal</span> <span class="o">=</span> <span class="mf">0.4</span><span class="p">,</span> <span class="n">t_step</span> <span class="o">=</span> <span class="mf">5e-5</span><span class="p">,</span> <span class="n">f_min</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span> <span class="n">t_min</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+<span class="n">modes</span> <span class="o">=</span> <span class="p">[(</span><span class="mi">2</span><span class="p">,</span><span class="mi">2</span><span class="p">)],</span> <span class="n">verbose</span> <span class="o">=</span> <span class="kc">False</span><span class="p">,</span> <span class="n">path_TEOBResumS</span> <span class="o">=</span> <span class="kc">None</span><span class="p">):</span>
+	<span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">generate_waveform</span>
+<span class="sd">=================</span>
+<span class="sd">	Wrapper to EOBRun_module.EOBRunPy() to generate a single waveform with TEOBResumS. Wave is not preprocessed.</span>
+<span class="sd">	Input:</span>
+<span class="sd">		m1,m2,s1,s2,d,iota,phi_0	orbital parameters</span>
+<span class="sd">		t_coal						approximate time to coalescence in reduced grid (ignored if f_min or t_min is set)</span>
+<span class="sd">		t_step						EOB integration time to be given to lal</span>
+<span class="sd">		f_min						starting frequency in Hz (if None, it will be determined by t_coal; ignored if t_min is set)</span>
+<span class="sd">		t_min						starting time in s (if None, t_coal will be returned)</span>
+<span class="sd">		modes 						list of modes to be included in the WFs</span>
+<span class="sd">		verbose						whether to print messages for each wave...</span>
+<span class="sd">	Output:</span>
+<span class="sd">		times (D,)	times at which wave is evaluated</span>
+<span class="sd">		h_p (D,)	plus polarization of the wave</span>
+<span class="sd">		h_c (D,)	cross polarization of the wave</span>
+<span class="sd">		t_m 		time at which amplitude peaks</span>
+<span class="sd">	&quot;&quot;&quot;</span>
+	<span class="n">modes_to_k</span> <span class="o">=</span> <span class="k">lambda</span> <span class="n">modes</span><span class="p">:[</span><span class="nb">int</span><span class="p">(</span><span class="n">x</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">*</span><span class="p">(</span><span class="n">x</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">-</span><span class="mi">1</span><span class="p">)</span><span class="o">/</span><span class="mi">2</span> <span class="o">+</span> <span class="n">x</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span><span class="o">-</span><span class="mi">2</span><span class="p">)</span> <span class="k">for</span> <span class="n">x</span> <span class="ow">in</span> <span class="n">modes</span><span class="p">]</span> <span class="c1"># [(l,m)] -&gt; [k]</span>
+
+	<span class="k">if</span> <span class="n">path_TEOBResumS</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span> <span class="c1">#very ugly but useful</span>
+		<span class="n">path_TEOBResumS</span> <span class="o">=</span> <span class="s1">&#39;/home/stefano/Desktop/Stefano/scuola/uni/tesi_magistrale/code/TEOBResumS/Python&#39;</span>
+	<span class="kn">import</span> <span class="nn">sys</span>
+	<span class="n">sys</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">path_TEOBResumS</span><span class="p">)</span> <span class="c1">#path to local installation of TEOBResumS</span>
+	<span class="kn">import</span> <span class="nn">EOBRun_module</span>
+
+	<span class="n">q</span> <span class="o">=</span> <span class="n">m1</span><span class="o">/</span><span class="n">m2</span>
+	<span class="k">if</span> <span class="n">q</span> <span class="o">&lt;</span><span class="mi">1</span><span class="p">:</span>
+		<span class="n">q</span> <span class="o">=</span> <span class="n">m2</span><span class="o">/</span><span class="n">m1</span>
+		<span class="n">s1</span><span class="p">,</span> <span class="n">s2</span> <span class="o">=</span> <span class="n">s2</span><span class="p">,</span> <span class="n">s1</span>
+	<span class="n">mtot</span> <span class="o">=</span> <span class="p">(</span><span class="n">m1</span><span class="o">+</span><span class="n">m2</span><span class="p">)</span><span class="c1">#*lal.MTSUN_SI</span>
+	<span class="n">mc</span> <span class="o">=</span> <span class="p">(</span><span class="n">m1</span><span class="o">*</span><span class="n">m2</span><span class="p">)</span><span class="o">**</span><span class="p">(</span><span class="mf">3.</span><span class="o">/</span><span class="mf">5.</span><span class="p">)</span><span class="o">/</span><span class="p">(</span><span class="n">m1</span><span class="o">+</span><span class="n">m2</span><span class="p">)</span><span class="o">**</span><span class="p">(</span><span class="mf">1.</span><span class="o">/</span><span class="mf">5.</span><span class="p">)</span>
+	<span class="n">mc</span> <span class="o">/=</span> <span class="mf">1.21</span> <span class="c1">#M_c / 1.21 M_sun</span>
+
+	<span class="k">if</span> <span class="n">t_min</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+		<span class="n">f_min</span> <span class="o">=</span> <span class="mf">.8</span><span class="o">*</span> <span class="p">((</span><span class="mi">151</span><span class="o">*</span><span class="p">(</span><span class="n">t_min</span><span class="o">/</span><span class="n">mtot</span><span class="p">)</span><span class="o">**</span><span class="p">(</span><span class="o">-</span><span class="mf">3.</span><span class="o">/</span><span class="mf">8.</span><span class="p">)</span> <span class="o">*</span> <span class="p">(((</span><span class="mi">1</span><span class="o">+</span><span class="n">q</span><span class="p">)</span><span class="o">**</span><span class="mi">2</span><span class="p">)</span><span class="o">/</span><span class="n">q</span><span class="p">)</span><span class="o">**</span><span class="p">(</span><span class="mf">3.</span><span class="o">/</span><span class="mf">8.</span><span class="p">))</span><span class="o">/</span><span class="n">mtot</span><span class="p">)</span>
+
+	<span class="k">if</span> <span class="n">f_min</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+		<span class="n">f_min</span> <span class="o">=</span> <span class="mf">.9</span><span class="o">*</span> <span class="p">((</span><span class="mi">151</span><span class="o">*</span><span class="p">(</span><span class="n">t_coal</span><span class="p">)</span><span class="o">**</span><span class="p">(</span><span class="o">-</span><span class="mf">3.</span><span class="o">/</span><span class="mf">8.</span><span class="p">)</span> <span class="o">*</span> <span class="p">(((</span><span class="mi">1</span><span class="o">+</span><span class="n">q</span><span class="p">)</span><span class="o">**</span><span class="mi">2</span><span class="p">)</span><span class="o">/</span><span class="n">q</span><span class="p">)</span><span class="o">**</span><span class="p">(</span><span class="mf">3.</span><span class="o">/</span><span class="mf">8.</span><span class="p">))</span><span class="o">/</span><span class="n">mtot</span><span class="p">)</span>
+
+	<span class="k">if</span> <span class="n">verbose</span><span class="p">:</span>
+		<span class="nb">print</span><span class="p">(</span><span class="s2">&quot;Generating wave @: &quot;</span><span class="p">,</span><span class="n">m1</span><span class="p">,</span><span class="n">m2</span><span class="p">,</span><span class="n">s1</span><span class="p">,</span><span class="n">s2</span><span class="p">,</span><span class="n">d</span><span class="p">,</span> <span class="n">iota</span><span class="p">)</span>
+	
+	<span class="n">k_modes</span> <span class="o">=</span> <span class="n">modes_to_k</span><span class="p">(</span><span class="n">modes</span><span class="p">)</span>
+
+	<span class="n">pars</span> <span class="o">=</span> <span class="p">{</span><span class="s1">&#39;M&#39;</span>                  <span class="p">:</span> <span class="n">m1</span><span class="o">+</span><span class="n">m2</span><span class="p">,</span>
+			<span class="s1">&#39;q&#39;</span>                  <span class="p">:</span> <span class="n">m1</span><span class="o">/</span><span class="n">m2</span><span class="p">,</span>
+			<span class="s1">&#39;Lambda1&#39;</span>            <span class="p">:</span> <span class="mf">0.</span><span class="p">,</span>
+			<span class="s1">&#39;Lambda2&#39;</span>            <span class="p">:</span> <span class="mf">0.</span><span class="p">,</span>     
+			<span class="s1">&#39;chi1&#39;</span>               <span class="p">:</span> <span class="n">s1</span><span class="p">,</span>
+			<span class="s1">&#39;chi2&#39;</span>               <span class="p">:</span> <span class="n">s2</span><span class="p">,</span>
+			<span class="s1">&#39;domain&#39;</span>             <span class="p">:</span> <span class="mi">0</span><span class="p">,</span>      <span class="c1"># TD</span>
+			<span class="s1">&#39;arg_out&#39;</span>            <span class="p">:</span> <span class="mi">1</span><span class="p">,</span>     <span class="c1"># Output hlm/hflm. Default = 0</span>
+			<span class="s1">&#39;use_mode_lm&#39;</span>        <span class="p">:</span> <span class="n">k_modes</span><span class="p">,</span>      <span class="c1"># List of modes to use/output through EOBRunPy</span>
+			<span class="s1">&#39;srate_interp&#39;</span>       <span class="p">:</span> <span class="mf">1.</span><span class="o">/</span><span class="n">t_step</span><span class="p">,</span>  <span class="c1"># srate at which to interpolate. Default = 4096.</span>
+			<span class="s1">&#39;use_geometric_units&#39;</span><span class="p">:</span> <span class="mi">0</span><span class="p">,</span>      <span class="c1"># Output quantities in geometric units. Default = 1</span>
+			<span class="s1">&#39;initial_frequency&#39;</span>  <span class="p">:</span> <span class="n">f_min</span><span class="p">,</span>   <span class="c1"># in Hz if use_geometric_units = 0, else in geometric units</span>
+			<span class="s1">&#39;interp_uniform_grid&#39;</span><span class="p">:</span> <span class="mi">2</span><span class="p">,</span>      <span class="c1"># Interpolate mode by mode on a uniform grid. Default = 0 (no interpolation)</span>
+			<span class="s1">&#39;distance&#39;</span><span class="p">:</span> <span class="n">d</span><span class="p">,</span>
+			<span class="s1">&#39;inclination&#39;</span><span class="p">:</span> <span class="n">iota</span><span class="p">,</span>
+			<span class="s1">&#39;nqc&#39;</span><span class="p">:</span><span class="mi">1</span><span class="p">,</span> <span class="c1">#{&quot;no&quot;, &quot;auto&quot;, &quot;manual&quot;}</span>
+			<span class="s1">&#39;nqc_coefs_flx&#39;</span><span class="p">:</span><span class="mi">0</span><span class="p">,</span> <span class="c1"># {&quot;none&quot;, &quot;nrfit_nospin20160209&quot;, &quot;fit_spin_202002&quot;, &quot;fromfile&quot;}</span>
+			<span class="s1">&#39;nqc_coefs_hlm&#39;</span><span class="p">:</span><span class="mi">0</span>
+		<span class="p">}</span>
+	<span class="n">times</span><span class="p">,</span> <span class="n">h_p</span><span class="p">,</span> <span class="n">h_c</span><span class="p">,</span> <span class="n">hlm</span> <span class="o">=</span> <span class="n">EOBRun_module</span><span class="o">.</span><span class="n">EOBRunPy</span><span class="p">(</span><span class="n">pars</span><span class="p">)</span>
+
+	<span class="k">try</span><span class="p">:</span>
+		<span class="n">argpeak</span> <span class="o">=</span> <span class="n">locate_peak</span><span class="p">(</span><span class="n">hlm</span><span class="p">[</span><span class="s1">&#39;1&#39;</span><span class="p">][</span><span class="mi">0</span><span class="p">])</span>
+	<span class="k">except</span><span class="p">:</span>
+		<span class="n">amp</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">sqrt</span><span class="p">(</span><span class="n">h_p</span><span class="o">**</span><span class="mi">2</span><span class="o">+</span><span class="n">h_c</span><span class="o">**</span><span class="mi">2</span><span class="p">)</span>
+		<span class="n">argpeak</span> <span class="o">=</span> <span class="n">locate_peak</span><span class="p">(</span><span class="n">amp</span><span class="p">)</span>
+	<span class="n">t_m</span> <span class="o">=</span>  <span class="n">times</span><span class="p">[</span><span class="n">argpeak</span><span class="p">]</span>
+	<span class="n">times</span> <span class="o">=</span> <span class="n">times</span> <span class="o">-</span> <span class="n">t_m</span>
+
+	<span class="k">if</span> <span class="n">t_min</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+		<span class="n">arg</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">argmin</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">abs</span><span class="p">(</span><span class="n">times</span><span class="o">+</span><span class="n">t_min</span><span class="p">))</span>
+	<span class="k">else</span><span class="p">:</span>
+		<span class="n">arg</span><span class="o">=</span><span class="mi">0</span>
+
+	<span class="k">return</span> <span class="n">times</span><span class="p">[</span><span class="n">arg</span><span class="p">:],</span> <span class="n">h_p</span><span class="p">[</span><span class="n">arg</span><span class="p">:],</span> <span class="n">h_c</span><span class="p">[</span><span class="n">arg</span><span class="p">:],</span> <span class="n">hlm</span><span class="p">,</span> <span class="n">t_m</span></div>
+
+
+<div class="viewcode-block" id="locate_peak"><a class="viewcode-back" href="../../api_reference/GW_helper.html#mlgw.GW_helper.locate_peak">[docs]</a><span class="k">def</span> <span class="nf">locate_peak</span><span class="p">(</span><span class="n">amp</span><span class="p">,</span> <span class="n">start</span> <span class="o">=</span> <span class="mf">0.3</span><span class="p">):</span>
+	<span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">	Given a time grid and an amplitude of the mode, it returns the peak of the amplitude.</span>
+<span class="sd">	Input:</span>
+<span class="sd">		amp (D,)		amplitude</span>
+<span class="sd">		start			points to be skipped at begining of the amplitude (in fraction of total points)</span>
+<span class="sd">	Output:</span>
+<span class="sd">		argpeak			index at which the amplitude has a peak</span>
+<span class="sd">	&quot;&quot;&quot;</span>
+	<span class="k">assert</span> <span class="n">amp</span><span class="o">.</span><span class="n">ndim</span> <span class="o">==</span> <span class="mi">1</span>
+	<span class="n">id_start</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">amp</span><span class="p">)</span><span class="o">*</span><span class="n">start</span><span class="p">)</span>
+	<span class="n">extrema</span> <span class="o">=</span> <span class="n">scipy</span><span class="o">.</span><span class="n">signal</span><span class="o">.</span><span class="n">argrelextrema</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">abs</span><span class="p">(</span><span class="n">amp</span><span class="p">[</span><span class="n">id_start</span><span class="p">:]),</span> <span class="n">np</span><span class="o">.</span><span class="n">greater</span><span class="p">)</span>
+	<span class="n">argpeak</span> <span class="o">=</span> <span class="n">extrema</span><span class="p">[</span><span class="mi">0</span><span class="p">][</span><span class="mi">0</span><span class="p">]</span><span class="o">+</span><span class="n">id_start</span>
+	<span class="k">return</span> <span class="n">argpeak</span></div>
+
+
+
+<div class="viewcode-block" id="save_dataset"><a class="viewcode-back" href="../../api_reference/GW_helper.html#mlgw.GW_helper.save_dataset">[docs]</a><span class="k">def</span> <span class="nf">save_dataset</span><span class="p">(</span><span class="n">filename</span><span class="p">,</span> <span class="n">theta_vector</span><span class="p">,</span> <span class="n">amp_dataset</span><span class="p">,</span> <span class="n">ph_dataset</span><span class="p">,</span> <span class="n">x_grid</span><span class="p">):</span>
+	<span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">	Save a dataset in a way that it&#39;s readable by load_dataset.</span>
+<span class="sd">	Input:</span>
+<span class="sd">		filename	name of the file to save dataset to</span>
+<span class="sd">		theta_vector (N_data,3)		vector holding ordered set of parameters used to generate amp_dataset and ph_dataset</span>
+<span class="sd">		amp_dataset (N_data,N_grid)	dataset with amplitudes</span>
+<span class="sd">		ph_dataset (N_data,N_grid)	dataset with phases</span>
+<span class="sd">		x_grid (N_grid,)			vector holding x_grid at which waves are evaluated</span>
+<span class="sd">	&quot;&quot;&quot;</span>
+	<span class="n">to_save</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">concatenate</span><span class="p">((</span><span class="n">theta_vector</span><span class="p">,</span> <span class="n">amp_dataset</span><span class="p">,</span> <span class="n">ph_dataset</span><span class="p">),</span> <span class="n">axis</span> <span class="o">=</span> <span class="mi">1</span><span class="p">)</span>
+	<span class="n">temp_x_grid</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">((</span><span class="mi">1</span><span class="p">,</span><span class="n">to_save</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">1</span><span class="p">]))</span>
+	<span class="n">K</span> <span class="o">=</span> <span class="nb">int</span><span class="p">((</span><span class="n">to_save</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span><span class="o">-</span><span class="mi">3</span><span class="p">)</span><span class="o">/</span><span class="mi">2</span><span class="p">)</span>
+	<span class="n">temp_x_grid</span><span class="p">[</span><span class="mi">0</span><span class="p">,</span><span class="mi">3</span><span class="p">:</span><span class="mi">3</span><span class="o">+</span><span class="n">k</span><span class="p">]</span> <span class="o">=</span> <span class="n">x_grid</span>
+	<span class="n">to_save</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">concatenate</span><span class="p">((</span><span class="n">temp_x_grid</span><span class="p">,</span><span class="n">to_save</span><span class="p">),</span> <span class="n">axis</span> <span class="o">=</span> <span class="mi">0</span><span class="p">)</span>
+	<span class="n">q_max</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">max</span><span class="p">(</span><span class="n">theta_vector</span><span class="p">[:,</span><span class="mi">0</span><span class="p">])</span>
+	<span class="n">spin_mag_max</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">max</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">abs</span><span class="p">(</span><span class="n">theta_vector</span><span class="p">[:,</span><span class="mi">1</span><span class="p">:</span><span class="mi">2</span><span class="p">]))</span>
+	<span class="n">x_step</span> <span class="o">=</span> <span class="n">x_grid</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span><span class="o">-</span><span class="n">x_grid</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
+	<span class="n">np</span><span class="o">.</span><span class="n">savetxt</span><span class="p">(</span><span class="n">filename</span><span class="p">,</span> <span class="n">to_save</span><span class="p">,</span> <span class="n">header</span> <span class="o">=</span> <span class="s2">&quot;# row: theta 3 | amp &quot;</span><span class="o">+</span><span class="nb">str</span><span class="p">(</span><span class="n">amp_dataset</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">1</span><span class="p">])</span><span class="o">+</span><span class="s2">&quot;| ph &quot;</span><span class="o">+</span><span class="nb">str</span><span class="p">(</span><span class="n">ph_dataset</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">1</span><span class="p">])</span><span class="o">+</span><span class="s2">&quot;</span><span class="se">\n</span><span class="s2"># N_grid = &quot;</span><span class="o">+</span><span class="nb">str</span><span class="p">(</span><span class="n">x_grid</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span><span class="o">+</span><span class="s2">&quot; | f_step =&quot;</span><span class="o">+</span><span class="nb">str</span><span class="p">(</span><span class="n">x_step</span><span class="p">)</span><span class="o">+</span><span class="s2">&quot; | q_max = &quot;</span><span class="o">+</span><span class="nb">str</span><span class="p">(</span><span class="n">q_max</span><span class="p">)</span><span class="o">+</span><span class="s2">&quot; | spin_mag_max = &quot;</span><span class="o">+</span><span class="nb">str</span><span class="p">(</span><span class="n">spin_mag_max</span><span class="p">),</span> <span class="n">newline</span> <span class="o">=</span> <span class="s1">&#39;</span><span class="se">\n</span><span class="s1">&#39;</span><span class="p">)</span>
+	<span class="k">return</span></div>
+
+
+<div class="viewcode-block" id="load_dataset"><a class="viewcode-back" href="../../api_reference/GW_helper.html#mlgw.GW_helper.load_dataset">[docs]</a><span class="k">def</span> <span class="nf">load_dataset</span><span class="p">(</span><span class="n">filename</span><span class="p">,</span> <span class="n">N_data</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">N_entries</span> <span class="o">=</span> <span class="mi">2</span><span class="p">,</span> <span class="n">N_grid</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span> <span class="n">shuffle</span> <span class="o">=</span> <span class="kc">False</span><span class="p">,</span> <span class="n">n_params</span> <span class="o">=</span> <span class="mi">3</span><span class="p">):</span>
+	<span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">	Load a dataset from file. The file should be suitable for np arrays and have the following structure:</span>
+<span class="sd">		parameters n_params | entry_1 K | entry_2 K | ... | entry_2 D</span>
+<span class="sd">	It is suitable for GW dataset (n_params = 3 and entry_1/2 = amplitude/phase), for angles dataset (n_params = 6 and entry_1/2 = alpha/beta) and for &quot;extended&quot; angle dataset (n_params = 6 and entries = alpha, beta_m, beta_amp, beta_ph)</span>
+<span class="sd">	The first row hold the x_grid vector.</span>
+<span class="sd">	It can shuffle the data if required.</span>
+<span class="sd">	Input:</span>
+<span class="sd">		filename	input filename</span>
+<span class="sd">		N_data		number of data to extract (only if data in file are more than N_data) (if None N_data = N)</span>
+<span class="sd">		N_grid		number of grid points to evaluate the waves in (Only if N_grid &lt; N_grid_dataset)</span>
+<span class="sd">		shuffle		whether to shuffle data</span>
+<span class="sd">		n_params	number of columns in the theta_vector</span>
+<span class="sd">	Outuput:</span>
+<span class="sd">		A list storing the following np.array</span>
+<span class="sd">			theta_vector (N_data,n_params)	vector holding ordered set of parameters used to generate amp_dataset and ph_dataset</span>
+<span class="sd">			dataset_1 (N_data,K)			entry 1</span>
+<span class="sd">			.</span>
+<span class="sd">			.</span>
+<span class="sd">			dataset_D	(N_data,K)			entry D</span>
+<span class="sd">			x_grid (K,)						vector holding x_grid at which the entries are evaluated (can be frequency or time grid)</span>
+<span class="sd">	&quot;&quot;&quot;</span>
+		<span class="c1">#here entry1 is amp and entry2 is ph (change it)</span>
+	<span class="k">if</span> <span class="n">N_data</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+		<span class="n">N_data</span> <span class="o">+=</span> <span class="mi">1</span>
+	<span class="n">data</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">loadtxt</span><span class="p">(</span><span class="n">filename</span><span class="p">,</span> <span class="n">max_rows</span> <span class="o">=</span> <span class="n">N_data</span><span class="p">)</span>
+	<span class="n">N</span> <span class="o">=</span> <span class="n">data</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
+	<span class="n">D</span> <span class="o">=</span> <span class="n">N_entries</span>
+	<span class="n">K</span> <span class="o">=</span> <span class="nb">int</span><span class="p">((</span><span class="n">data</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span><span class="o">-</span><span class="n">n_params</span><span class="p">)</span><span class="o">/</span><span class="n">D</span><span class="p">)</span>
+	<span class="n">x_grid</span> <span class="o">=</span> <span class="n">data</span><span class="p">[</span><span class="mi">0</span><span class="p">,</span><span class="n">n_params</span><span class="p">:</span><span class="n">n_params</span><span class="o">+</span><span class="n">K</span><span class="p">]</span> <span class="c1">#saving x_grid</span>
+
+	<span class="k">if</span> <span class="n">data</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span> <span class="o">!=</span> <span class="n">D</span><span class="o">*</span><span class="n">K</span> <span class="o">+</span> <span class="n">n_params</span><span class="p">:</span>
+		<span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;File given is not suitable for the required dataset. Unable to continue&quot;</span><span class="p">)</span>
+
+	<span class="n">data</span> <span class="o">=</span> <span class="n">data</span><span class="p">[</span><span class="mi">1</span><span class="p">:,:]</span> <span class="c1">#removing x_grid from full data</span>
+	<span class="k">if</span> <span class="n">shuffle</span><span class="p">:</span> 	<span class="c1">#shuffling if required</span>
+		<span class="n">np</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">shuffle</span><span class="p">(</span><span class="n">data</span><span class="p">)</span>
+
+	<span class="n">theta_vector</span> <span class="o">=</span> <span class="n">data</span><span class="p">[:,</span><span class="mi">0</span><span class="p">:</span><span class="n">n_params</span><span class="p">]</span>
+	<span class="n">dataset_list</span> <span class="o">=</span> <span class="p">[]</span>
+	<span class="k">for</span> <span class="n">d</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">D</span><span class="p">):</span>
+		<span class="n">dataset_list</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">data</span><span class="p">[:,</span><span class="n">n_params</span><span class="o">+</span><span class="n">d</span><span class="o">*</span><span class="n">K</span><span class="p">:</span><span class="n">n_params</span><span class="o">+</span><span class="p">(</span><span class="n">d</span><span class="o">+</span><span class="mi">1</span><span class="p">)</span><span class="o">*</span><span class="n">K</span><span class="p">])</span>
+
+	<span class="k">if</span> <span class="n">N_grid</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+		<span class="k">if</span> <span class="n">dataset_list</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span> <span class="o">&lt;</span> <span class="n">N_grid</span><span class="p">:</span>
+			<span class="n">warnings</span><span class="o">.</span><span class="n">warn</span><span class="p">(</span><span class="s2">&quot;Not enough grid points (&quot;</span><span class="o">+</span><span class="nb">str</span><span class="p">(</span><span class="n">dataset_list</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">1</span><span class="p">])</span><span class="o">+</span><span class="s2">&quot;) for the required N_grid value (&quot;</span><span class="o">+</span><span class="nb">str</span><span class="p">(</span><span class="n">N_grid</span><span class="p">)</span><span class="o">+</span><span class="s2">&quot;).</span><span class="se">\n</span><span class="s2">Maximum number of grid point is taken (but less than N_grid)&quot;</span><span class="p">)</span>
+			<span class="n">N_grid</span> <span class="o">=</span> <span class="n">dataset_list</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span>
+		<span class="n">indices</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">choice</span><span class="p">(</span><span class="nb">range</span><span class="p">(</span><span class="n">dataset_list</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">1</span><span class="p">]),</span> <span class="n">size</span> <span class="o">=</span> <span class="p">(</span><span class="n">N_grid</span><span class="p">,),</span> <span class="n">replace</span> <span class="o">=</span> <span class="kc">False</span><span class="p">)</span>
+		<span class="n">x_grid</span> <span class="o">=</span> <span class="n">x_grid</span><span class="p">[</span><span class="n">indices</span><span class="p">]</span>
+		<span class="k">for</span> <span class="n">d</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">D</span><span class="p">):</span>
+			<span class="n">dataset_list</span><span class="p">[</span><span class="n">d</span><span class="p">]</span> <span class="o">=</span> <span class="n">dataset_list</span><span class="p">[</span><span class="n">d</span><span class="p">][:,</span><span class="n">indices</span><span class="p">]</span>
+
+	<span class="n">to_return</span> <span class="o">=</span> <span class="p">[</span><span class="n">theta_vector</span><span class="p">,</span> <span class="o">*</span><span class="n">dataset_list</span><span class="p">,</span> <span class="n">x_grid</span><span class="p">]</span>
+
+	<span class="k">return</span> <span class="n">to_return</span></div>
+
+<div class="viewcode-block" id="make_set_split"><a class="viewcode-back" href="../../api_reference/GW_helper.html#mlgw.GW_helper.make_set_split">[docs]</a><span class="k">def</span> <span class="nf">make_set_split</span><span class="p">(</span><span class="n">data</span><span class="p">,</span> <span class="n">labels</span><span class="p">,</span> <span class="n">train_fraction</span> <span class="o">=</span> <span class="mf">.85</span><span class="p">,</span> <span class="n">scale_factor</span> <span class="o">=</span> <span class="kc">None</span><span class="p">):</span>
+	<span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">	Given a GW dataset made of data and labels, it makes a split between training and test set. Labels are scaled for scale factor (labels = labels/scale_factor).</span>
+<span class="sd">	Input:</span>
+<span class="sd">		data (N,K)		parameters set</span>
+<span class="sd">		labels (N,L)	label set</span>
+<span class="sd">		train_fraction	the fraction of data to included in training set</span>
+<span class="sd">		scale_factor	scale factor for scaling data (if None data are not scaled)</span>
+<span class="sd">	Output:</span>
+<span class="sd">		train_data/test_data (N*train_frac/N*(1-train_frac),K)	parameters for training/test set</span>
+<span class="sd">		train_labels/test_labels (N*train_frac/N*(1-train_frac),K)	labels for training/test set</span>
+<span class="sd">	&quot;&quot;&quot;</span>
+	<span class="k">if</span> <span class="n">scale_factor</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+		<span class="n">scale_factor</span> <span class="o">=</span> <span class="mf">1.</span>
+	<span class="n">labels</span> <span class="o">=</span> <span class="n">labels</span><span class="o">/</span><span class="n">scale_factor</span>
+
+		<span class="c1">#splitting into train and test set</span>
+	<span class="n">N</span> <span class="o">=</span> <span class="n">data</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
+	<span class="n">train_data</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="n">data</span><span class="p">[:</span><span class="nb">int</span><span class="p">(</span><span class="n">train_fraction</span><span class="o">*</span><span class="n">N</span><span class="p">),:])</span>
+	<span class="n">test_data</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="n">data</span><span class="p">[</span><span class="nb">int</span><span class="p">(</span><span class="n">train_fraction</span><span class="o">*</span><span class="n">N</span><span class="p">):,:])</span>
+
+	<span class="n">train_labels</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="n">labels</span><span class="p">[:</span><span class="nb">int</span><span class="p">(</span><span class="n">train_fraction</span><span class="o">*</span><span class="n">N</span><span class="p">),:])</span>
+	<span class="n">test_labels</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="n">labels</span><span class="p">[</span><span class="nb">int</span><span class="p">(</span><span class="n">train_fraction</span><span class="o">*</span><span class="n">N</span><span class="p">):,:])</span>
+	<span class="k">return</span> <span class="n">train_data</span><span class="p">,</span> <span class="n">test_data</span><span class="p">,</span> <span class="n">train_labels</span><span class="p">,</span> <span class="n">test_labels</span></div>
+
+</pre></div>
+
+                </article>
+              
+
+              
+              
+                <footer class="bd-footer-article">
+                  
+<div class="footer-article-items footer-article__inner">
+  
+    <div class="footer-article-item"><!-- Previous / next buttons -->
+<div class="prev-next-area">
+</div></div>
+  
+</div>
+
+                </footer>
+              
+            </div>
+            
+            
+              
+            
+          </div>
+          <footer class="bd-footer-content">
+            
+<div class="bd-footer-content__inner container">
+  
+  <div class="footer-item">
+    
+<p class="component-author">
+By Stefano Schmidt
+</p>
+
+  </div>
+  
+  <div class="footer-item">
+    
+  <p class="copyright">
+    
+      © Copyright 2023, Stefano Schmidt.
+      <br/>
+    
+  </p>
+
+  </div>
+  
+  <div class="footer-item">
+    
+  </div>
+  
+  <div class="footer-item">
+    
+  </div>
+  
+</div>
+          </footer>
+        
+
+      </main>
+    </div>
+  </div>
+  
+  <!-- Scripts loaded after <body> so the DOM is not blocked -->
+  <script src="../../_static/scripts/bootstrap.js?digest=e353d410970836974a52"></script>
+<script src="../../_static/scripts/pydata-sphinx-theme.js?digest=e353d410970836974a52"></script>
+
+  <footer class="bd-footer">
+  </footer>
+  </body>
+</html>

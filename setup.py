@@ -62,7 +62,12 @@ setup(
 		"tensorflow >= 2.10.0"
 		#"lalsuite >= 6.62"
     ],
-	long_description_content_type = 'text/x-rst'
+	long_description_content_type = 'text/x-rst',
+	command_options={
+        'build_sphinx': {
+            'source_dir': ('setup.py', 'docs'),
+            'build_dir': ('setup.py', 'docs/__build'),
+            }},
 )
 
 

@@ -1,0 +1,623 @@
+
+
+<!DOCTYPE html>
+
+
+<html lang="en" >
+
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>mlgw.fit_model &#8212; mlgw 3.0.0 documentation</title>
+  
+  
+  
+  <script data-cfasync="false">
+    document.documentElement.dataset.mode = localStorage.getItem("mode") || "";
+    document.documentElement.dataset.theme = localStorage.getItem("theme") || "light";
+  </script>
+  
+  <!-- Loaded before other Sphinx assets -->
+  <link href="../../_static/styles/theme.css?digest=e353d410970836974a52" rel="stylesheet" />
+<link href="../../_static/styles/bootstrap.css?digest=e353d410970836974a52" rel="stylesheet" />
+<link href="../../_static/styles/pydata-sphinx-theme.css?digest=e353d410970836974a52" rel="stylesheet" />
+
+  
+  <link href="../../_static/vendor/fontawesome/6.1.2/css/all.min.css?digest=e353d410970836974a52" rel="stylesheet" />
+  <link rel="preload" as="font" type="font/woff2" crossorigin href="../../_static/vendor/fontawesome/6.1.2/webfonts/fa-solid-900.woff2" />
+<link rel="preload" as="font" type="font/woff2" crossorigin href="../../_static/vendor/fontawesome/6.1.2/webfonts/fa-brands-400.woff2" />
+<link rel="preload" as="font" type="font/woff2" crossorigin href="../../_static/vendor/fontawesome/6.1.2/webfonts/fa-regular-400.woff2" />
+
+    <link rel="stylesheet" type="text/css" href="../../_static/pygments.css" />
+    <link rel="stylesheet" href="../../_static/styles/sphinx-book-theme.css?digest=14f4ca6b54d191a8c7657f6c759bf11a5fb86285" type="text/css" />
+  
+  <!-- Pre-loaded scripts that we'll load fully later -->
+  <link rel="preload" as="script" href="../../_static/scripts/bootstrap.js?digest=e353d410970836974a52" />
+<link rel="preload" as="script" href="../../_static/scripts/pydata-sphinx-theme.js?digest=e353d410970836974a52" />
+
+    <script data-url_root="../../" id="documentation_options" src="../../_static/documentation_options.js"></script>
+    <script src="../../_static/doctools.js"></script>
+    <script src="../../_static/sphinx_highlight.js"></script>
+    <script src="../../_static/scripts/sphinx-book-theme.js?digest=5a5c038af52cf7bc1a1ec88eea08e6366ee68824"></script>
+    <script>DOCUMENTATION_OPTIONS.pagename = '_modules/mlgw/fit_model';</script>
+    <link rel="author" title="About these documents" href="../../about.html" />
+    <link rel="index" title="Index" href="../../genindex.html" />
+    <link rel="search" title="Search" href="../../search.html" />
+  <meta name="viewport" content="width=device-width, initial-scale=1"/>
+  <meta name="docsearch:language" content="en"/>
+  </head>
+  
+  
+  <body data-bs-spy="scroll" data-bs-target=".bd-toc-nav" data-offset="180" data-bs-root-margin="0px 0px -60%" data-default-mode="">
+
+  
+  
+  <a class="skip-link" href="#main-content">Skip to main content</a>
+  
+  <input type="checkbox"
+          class="sidebar-toggle"
+          name="__primary"
+          id="__primary"/>
+  <label class="overlay overlay-primary" for="__primary"></label>
+  
+  <input type="checkbox"
+          class="sidebar-toggle"
+          name="__secondary"
+          id="__secondary"/>
+  <label class="overlay overlay-secondary" for="__secondary"></label>
+  
+  <div class="search-button__wrapper">
+    <div class="search-button__overlay"></div>
+    <div class="search-button__search-container">
+<form class="bd-search d-flex align-items-center"
+      action="../../search.html"
+      method="get">
+  <i class="fa-solid fa-magnifying-glass"></i>
+  <input type="search"
+         class="form-control"
+         name="q"
+         id="search-input"
+         placeholder="Search..."
+         aria-label="Search..."
+         autocomplete="off"
+         autocorrect="off"
+         autocapitalize="off"
+         spellcheck="false"/>
+  <span class="search-button__kbd-shortcut"><kbd class="kbd-shortcut__modifier">Ctrl</kbd>+<kbd>K</kbd></span>
+</form></div>
+  </div>
+  
+    <nav class="bd-header navbar navbar-expand-lg bd-navbar">
+    </nav>
+  
+  <div class="bd-container">
+    <div class="bd-container__inner bd-page-width">
+      
+      <div class="bd-sidebar-primary bd-sidebar">
+        
+
+  
+  <div class="sidebar-header-items sidebar-primary__section">
+    
+    
+    
+    
+  </div>
+  
+    <div class="sidebar-primary-items__start sidebar-primary__section">
+        <div class="sidebar-primary-item">
+  
+
+<a class="navbar-brand logo" href="../../index.html">
+  
+  
+  
+  
+  
+    <p class="title logo__title">mlgw 3.0.0 documentation</p>
+  
+</a></div>
+        <div class="sidebar-primary-item"><nav class="bd-links" id="bd-docs-nav" aria-label="Main">
+    <div class="bd-toc-item navbar-nav active">
+        <p aria-level="2" class="caption" role="heading"><span class="caption-text">Usage</span></p>
+<ul class="nav bd-sidenav">
+<li class="toctree-l1"><a class="reference internal" href="../../usage/install.html">Installing <code class="docutils literal notranslate"><span class="pre">mlgw</span></code></a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../usage/overview.html">What <code class="docutils literal notranslate"><span class="pre">mlgw</span></code> can do for you</a></li>
+</ul>
+<p aria-level="2" class="caption" role="heading"><span class="caption-text">API reference</span></p>
+<ul class="nav bd-sidenav">
+<li class="toctree-l1"><a class="reference internal" href="../../api_reference/GW_generator.html">Module GW_generator.py</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../api_reference/NN_model.html">Module NN_model.py</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../api_reference/EM_MoE.html">Module EM_MoE.py</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../api_reference/ML_routines.html">Module ML_routines.py</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../api_reference/GW_helper.html">Module GW_helper.py</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../api_reference/fit_model.html">Module fit_model.py</a></li>
+</ul>
+<p aria-level="2" class="caption" role="heading"><span class="caption-text">About</span></p>
+<ul class="nav bd-sidenav">
+<li class="toctree-l1"><a class="reference internal" href="../../about.html">About</a></li>
+</ul>
+
+    </div>
+</nav></div>
+    </div>
+  
+  
+  <div class="sidebar-primary-items__end sidebar-primary__section">
+  </div>
+  
+  <div id="rtd-footer-container"></div>
+
+
+      </div>
+      
+      <main id="main-content" class="bd-main">
+        
+        
+
+<div class="sbt-scroll-pixel-helper"></div>
+
+          <div class="bd-content">
+            <div class="bd-article-container">
+              
+              <div class="bd-header-article">
+<div class="header-article-items header-article__inner">
+  
+    <div class="header-article-items__start">
+      
+        <div class="header-article-item"><label class="sidebar-toggle primary-toggle btn btn-sm" for="__primary" title="Toggle primary sidebar" data-bs-placement="bottom" data-bs-toggle="tooltip">
+  <span class="fa-solid fa-bars"></span>
+</label></div>
+      
+    </div>
+  
+  
+    <div class="header-article-items__end">
+      
+        <div class="header-article-item">
+
+<div class="article-header-buttons">
+
+
+
+<button onclick="toggleFullScreen()"
+  class="btn btn-sm btn-fullscreen-button"
+  title="Fullscreen mode"
+  data-bs-placement="bottom" data-bs-toggle="tooltip"
+>
+  
+
+<span class="btn__icon-container">
+  <i class="fas fa-expand"></i>
+  </span>
+
+</button>
+
+
+<script>
+document.write(`
+  <button class="theme-switch-button btn btn-sm btn-outline-primary navbar-btn rounded-circle" title="light/dark" aria-label="light/dark" data-bs-placement="bottom" data-bs-toggle="tooltip">
+    <span class="theme-switch" data-mode="light"><i class="fa-solid fa-sun"></i></span>
+    <span class="theme-switch" data-mode="dark"><i class="fa-solid fa-moon"></i></span>
+    <span class="theme-switch" data-mode="auto"><i class="fa-solid fa-circle-half-stroke"></i></span>
+  </button>
+`);
+</script>
+
+<script>
+document.write(`
+  <button class="btn btn-sm navbar-btn search-button search-button__button" title="Search" aria-label="Search" data-bs-placement="bottom" data-bs-toggle="tooltip">
+    <i class="fa-solid fa-magnifying-glass"></i>
+  </button>
+`);
+</script>
+
+</div></div>
+      
+    </div>
+  
+</div>
+</div>
+              
+              
+
+<div id="jb-print-docs-body" class="onlyprint">
+    <h1></h1>
+    <!-- Table of contents -->
+    <div id="print-main-content">
+        <div id="jb-print-toc">
+            
+        </div>
+    </div>
+</div>
+
+              
+                
+<div id="searchbox"></div>
+                <article class="bd-article" role="main">
+                  
+  <h1>Source code for mlgw.fit_model</h1><div class="highlight"><pre>
+<span></span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">Module fit_model.py</span>
+<span class="sd">===================</span>
+<span class="sd">	Various routines for mlgw model fitting.</span>
+<span class="sd">	Routines:</span>
+<span class="sd">		create_PCA_dataset		routine for generating a dataset for PC projections of waves and orbital parameters. It start from a waveform dataset</span>
+<span class="sd">		fit_MoE					routine for fitting a MoE model for regression from obrital parameters to PC projection. It takes as input a PCA dataset, and outputs many file where the model is saved.</span>
+<span class="sd">&quot;&quot;&quot;</span>
+
+<span class="c1">#################</span>
+
+<span class="kn">import</span> <span class="nn">os</span>
+<span class="kn">import</span> <span class="nn">sys</span>
+<span class="kn">import</span> <span class="nn">warnings</span>
+<span class="kn">import</span> <span class="nn">numpy</span> <span class="k">as</span> <span class="nn">np</span>
+<span class="n">sys</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">insert</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">dirname</span><span class="p">(</span><span class="vm">__file__</span><span class="p">))</span> 	<span class="c1">#adding to path folder where mlgw package is installed (ugly?)</span>
+<span class="kn">from</span> <span class="nn">shutil</span> <span class="kn">import</span> <span class="n">copyfile</span> <span class="c1">#for copying files </span>
+<span class="kn">from</span> <span class="nn">GW_helper</span> <span class="kn">import</span> <span class="o">*</span> 	<span class="c1">#routines for dealing with datasets</span>
+<span class="kn">from</span> <span class="nn">ML_routines</span> <span class="kn">import</span> <span class="o">*</span>	<span class="c1">#PCA model</span>
+<span class="kn">from</span> <span class="nn">EM_MoE</span> <span class="kn">import</span> <span class="o">*</span>		<span class="c1">#MoE model</span>
+
+<span class="c1">################# routine create_PCA_dataset</span>
+<div class="viewcode-block" id="create_PCA_dataset"><a class="viewcode-back" href="../../api_reference/fit_model.html#mlgw.fit_model.create_PCA_dataset">[docs]</a><span class="k">def</span> <span class="nf">create_PCA_dataset</span><span class="p">(</span><span class="n">K</span><span class="p">,</span> <span class="n">dataset_file</span><span class="p">,</span> <span class="n">out_folder</span><span class="p">,</span> <span class="n">train_frac</span> <span class="o">=</span> <span class="mf">0.75</span><span class="p">,</span> <span class="n">clean_dataset</span> <span class="o">=</span> <span class="kc">False</span><span class="p">):</span>
+	<span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">create_PCA_dataset</span>
+<span class="sd">==================</span>
+<span class="sd">	Creates a PCA dataset starting from a waveform dataset.</span>
+<span class="sd">	Waveform dataset can be generated with:</span>
+<span class="sd">		mlgw.GW_helper.create_dataset_TD(N_data = 3000, N_grid = 4000, filename = &quot;../GW_TD_dataset.dat&quot;,</span>
+<span class="sd">		 t_coal = .4, q_range = (1.,10.), m2_range = None, s1_range = (-0.8,0.8), s2_range = (-0.8,0.8),</span>
+<span class="sd">		 t_step = 1e-6, lal_approximant = &quot;SEOBNRv2_opt&quot;)</span>
+<span class="sd">	A PCA dataset consists in</span>
+<span class="sd">		PCA model				a fitted PCA model in the form of mlgw.ML_routines.PCA_model (used for reduced dataset creation)</span>
+<span class="sd">		train(test) theta		training(test) set for the orbital parameters</span>
+<span class="sd">		train(test) amp(ph)		training(test) set for the reduced components of amplitude(phase)</span>
+<span class="sd">		times					times at which waves are evalueted in the high dimensional representation (not useful for MoE but required by mlgw.GW_generator</span>
+<span class="sd">	Dataset will be saved to output folder in the following files (total 9):</span>
+<span class="sd">		&quot;amp(ph)_PCA_model&quot;    &quot;PCA_train(test)_theta.dat&quot;    &quot;PCA_train(test)_amp(ph).dat&quot;    &quot;times&quot;</span>
+<span class="sd">	Input:</span>
+<span class="sd">		K (tuple)		number of PC to consider (K_amp, K_ph); if int amp and ph have the same number of PC</span>
+<span class="sd">		dataset_file	path to file holding input waveform dataset</span>
+<span class="sd">		out_folder		output folder which all output files will be saved to.</span>
+<span class="sd">		train_frac		fraction of data in WF datset to be included in training set (must be strictly less than 1)</span>
+<span class="sd">		clean_dataset	whether to remove outliers at low q in the dataset (advised for odd m modes)</span>
+<span class="sd">	&quot;&quot;&quot;</span>
+	<span class="k">if</span> <span class="ow">not</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">isdir</span><span class="p">(</span><span class="n">out_folder</span><span class="p">):</span> <span class="c1">#check if out_folder exists</span>
+		<span class="k">try</span><span class="p">:</span>
+			<span class="n">os</span><span class="o">.</span><span class="n">mkdir</span><span class="p">(</span><span class="n">out_folder</span><span class="p">)</span>
+		<span class="k">except</span><span class="p">:</span>
+			<span class="k">raise</span> <span class="ne">RuntimeError</span><span class="p">(</span><span class="s2">&quot;Impossible to create output folder &quot;</span><span class="o">+</span><span class="nb">str</span><span class="p">(</span><span class="n">out_folder</span><span class="p">)</span><span class="o">+</span><span class="s2">&quot;. Please, choose a valid folder.&quot;</span><span class="p">)</span>
+			<span class="k">return</span>
+
+	<span class="n">theta_vector</span><span class="p">,</span> <span class="n">amp_dataset</span><span class="p">,</span> <span class="n">ph_dataset</span><span class="p">,</span> <span class="n">times</span> <span class="o">=</span> <span class="n">load_dataset</span><span class="p">(</span><span class="n">dataset_file</span><span class="p">,</span> <span class="n">shuffle</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span> <span class="c1">#loading dataset</span>
+	<span class="k">if</span> <span class="kc">False</span><span class="p">:</span> <span class="c1">#weird thing to fix a different scaling in the previous dataset. User does not want to care about it</span>
+		<span class="nb">print</span><span class="p">(</span><span class="s2">&quot;##################################### Non standard stuff! Attention #####################################&quot;</span><span class="p">)</span>
+		<span class="n">nu</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">divide</span><span class="p">(</span><span class="n">theta_vector</span><span class="p">[:,</span><span class="mi">0</span><span class="p">],</span> <span class="n">np</span><span class="o">.</span><span class="n">square</span><span class="p">(</span><span class="mi">1</span><span class="o">+</span><span class="n">theta_vector</span><span class="p">[:,</span><span class="mi">0</span><span class="p">]))</span>
+		<span class="n">amp_dataset</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">multiply</span><span class="p">(</span><span class="n">amp_dataset</span><span class="o">.</span><span class="n">T</span><span class="p">,</span> <span class="n">nu</span><span class="p">)</span><span class="o">.</span><span class="n">T</span>
+	
+	<span class="k">if</span> <span class="kc">False</span><span class="p">:</span> <span class="c1">#trim the last part of the model, to remove ringdown and change regression variable to ~Mchirp</span>
+		<span class="nb">print</span><span class="p">(</span><span class="s2">&quot;##################################### Non standard stuff! Attention #####################################&quot;</span><span class="p">)</span>
+		<span class="n">N_trim</span> <span class="o">=</span> <span class="n">ph_dataset</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
+		<span class="n">amp_dataset</span><span class="p">,</span> <span class="n">ph_dataset</span><span class="p">,</span> <span class="n">times</span> <span class="o">=</span> <span class="n">amp_dataset</span><span class="p">[:,:</span><span class="n">N_trim</span><span class="p">],</span> <span class="n">ph_dataset</span><span class="p">[:,:</span><span class="n">N_trim</span><span class="p">],</span> <span class="n">times</span><span class="p">[:</span><span class="n">N_trim</span><span class="p">]</span>
+			<span class="c1">#regression with Mchirp and chi_eff</span>
+		<span class="n">theta_vector</span><span class="p">[:,</span><span class="mi">1</span><span class="p">]</span> <span class="o">=</span> <span class="p">(</span><span class="n">theta_vector</span><span class="p">[:,</span><span class="mi">1</span><span class="p">]</span><span class="o">*</span><span class="n">theta_vector</span><span class="p">[:,</span><span class="mi">0</span><span class="p">]</span><span class="o">+</span> <span class="n">theta_vector</span><span class="p">[:,</span><span class="mi">2</span><span class="p">])</span><span class="o">/</span><span class="p">(</span><span class="mi">1</span><span class="o">+</span><span class="n">theta_vector</span><span class="p">[:,</span><span class="mi">0</span><span class="p">])</span>
+		<span class="n">theta_vector</span><span class="p">[:,</span><span class="mi">0</span><span class="p">]</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">power</span><span class="p">(</span><span class="n">theta_vector</span><span class="p">[:,</span><span class="mi">0</span><span class="p">]</span><span class="o">/</span><span class="n">np</span><span class="o">.</span><span class="n">square</span><span class="p">(</span><span class="mi">1</span><span class="o">+</span><span class="n">theta_vector</span><span class="p">[:,</span><span class="mi">0</span><span class="p">]),</span> <span class="mf">3.</span><span class="o">/</span><span class="mf">5.</span><span class="p">)</span>
+		<span class="n">theta_vector</span><span class="p">[:,</span><span class="mi">0</span><span class="p">]</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">exp</span><span class="p">(</span><span class="n">theta_vector</span><span class="p">[:,</span><span class="mi">0</span><span class="p">])</span> <span class="c1">#hack to remove logaritmic features</span>
+
+	<span class="nb">print</span><span class="p">(</span><span class="s2">&quot;Loaded datataset with shape: &quot;</span><span class="o">+</span> <span class="nb">str</span><span class="p">(</span><span class="n">ph_dataset</span><span class="o">.</span><span class="n">shape</span><span class="p">))</span>
+
+	<span class="n">train_theta</span><span class="p">,</span> <span class="n">test_theta</span><span class="p">,</span> <span class="n">train_amp</span><span class="p">,</span> <span class="n">test_amp</span> <span class="o">=</span> <span class="n">make_set_split</span><span class="p">(</span><span class="n">theta_vector</span><span class="p">,</span> <span class="n">amp_dataset</span><span class="p">,</span> <span class="n">train_frac</span><span class="p">,</span> <span class="mf">1.</span><span class="p">)</span>
+	<span class="n">train_theta</span><span class="p">,</span> <span class="n">test_theta</span><span class="p">,</span> <span class="n">train_ph</span><span class="p">,</span> <span class="n">test_ph</span>   <span class="o">=</span> <span class="n">make_set_split</span><span class="p">(</span><span class="n">theta_vector</span><span class="p">,</span> <span class="n">ph_dataset</span><span class="p">,</span> <span class="n">train_frac</span><span class="p">,</span> <span class="mf">1.</span><span class="p">)</span>
+
+	<span class="k">if</span> <span class="nb">type</span><span class="p">(</span><span class="n">K</span><span class="p">)</span> <span class="ow">is</span> <span class="nb">int</span><span class="p">:</span>
+		<span class="n">K</span> <span class="o">=</span> <span class="p">(</span><span class="n">K</span><span class="p">,</span><span class="n">K</span><span class="p">)</span>
+	<span class="k">if</span> <span class="nb">type</span><span class="p">(</span><span class="n">K</span><span class="p">)</span> <span class="ow">is</span> <span class="ow">not</span> <span class="nb">tuple</span><span class="p">:</span>
+		<span class="k">raise</span> <span class="ne">RuntimeError</span><span class="p">(</span><span class="s2">&quot;Wrong format for number of component K. Tuple expected but got &quot;</span><span class="o">+</span><span class="nb">str</span><span class="p">(</span><span class="nb">type</span><span class="p">(</span><span class="n">K</span><span class="p">)))</span>
+
+		<span class="c1">#DOING PCA</span>
+
+		<span class="c1">#phase</span>
+	<span class="n">PCA_ph</span> <span class="o">=</span> <span class="n">PCA_model</span><span class="p">()</span>
+
+	<span class="k">if</span> <span class="n">clean_dataset</span><span class="p">:</span> <span class="c1">#removing outliers, if it is the case</span>
+		<span class="n">PCA_ph</span><span class="o">.</span><span class="n">fit_model</span><span class="p">(</span><span class="n">train_ph</span><span class="p">,</span> <span class="n">K</span><span class="p">[</span><span class="mi">1</span><span class="p">],</span> <span class="n">scale_PC</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+		<span class="n">y</span> <span class="o">=</span> <span class="n">PCA_ph</span><span class="o">.</span><span class="n">reduce_data</span><span class="p">(</span><span class="n">train_ph</span><span class="p">)</span>
+		<span class="n">low_q</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">where</span><span class="p">(</span><span class="n">train_theta</span><span class="p">[:,</span><span class="mi">0</span><span class="p">]</span><span class="o">&lt;</span><span class="mf">2.</span><span class="p">)[</span><span class="mi">0</span><span class="p">]</span>
+		<span class="n">q</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">quantile</span><span class="p">(</span><span class="n">y</span><span class="p">[</span><span class="n">low_q</span><span class="p">,:],</span> <span class="n">q</span> <span class="o">=</span> <span class="p">[</span><span class="mf">0.25</span><span class="p">,</span><span class="mf">0.5</span><span class="p">,</span><span class="mf">0.75</span><span class="p">],</span> <span class="n">axis</span> <span class="o">=</span> <span class="mi">0</span><span class="p">)</span>
+		<span class="n">z_score</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">divide</span><span class="p">(</span><span class="n">y</span><span class="p">[</span><span class="n">low_q</span><span class="p">,:]</span><span class="o">-</span><span class="n">q</span><span class="p">[</span><span class="mi">1</span><span class="p">,:],</span> <span class="n">np</span><span class="o">.</span><span class="n">abs</span><span class="p">(</span><span class="n">q</span><span class="p">[</span><span class="mi">0</span><span class="p">,:]</span><span class="o">-</span><span class="n">q</span><span class="p">[</span><span class="mi">2</span><span class="p">,:]))</span> <span class="c1">#IQR</span>
+		<span class="n">where_bad</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">where</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">abs</span><span class="p">(</span><span class="n">z_score</span><span class="p">[:,:</span><span class="mi">3</span><span class="p">])</span><span class="o">&gt;</span><span class="mf">2.</span><span class="p">)[</span><span class="mi">0</span><span class="p">]</span> <span class="c1">#arbitrary threshold for removing points</span>
+		<span class="n">where_bad</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">unique</span><span class="p">(</span><span class="n">where_bad</span><span class="p">)</span> <span class="c1">#indices in the array y[low_q,:]</span>
+		<span class="n">where_bad</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span> <span class="p">[(</span><span class="n">i</span> <span class="ow">in</span> <span class="n">low_q</span><span class="p">[</span><span class="n">where_bad</span><span class="p">])</span> <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">y</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">])]</span> <span class="p">)</span> <span class="c1">#bool indices in the start array</span>
+			<span class="c1">#removing from dataset</span>
+		<span class="n">train_ph</span> <span class="o">=</span> <span class="n">train_ph</span><span class="p">[</span><span class="o">~</span><span class="n">where_bad</span><span class="p">,:]</span>
+		<span class="n">train_amp</span> <span class="o">=</span> <span class="n">train_amp</span><span class="p">[</span><span class="o">~</span><span class="n">where_bad</span><span class="p">,:]</span>
+		<span class="n">train_theta</span> <span class="o">=</span> <span class="n">train_theta</span><span class="p">[</span><span class="o">~</span><span class="n">where_bad</span><span class="p">,:]</span>	
+
+	<span class="nb">print</span><span class="p">(</span><span class="s2">&quot;Orbital parameters are in range: [</span><span class="si">%f</span><span class="s2">,</span><span class="si">%f</span><span class="s2">]x[</span><span class="si">%f</span><span class="s2">,</span><span class="si">%f</span><span class="s2">]x[</span><span class="si">%f</span><span class="s2">,</span><span class="si">%f</span><span class="s2">]&quot;</span><span class="o">%</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">min</span><span class="p">(</span><span class="n">train_theta</span><span class="p">[:,</span><span class="mi">0</span><span class="p">]),</span> <span class="n">np</span><span class="o">.</span><span class="n">max</span><span class="p">(</span><span class="n">train_theta</span><span class="p">[:,</span><span class="mi">0</span><span class="p">]),</span> <span class="n">np</span><span class="o">.</span><span class="n">min</span><span class="p">(</span><span class="n">train_theta</span><span class="p">[:,</span><span class="mi">1</span><span class="p">]),</span> <span class="n">np</span><span class="o">.</span><span class="n">max</span><span class="p">(</span><span class="n">train_theta</span><span class="p">[:,</span><span class="mi">1</span><span class="p">]),</span> <span class="n">np</span><span class="o">.</span><span class="n">min</span><span class="p">(</span><span class="n">train_theta</span><span class="p">[:,</span><span class="mi">2</span><span class="p">]),</span> <span class="n">np</span><span class="o">.</span><span class="n">max</span><span class="p">(</span><span class="n">train_theta</span><span class="p">[:,</span><span class="mi">2</span><span class="p">])))</span>
+
+	<span class="n">E_ph</span> <span class="o">=</span> <span class="n">PCA_ph</span><span class="o">.</span><span class="n">fit_model</span><span class="p">(</span><span class="n">train_ph</span><span class="p">,</span> <span class="n">K</span><span class="p">[</span><span class="mi">1</span><span class="p">],</span> <span class="n">scale_PC</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+	<span class="nb">print</span><span class="p">(</span><span class="s2">&quot;PCA eigenvalues for phase: &quot;</span><span class="p">,</span> <span class="n">E_ph</span><span class="p">)</span>
+	<span class="n">red_train_ph</span> <span class="o">=</span> <span class="n">PCA_ph</span><span class="o">.</span><span class="n">reduce_data</span><span class="p">(</span><span class="n">train_ph</span><span class="p">)</span>			<span class="c1">#(N,K) to save in train dataset </span>
+	<span class="n">red_test_ph</span> <span class="o">=</span> <span class="n">PCA_ph</span><span class="o">.</span><span class="n">reduce_data</span><span class="p">(</span><span class="n">test_ph</span><span class="p">)</span>			<span class="c1">#(N,K) to save in test dataset</span>
+	<span class="n">rec_test_ph</span> <span class="o">=</span> <span class="n">PCA_ph</span><span class="o">.</span><span class="n">reconstruct_data</span><span class="p">(</span><span class="n">red_test_ph</span><span class="p">)</span> 	<span class="c1">#(N,D) for computing mismatch</span>
+
+		<span class="c1">#amplitude</span>
+	<span class="n">PCA_amp</span> <span class="o">=</span> <span class="n">PCA_model</span><span class="p">()</span>
+	<span class="n">E_amp</span> <span class="o">=</span> <span class="n">PCA_amp</span><span class="o">.</span><span class="n">fit_model</span><span class="p">(</span><span class="n">train_amp</span><span class="p">,</span> <span class="n">K</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="n">scale_PC</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+	<span class="nb">print</span><span class="p">(</span><span class="s2">&quot;PCA eigenvalues for amplitude: &quot;</span><span class="p">,</span> <span class="n">E_amp</span><span class="p">)</span>
+	<span class="n">red_train_amp</span> <span class="o">=</span> <span class="n">PCA_amp</span><span class="o">.</span><span class="n">reduce_data</span><span class="p">(</span><span class="n">train_amp</span><span class="p">)</span>			<span class="c1">#(N,K) to save in train dataset </span>
+	<span class="n">red_test_amp</span> <span class="o">=</span> <span class="n">PCA_amp</span><span class="o">.</span><span class="n">reduce_data</span><span class="p">(</span><span class="n">test_amp</span><span class="p">)</span>			<span class="c1">#(N,K) to save in test dataset</span>
+	<span class="n">rec_test_amp</span> <span class="o">=</span> <span class="n">PCA_amp</span><span class="o">.</span><span class="n">reconstruct_data</span><span class="p">(</span><span class="n">red_test_amp</span><span class="p">)</span> 	<span class="c1">#(N,D) for computing mismatch</span>
+
+	<span class="k">if</span> <span class="ow">not</span> <span class="n">out_folder</span><span class="o">.</span><span class="n">endswith</span><span class="p">(</span><span class="s1">&#39;/&#39;</span><span class="p">):</span>
+		<span class="n">out_folder</span> <span class="o">=</span> <span class="n">out_folder</span> <span class="o">+</span> <span class="s2">&quot;/&quot;</span>
+
+		<span class="c1">#saving to files</span>
+	<span class="n">PCA_amp</span><span class="o">.</span><span class="n">save_model</span><span class="p">(</span><span class="n">out_folder</span><span class="o">+</span><span class="s2">&quot;amp_PCA_model&quot;</span><span class="p">)</span>				<span class="c1">#saving amp PCA model</span>
+	<span class="n">PCA_ph</span><span class="o">.</span><span class="n">save_model</span><span class="p">(</span><span class="n">out_folder</span><span class="o">+</span><span class="s2">&quot;ph_PCA_model&quot;</span><span class="p">)</span>				<span class="c1">#saving ph PCA model</span>
+	<span class="n">np</span><span class="o">.</span><span class="n">savetxt</span><span class="p">(</span><span class="n">out_folder</span><span class="o">+</span><span class="s2">&quot;PCA_train_theta.dat&quot;</span><span class="p">,</span> <span class="n">train_theta</span><span class="p">)</span>	<span class="c1">#saving train theta</span>
+	<span class="n">np</span><span class="o">.</span><span class="n">savetxt</span><span class="p">(</span><span class="n">out_folder</span><span class="o">+</span><span class="s2">&quot;PCA_test_theta.dat&quot;</span><span class="p">,</span> <span class="n">test_theta</span><span class="p">)</span>		<span class="c1">#saving test theta</span>
+	<span class="n">np</span><span class="o">.</span><span class="n">savetxt</span><span class="p">(</span><span class="n">out_folder</span><span class="o">+</span><span class="s2">&quot;PCA_train_amp.dat&quot;</span><span class="p">,</span> <span class="n">red_train_amp</span><span class="p">)</span>	<span class="c1">#saving train reduced amplitudes</span>
+	<span class="n">np</span><span class="o">.</span><span class="n">savetxt</span><span class="p">(</span><span class="n">out_folder</span><span class="o">+</span><span class="s2">&quot;PCA_test_amp.dat&quot;</span><span class="p">,</span> <span class="n">red_test_amp</span><span class="p">)</span>		<span class="c1">#saving test reduced amplitudes</span>
+	<span class="n">np</span><span class="o">.</span><span class="n">savetxt</span><span class="p">(</span><span class="n">out_folder</span><span class="o">+</span><span class="s2">&quot;PCA_train_ph.dat&quot;</span><span class="p">,</span> <span class="n">red_train_ph</span><span class="p">)</span>		<span class="c1">#saving train reduced phases</span>
+	<span class="n">np</span><span class="o">.</span><span class="n">savetxt</span><span class="p">(</span><span class="n">out_folder</span><span class="o">+</span><span class="s2">&quot;PCA_test_ph.dat&quot;</span><span class="p">,</span> <span class="n">red_test_ph</span><span class="p">)</span>		<span class="c1">#saving test reduced phases</span>
+	<span class="n">np</span><span class="o">.</span><span class="n">savetxt</span><span class="p">(</span><span class="n">out_folder</span><span class="o">+</span><span class="s2">&quot;times&quot;</span><span class="p">,</span> <span class="n">times</span><span class="p">)</span>						<span class="c1">#saving times</span>
+
+		<span class="c1">#computing mismatch</span>
+	<span class="n">F_PCA</span> <span class="o">=</span> <span class="n">compute_mismatch</span><span class="p">((</span><span class="n">test_amp</span><span class="p">),</span> <span class="n">test_ph</span><span class="p">,</span> <span class="p">(</span><span class="n">rec_test_amp</span><span class="p">),</span> <span class="n">rec_test_ph</span><span class="p">)</span> 
+	<span class="nb">print</span><span class="p">(</span><span class="s2">&quot;Average PCA mismatch: &quot;</span><span class="p">,</span><span class="n">np</span><span class="o">.</span><span class="n">mean</span><span class="p">(</span><span class="n">F_PCA</span><span class="p">))</span>
+	
+	<span class="k">return</span></div>
+
+<span class="c1">################# routine fit_MoE</span>
+<div class="viewcode-block" id="fit_MoE"><a class="viewcode-back" href="../../api_reference/fit_model.html#mlgw.fit_model.fit_MoE">[docs]</a><span class="k">def</span> <span class="nf">fit_MoE</span><span class="p">(</span><span class="n">fit_type</span><span class="p">,</span> <span class="n">in_folder</span><span class="p">,</span> <span class="n">out_folder</span><span class="p">,</span> <span class="n">experts</span><span class="p">,</span> <span class="n">comp_to_fit</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span> <span class="n">features</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span> <span class="n">EM_threshold</span> <span class="o">=</span> <span class="mf">1e-2</span><span class="p">,</span> <span class="n">args</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span> <span class="n">N_train</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span> <span class="n">verbose</span> <span class="o">=</span> <span class="kc">True</span><span class="p">,</span> <span class="n">train_mismatch</span> <span class="o">=</span> <span class="kc">False</span><span class="p">,</span> <span class="n">test_mismatch</span> <span class="o">=</span> <span class="kc">True</span><span class="p">):</span>
+	<span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">fit_MoE</span>
+<span class="sd">=======</span>
+<span class="sd">	Fit a MoE model for each component of a PCA dataset.</span>
+<span class="sd">	It loads a PCA dataset from in_folder and fits the regression</span>
+<span class="sd">		theta = (q,s1,s2) ---&gt; PC_pojection(theta)</span>
+<span class="sd">	Outputs the fitted models to out_folder</span>
+<span class="sd">		amp(ph)_exp_#		for amplitude (phase) of expert model for PCA component #</span>
+<span class="sd">		amp(ph)_gat_#		for amplitude (phase) of gating function for PCA component #</span>
+<span class="sd">		amp(ph)_feat		for list of features to use for MoE models</span>
+<span class="sd">	Furthermore it copies PCA models and times files to the out folder. Out folder will be a valid input for mlgw.GW_generator.GW_generator.</span>
+<span class="sd">	User can choose some fitting hyperparameters.</span>
+<span class="sd">	Input:</span>
+<span class="sd">		fit_type (&quot;amp&quot;,&quot;ph&quot;)	whether to fit the model for amplitude or phase</span>
+<span class="sd">		in_folder				path to folder with the PCA dataset. It must have the format of mlgw.fit_model.create_PCA_dataset</span>
+<span class="sd">		out_folder				path to folder to save models to. The folder can be used by mlgw.GW_generator.GW_generator</span>
+<span class="sd">		experts ()/[]			experts to use for each PCA component fit. If int, all models have same number of experts; if list, different experts are allowed but they must match the actual number of PC in PCA dataset.</span>
+<span class="sd">		comp_to_fit	[]			list of PCs to fit. If None, all components will be fitted. If int, it denotes the maximum PC order to be fitted.</span>
+<span class="sd">		features []				list of feature for basis function expansion. It must be in the format of mlgw.ML_routines.add_extra_features. If None, a default second degree polynomial in q, s1, s2 will be used.</span>
+<span class="sd">		EM_threshold ()			threshold of minumum change in LL before breaking from the EM algorithm.</span>
+<span class="sd">		args []					list of arguments for the softmax function fit routine mlgw.EM_MoE.softmax_regression.fit. They must be in the order [optimizator, validation set, reg. constant, verbose, threshold, # iteration, step for gradient]. If None, default values are used (recommended)</span>
+<span class="sd">		N_train					number of training points to use in the PCA dataset. If None, every point available will be used.</span>
+<span class="sd">		verbose					whether to display EM iteration messages</span>
+<span class="sd">		train_mismatch			whether to return mismatch and mse on train data (if True, test_mismatch = True)</span>
+<span class="sd">		test_mismatch			whether to return mismatch and mse on test data</span>
+<span class="sd">	Output:</span>
+<span class="sd">		F, mse_list											average test mismatch with PCA reconstructed waves, list of mse for each of the fitted component</span>
+<span class="sd">		F_train, F_test, mse_train_list, mse_test_list		average train (test) mismatch (if relevant). Same format as above.</span>
+<span class="sd">	&quot;&quot;&quot;</span>
+	<span class="k">if</span> <span class="ow">not</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">isdir</span><span class="p">(</span><span class="n">out_folder</span><span class="p">):</span> <span class="c1">#check if out_folder exists</span>
+		<span class="k">try</span><span class="p">:</span>
+			<span class="n">os</span><span class="o">.</span><span class="n">mkdir</span><span class="p">(</span><span class="n">out_folder</span><span class="p">)</span>
+		<span class="k">except</span><span class="p">:</span>
+			<span class="k">raise</span> <span class="ne">RuntimeError</span><span class="p">(</span><span class="s2">&quot;Impossible to create output folder &quot;</span><span class="o">+</span><span class="nb">str</span><span class="p">(</span><span class="n">out_folder</span><span class="p">)</span><span class="o">+</span><span class="s2">&quot;. Please, choose a valid folder.&quot;</span><span class="p">)</span>
+			<span class="k">return</span>
+
+	<span class="k">if</span> <span class="n">train_mismatch</span><span class="p">:</span>
+		<span class="n">test_mismatch</span> <span class="o">=</span> <span class="kc">True</span>
+
+	<span class="c1">#if not fit_type in [&quot;amp&quot;,&quot;ph&quot;]:</span>
+	<span class="c1">#	raise RuntimeError(&quot;Data type for fit_type not understood. Required (\&quot;amp\&quot;/\&quot;ph\&quot;) but \&quot;&quot;+str(fit_type)+&quot;\&quot; given.&quot;)</span>
+	<span class="c1">#	return</span>
+
+	<span class="k">if</span> <span class="ow">not</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">isdir</span><span class="p">(</span><span class="n">out_folder</span><span class="p">):</span> <span class="c1">#check if out_folder exists</span>
+		<span class="k">raise</span> <span class="ne">RuntimeError</span><span class="p">(</span><span class="s2">&quot;Ouput folder &quot;</span><span class="o">+</span><span class="nb">str</span><span class="p">(</span><span class="n">out_folder</span><span class="p">)</span><span class="o">+</span><span class="s2">&quot; does not exist. Please, choose a valid folder.&quot;</span><span class="p">)</span>
+		<span class="k">return</span>
+
+	<span class="k">if</span> <span class="ow">not</span> <span class="n">out_folder</span><span class="o">.</span><span class="n">endswith</span><span class="p">(</span><span class="s1">&#39;/&#39;</span><span class="p">):</span>
+		<span class="n">out_folder</span> <span class="o">=</span> <span class="n">out_folder</span> <span class="o">+</span> <span class="s2">&quot;/&quot;</span>
+	<span class="k">if</span> <span class="ow">not</span> <span class="n">in_folder</span><span class="o">.</span><span class="n">endswith</span><span class="p">(</span><span class="s1">&#39;/&#39;</span><span class="p">):</span>
+		<span class="n">in_folder</span> <span class="o">=</span> <span class="n">in_folder</span> <span class="o">+</span> <span class="s2">&quot;/&quot;</span>
+
+	<span class="k">if</span> <span class="n">features</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+		<span class="n">features</span> <span class="o">=</span> <span class="p">[</span><span class="s2">&quot;00&quot;</span><span class="p">,</span> <span class="s2">&quot;11&quot;</span><span class="p">,</span><span class="s2">&quot;22&quot;</span><span class="p">,</span> <span class="s2">&quot;01&quot;</span><span class="p">,</span> <span class="s2">&quot;02&quot;</span><span class="p">,</span> <span class="s2">&quot;12&quot;</span><span class="p">]</span>
+	<span class="k">if</span> <span class="nb">type</span><span class="p">(</span><span class="n">features</span><span class="p">)</span> <span class="ow">is</span> <span class="ow">not</span> <span class="nb">list</span><span class="p">:</span>
+		<span class="k">raise</span> <span class="ne">RuntimeError</span><span class="p">(</span><span class="s2">&quot;Features to use for regression must be given as list. Type &quot;</span><span class="o">+</span><span class="nb">str</span><span class="p">(</span><span class="nb">type</span><span class="p">(</span><span class="n">features</span><span class="p">))</span><span class="o">+</span><span class="s2">&quot; given instead&quot;</span><span class="p">)</span>
+		<span class="k">return</span>
+	
+	<span class="k">if</span> <span class="nb">type</span><span class="p">(</span><span class="n">N_train</span><span class="p">)</span> <span class="ow">is</span> <span class="ow">not</span> <span class="nb">int</span> <span class="ow">and</span> <span class="n">N_train</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+		<span class="k">raise</span> <span class="ne">RuntimeError</span><span class="p">(</span><span class="s2">&quot;Nunmber of training point to use must be be an integer. Type &quot;</span><span class="o">+</span><span class="nb">str</span><span class="p">(</span><span class="nb">type</span><span class="p">(</span><span class="n">N_train</span><span class="p">))</span><span class="o">+</span><span class="s2">&quot; given instead&quot;</span><span class="p">)</span>
+		<span class="k">return</span>
+
+	<span class="k">if</span> <span class="n">args</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+				<span class="c1">#opt	val_set reg   verbose threshold	N_it step</span>
+		<span class="n">args</span> <span class="o">=</span> <span class="p">[</span><span class="s2">&quot;adam&quot;</span><span class="p">,</span> <span class="kc">None</span><span class="p">,</span>   <span class="mf">1e-5</span><span class="p">,</span> <span class="kc">False</span><span class="p">,</span>  <span class="mf">1e-4</span><span class="p">,</span>		<span class="mi">150</span><span class="p">,</span> <span class="mf">2e-3</span><span class="p">]</span> <span class="c1">#default arguments for sotmax fit routine</span>
+
+		<span class="c1">#loading data</span>
+	<span class="n">train_theta</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">loadtxt</span><span class="p">(</span><span class="n">in_folder</span><span class="o">+</span><span class="s2">&quot;PCA_train_theta.dat&quot;</span><span class="p">)[:</span><span class="n">N_train</span><span class="p">,:]</span>		<span class="c1">#(N,3)</span>
+	<span class="n">test_theta</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">loadtxt</span><span class="p">(</span><span class="n">in_folder</span><span class="o">+</span><span class="s2">&quot;PCA_test_theta.dat&quot;</span><span class="p">)</span>						<span class="c1">#(N&#39;,3)</span>
+	<span class="n">PCA_train</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">loadtxt</span><span class="p">(</span><span class="n">in_folder</span><span class="o">+</span><span class="s2">&quot;PCA_train_&quot;</span><span class="o">+</span><span class="n">fit_type</span><span class="o">+</span><span class="s2">&quot;.dat&quot;</span><span class="p">)[:</span><span class="n">N_train</span><span class="p">,:]</span>	<span class="c1">#(N,K)</span>
+	<span class="n">PCA_test</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">loadtxt</span><span class="p">(</span><span class="n">in_folder</span><span class="o">+</span><span class="s2">&quot;PCA_test_&quot;</span><span class="o">+</span><span class="n">fit_type</span><span class="o">+</span><span class="s2">&quot;.dat&quot;</span><span class="p">)</span>				<span class="c1">#(N&#39;,K)</span>
+	<span class="n">PCA</span> <span class="o">=</span> <span class="n">PCA_model</span><span class="p">(</span><span class="n">in_folder</span><span class="o">+</span><span class="n">fit_type</span><span class="o">+</span><span class="s2">&quot;_PCA_model&quot;</span><span class="p">)</span>							<span class="c1">#loading PCA model</span>
+
+	<span class="nb">print</span><span class="p">(</span><span class="s2">&quot;Using &quot;</span><span class="o">+</span><span class="nb">str</span><span class="p">(</span><span class="n">PCA_train</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span><span class="o">+</span><span class="s2">&quot; train data&quot;</span><span class="p">)</span>
+	
+		<span class="c1">#adding new features for basis function expansion</span>
+	<span class="n">train_theta</span> <span class="o">=</span> <span class="n">add_extra_features</span><span class="p">(</span><span class="n">train_theta</span><span class="p">,</span> <span class="n">features</span><span class="p">,</span> <span class="n">log_list</span> <span class="o">=</span> <span class="p">[</span><span class="mi">0</span><span class="p">])</span>
+	<span class="n">test_theta</span> <span class="o">=</span> <span class="n">add_extra_features</span><span class="p">(</span><span class="n">test_theta</span><span class="p">,</span> <span class="n">features</span><span class="p">,</span> <span class="n">log_list</span> <span class="o">=</span> <span class="p">[</span><span class="mi">0</span><span class="p">])</span>
+	<span class="n">D</span> <span class="o">=</span> <span class="n">train_theta</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span> <span class="c1">#dimensionality of input space for MoE</span>
+
+	<span class="n">MoE_models</span> <span class="o">=</span> <span class="p">[]</span> <span class="c1">#list of model, one for each component</span>
+	<span class="k">if</span> <span class="n">train_mismatch</span><span class="p">:</span>
+		<span class="n">PCA_train_pred</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">(</span><span class="n">PCA_train</span><span class="o">.</span><span class="n">shape</span><span class="p">)</span> <span class="c1">#to keep values for reconstruction</span>
+	<span class="n">PCA_test_pred</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">(</span><span class="n">PCA_test</span><span class="o">.</span><span class="n">shape</span><span class="p">)</span> <span class="c1">#to keep values for reconstruction</span>
+
+	<span class="k">if</span> <span class="n">comp_to_fit</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+		<span class="n">comp_to_fit</span> <span class="o">=</span> <span class="p">[</span><span class="n">i</span> <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">PCA</span><span class="o">.</span><span class="n">get_dimensions</span><span class="p">()[</span><span class="mi">1</span><span class="p">])]</span>
+	<span class="k">if</span> <span class="nb">type</span><span class="p">(</span><span class="n">comp_to_fit</span><span class="p">)</span> <span class="ow">is</span> <span class="nb">int</span><span class="p">:</span>
+		<span class="n">comp_to_fit</span> <span class="o">=</span> <span class="p">[</span><span class="n">i</span> <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">comp_to_fit</span><span class="p">)]</span>
+	<span class="k">if</span> <span class="nb">type</span><span class="p">(</span><span class="n">comp_to_fit</span><span class="p">)</span> <span class="ow">is</span> <span class="ow">not</span> <span class="nb">list</span><span class="p">:</span>
+		<span class="k">raise</span> <span class="ne">RuntimeError</span><span class="p">(</span><span class="s2">&quot;Components to fit must be given as list or None type. Type &quot;</span><span class="o">+</span><span class="nb">str</span><span class="p">(</span><span class="nb">type</span><span class="p">(</span><span class="n">comp_to_fit</span><span class="p">))</span><span class="o">+</span><span class="s2">&quot; given instead&quot;</span><span class="p">)</span>
+		<span class="k">return</span>
+
+	<span class="k">if</span> <span class="nb">type</span><span class="p">(</span><span class="n">experts</span><span class="p">)</span> <span class="ow">is</span> <span class="nb">int</span><span class="p">:</span>
+		<span class="n">experts</span> <span class="o">=</span> <span class="p">[</span><span class="n">experts</span> <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="n">comp_to_fit</span><span class="p">]</span>
+
+	<span class="n">mse_train_list</span> <span class="o">=</span> <span class="p">[]</span> <span class="c1">#list for holding mse of every PCs</span>
+	<span class="n">mse_test_list</span> <span class="o">=</span> <span class="p">[]</span> <span class="c1">#list for holding mse of every PCs</span>
+
+		<span class="c1">#starting fit procedure</span>
+	<span class="k">for</span> <span class="n">i</span><span class="p">,</span><span class="n">k</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">comp_to_fit</span><span class="p">):</span>
+		<span class="nb">print</span><span class="p">(</span><span class="s2">&quot;### Fitting component &quot;</span><span class="p">,</span> <span class="n">k</span><span class="p">,</span> <span class="s2">&quot; | experts = &quot;</span><span class="p">,</span> <span class="n">experts</span><span class="p">[</span><span class="n">i</span><span class="p">])</span>
+			<span class="c1">#useless variables for sake of clariness</span>
+		<span class="n">y_train</span> <span class="o">=</span> <span class="n">PCA_train</span><span class="p">[:,</span><span class="n">k</span><span class="p">]</span>
+		<span class="n">y_test</span> <span class="o">=</span> <span class="n">PCA_test</span><span class="p">[:,</span><span class="n">k</span><span class="p">]</span>
+
+		<span class="n">MoE_models</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">MoE_model</span><span class="p">(</span><span class="n">D</span><span class="p">,</span><span class="n">experts</span><span class="p">[</span><span class="n">i</span><span class="p">]))</span>
+		<span class="n">MoE_models</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span><span class="o">.</span><span class="n">fit</span><span class="p">(</span><span class="n">train_theta</span><span class="p">,</span> <span class="n">y_train</span><span class="p">,</span> <span class="n">threshold</span> <span class="o">=</span> <span class="n">EM_threshold</span><span class="p">,</span> <span class="n">args</span> <span class="o">=</span> <span class="n">args</span><span class="p">,</span> <span class="n">verbose</span> <span class="o">=</span> <span class="n">verbose</span><span class="p">,</span> <span class="n">val_set</span> <span class="o">=</span> <span class="p">(</span><span class="n">test_theta</span><span class="p">,</span> <span class="n">y_test</span><span class="p">))</span>
+
+			<span class="c1">#doing some test</span>
+		<span class="k">if</span> <span class="n">train_mismatch</span><span class="p">:</span>
+			<span class="n">y_pred</span> <span class="o">=</span> <span class="n">MoE_models</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span><span class="o">.</span><span class="n">predict</span><span class="p">(</span><span class="n">train_theta</span><span class="p">)</span>
+			<span class="n">mse_train_list</span><span class="o">.</span><span class="n">append</span><span class="p">(</span> <span class="n">np</span><span class="o">.</span><span class="n">sum</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">square</span><span class="p">(</span><span class="n">y_pred</span><span class="o">-</span><span class="n">y_train</span><span class="p">))</span><span class="o">/</span><span class="p">(</span><span class="n">y_pred</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span> <span class="p">)</span>
+			<span class="n">PCA_train_pred</span><span class="p">[:,</span><span class="n">k</span><span class="p">]</span> <span class="o">=</span> <span class="n">y_pred</span>
+
+		<span class="n">y_pred</span> <span class="o">=</span> <span class="n">MoE_models</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span><span class="o">.</span><span class="n">predict</span><span class="p">(</span><span class="n">test_theta</span><span class="p">)</span>
+		<span class="n">mse_test_list</span><span class="o">.</span><span class="n">append</span><span class="p">(</span> <span class="n">np</span><span class="o">.</span><span class="n">sum</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">square</span><span class="p">(</span><span class="n">y_pred</span><span class="o">-</span><span class="n">y_test</span><span class="p">))</span><span class="o">/</span><span class="p">(</span><span class="n">y_pred</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span> <span class="p">)</span>
+		<span class="nb">print</span><span class="p">(</span><span class="s2">&quot;Test square loss for comp &quot;</span><span class="o">+</span><span class="nb">str</span><span class="p">(</span><span class="n">k</span><span class="p">)</span><span class="o">+</span><span class="s2">&quot;: &quot;</span><span class="p">,</span> <span class="n">mse_test_list</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span> <span class="p">)</span>
+		<span class="nb">print</span><span class="p">(</span><span class="s2">&quot;LL for comp &quot;</span><span class="o">+</span><span class="nb">str</span><span class="p">(</span><span class="n">k</span><span class="p">)</span><span class="o">+</span><span class="s2">&quot; (train,val): &quot;</span><span class="p">,</span> <span class="p">(</span><span class="n">MoE_models</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span><span class="o">.</span><span class="n">log_likelihood</span><span class="p">(</span><span class="n">train_theta</span><span class="p">,</span><span class="n">y_train</span><span class="p">),</span><span class="n">MoE_models</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span><span class="o">.</span><span class="n">log_likelihood</span><span class="p">(</span><span class="n">test_theta</span><span class="p">,</span><span class="n">y_test</span><span class="p">)))</span>
+		<span class="n">PCA_test_pred</span><span class="p">[:,</span><span class="n">k</span><span class="p">]</span> <span class="o">=</span> <span class="n">y_pred</span>
+
+
+		<span class="c1">#saving everything to file</span>
+		<span class="c1">#saving feature list</span>
+	<span class="n">outfile</span> <span class="o">=</span> <span class="nb">open</span><span class="p">(</span><span class="n">out_folder</span><span class="o">+</span><span class="n">fit_type</span><span class="o">+</span><span class="s2">&quot;_feat&quot;</span><span class="p">,</span> <span class="s2">&quot;w+&quot;</span><span class="p">)</span>
+	<span class="n">outfile</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="s2">&quot;</span><span class="se">\n</span><span class="s2">&quot;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">features</span><span class="p">))</span>
+	<span class="n">outfile</span><span class="o">.</span><span class="n">close</span><span class="p">()</span>
+		<span class="c1">#copying PCA model and times, for making out_folder ready to be used in </span>
+	<span class="n">copyfile</span><span class="p">(</span><span class="n">in_folder</span><span class="o">+</span><span class="n">fit_type</span><span class="o">+</span><span class="s2">&quot;_PCA_model&quot;</span><span class="p">,</span> <span class="n">out_folder</span><span class="o">+</span><span class="n">fit_type</span><span class="o">+</span><span class="s2">&quot;_PCA_model&quot;</span><span class="p">)</span>
+	<span class="n">copyfile</span><span class="p">(</span><span class="n">in_folder</span><span class="o">+</span><span class="s2">&quot;times&quot;</span><span class="p">,</span> <span class="n">out_folder</span><span class="o">+</span><span class="s2">&quot;times&quot;</span><span class="p">)</span>
+		<span class="c1">#saving MoE models</span>
+	<span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">MoE_models</span><span class="p">)):</span>
+		<span class="n">MoE_models</span><span class="p">[</span><span class="n">i</span><span class="p">]</span><span class="o">.</span><span class="n">save</span><span class="p">(</span><span class="n">out_folder</span><span class="o">+</span><span class="n">fit_type</span><span class="o">+</span><span class="s2">&quot;_exp_&quot;</span><span class="o">+</span><span class="nb">str</span><span class="p">(</span><span class="n">i</span><span class="p">),</span><span class="n">out_folder</span><span class="o">+</span><span class="n">fit_type</span><span class="o">+</span><span class="s2">&quot;_gat_&quot;</span><span class="o">+</span><span class="nb">str</span><span class="p">(</span><span class="n">i</span><span class="p">))</span>
+
+		<span class="c1">#doing test</span>
+	<span class="n">F_MoE</span><span class="p">,</span> <span class="n">F_MoE_train</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">nan</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">nan</span>
+	<span class="k">if</span> <span class="n">test_mismatch</span> <span class="ow">and</span> <span class="n">fit_type</span> <span class="ow">is</span> <span class="s2">&quot;ph&quot;</span><span class="p">:</span> <span class="c1">#testing for phase</span>
+		<span class="n">PCA_test_amp</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">loadtxt</span><span class="p">(</span><span class="n">in_folder</span><span class="o">+</span><span class="s2">&quot;PCA_test_amp.dat&quot;</span><span class="p">)</span>
+		<span class="n">PCA_amp</span> <span class="o">=</span> <span class="n">PCA_model</span><span class="p">(</span><span class="n">in_folder</span><span class="o">+</span><span class="s2">&quot;amp_PCA_model&quot;</span><span class="p">)</span>
+		<span class="n">rec_amp</span><span class="o">=</span><span class="n">PCA_amp</span><span class="o">.</span><span class="n">reconstruct_data</span><span class="p">(</span><span class="n">PCA_test_amp</span><span class="p">)</span>
+		<span class="n">rec_ph</span><span class="o">=</span><span class="n">PCA</span><span class="o">.</span><span class="n">reconstruct_data</span><span class="p">(</span><span class="n">PCA_test</span><span class="p">)</span>
+		<span class="n">rec_ph_pred</span><span class="o">=</span><span class="n">PCA</span><span class="o">.</span><span class="n">reconstruct_data</span><span class="p">(</span><span class="n">PCA_test_pred</span><span class="p">)</span>
+		<span class="n">F_MoE</span> <span class="o">=</span> <span class="n">compute_mismatch</span><span class="p">(</span><span class="n">rec_amp</span><span class="p">,</span> <span class="n">rec_ph</span><span class="p">,</span> <span class="n">rec_amp</span><span class="p">,</span> <span class="n">rec_ph_pred</span><span class="p">)</span> 
+		
+	<span class="k">if</span> <span class="n">test_mismatch</span> <span class="ow">and</span> <span class="n">fit_type</span> <span class="ow">is</span> <span class="s2">&quot;amp&quot;</span><span class="p">:</span> <span class="c1">#testing for amplitude</span>
+		<span class="n">PCA_test_ph</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">loadtxt</span><span class="p">(</span><span class="n">in_folder</span><span class="o">+</span><span class="s2">&quot;PCA_test_ph.dat&quot;</span><span class="p">)</span>
+		<span class="n">PCA_ph</span> <span class="o">=</span> <span class="n">PCA_model</span><span class="p">(</span><span class="n">in_folder</span><span class="o">+</span><span class="s2">&quot;ph_PCA_model&quot;</span><span class="p">)</span>
+		<span class="n">rec_ph</span><span class="o">=</span><span class="n">PCA_ph</span><span class="o">.</span><span class="n">reconstruct_data</span><span class="p">(</span><span class="n">PCA_test_ph</span><span class="p">)</span>
+		<span class="n">rec_amp</span><span class="o">=</span><span class="n">PCA</span><span class="o">.</span><span class="n">reconstruct_data</span><span class="p">(</span><span class="n">PCA_test</span><span class="p">)</span>
+		<span class="n">rec_amp_pred</span><span class="o">=</span><span class="n">PCA</span><span class="o">.</span><span class="n">reconstruct_data</span><span class="p">(</span><span class="n">PCA_test_pred</span><span class="p">)</span>
+		<span class="n">F_MoE</span> <span class="o">=</span> <span class="n">compute_mismatch</span><span class="p">(</span><span class="n">rec_amp</span><span class="p">,</span> <span class="n">rec_ph</span><span class="p">,</span> <span class="n">rec_amp_pred</span><span class="p">,</span> <span class="n">rec_ph</span><span class="p">)</span> 
+
+	<span class="k">if</span> <span class="n">train_mismatch</span> <span class="ow">and</span> <span class="n">fit_type</span> <span class="ow">is</span> <span class="s2">&quot;ph&quot;</span><span class="p">:</span> <span class="c1">#testing for phase</span>
+		<span class="n">PCA_train_amp</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">loadtxt</span><span class="p">(</span><span class="n">in_folder</span><span class="o">+</span><span class="s2">&quot;PCA_train_amp.dat&quot;</span><span class="p">)[:</span><span class="n">N_train</span><span class="p">,:]</span>
+		<span class="n">PCA_amp</span> <span class="o">=</span> <span class="n">PCA_model</span><span class="p">(</span><span class="n">in_folder</span><span class="o">+</span><span class="s2">&quot;amp_PCA_model&quot;</span><span class="p">)</span>
+		<span class="n">rec_amp</span><span class="o">=</span><span class="n">PCA_amp</span><span class="o">.</span><span class="n">reconstruct_data</span><span class="p">(</span><span class="n">PCA_train_amp</span><span class="p">)</span>
+		<span class="n">rec_ph</span><span class="o">=</span><span class="n">PCA</span><span class="o">.</span><span class="n">reconstruct_data</span><span class="p">(</span><span class="n">PCA_train</span><span class="p">)</span>
+		<span class="n">rec_ph_pred</span><span class="o">=</span><span class="n">PCA</span><span class="o">.</span><span class="n">reconstruct_data</span><span class="p">(</span><span class="n">PCA_train_pred</span><span class="p">)</span>
+		<span class="n">F_MoE_train</span> <span class="o">=</span> <span class="n">compute_mismatch</span><span class="p">(</span><span class="n">rec_amp</span><span class="p">,</span> <span class="n">rec_ph</span><span class="p">,</span> <span class="n">rec_amp</span><span class="p">,</span> <span class="n">rec_ph_pred</span><span class="p">)</span> 
+
+	<span class="k">if</span> <span class="n">train_mismatch</span> <span class="ow">and</span> <span class="n">fit_type</span> <span class="ow">is</span> <span class="s2">&quot;amp&quot;</span><span class="p">:</span> <span class="c1">#testing for amplitude</span>
+		<span class="n">PCA_train_ph</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">loadtxt</span><span class="p">(</span><span class="n">in_folder</span><span class="o">+</span><span class="s2">&quot;PCA_train_ph.dat&quot;</span><span class="p">)[:</span><span class="n">N_train</span><span class="p">,:]</span>
+		<span class="n">PCA_ph</span> <span class="o">=</span> <span class="n">PCA_model</span><span class="p">(</span><span class="n">in_folder</span><span class="o">+</span><span class="s2">&quot;ph_PCA_model&quot;</span><span class="p">)</span>
+		<span class="n">rec_ph</span><span class="o">=</span><span class="n">PCA_ph</span><span class="o">.</span><span class="n">reconstruct_data</span><span class="p">(</span><span class="n">PCA_train_ph</span><span class="p">)</span>
+		<span class="n">rec_amp</span><span class="o">=</span><span class="n">PCA</span><span class="o">.</span><span class="n">reconstruct_data</span><span class="p">(</span><span class="n">PCA_train</span><span class="p">)</span>
+		<span class="n">rec_amp_pred</span><span class="o">=</span><span class="n">PCA</span><span class="o">.</span><span class="n">reconstruct_data</span><span class="p">(</span><span class="n">PCA_train_pred</span><span class="p">)</span>
+		<span class="n">F_MoE_train</span> <span class="o">=</span> <span class="n">compute_mismatch</span><span class="p">(</span><span class="n">rec_amp</span><span class="p">,</span> <span class="n">rec_ph</span><span class="p">,</span> <span class="n">rec_amp_pred</span><span class="p">,</span> <span class="n">rec_ph</span><span class="p">)</span> 
+
+	<span class="k">if</span> <span class="n">test_mismatch</span><span class="p">:</span>
+		<span class="nb">print</span><span class="p">(</span><span class="s2">&quot;MoE mismatch [50th, 5th, 95th] percentile: &quot;</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">percentile</span><span class="p">(</span><span class="n">F_MoE</span><span class="p">,[</span><span class="mi">50</span><span class="p">,</span><span class="mi">5</span><span class="p">,</span><span class="mi">95</span><span class="p">]))</span>
+
+	<span class="k">if</span> <span class="n">test_mismatch</span> <span class="ow">and</span> <span class="ow">not</span> <span class="n">train_mismatch</span><span class="p">:</span>
+		<span class="k">return</span> <span class="n">np</span><span class="o">.</span><span class="n">mean</span><span class="p">(</span><span class="n">F_MoE</span><span class="p">),</span> <span class="n">mse_test_list</span>
+	<span class="k">if</span> <span class="n">train_mismatch</span> <span class="ow">and</span> <span class="n">train_mismatch</span><span class="p">:</span>
+		<span class="k">return</span> <span class="n">np</span><span class="o">.</span><span class="n">mean</span><span class="p">(</span><span class="n">F_MoE_train</span><span class="p">),</span> <span class="n">np</span><span class="o">.</span><span class="n">mean</span><span class="p">(</span><span class="n">F_MoE</span><span class="p">),</span> <span class="n">mse_train_list</span><span class="p">,</span> <span class="n">mse_test_list</span>
+	<span class="k">return</span></div>
+
+
+</pre></div>
+
+                </article>
+              
+
+              
+              
+                <footer class="bd-footer-article">
+                  
+<div class="footer-article-items footer-article__inner">
+  
+    <div class="footer-article-item"><!-- Previous / next buttons -->
+<div class="prev-next-area">
+</div></div>
+  
+</div>
+
+                </footer>
+              
+            </div>
+            
+            
+              
+            
+          </div>
+          <footer class="bd-footer-content">
+            
+<div class="bd-footer-content__inner container">
+  
+  <div class="footer-item">
+    
+<p class="component-author">
+By Stefano Schmidt
+</p>
+
+  </div>
+  
+  <div class="footer-item">
+    
+  <p class="copyright">
+    
+      © Copyright 2023, Stefano Schmidt.
+      <br/>
+    
+  </p>
+
+  </div>
+  
+  <div class="footer-item">
+    
+  </div>
+  
+  <div class="footer-item">
+    
+  </div>
+  
+</div>
+          </footer>
+        
+
+      </main>
+    </div>
+  </div>
+  
+  <!-- Scripts loaded after <body> so the DOM is not blocked -->
+  <script src="../../_static/scripts/bootstrap.js?digest=e353d410970836974a52"></script>
+<script src="../../_static/scripts/pydata-sphinx-theme.js?digest=e353d410970836974a52"></script>
+
+  <footer class="bd-footer">
+  </footer>
+  </body>
+</html>

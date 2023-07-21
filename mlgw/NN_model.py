@@ -1,3 +1,9 @@
+"""
+Module NN_model.py
+==================
+
+Implements a Neural Network model to generate the reduced PCA coeffiecients of a WF.
+"""
 import sys
 import os
 import numpy as np
@@ -55,7 +61,7 @@ class PcaData: #needs to be cleaned up still
 		if isinstance(PC_comp,int): PC_comp = list(range(PC_comp))
 
 		self.PC_comp = PC_comp
-		if N == None:
+		if N is None:
 			if ratio == 1:
 				self.train_theta = train_theta
 				self.test_theta = test_theta
@@ -393,7 +399,7 @@ def save_model(model, history, out_folder, hyperparameters, PCA_data, PCA_data_l
 	#saves the weights and features of a trained model to a file.
 	#also saves the relevant hyperparameters.
 
-	if out_folder.ends_with('/'): out_folder = out_folder[:-1]
+	out_folder = Path(out_folder)
 
 	K = len(PCA_data.test_var[0]) #number of PCA components
 	MSE = np.zeros(K)
@@ -404,9 +410,9 @@ def save_model(model, history, out_folder, hyperparameters, PCA_data, PCA_data_l
 
 	PC_comp_string = "["+",".join(str(x) for x in PCA_data.PC_comp)+"]"
 
-	f = open(out_folder+"/Model_fit_info.txt", 'x')
+	f = open(out_folder/"Model_fit_info.txt", 'x')
 	f.write("Model for " + PC_comp_string + 'PCs for '+PCA_data.quantity+'\n')
-	if PCA_data_loc != None: f.write("Trained on dataset: "+PCA_data_loc+'\n')
+	if PCA_data_loc != None: f.write("Trained on dataset: {}\n".format(str(PCA_data_loc)))
 	f.write("created model with params: \n")
 	f.write("layer_list : ["+",".join([str(x) for x in hyperparameters['layer_list']])+']\n')
 	f.write("optimizer : " + hyperparameters['optimizers'].name + " with learning rate " + str(hyperparameters['optimizers'].lr)+'\n')
@@ -425,14 +431,14 @@ def save_model(model, history, out_folder, hyperparameters, PCA_data, PCA_data_l
 	plt.plot(history.history['val_loss'], label='test')
 	plt.yscale('log')
 	plt.legend()
-	plt.savefig(out_folder+'/lossfunction.png')
+	plt.savefig(out_folder/'lossfunction.png')
 	plt.close(fig='lossfunction')
 	if residual:
-		model.save(out_folder+'/'+PCA_data.quantity+'_weights_'+PC_comp_string+'_res.h5')
+		model.save(out_folder/(PCA_data.quantity+'_weights_'+PC_comp_string+'_res.h5'))
 		coefficients = np.genfromtxt(PCA_data_loc+'coefficients')
-		np.savetxt(out_folder+'/coefficients', coefficients)
+		np.savetxt(out_folder/'coefficients', coefficients)
 	else:
-		model.save(out_folder+'/'+PCA_data.quantity+'_weights_'+PC_comp_string+'.h5')
+		model.save(out_folder/(PCA_data.quantity+'_weights_'+PC_comp_string+'.h5'))
 	return
 
 def tune_model(out_folder, project_name, quantity, PCA_data_loc, PC_to_fit, hyperparameters, max_epochs=1000, init_trials=None, trials = 10):
@@ -493,66 +499,72 @@ def analyse_tuner_results(file_loc, save_loc=None):
 		plt.yscale('log')
 		if param in ['learning rate']: plt.xscale('log')
 		if save_loc != None: plt.savefig(save_loc+"/"+param+".png")
-		plt.show()
+	plt.show()
 
 	data.sort(key=lambda x : x[1])
 	
-	print("Top ten hyperparameters are: \n")
-	for i in range(10):
-		print(data[i][2], ' with a score of ', data[0][1])
-	print("Averages of top 10:")
-	print("Units: ", np.mean([data[i][2]['units'] for i in range(10)]))
-	print("Layers: ", np.mean([data[i][2]['layers'] for i in range(10)]))
-	print("learning rate: ", np.mean([data[i][2]['learning rate'] for i in range(10)]))
-	print("feature order: ", np.mean([data[i][2]['feature order'] for i in range(10)]))
+	print("Top 10 hyperparameters are: \n")
+	for i in range(100):
+		print(data[i][2], '\n\twith a score of ', data[i][1])
 	return
 
-def fit_NN(fit_type, in_folder, out_folder, hyperparameters = None, N_train = None, comp_to_fit = None, features = None, epochs = 2000, verbose = 1, residual=False):
+def fit_NN(fit_type, in_folder, out_folder, hyperparameters, N_train = None, comp_to_fit = None, features = None, epochs = 2000, verbose = 1, residual=False):
 	"""
-fit_NN
-=======
 	Fit a NN model for the selected PC's of the PCA dataset
 	It loads a PCA dataset from in_folder and fits the regression
+	
 		theta = (q,s1,s2) ---> PC_pojection(theta)
+	
 	Outputs the fitted model to out_folder
+	
 		amp(ph)_PCs.h5 (weights of the model)
+	
 		feat_amp(ph)_PCs.txt
+	
 		info.txt
+	
 	Furthermore it copies PCA models and times files to the out folder.
 	Several of these NNs, for both amplitude and phase, can be combined with the NN_gather method (STILL HAEV TO IMPLEMENT!!!), which can then be inputted to mlgw.GW_generator.GW_generator.
 	User can choose some fitting hyperparameters.
+
 	Input:
-		fit_type ("amp","ph")	whether to fit the model for amplitude or phase
-		in_folder				path to folder with the PCA dataset. It must have the format of mlgw.fit_model.create_PCA_dataset
-		out_folder				path to folder to save models to. Several folder locations can be inputted to NN_gather which can then be used by mlgw.GW_generator.mode_generator_NN
-		hyperparameters			dictionary of the hyperparameters used for the NN structure. If none, default parameters are used.
-		N_train					integer for how many training samples to use. If none, all are used.
-		comp_to_fit	[]			list of PCs to fit. If None, all components will be fitted. If int, it denotes the maximum PC order to be fitted.
-		features []				list of strings for adding features. Note that only features implemented in PcaData_v2.PcaData.augment_features can be used. If None, a default second degree polynomial in q, s1, s2 will be used.
-		epochs					integer specifying for how many iterations (epochs) the NN should train
-		verbose					whether to display NN iteration messages
-		residual				whether this is a model for the residual 
+		fit_type: str
+			whether to fit the model for amplitude or phase ("amp" or "ph")
+		in_folder: str
+			path to folder with the PCA dataset. It must have the format of mlgw.fit_model.create_PCA_dataset
+		out_folder: str
+			path to folder to save models to. Several folder locations can be inputted to NN_gather which can then be used by mlgw.GW_generator.mode_generator_NN
+		hyperparameters: dict
+			dictionary of the hyperparameters used for the NN structure. If none, default parameters are used.
+		N_train: int
+			integer for how many training samples to use. If none, all are used.
+		comp_to_fit: listl
+			PCs to fit. If None, all components will be fitted. If int, it denotes the maximum PC order to be fitted.
+		features: list
+			Strings or tuples for adding features. Note that only features implemented in PcaData_v2.PcaData.augment_features can be used. If None, no extra features will be added: see :func:`add_extra_features`
+		epochs: int
+			integer specifying for how many iterations (epochs) the NN should train
+		verbose: bool
+			whether to display NN iteration messages
+		residual: bool
+			whether this is a model for the residual 
 	"""
-	#if not fit_type in ["amp","ph"]:
-	#	raise RuntimeError("Data type for fit_type not understood. Required (\"amp\"/\"ph\") but \""+str(fit_type)+"\" given.")
-	#	return
+	if not fit_type in ["amp","ph"]:
+		raise RuntimeError("Data type for fit_type not understood. Required 'amp' or 'ph but {} given.".format(fit_type))
 
 	os.makedirs(out_folder, exist_ok = True)
 
-	if not out_folder.endswith('/'):
-		out_folder = out_folder + "/"
-	if not in_folder.endswith('/'):
-		in_folder = in_folder + "/"
+	out_folder = Path(out_folder)
+	in_folder = Path(in_folder)
 
 	if features is None:
-		features = ["2nd_poly"]
+		features = []
 	if not isinstance(features, list):
 		raise RuntimeError("Features to use for regression must be given as list. Type "+str(type(features))+" given instead")
 		return
 	
-	if type(N_train) is not int and N_train is not None:
-		raise RuntimeError("Nunmber of training point to use must be be an integer. Type "+str(type(N_train))+" given instead")
-		return
+	if not (isinstance(N_train, int) or N_train is None):
+		raise RuntimeError("Number of training point to use must be be an integer. Type {} given instead".format(type(N_train)))
 
 		#loading data
 	PCA_data = PcaData(in_folder, comp_to_fit, fit_type, features=features, N=N_train)
@@ -567,10 +579,10 @@ fit_NN
 	mse_test_list = [] #list for holding mse of every PCs
 	
 		#starting fit procedure TODO: implement the training of neural network, and the tests and saving to files.
-	PC_comp_string = "["+",".join(str(x) for x in PCA_data.PC_comp)+"]"
+	PC_comp_string = "[{}]".format("".join(str(x) for x in PCA_data.PC_comp))
 	print("Starting fitting components ", PC_comp_string)
 	if hyperparameters == None:
-		print("Default hyperparameters are used for the NN (see Model_fit_info.txt in the out_folder)")
+		warnings.warn("Default hyperparameters are being used for the NN (see Model_fit_info.txt in the out_folder)")
 		hyperparameters = {'layer_list' : [20,20,15,15], 
 				'optimizers' : Optimizers("Nadam",0.002), 
 				'activation' : "sigmoid", 
@@ -579,7 +591,7 @@ fit_NN
 	
 	loss_weights = np.sqrt(np.array(PCA_data.pca.PCA_params[2]))[PCA_data.PC_comp]
 	loss_weights = loss_weights / min(loss_weights)
-	print("Weights used are: ", loss_weights)
+	print("Using loss function weights: ", loss_weights)
 	
 	model = keras.Sequential()
 	#model = mlgw_NN(features=feats)
@@ -604,18 +616,18 @@ fit_NN
 
 	history = model.fit(x=PCA_data.train_theta,  y=PCA_data.train_var, batch_size=hyperparameters['batch_size'], validation_data=(PCA_data.test_theta,PCA_data.test_var), epochs=epochs, verbose=verbose,callbacks=callback_list)
 	
-	print("successfuly trained model!")
+	print("Successfuly trained model!")
 		#doing some test
 		
 	y_pred = model.predict(PCA_data.test_theta) #y_pred is now an ~(N,K) array
 	for i in range(len(PCA_data.PC_comp)):
 		mse_test_list.append(np.sum(np.square(y_pred[:,i]-PCA_data.test_var[:,i]))/(y_pred.shape[0]))
 	
-	print("Test square loss: ", mse_test_list)
+	print("Test square loss for each component: ", mse_test_list)
 
 		#saving everything to file
 		#saving feature list
-	outfile = open(out_folder+fit_type+"_feat_"+PC_comp_string+".txt", "x")
+	outfile = open(out_folder/"{}_feat_{}.txt".format(fit_type, PC_comp_string), "x")
 	for c in features:
 		if isinstance(c, str):
 			outfile.write(c+"\n")

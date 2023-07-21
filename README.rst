@@ -45,7 +45,7 @@ To generate (and plot) a wave:
 
 The output is:
 
-.. image:: https://raw.githubusercontent.com/stefanoschmidt1995/MLGW/master/docs/WF_example.png
+.. image:: https://raw.githubusercontent.com/stefanoschmidt1995/MLGW/master/docs/img/WF_example.png
    :width: 700px
 
 The ML model
@@ -68,7 +68,7 @@ Usage of mlgw
 =============
 It outputs the GW strain:
 
-.. image:: https://raw.githubusercontent.com/stefanoschmidt1995/MLGW/master/docs/strain.png
+.. image:: https://raw.githubusercontent.com/stefanoschmidt1995/MLGW/master/docs/img/strain.png
    :width: 700px
 
 where m_i and s_i are BH masses and spins, d_L the luminosity distance from the source, i is the inclination angle and phi is a reference phase. The (l,m) modes included depends on the model considered: use ``mlgw.GW_generator.GW_generator.list_modes()`` to list them.

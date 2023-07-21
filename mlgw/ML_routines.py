@@ -533,7 +533,9 @@ def augment_features_polynomial(theta, features = [], order = 0):
 	"""
 	theta = np.atleast_2d(theta)
 	
-	if not (features and order):
+	if isinstance(features, str): features = [features]
+	
+	if not (features and order>1):
 		return theta
 	
 	feat_list = []

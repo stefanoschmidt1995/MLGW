@@ -4,8 +4,9 @@ os.environ['TF_CPP_MIN_LOG_LEVEL'] = '2'
 
 sys.path.insert(1,"/home/tim.grimbergen/new_MLGW/MLGW-master/mlgw")
 
-from NN_model_improved import analyse_tuner_results
+from mlgw.NN_model import analyse_tuner_results
 
-D = "/home/tim.grimbergen/new_MLGW/MLGW-master/dev/mlgw_NN/bayesian_tuning/tuning_[1,2,3,4]_amp/"
+#D = "/home/stefano/Dropbox/Stefano/PhD/mlgw_repository/dev/mlgw_NN/bayesian_tuning_22/tuning_amp_22_0123"
+D = "/home/stefano/Dropbox/Stefano/PhD/mlgw_repository/dev/mlgw_NN/bayesian_tuning_22/tuning_ph_22_2345"
 
-analyse_tuner_results(D, save_loc=D)
+analyse_tuner_results(D, save_loc=None)

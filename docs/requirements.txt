@@ -1,0 +1,6 @@
+sphinx>=4.4.0
+myst-parser
+readthedocs-sphinx-search>=0.1.1
+sphinx-sitemap
+sphinx-book-theme
+sphinxcontrib-programoutput

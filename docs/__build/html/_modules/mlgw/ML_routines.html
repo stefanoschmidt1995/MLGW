@@ -1,0 +1,903 @@
+
+
+<!DOCTYPE html>
+
+
+<html lang="en" >
+
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>mlgw.ML_routines &#8212; mlgw 3.0.0 documentation</title>
+  
+  
+  
+  <script data-cfasync="false">
+    document.documentElement.dataset.mode = localStorage.getItem("mode") || "";
+    document.documentElement.dataset.theme = localStorage.getItem("theme") || "light";
+  </script>
+  
+  <!-- Loaded before other Sphinx assets -->
+  <link href="../../_static/styles/theme.css?digest=e353d410970836974a52" rel="stylesheet" />
+<link href="../../_static/styles/bootstrap.css?digest=e353d410970836974a52" rel="stylesheet" />
+<link href="../../_static/styles/pydata-sphinx-theme.css?digest=e353d410970836974a52" rel="stylesheet" />
+
+  
+  <link href="../../_static/vendor/fontawesome/6.1.2/css/all.min.css?digest=e353d410970836974a52" rel="stylesheet" />
+  <link rel="preload" as="font" type="font/woff2" crossorigin href="../../_static/vendor/fontawesome/6.1.2/webfonts/fa-solid-900.woff2" />
+<link rel="preload" as="font" type="font/woff2" crossorigin href="../../_static/vendor/fontawesome/6.1.2/webfonts/fa-brands-400.woff2" />
+<link rel="preload" as="font" type="font/woff2" crossorigin href="../../_static/vendor/fontawesome/6.1.2/webfonts/fa-regular-400.woff2" />
+
+    <link rel="stylesheet" type="text/css" href="../../_static/pygments.css" />
+    <link rel="stylesheet" href="../../_static/styles/sphinx-book-theme.css?digest=14f4ca6b54d191a8c7657f6c759bf11a5fb86285" type="text/css" />
+  
+  <!-- Pre-loaded scripts that we'll load fully later -->
+  <link rel="preload" as="script" href="../../_static/scripts/bootstrap.js?digest=e353d410970836974a52" />
+<link rel="preload" as="script" href="../../_static/scripts/pydata-sphinx-theme.js?digest=e353d410970836974a52" />
+
+    <script data-url_root="../../" id="documentation_options" src="../../_static/documentation_options.js"></script>
+    <script src="../../_static/doctools.js"></script>
+    <script src="../../_static/sphinx_highlight.js"></script>
+    <script src="../../_static/scripts/sphinx-book-theme.js?digest=5a5c038af52cf7bc1a1ec88eea08e6366ee68824"></script>
+    <script>DOCUMENTATION_OPTIONS.pagename = '_modules/mlgw/ML_routines';</script>
+    <link rel="author" title="About these documents" href="../../about.html" />
+    <link rel="index" title="Index" href="../../genindex.html" />
+    <link rel="search" title="Search" href="../../search.html" />
+  <meta name="viewport" content="width=device-width, initial-scale=1"/>
+  <meta name="docsearch:language" content="en"/>
+  </head>
+  
+  
+  <body data-bs-spy="scroll" data-bs-target=".bd-toc-nav" data-offset="180" data-bs-root-margin="0px 0px -60%" data-default-mode="">
+
+  
+  
+  <a class="skip-link" href="#main-content">Skip to main content</a>
+  
+  <input type="checkbox"
+          class="sidebar-toggle"
+          name="__primary"
+          id="__primary"/>
+  <label class="overlay overlay-primary" for="__primary"></label>
+  
+  <input type="checkbox"
+          class="sidebar-toggle"
+          name="__secondary"
+          id="__secondary"/>
+  <label class="overlay overlay-secondary" for="__secondary"></label>
+  
+  <div class="search-button__wrapper">
+    <div class="search-button__overlay"></div>
+    <div class="search-button__search-container">
+<form class="bd-search d-flex align-items-center"
+      action="../../search.html"
+      method="get">
+  <i class="fa-solid fa-magnifying-glass"></i>
+  <input type="search"
+         class="form-control"
+         name="q"
+         id="search-input"
+         placeholder="Search..."
+         aria-label="Search..."
+         autocomplete="off"
+         autocorrect="off"
+         autocapitalize="off"
+         spellcheck="false"/>
+  <span class="search-button__kbd-shortcut"><kbd class="kbd-shortcut__modifier">Ctrl</kbd>+<kbd>K</kbd></span>
+</form></div>
+  </div>
+  
+    <nav class="bd-header navbar navbar-expand-lg bd-navbar">
+    </nav>
+  
+  <div class="bd-container">
+    <div class="bd-container__inner bd-page-width">
+      
+      <div class="bd-sidebar-primary bd-sidebar">
+        
+
+  
+  <div class="sidebar-header-items sidebar-primary__section">
+    
+    
+    
+    
+  </div>
+  
+    <div class="sidebar-primary-items__start sidebar-primary__section">
+        <div class="sidebar-primary-item">
+  
+
+<a class="navbar-brand logo" href="../../index.html">
+  
+  
+  
+  
+  
+    <p class="title logo__title">mlgw 3.0.0 documentation</p>
+  
+</a></div>
+        <div class="sidebar-primary-item"><nav class="bd-links" id="bd-docs-nav" aria-label="Main">
+    <div class="bd-toc-item navbar-nav active">
+        <p aria-level="2" class="caption" role="heading"><span class="caption-text">Usage</span></p>
+<ul class="nav bd-sidenav">
+<li class="toctree-l1"><a class="reference internal" href="../../usage/install.html">Installing <code class="docutils literal notranslate"><span class="pre">mlgw</span></code></a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../usage/overview.html">What <code class="docutils literal notranslate"><span class="pre">mlgw</span></code> can do for you</a></li>
+</ul>
+<p aria-level="2" class="caption" role="heading"><span class="caption-text">API reference</span></p>
+<ul class="nav bd-sidenav">
+<li class="toctree-l1"><a class="reference internal" href="../../api_reference/GW_generator.html">Module GW_generator.py</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../api_reference/NN_model.html">Module NN_model.py</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../api_reference/EM_MoE.html">Module EM_MoE.py</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../api_reference/ML_routines.html">Module ML_routines.py</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../api_reference/GW_helper.html">Module GW_helper.py</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../api_reference/fit_model.html">Module fit_model.py</a></li>
+</ul>
+<p aria-level="2" class="caption" role="heading"><span class="caption-text">About</span></p>
+<ul class="nav bd-sidenav">
+<li class="toctree-l1"><a class="reference internal" href="../../about.html">About</a></li>
+</ul>
+
+    </div>
+</nav></div>
+    </div>
+  
+  
+  <div class="sidebar-primary-items__end sidebar-primary__section">
+  </div>
+  
+  <div id="rtd-footer-container"></div>
+
+
+      </div>
+      
+      <main id="main-content" class="bd-main">
+        
+        
+
+<div class="sbt-scroll-pixel-helper"></div>
+
+          <div class="bd-content">
+            <div class="bd-article-container">
+              
+              <div class="bd-header-article">
+<div class="header-article-items header-article__inner">
+  
+    <div class="header-article-items__start">
+      
+        <div class="header-article-item"><label class="sidebar-toggle primary-toggle btn btn-sm" for="__primary" title="Toggle primary sidebar" data-bs-placement="bottom" data-bs-toggle="tooltip">
+  <span class="fa-solid fa-bars"></span>
+</label></div>
+      
+    </div>
+  
+  
+    <div class="header-article-items__end">
+      
+        <div class="header-article-item">
+
+<div class="article-header-buttons">
+
+
+
+<button onclick="toggleFullScreen()"
+  class="btn btn-sm btn-fullscreen-button"
+  title="Fullscreen mode"
+  data-bs-placement="bottom" data-bs-toggle="tooltip"
+>
+  
+
+<span class="btn__icon-container">
+  <i class="fas fa-expand"></i>
+  </span>
+
+</button>
+
+
+<script>
+document.write(`
+  <button class="theme-switch-button btn btn-sm btn-outline-primary navbar-btn rounded-circle" title="light/dark" aria-label="light/dark" data-bs-placement="bottom" data-bs-toggle="tooltip">
+    <span class="theme-switch" data-mode="light"><i class="fa-solid fa-sun"></i></span>
+    <span class="theme-switch" data-mode="dark"><i class="fa-solid fa-moon"></i></span>
+    <span class="theme-switch" data-mode="auto"><i class="fa-solid fa-circle-half-stroke"></i></span>
+  </button>
+`);
+</script>
+
+<script>
+document.write(`
+  <button class="btn btn-sm navbar-btn search-button search-button__button" title="Search" aria-label="Search" data-bs-placement="bottom" data-bs-toggle="tooltip">
+    <i class="fa-solid fa-magnifying-glass"></i>
+  </button>
+`);
+</script>
+
+</div></div>
+      
+    </div>
+  
+</div>
+</div>
+              
+              
+
+<div id="jb-print-docs-body" class="onlyprint">
+    <h1></h1>
+    <!-- Table of contents -->
+    <div id="print-main-content">
+        <div id="jb-print-toc">
+            
+        </div>
+    </div>
+</div>
+
+              
+                
+<div id="searchbox"></div>
+                <article class="bd-article" role="main">
+                  
+  <h1>Source code for mlgw.ML_routines</h1><div class="highlight"><pre>
+<span></span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">Module ML_routines.py</span>
+<span class="sd">=====================</span>
+<span class="sd">	Definition of the following ML routines:</span>
+<span class="sd">		PCA model</span>
+<span class="sd">			class PCA_model: implements a PCA model with methods for fitting and doing data reduction</span>
+<span class="sd">		Gaussian Discriminant Analysis</span>
+<span class="sd">			class GDA: implements a model for a Gaussian discriminant Analysis classifiers. It might be useful for MoE.</span>
+<span class="sd">		Data augmentation helper</span>
+<span class="sd">			function add_extra_features: adds to a dataset some extra polynomial features</span>
+<span class="sd">&quot;&quot;&quot;</span>
+<span class="c1">#################</span>
+
+<span class="kn">import</span> <span class="nn">scipy.stats</span><span class="o">,</span> <span class="nn">scipy.linalg</span>
+<span class="kn">import</span> <span class="nn">numpy</span> <span class="k">as</span> <span class="nn">np</span>
+<span class="kn">import</span> <span class="nn">warnings</span>
+<span class="kn">from</span> <span class="nn">itertools</span> <span class="kn">import</span> <span class="n">combinations_with_replacement</span>
+
+<span class="c1">################# PCA class</span>
+<div class="viewcode-block" id="PCA_model"><a class="viewcode-back" href="../../api_reference/ML_routines.html#mlgw.ML_routines.PCA_model">[docs]</a><span class="k">class</span> <span class="nc">PCA_model</span><span class="p">:</span>
+	<span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">PCA_model</span>
+<span class="sd">=========</span>
+<span class="sd">	Class aimed to deal with a PCA model.</span>
+<span class="sd">	It fits a PCA model and is able to reduce a dataset (dimension D) to a lower dimensional (dimension K) one and to reconstruct low dimensional data to high dimensional one.</span>
+<span class="sd">	It stores the following parameters (get them with get_PCA_params()):</span>
+<span class="sd">		V (D,K)			matrix for dimensional reduction</span>
+<span class="sd">		mu (D,)			the average value for each feature of dataset</span>
+<span class="sd">		max_PC (K,)		maximum value of PC projection used to redurn scaled low dimensional data (activate it with scale_PC=True in fit_model methods())</span>
+<span class="sd">		E (K,)			Eigenvalues of the PCs</span>
+<span class="sd">	&quot;&quot;&quot;</span>
+	<span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">filename</span> <span class="o">=</span> <span class="kc">None</span><span class="p">):</span>
+		<span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">	__init__</span>
+<span class="sd">	========</span>
+<span class="sd">		Constructor for PCA model. If filename is given, loads the model from file.</span>
+<span class="sd">		Input:</span>
+<span class="sd">			filename	file to load the model from</span>
+<span class="sd">		&quot;&quot;&quot;</span>
+		<span class="bp">self</span><span class="o">.</span><span class="n">PCA_params</span> <span class="o">=</span> <span class="p">[]</span>
+		<span class="k">if</span> <span class="n">filename</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+			<span class="bp">self</span><span class="o">.</span><span class="n">load_model</span><span class="p">(</span><span class="n">filename</span><span class="p">)</span>
+		<span class="k">return</span> <span class="kc">None</span>
+
+<div class="viewcode-block" id="PCA_model.save_model"><a class="viewcode-back" href="../../api_reference/ML_routines.html#mlgw.ML_routines.PCA_model.save_model">[docs]</a>	<span class="k">def</span> <span class="nf">save_model</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">filename</span><span class="p">):</span>
+		<span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">	save_model</span>
+<span class="sd">	==========</span>
+<span class="sd">		Save the PCA model parameters to file in the matrix</span>
+<span class="sd">			[[V (D,K), mu (D,)], [max_PC (K(+1),)], [E (K(+1),)] ]</span>
+<span class="sd">		with shape (D+2,K+1)</span>
+<span class="sd">		Input:</span>
+<span class="sd">			filename	file to save the model in</span>
+<span class="sd">		Output:</span>
+<span class="sd">		&quot;&quot;&quot;</span>
+		<span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">PCA_params</span> <span class="o">==</span> <span class="p">[]:</span>
+			<span class="nb">print</span><span class="p">(</span><span class="s2">&quot;Model is not fitted yet! There is nothing to save&quot;</span><span class="p">)</span>
+			<span class="k">return</span> <span class="kc">None</span>
+		<span class="p">(</span><span class="n">D</span><span class="p">,</span> <span class="n">K</span><span class="p">)</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">PCA_params</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">shape</span>
+		<span class="n">V</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">PCA_params</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="c1">#(D,K)</span>
+		<span class="n">mu</span> <span class="o">=</span> <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">PCA_params</span><span class="p">[</span><span class="mi">1</span><span class="p">])[:,</span><span class="n">np</span><span class="o">.</span><span class="n">newaxis</span><span class="p">]</span><span class="c1">#(D,1)</span>
+		<span class="n">max_PC</span> <span class="o">=</span> <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">PCA_params</span><span class="p">[</span><span class="mi">2</span><span class="p">])</span> <span class="c1">#(K,)</span>
+		<span class="n">E</span> <span class="o">=</span> <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">PCA_params</span><span class="p">[</span><span class="mi">3</span><span class="p">])</span> <span class="c1">#(K,)</span>
+		<span class="n">first_row</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">concatenate</span><span class="p">((</span><span class="n">V</span><span class="p">,</span><span class="n">mu</span><span class="p">),</span> <span class="n">axis</span> <span class="o">=</span> <span class="mi">1</span><span class="p">)</span> <span class="c1">#(D, K+1)</span>
+
+		<span class="n">to_save</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">((</span><span class="n">D</span><span class="o">+</span><span class="mi">2</span><span class="p">,</span> <span class="n">K</span><span class="o">+</span><span class="mi">1</span><span class="p">))</span>
+		<span class="n">to_save</span><span class="p">[:</span><span class="n">D</span><span class="p">,:]</span> <span class="o">=</span> <span class="n">first_row</span>
+		<span class="n">to_save</span><span class="p">[</span><span class="n">D</span><span class="p">,:</span><span class="n">K</span><span class="p">]</span> <span class="o">=</span> <span class="n">max_PC</span>
+		<span class="n">to_save</span><span class="p">[</span><span class="n">D</span><span class="o">+</span><span class="mi">1</span><span class="p">,:</span><span class="n">K</span><span class="p">]</span> <span class="o">=</span> <span class="n">E</span><span class="o">.</span><span class="n">real</span>
+		<span class="n">to_save</span><span class="p">[</span><span class="n">D</span><span class="p">:,</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">NAN</span>		
+
+		<span class="n">np</span><span class="o">.</span><span class="n">savetxt</span><span class="p">(</span><span class="n">filename</span><span class="p">,</span> <span class="n">to_save</span><span class="p">)</span>
+		<span class="k">return</span> <span class="kc">None</span> </div>
+
+<div class="viewcode-block" id="PCA_model.load_model"><a class="viewcode-back" href="../../api_reference/ML_routines.html#mlgw.ML_routines.PCA_model.load_model">[docs]</a>	<span class="k">def</span> <span class="nf">load_model</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">filename</span><span class="p">):</span>
+		<span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">	load_model</span>
+<span class="sd">	==========</span>
+<span class="sd">		Load the PCA parameters from file. The format is the same as save_model</span>
+<span class="sd">		Input:</span>
+<span class="sd">			filename	file to load the model from</span>
+<span class="sd">		Output:</span>
+<span class="sd">		&quot;&quot;&quot;</span>
+		<span class="n">data</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">loadtxt</span><span class="p">(</span><span class="n">filename</span><span class="p">)</span> <span class="c1">#loading data</span>
+
+		<span class="k">if</span> <span class="ow">not</span> <span class="n">np</span><span class="o">.</span><span class="n">any</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">isnan</span><span class="p">(</span><span class="n">data</span><span class="p">)):</span> <span class="c1">#if there is no NaN, the old format is employed. This is to ensure code portability :(</span>
+			<span class="n">warnings</span><span class="o">.</span><span class="n">warn</span><span class="p">(</span><span class="s2">&quot;Old PCA model type given. The model is loaded correctly but it is better to save the model to the new format.&quot;</span><span class="p">)</span>
+			<span class="n">V</span> <span class="o">=</span> <span class="n">data</span><span class="p">[:,:</span><span class="n">data</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span><span class="o">-</span><span class="mi">2</span><span class="p">]</span> <span class="c1">#(D,K)</span>
+			<span class="n">mu</span> <span class="o">=</span> <span class="n">data</span><span class="p">[:,</span><span class="n">data</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span><span class="o">-</span><span class="mi">2</span><span class="p">]</span> <span class="c1">#(D,)</span>
+			<span class="n">max_PC</span> <span class="o">=</span> <span class="n">data</span><span class="p">[:</span><span class="n">V</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">1</span><span class="p">],</span><span class="n">data</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span> <span class="c1">#(K,)</span>
+			<span class="n">E</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">ones</span><span class="p">((</span><span class="n">V</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">1</span><span class="p">],))</span> <span class="c1">#(K,)</span>
+		<span class="k">else</span><span class="p">:</span>
+			<span class="n">V</span> <span class="o">=</span> <span class="n">data</span><span class="p">[:</span><span class="n">data</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">-</span><span class="mi">2</span><span class="p">,:</span><span class="n">data</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span>
+			<span class="n">mu</span> <span class="o">=</span> <span class="n">data</span><span class="p">[:</span><span class="n">data</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">-</span><span class="mi">2</span><span class="p">,</span><span class="n">data</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span>
+			<span class="n">max_PC</span> <span class="o">=</span> <span class="n">data</span><span class="p">[</span><span class="n">data</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">-</span><span class="mi">2</span><span class="p">,:</span><span class="n">data</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span>
+			<span class="n">E</span> <span class="o">=</span> <span class="n">data</span><span class="p">[</span><span class="n">data</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">-</span><span class="mi">1</span><span class="p">,:</span><span class="n">data</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span>
+
+		<span class="bp">self</span><span class="o">.</span><span class="n">PCA_params</span><span class="o">=</span> <span class="p">[</span><span class="n">V</span><span class="p">,</span><span class="n">mu</span><span class="p">,</span><span class="n">max_PC</span><span class="p">,</span> <span class="n">E</span><span class="p">]</span>
+		<span class="k">return</span> <span class="kc">None</span></div>
+
+<div class="viewcode-block" id="PCA_model.reconstruct_data"><a class="viewcode-back" href="../../api_reference/ML_routines.html#mlgw.ML_routines.PCA_model.reconstruct_data">[docs]</a>	<span class="k">def</span> <span class="nf">reconstruct_data</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">red_data</span><span class="p">,</span> <span class="n">K</span> <span class="o">=</span> <span class="kc">None</span><span class="p">):</span>
+		<span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">	reconstruct_data</span>
+<span class="sd">	================</span>
+<span class="sd">		Gives the best estimate of high dimensional data given the low dimensional PCA approximation.</span>
+<span class="sd">		Data are rescaled back to the original training measure inverting the preprocessing procedure.</span>
+<span class="sd">		Input:</span>
+<span class="sd">			red_data (N,K&#39;)	low dimensional representation of data</span>
+<span class="sd">			K				Number of compontents to be used for reconstruction. If None, all the given components will be used</span>
+<span class="sd">		Output:</span>
+<span class="sd">			data (N,D)		high dimensional reconstruction of data (after inversion of preprocessing)</span>
+<span class="sd">		&quot;&quot;&quot;</span>
+		<span class="k">if</span> <span class="n">K</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span> <span class="c1">#adding zeros if the compontents are not to be used</span>
+			<span class="k">if</span> <span class="n">K</span> <span class="o">&lt;</span> <span class="bp">self</span><span class="o">.</span><span class="n">PCA_params</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">1</span><span class="p">]:</span>
+				<span class="n">red_data</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">concatenate</span><span class="p">([</span><span class="n">red_data</span><span class="p">[:,:</span><span class="n">K</span><span class="p">],</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">((</span><span class="n">red_data</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="bp">self</span><span class="o">.</span><span class="n">PCA_params</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span><span class="o">-</span><span class="n">K</span><span class="p">))],</span> <span class="n">axis</span> <span class="o">=</span> <span class="mi">1</span><span class="p">)</span> 
+		<span class="n">red_data</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">multiply</span><span class="p">(</span><span class="n">red_data</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">PCA_params</span><span class="p">[</span><span class="mi">2</span><span class="p">])</span>
+		<span class="n">data</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">matmul</span><span class="p">(</span><span class="n">red_data</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">PCA_params</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">T</span><span class="p">)</span>
+		<span class="n">data</span> <span class="o">=</span> <span class="n">data</span><span class="o">+</span><span class="bp">self</span><span class="o">.</span><span class="n">PCA_params</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span>
+		<span class="k">return</span> <span class="n">data</span><span class="o">.</span><span class="n">real</span></div>
+
+
+<div class="viewcode-block" id="PCA_model.reduce_data"><a class="viewcode-back" href="../../api_reference/ML_routines.html#mlgw.ML_routines.PCA_model.reduce_data">[docs]</a>	<span class="k">def</span> <span class="nf">reduce_data</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">data</span><span class="p">):</span>
+		<span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">	reduce_data</span>
+<span class="sd">	===========</span>
+<span class="sd">		Reduce data by applying a PCA dimensionality reduction. Data are preprocessed by a scaling and a mean shift according to parameters give in PCA_params (in the fashion of fit_PCA). The reduced version of preprocessd data is returned (X_red = X*V_PCA).</span>
+<span class="sd">		Input:</span>
+<span class="sd">			data (N,D)		data to reduce</span>
+<span class="sd">		Output:</span>
+<span class="sd">			red_data (N,K)	dimensional reduction of preprocessed data</span>
+<span class="sd">		&quot;&quot;&quot;</span>
+		<span class="n">data</span> <span class="o">=</span> <span class="n">data</span> <span class="o">-</span> <span class="bp">self</span><span class="o">.</span><span class="n">PCA_params</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span>
+		<span class="n">red_data</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">matmul</span><span class="p">(</span><span class="n">data</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">PCA_params</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span>
+		<span class="n">red_data</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">divide</span><span class="p">(</span><span class="n">red_data</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">PCA_params</span><span class="p">[</span><span class="mi">2</span><span class="p">])</span> <span class="c1">#scaling PC to make them o(1)</span>
+		<span class="k">return</span> <span class="n">red_data</span><span class="o">.</span><span class="n">real</span></div>
+
+<div class="viewcode-block" id="PCA_model.fit_model"><a class="viewcode-back" href="../../api_reference/ML_routines.html#mlgw.ML_routines.PCA_model.fit_model">[docs]</a>	<span class="k">def</span> <span class="nf">fit_model</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">X</span><span class="p">,</span> <span class="n">K</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span> <span class="n">scale_PC</span><span class="o">=</span><span class="kc">True</span><span class="p">):</span>
+		<span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">	fit_model</span>
+<span class="sd">	=========</span>
+<span class="sd">		Fit the PCA model for the given dataset. Data are done zero mean for each feature and rescaled s.t. are O(1) if scale_data is True.</span>
+<span class="sd">		A parameter set is returned holding fitted PCA parameters (projection matrix, data mean and scale factor)</span>
+<span class="sd">		Input:</span>
+<span class="sd">			X (N,D)		training set</span>
+<span class="sd">			K ()		number of principal components</span>
+<span class="sd">			scale_PC	whether PC should be scaled by their maximum value to make them all O(1)</span>
+<span class="sd">		Output:</span>
+<span class="sd">			E (K,)	eigenvalues of the first K principal components</span>
+<span class="sd">		&quot;&quot;&quot;</span>
+		<span class="n">X</span> <span class="o">=</span> <span class="n">X</span><span class="o">.</span><span class="n">astype</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">float128</span><span class="p">)</span>
+		<span class="n">mu</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">mean</span><span class="p">(</span><span class="n">X</span><span class="p">,</span><span class="mi">0</span><span class="p">)</span> <span class="c1">#(D,)</span>
+		<span class="n">X</span> <span class="o">=</span> <span class="n">X</span> <span class="o">-</span> <span class="n">mu</span>
+
+			<span class="c1">#doing actual PCA</span>
+		<span class="k">if</span> <span class="n">K</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+			<span class="n">K</span> <span class="o">=</span> <span class="n">X</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span>
+
+		<span class="c1">#E, V = np.linalg.eig(np.cov(X.T))</span>
+		<span class="n">E</span><span class="p">,</span> <span class="n">V</span> <span class="o">=</span> <span class="n">scipy</span><span class="o">.</span><span class="n">linalg</span><span class="o">.</span><span class="n">eig</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">cov</span><span class="p">(</span><span class="n">X</span><span class="o">.</span><span class="n">T</span><span class="p">))</span> <span class="c1">#better than np?</span>
+		
+		<span class="n">idx</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">argsort</span><span class="p">(</span><span class="n">E</span><span class="p">)[::</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span>
+		<span class="n">V</span> <span class="o">=</span> <span class="n">V</span><span class="p">[:,</span> <span class="n">idx</span><span class="p">[:</span><span class="n">K</span><span class="p">]]</span> <span class="c1"># (D,K)</span>
+		<span class="n">E</span> <span class="o">=</span> <span class="n">E</span><span class="p">[</span><span class="n">idx</span><span class="p">[:</span><span class="n">K</span><span class="p">]]</span><span class="o">.</span><span class="n">real</span> <span class="c1">#(K,)</span>
+		<span class="bp">self</span><span class="o">.</span><span class="n">PCA_params</span> <span class="o">=</span> <span class="p">[</span><span class="n">V</span><span class="o">.</span><span class="n">real</span><span class="p">,</span> <span class="n">mu</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">ones</span><span class="p">((</span><span class="n">K</span><span class="p">,)),</span>  <span class="n">E</span><span class="p">]</span>
+
+		<span class="k">if</span> <span class="n">scale_PC</span><span class="p">:</span>
+			<span class="n">red_data</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">matmul</span><span class="p">(</span><span class="n">X</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">PCA_params</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span> <span class="c1">#(N,K)</span>
+			<span class="bp">self</span><span class="o">.</span><span class="n">PCA_params</span><span class="p">[</span><span class="mi">2</span><span class="p">]</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">max</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">abs</span><span class="p">(</span><span class="n">red_data</span><span class="p">),</span> <span class="n">axis</span> <span class="o">=</span> <span class="mi">0</span><span class="p">)</span> <span class="c1">#(K,)</span>
+
+		<span class="k">return</span> <span class="n">E</span><span class="p">[:</span><span class="n">K</span><span class="p">]</span><span class="o">.</span><span class="n">real</span></div>
+
+<div class="viewcode-block" id="PCA_model.get_V_matrix"><a class="viewcode-back" href="../../api_reference/ML_routines.html#mlgw.ML_routines.PCA_model.get_V_matrix">[docs]</a>	<span class="k">def</span> <span class="nf">get_V_matrix</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+		<span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">	get_V_matrix</span>
+<span class="sd">	============</span>
+<span class="sd">		Returns the projection matrix of the model</span>
+<span class="sd">		Input:</span>
+<span class="sd">		Output:</span>
+<span class="sd">			V (D,K) matrix of eigenvector used for projection and reconstruction of data</span>
+<span class="sd">		&quot;&quot;&quot;</span>
+		<span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">PCA_params</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span></div>
+
+<div class="viewcode-block" id="PCA_model.get_dimensions"><a class="viewcode-back" href="../../api_reference/ML_routines.html#mlgw.ML_routines.PCA_model.get_dimensions">[docs]</a>	<span class="k">def</span> <span class="nf">get_dimensions</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+		<span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">	get_dimensions</span>
+<span class="sd">	==============</span>
+<span class="sd">		Returns dimension of high- and low-dimensional space.</span>
+<span class="sd">		Input:</span>
+<span class="sd">		Output:</span>
+<span class="sd">			(D,K) (tuple)	dimensions in the format (high-dim, low-dim)</span>
+<span class="sd">		&quot;&quot;&quot;</span>
+		<span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">PCA_params</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">shape</span></div>
+
+<div class="viewcode-block" id="PCA_model.get_PCA_params"><a class="viewcode-back" href="../../api_reference/ML_routines.html#mlgw.ML_routines.PCA_model.get_PCA_params">[docs]</a>	<span class="k">def</span> <span class="nf">get_PCA_params</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+		<span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">	get_PCA_params</span>
+<span class="sd">	==============</span>
+<span class="sd">		Returns the parameters of the model</span>
+<span class="sd">		Input:</span>
+<span class="sd">		Output:</span>
+<span class="sd">			PCA_params [V (D,K), mu (D,), max_PC (K,), E (K,)]	paramters for preprocessing and PCA</span>
+<span class="sd">		&quot;&quot;&quot;</span>
+		<span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">PCA_params</span></div></div>
+
+<span class="c1">################# Gaussian Discriminant Analysis</span>
+<div class="viewcode-block" id="GDA"><a class="viewcode-back" href="../../api_reference/ML_routines.html#mlgw.ML_routines.GDA">[docs]</a><span class="k">class</span> <span class="nc">GDA</span><span class="p">(</span><span class="nb">object</span><span class="p">):</span>
+	<span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">GDA</span>
+<span class="sd">===</span>
+<span class="sd">	This class implements a model for Gaussian Discriminant Analysis. The model is a classifier with form:</span>
+<span class="sd">		p(y=k|x,params) ~ p(y=k) * p(x | y=k, params) =  pi_k * N(x | mu_k, sigma_k)</span>
+<span class="sd">	&quot;&quot;&quot;</span>
+	<span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">D</span><span class="p">,</span> <span class="n">K</span><span class="p">,</span> <span class="n">naive</span> <span class="o">=</span> <span class="kc">True</span><span class="p">,</span> <span class="n">hard_clustering</span> <span class="o">=</span> <span class="kc">False</span><span class="p">,</span> <span class="n">same_weights</span> <span class="o">=</span> <span class="kc">False</span><span class="p">):</span>
+		<span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">	__init__</span>
+<span class="sd">	========</span>
+<span class="sd">		Initialize the model with K classes for regressions.</span>
+<span class="sd">		Input:</span>
+<span class="sd">			D 				dimensionality of input space</span>
+<span class="sd">			K				number or classes for regression</span>
+<span class="sd">			naive			whether the covariance matrix for each class should be diagonal (naive assumption)</span>
+<span class="sd">			hard_clustering	whether hard clustering predictions should be done</span>
+<span class="sd">			same_weights	whethet all p(y=k) should be the same</span>
+<span class="sd">		&quot;&quot;&quot;</span>
+		<span class="bp">self</span><span class="o">.</span><span class="n">D</span> <span class="o">=</span> <span class="n">D</span> 
+		<span class="bp">self</span><span class="o">.</span><span class="n">K</span> <span class="o">=</span> <span class="n">K</span> 
+		<span class="bp">self</span><span class="o">.</span><span class="n">naive</span> <span class="o">=</span> <span class="n">naive</span>
+		<span class="bp">self</span><span class="o">.</span><span class="n">same_weights</span> <span class="o">=</span> <span class="n">same_weights</span>
+		<span class="bp">self</span><span class="o">.</span><span class="n">hard_clustering</span> <span class="o">=</span> <span class="n">hard_clustering</span>
+		<span class="k">if</span> <span class="ow">not</span> <span class="n">naive</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">models</span> <span class="o">=</span> <span class="p">[]</span>
+		<span class="bp">self</span><span class="o">.</span><span class="n">model_params</span> <span class="o">=</span> <span class="p">[]</span>
+			<span class="c1">#initializing with dummy things</span>
+		<span class="k">for</span> <span class="n">k</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">K</span><span class="p">):</span>	
+			<span class="n">mu</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">((</span><span class="n">D</span><span class="p">,))</span> <span class="c1">#(D,)</span>
+			<span class="n">sigma</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">ones</span><span class="p">((</span><span class="n">D</span><span class="p">,))</span><span class="o">/</span><span class="n">D</span>
+			<span class="k">if</span> <span class="ow">not</span> <span class="n">naive</span><span class="p">:</span>
+				<span class="bp">self</span><span class="o">.</span><span class="n">models</span><span class="o">.</span><span class="n">append</span><span class="p">(</span> <span class="n">scipy</span><span class="o">.</span><span class="n">stats</span><span class="o">.</span><span class="n">multivariate_normal</span><span class="p">(</span><span class="n">mu</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">diag</span><span class="p">(</span><span class="n">sigma</span><span class="p">))</span> <span class="p">)</span>
+				<span class="bp">self</span><span class="o">.</span><span class="n">model_params</span><span class="o">.</span><span class="n">append</span><span class="p">((</span><span class="n">mu</span><span class="p">,</span><span class="n">np</span><span class="o">.</span><span class="n">diag</span><span class="p">(</span><span class="n">sigma</span><span class="p">)))</span>
+			<span class="k">else</span><span class="p">:</span>
+				<span class="bp">self</span><span class="o">.</span><span class="n">model_params</span><span class="o">.</span><span class="n">append</span><span class="p">((</span><span class="n">mu</span><span class="p">,</span><span class="n">sigma</span><span class="p">))</span>
+		<span class="bp">self</span><span class="o">.</span><span class="n">pi_k</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">ones</span><span class="p">((</span><span class="n">K</span><span class="p">,))</span><span class="o">/</span><span class="n">K</span> <span class="c1">#initialization</span>
+		<span class="k">return</span>
+
+<div class="viewcode-block" id="GDA.init_centroids"><a class="viewcode-back" href="../../api_reference/ML_routines.html#mlgw.ML_routines.GDA.init_centroids">[docs]</a>	<span class="k">def</span> <span class="nf">init_centroids</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">centroids</span><span class="p">,</span> <span class="n">sigma</span> <span class="o">=</span> <span class="kc">None</span><span class="p">):</span>
+		<span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">	init_centroids</span>
+<span class="sd">	==============</span>
+<span class="sd">		Initialize each of cluster mean and variance with a custom value..</span>
+<span class="sd">		Input:</span>
+<span class="sd">			centroids (D,K)		array with K centroids (each of D dimension)</span>
+<span class="sd">			sigma (D,K)			diagonal of covariance matrix</span>
+<span class="sd">		&quot;&quot;&quot;</span>
+		<span class="k">if</span> <span class="n">centroids</span><span class="o">.</span><span class="n">shape</span> <span class="o">!=</span> <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">D</span><span class="p">,</span><span class="bp">self</span><span class="o">.</span><span class="n">K</span><span class="p">):</span>
+			<span class="k">raise</span> <span class="ne">TypeError</span><span class="p">(</span><span class="s2">&quot;Centroids matrix not suitable! Shape should be (&quot;</span><span class="o">+</span><span class="nb">str</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">D</span><span class="p">)</span><span class="o">+</span><span class="s2">&quot;,&quot;</span><span class="o">+</span><span class="nb">str</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">K</span><span class="p">)</span><span class="o">+</span><span class="s2">&quot;)&quot;</span><span class="p">)</span>
+		<span class="k">if</span> <span class="n">sigma</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+			<span class="n">sigma</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">ones</span><span class="p">((</span><span class="bp">self</span><span class="o">.</span><span class="n">D</span><span class="p">,</span><span class="bp">self</span><span class="o">.</span><span class="n">K</span><span class="p">))</span>
+		<span class="k">if</span> <span class="n">sigma</span><span class="o">.</span><span class="n">shape</span> <span class="o">!=</span> <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">D</span><span class="p">,</span><span class="bp">self</span><span class="o">.</span><span class="n">K</span><span class="p">):</span>
+			<span class="k">raise</span> <span class="ne">TypeError</span><span class="p">(</span><span class="s2">&quot;Sigma matrix not suitable!&quot;</span><span class="p">)</span>
+		<span class="k">for</span> <span class="n">k</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">K</span><span class="p">):</span>
+			<span class="bp">self</span><span class="o">.</span><span class="n">model_params</span><span class="p">[</span><span class="n">k</span><span class="p">]</span> <span class="o">=</span> <span class="p">(</span><span class="n">centroids</span><span class="p">[:,</span><span class="n">k</span><span class="p">],</span><span class="n">sigma</span><span class="p">[:,</span><span class="n">k</span><span class="p">])</span>
+		<span class="k">return</span> </div>
+
+<div class="viewcode-block" id="GDA.predict"><a class="viewcode-back" href="../../api_reference/ML_routines.html#mlgw.ML_routines.GDA.predict">[docs]</a>	<span class="k">def</span> <span class="nf">predict</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">X_test</span><span class="p">,</span> <span class="n">LL</span> <span class="o">=</span> <span class="kc">False</span><span class="p">):</span>
+		<span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">	predict</span>
+<span class="sd">	=======</span>
+<span class="sd">		Makes predictions with probability: p(y = k | x).</span>
+<span class="sd">		Log probability can be returned</span>
+<span class="sd">		Input:</span>
+<span class="sd">			X_test (N,D)	test points</span>
+<span class="sd">			LL				whether log probability is required</span>
+<span class="sd">		Ouput:</span>
+<span class="sd">			y_pred (N,K)	predictions</span>
+<span class="sd">		&quot;&quot;&quot;</span>
+		<span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">model_params</span><span class="p">)</span> <span class="o">!=</span> <span class="bp">self</span><span class="o">.</span><span class="n">K</span><span class="p">:</span>
+			<span class="k">raise</span> <span class="ne">RuntimeWarning</span><span class="p">(</span><span class="s2">&quot;Model must be fitted before making predictions! No predictions have been done&quot;</span><span class="p">)</span>
+			<span class="k">return</span> <span class="kc">None</span>
+		<span class="n">res</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">((</span><span class="n">X_test</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span><span class="bp">self</span><span class="o">.</span><span class="n">K</span><span class="p">))</span>		
+		<span class="k">for</span> <span class="n">k</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">K</span><span class="p">):</span>
+			<span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">naive</span><span class="p">:</span>
+				<span class="n">mu</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">model_params</span><span class="p">[</span><span class="n">k</span><span class="p">][</span><span class="mi">0</span><span class="p">]</span>	<span class="c1">#(D,)</span>
+				<span class="n">sigma_sq</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">model_params</span><span class="p">[</span><span class="n">k</span><span class="p">][</span><span class="mi">1</span><span class="p">]</span> <span class="c1">#(D,) diagonal elements</span>
+				<span class="n">non_zero</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">where</span><span class="p">(</span><span class="n">sigma_sq</span> <span class="o">!=</span><span class="mi">0</span><span class="p">)[</span><span class="mi">0</span><span class="p">]</span> <span class="c1">#(D&#39;,) only non-zero variance components enter the valuation of argument</span>
+				<span class="n">arg</span> <span class="o">=</span> <span class="o">-</span><span class="mf">0.5</span><span class="o">*</span><span class="n">np</span><span class="o">.</span><span class="n">divide</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">square</span><span class="p">(</span><span class="n">X_test</span><span class="p">[:,</span><span class="n">non_zero</span><span class="p">]</span><span class="o">-</span> <span class="n">mu</span><span class="p">[</span><span class="n">non_zero</span><span class="p">]),</span> <span class="n">sigma_sq</span><span class="p">[</span><span class="n">non_zero</span><span class="p">])</span> <span class="c1">#shape (N,D&#39;)</span>
+				<span class="n">arg</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">sum</span><span class="p">(</span><span class="n">arg</span><span class="p">,</span> <span class="n">axis</span> <span class="o">=</span><span class="mi">1</span><span class="p">)</span> <span class="c1">#(N,)</span>
+				<span class="c1">#arg = arg - .5 * np.sum(np.log(sigma_sq[non_zero])) #it&#39;s better not to normalize things</span>
+				<span class="n">res</span><span class="p">[:,</span><span class="n">k</span><span class="p">]</span> <span class="o">=</span> <span class="n">arg</span> <span class="o">+</span> <span class="n">np</span><span class="o">.</span><span class="n">log</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">pi_k</span><span class="p">[</span><span class="n">k</span><span class="p">])</span> <span class="c1">#adding p(y=k) as in Bayes&#39; rule</span>
+			<span class="k">if</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">naive</span><span class="p">:</span>
+				<span class="n">res</span><span class="p">[:,</span><span class="n">k</span><span class="p">]</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">pi_k</span><span class="p">[</span><span class="n">k</span><span class="p">]</span><span class="o">*</span><span class="bp">self</span><span class="o">.</span><span class="n">models</span><span class="p">[</span><span class="n">k</span><span class="p">]</span><span class="o">.</span><span class="n">pdf</span><span class="p">(</span><span class="n">X_test</span><span class="p">)</span> <span class="c1">#(N,) #really old version of the model</span>
+
+		<span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">hard_clustering</span><span class="p">:</span> <span class="c1">#returning hard clustering predictions</span>
+			<span class="n">to_return</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">(</span><span class="n">res</span><span class="o">.</span><span class="n">shape</span><span class="p">)</span>
+			<span class="n">to_return</span><span class="p">[</span><span class="n">np</span><span class="o">.</span><span class="n">arange</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">res</span><span class="p">)),</span> <span class="n">res</span><span class="o">.</span><span class="n">argmax</span><span class="p">(</span><span class="mi">1</span><span class="p">)]</span> <span class="o">=</span> <span class="mi">1</span>
+			<span class="k">return</span> <span class="n">to_return</span>
+
+		<span class="k">if</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">naive</span><span class="p">:</span>
+			<span class="n">res</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">divide</span><span class="p">(</span><span class="n">res</span><span class="o">.</span><span class="n">T</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">sum</span><span class="p">(</span><span class="n">res</span><span class="p">,</span> <span class="n">axis</span> <span class="o">=</span><span class="mi">1</span><span class="p">))</span><span class="o">.</span><span class="n">T</span>
+			<span class="k">if</span> <span class="n">LL</span><span class="p">:</span> <span class="n">res</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">log</span><span class="p">(</span><span class="n">res</span><span class="p">)</span>
+			<span class="k">return</span> <span class="n">res</span> <span class="c1">#(N,K)	</span>
+		<span class="k">else</span><span class="p">:</span>
+			<span class="k">if</span> <span class="n">LL</span><span class="p">:</span>
+				<span class="k">return</span> <span class="n">res</span> <span class="c1">#result is not normalized... I should find a way to do it...</span>
+			<span class="n">res</span> <span class="o">=</span> <span class="p">(</span><span class="n">res</span><span class="o">.</span><span class="n">T</span> <span class="o">-</span> <span class="n">np</span><span class="o">.</span><span class="n">mean</span><span class="p">(</span><span class="n">res</span><span class="p">,</span> <span class="n">axis</span> <span class="o">=</span><span class="mi">1</span><span class="p">))</span><span class="o">.</span><span class="n">T</span>
+			<span class="n">res</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">exp</span><span class="p">(</span><span class="n">res</span><span class="p">)</span>
+			<span class="n">res</span><span class="p">[</span><span class="n">np</span><span class="o">.</span><span class="n">where</span><span class="p">(</span><span class="n">res</span><span class="o">==</span><span class="mi">0</span><span class="p">)[</span><span class="mi">0</span><span class="p">]]</span> <span class="o">=</span> <span class="mf">1e-5</span>
+			<span class="k">return</span> <span class="n">np</span><span class="o">.</span><span class="n">divide</span><span class="p">(</span><span class="n">res</span><span class="o">.</span><span class="n">T</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">sum</span><span class="p">(</span><span class="n">res</span><span class="p">,</span> <span class="n">axis</span> <span class="o">=</span><span class="mi">1</span><span class="p">))</span><span class="o">.</span><span class="n">T</span></div>
+
+<div class="viewcode-block" id="GDA.fit"><a class="viewcode-back" href="../../api_reference/ML_routines.html#mlgw.ML_routines.GDA.fit">[docs]</a>	<span class="k">def</span> <span class="nf">fit</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">X_train</span><span class="p">,</span> <span class="n">y_train</span><span class="p">):</span>
+		<span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">	fit</span>
+<span class="sd">	===</span>
+<span class="sd">		Fit the model with MLE.</span>
+<span class="sd">		Input:</span>
+<span class="sd">			X_train (N,D)	train data</span>
+<span class="sd">			y_train (N,)	train labels</span>
+<span class="sd">		&quot;&quot;&quot;</span>
+		<span class="bp">self</span><span class="o">.</span><span class="n">models</span> <span class="o">=</span> <span class="p">[]</span>
+		<span class="bp">self</span><span class="o">.</span><span class="n">model_params</span> <span class="o">=</span> <span class="p">[]</span>
+		<span class="k">for</span> <span class="n">k</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">K</span><span class="p">):</span>	
+			<span class="n">mu</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">sum</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">multiply</span><span class="p">(</span><span class="n">X_train</span><span class="o">.</span><span class="n">T</span><span class="p">,</span><span class="n">y_train</span><span class="p">[:,</span><span class="n">k</span><span class="p">])</span><span class="o">.</span><span class="n">T</span><span class="p">,</span> <span class="n">axis</span> <span class="o">=</span> <span class="mi">0</span><span class="p">)</span> <span class="c1">#(D,)</span>
+			<span class="n">mu</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">divide</span><span class="p">(</span><span class="n">mu</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">sum</span><span class="p">(</span><span class="n">y_train</span><span class="p">[:,</span><span class="n">k</span><span class="p">]))</span>
+			<span class="c1">#print(&quot;mu:&quot;, mu.shape)</span>
+			<span class="n">temp_var</span> <span class="o">=</span> <span class="n">X_train</span><span class="o">-</span><span class="n">mu</span>
+			<span class="c1">#print(&quot;temp_var: &quot;, temp_var.shape)</span>
+			<span class="n">sigma_sq</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">matmul</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">multiply</span><span class="p">((</span><span class="n">X_train</span><span class="o">-</span><span class="n">mu</span><span class="p">)</span><span class="o">.</span><span class="n">T</span><span class="p">,</span> <span class="n">y_train</span><span class="p">[:,</span><span class="n">k</span><span class="p">]),</span> <span class="n">X_train</span><span class="o">-</span><span class="n">mu</span><span class="p">)</span> <span class="c1">#(D,D)</span>
+			<span class="n">sigma_sq</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">divide</span><span class="p">(</span><span class="n">sigma_sq</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">sum</span><span class="p">(</span><span class="n">y_train</span><span class="p">[:,</span><span class="n">k</span><span class="p">]))</span>
+			<span class="k">if</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">naive</span><span class="p">:</span>
+				<span class="bp">self</span><span class="o">.</span><span class="n">models</span><span class="o">.</span><span class="n">append</span><span class="p">(</span> <span class="n">scipy</span><span class="o">.</span><span class="n">stats</span><span class="o">.</span><span class="n">multivariate_normal</span><span class="p">(</span><span class="n">mu</span><span class="p">,</span> <span class="n">sigma_sq</span><span class="p">)</span> <span class="p">)</span>
+			<span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">naive</span><span class="p">:</span>
+				<span class="c1">#only elements in diagonal are taken (naive assumption)</span>
+				<span class="n">sigma_sq</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">diag</span><span class="p">(</span><span class="n">sigma_sq</span><span class="p">)</span> <span class="c1">#(D,) #can be used to prevent overfitting</span>
+			<span class="bp">self</span><span class="o">.</span><span class="n">model_params</span><span class="o">.</span><span class="n">append</span><span class="p">((</span><span class="n">mu</span><span class="p">,</span><span class="n">sigma_sq</span><span class="p">))</span>
+		<span class="k">if</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">same_weights</span><span class="p">:</span>
+			<span class="bp">self</span><span class="o">.</span><span class="n">pi_k</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">sum</span><span class="p">(</span><span class="n">y_train</span><span class="p">,</span> <span class="n">axis</span> <span class="o">=</span> <span class="mi">0</span><span class="p">)</span><span class="o">/</span><span class="n">np</span><span class="o">.</span><span class="n">sum</span><span class="p">(</span><span class="n">y_train</span><span class="p">)</span>
+		<span class="k">return</span></div>
+	
+<div class="viewcode-block" id="GDA.get_weights"><a class="viewcode-back" href="../../api_reference/ML_routines.html#mlgw.ML_routines.GDA.get_weights">[docs]</a>	<span class="k">def</span> <span class="nf">get_weights</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+		<span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">	get_weights</span>
+<span class="sd">	===========</span>
+<span class="sd">		Return the weights of the model.</span>
+<span class="sd">		Output:</span>
+<span class="sd">			model_params []		parameters of generative gaussians [(mu_0,sigma_0), ... , (mu_K-1,sigma_K-1)]</span>
+<span class="sd">			pi_k (k,)			probabilities for each class p(y = k) </span>
+<span class="sd">		&quot;&quot;&quot;</span>
+		<span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">model_params</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">pi_k</span></div>
+
+<div class="viewcode-block" id="GDA.accuracy"><a class="viewcode-back" href="../../api_reference/ML_routines.html#mlgw.ML_routines.GDA.accuracy">[docs]</a>	<span class="k">def</span> <span class="nf">accuracy</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">X_test</span><span class="p">,</span> <span class="n">y_test</span><span class="p">,</span> <span class="n">LL</span> <span class="o">=</span> <span class="kc">False</span><span class="p">):</span>
+		<span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">	accuracy</span>
+<span class="sd">	========</span>
+<span class="sd">		Computes the accuracy of the model (i.e. the fraction of misclassified points).</span>
+<span class="sd">		This measure is meaningful only in the case of hard clustering where there is only one label for each data point.</span>
+<span class="sd">		Input:</span>
+<span class="sd">			X_test (N,D)	test points</span>
+<span class="sd">			y_test (N,K)	true labels of test points</span>
+<span class="sd">			LL				whether to use log prob for predictions</span>
+<span class="sd">		Output:</span>
+<span class="sd">			accuracy	accuracy of the predictions made at test points</span>
+<span class="sd">		&quot;&quot;&quot;</span>
+		<span class="k">if</span> <span class="n">X_test</span><span class="o">.</span><span class="n">ndim</span> <span class="o">==</span> <span class="mi">1</span><span class="p">:</span>
+			<span class="n">X_test</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">reshape</span><span class="p">(</span><span class="n">X_test</span><span class="p">,</span> <span class="p">(</span><span class="n">X_test</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span><span class="mi">1</span><span class="p">))</span>
+		<span class="n">y_pred</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">predict</span><span class="p">(</span><span class="n">X_test</span><span class="p">,</span> <span class="n">LL</span><span class="p">)</span>
+		<span class="k">return</span> <span class="n">np</span><span class="o">.</span><span class="n">sum</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">argmax</span><span class="p">(</span><span class="n">y_pred</span><span class="p">,</span><span class="n">axis</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span><span class="o">==</span><span class="n">np</span><span class="o">.</span><span class="n">argmax</span><span class="p">(</span><span class="n">y_test</span><span class="p">,</span><span class="n">axis</span><span class="o">=</span><span class="mi">1</span><span class="p">))</span><span class="o">/</span><span class="nb">float</span><span class="p">(</span><span class="n">y_test</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span></div></div>
+
+
+<span class="c1">################# Extra features routine</span>
+<div class="viewcode-block" id="add_extra_features"><a class="viewcode-back" href="../../api_reference/ML_routines.html#mlgw.ML_routines.add_extra_features">[docs]</a><span class="k">def</span> <span class="nf">add_extra_features</span><span class="p">(</span><span class="n">data</span><span class="p">,</span> <span class="n">feature_list</span><span class="p">,</span> <span class="n">log_list</span> <span class="o">=</span> <span class="kc">None</span><span class="p">):</span>
+	<span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">add_extra_features</span>
+<span class="sd">==================</span>
+<span class="sd">	Given a dataset, it enlarge its feature number to make a basis function regression.</span>
+<span class="sd">	Features to add must be specified with feature list. Each element in the list is a string in form &quot;ijk&quot; where ijk are feature indices as in numpy array data (repetitions allowed); this represents the new feauture x_new = x_i*x_j*x_k</span>
+<span class="sd">	Features can be log preprocessed.</span>
+<span class="sd">	Input:</span>
+<span class="sd">		data (N,D)/(N,)			data to augment</span>
+<span class="sd">		feature_list (len L)	list of features to add</span>
+<span class="sd">		log_list []				list of indices in data, to which apply a log preprocessing (None is the same as [])</span>
+<span class="sd">	Output:</span>
+<span class="sd">		new_data (N,D+L)	data with new feature</span>
+<span class="sd">	&quot;&quot;&quot;</span>
+	<span class="n">data</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="n">data</span><span class="p">)</span> <span class="c1">#this is required to manipulate freely the data...</span>
+	<span class="k">if</span> <span class="n">data</span><span class="o">.</span><span class="n">ndim</span> <span class="o">==</span> <span class="mi">1</span><span class="p">:</span> <span class="n">data</span> <span class="o">=</span> <span class="n">data</span><span class="p">[:,</span><span class="n">np</span><span class="o">.</span><span class="n">newaxis</span><span class="p">]</span>
+	<span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">feature_list</span><span class="p">)</span><span class="o">==</span><span class="mi">0</span><span class="p">:</span>
+		<span class="k">return</span> <span class="n">data</span>
+
+	<span class="k">if</span> <span class="n">log_list</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+		<span class="n">data</span><span class="p">[:,</span><span class="n">log_list</span><span class="p">]</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">log</span><span class="p">(</span><span class="n">data</span><span class="p">[:,</span><span class="n">log_list</span><span class="p">])</span> <span class="c1">#probably a good idea...</span>
+
+	<span class="n">D</span> <span class="o">=</span> <span class="n">data</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span>
+	<span class="n">new_features</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">((</span><span class="n">data</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span><span class="nb">len</span><span class="p">(</span><span class="n">feature_list</span><span class="p">)))</span>
+	<span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">feature_list</span><span class="p">)):</span>
+		<span class="n">exps</span> <span class="o">=</span> <span class="p">[</span><span class="n">feature_list</span><span class="p">[</span><span class="n">i</span><span class="p">]</span><span class="o">.</span><span class="n">count</span><span class="p">(</span><span class="nb">str</span><span class="p">(</span><span class="n">j</span><span class="p">))</span> <span class="k">for</span> <span class="n">j</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">D</span><span class="p">)]</span>		
+		<span class="n">temp</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">power</span><span class="p">(</span><span class="n">data</span><span class="p">,</span> <span class="n">exps</span><span class="p">)</span> <span class="c1">#(N,D)</span>
+		<span class="n">temp</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">prod</span><span class="p">(</span><span class="n">temp</span><span class="p">,</span> <span class="n">axis</span> <span class="o">=</span><span class="mi">1</span><span class="p">)</span> <span class="c1">#(N,)</span>
+		<span class="n">new_features</span><span class="p">[:,</span><span class="n">i</span><span class="p">]</span> <span class="o">=</span> <span class="n">temp</span> <span class="c1">#assign new feature</span>
+
+	<span class="n">new_data</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">concatenate</span><span class="p">((</span><span class="n">data</span><span class="p">,</span> <span class="n">new_features</span><span class="p">),</span> <span class="n">axis</span> <span class="o">=</span> <span class="mi">1</span><span class="p">)</span>
+
+	<span class="k">return</span> <span class="n">new_data</span></div>
+
+<div class="viewcode-block" id="jac_extra_features"><a class="viewcode-back" href="../../api_reference/ML_routines.html#mlgw.ML_routines.jac_extra_features">[docs]</a><span class="k">def</span> <span class="nf">jac_extra_features</span><span class="p">(</span><span class="n">data</span><span class="p">,</span> <span class="n">feature_list</span><span class="p">,</span> <span class="n">log_list</span> <span class="o">=</span> <span class="kc">None</span><span class="p">):</span>
+	<span class="sd">&quot;&quot;&quot;	</span>
+<span class="sd">jac_extra_features</span>
+<span class="sd">==================</span>
+<span class="sd">	Given a dataset, it computes the jacobian of the augmented data. Data are augmented as in add_extra_features.</span>
+<span class="sd">	Features to add must be specified with feature list. Each element in the list is a string in form &quot;ijk&quot; where ijk are feature indices as in numpy array data (repetitions allowed); this represents the new feauture x_new = x_i*x_j*x_k</span>
+<span class="sd">	Features can be log preprocessed.</span>
+<span class="sd">	Gradients are computed as follows:</span>
+<span class="sd">		grad_ijk = D_k (xi_i)_j</span>
+<span class="sd">	where (xi_i)_j is the j-th augmented feature for the i-th data point</span>
+<span class="sd">	Input:</span>
+<span class="sd">		data (N,D)/(N,)			data to augment</span>
+<span class="sd">		feature_list (len L)	list of features to add</span>
+<span class="sd">		log_list []				list of indices in data, to which apply a log preprocessing (None is the same as [])</span>
+<span class="sd">	Output:</span>
+<span class="sd">		grad (N,D+L,D)	gradient of the new features</span>
+<span class="sd">	&quot;&quot;&quot;</span>
+	<span class="n">data</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="n">data</span><span class="p">)</span> <span class="c1">#this is required to manipulate freely the data...</span>
+	<span class="k">if</span> <span class="n">data</span><span class="o">.</span><span class="n">ndim</span> <span class="o">==</span> <span class="mi">1</span><span class="p">:</span> <span class="n">data</span> <span class="o">=</span> <span class="n">data</span><span class="p">[:,</span><span class="n">np</span><span class="o">.</span><span class="n">newaxis</span><span class="p">]</span>
+	<span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">feature_list</span><span class="p">)</span><span class="o">==</span><span class="mi">0</span><span class="p">:</span>
+		<span class="k">return</span> <span class="n">data</span>
+	<span class="n">D</span> <span class="o">=</span> <span class="n">data</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span>
+
+	<span class="k">if</span> <span class="n">log_list</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+		<span class="n">data</span><span class="p">[:,</span><span class="n">log_list</span><span class="p">]</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">log</span><span class="p">(</span><span class="n">data</span><span class="p">[:,</span><span class="n">log_list</span><span class="p">])</span> <span class="c1">#probably a good idea...</span>
+
+	<span class="n">jac</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">((</span><span class="n">data</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="nb">len</span><span class="p">(</span><span class="n">feature_list</span><span class="p">)</span><span class="o">+</span><span class="n">D</span><span class="p">,</span><span class="n">D</span><span class="p">))</span> <span class="c1">#(N,D+L,D)</span>
+	<span class="n">jac</span><span class="p">[:,:</span><span class="n">D</span><span class="p">,:]</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">identity</span><span class="p">(</span><span class="n">D</span><span class="p">)</span> <span class="c1">#setting easy gradients</span>
+	<span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">feature_list</span><span class="p">)):</span>
+		<span class="n">exps</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">((</span><span class="n">D</span><span class="p">,))</span> <span class="c1">#(D,)</span>
+		<span class="k">for</span> <span class="n">j</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">D</span><span class="p">):</span>
+			<span class="n">exps</span><span class="p">[</span><span class="n">j</span><span class="p">]</span> <span class="o">=</span> <span class="n">feature_list</span><span class="p">[</span><span class="n">i</span><span class="p">]</span><span class="o">.</span><span class="n">count</span><span class="p">(</span><span class="nb">str</span><span class="p">(</span><span class="n">j</span><span class="p">))</span>
+		<span class="k">for</span> <span class="n">j</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">D</span><span class="p">):</span>
+			<span class="k">if</span> <span class="n">exps</span><span class="p">[</span><span class="n">j</span><span class="p">]</span> <span class="o">!=</span><span class="mi">0</span><span class="p">:</span>
+				<span class="n">temp_exps</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="n">exps</span><span class="p">)</span>
+				<span class="n">temp_exps</span><span class="p">[</span><span class="n">j</span><span class="p">]</span> <span class="o">=</span> <span class="n">temp_exps</span><span class="p">[</span><span class="n">j</span><span class="p">]</span> <span class="o">-</span><span class="mi">1</span>
+				<span class="c1">#print(exps[j],temp_exps)</span>
+				<span class="n">jac</span><span class="p">[:,</span><span class="n">i</span><span class="o">+</span><span class="n">D</span><span class="p">,</span><span class="n">j</span><span class="p">]</span> <span class="o">=</span> <span class="n">exps</span><span class="p">[</span><span class="n">j</span><span class="p">]</span><span class="o">*</span><span class="n">np</span><span class="o">.</span><span class="n">prod</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">power</span><span class="p">(</span><span class="n">data</span><span class="p">,</span> <span class="n">temp_exps</span><span class="p">),</span> <span class="n">axis</span> <span class="o">=</span><span class="mi">1</span><span class="p">)</span>
+
+	<span class="k">if</span> <span class="n">log_list</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+		<span class="n">jac</span><span class="p">[:,:,</span><span class="n">log_list</span><span class="p">]</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">divide</span><span class="p">(</span><span class="n">jac</span><span class="p">[:,:,</span><span class="n">log_list</span><span class="p">],</span><span class="n">np</span><span class="o">.</span><span class="n">exp</span><span class="p">(</span><span class="n">data</span><span class="p">[:,</span><span class="kc">None</span><span class="p">,</span><span class="n">log_list</span><span class="p">]))</span>
+
+	<span class="k">return</span> <span class="n">jac</span></div>
+
+<div class="viewcode-block" id="augment_features"><a class="viewcode-back" href="../../api_reference/ML_routines.html#mlgw.ML_routines.augment_features">[docs]</a><span class="k">def</span> <span class="nf">augment_features</span><span class="p">(</span><span class="n">theta</span><span class="p">,</span> <span class="n">features</span> <span class="o">=</span> <span class="p">[]):</span>
+	<span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">	Performs feature augmentation for the neural network model</span>
+<span class="sd">	&quot;&quot;&quot;</span>
+	<span class="c1">#FIXME: this function needs to be refactored more nicely!</span>
+	<span class="n">allowed_features</span> <span class="o">=</span> <span class="nb">set</span><span class="p">([</span><span class="s2">&quot;2nd_poly&quot;</span><span class="p">,</span><span class="s2">&quot;sym_mas&quot;</span><span class="p">,</span><span class="s2">&quot;eff_spin&quot;</span><span class="p">,</span><span class="s2">&quot;eff_spin_powers&quot;</span><span class="p">,</span><span class="s2">&quot;sym_mas_powers&quot;</span><span class="p">,</span> <span class="s2">&quot;eff_spin_sym_mas_2nd_poly&quot;</span><span class="p">,</span> <span class="s2">&quot;eff_spin_sym_mas_3rd_poly&quot;</span><span class="p">,</span> <span class="s2">&quot;eff_spin_sym_mas_4th_poly&quot;</span><span class="p">,</span> <span class="s2">&quot;chirp&quot;</span><span class="p">,</span> <span class="s2">&quot;1_inverse&quot;</span><span class="p">,</span> <span class="s2">&quot;q_cube&quot;</span><span class="p">,</span> <span class="s2">&quot;q_quart&quot;</span><span class="p">,</span> <span class="s2">&quot;q_min1inverse&quot;</span><span class="p">,</span> <span class="s2">&quot;q_squared&quot;</span><span class="p">,</span> <span class="s2">&quot;q_inverse&quot;</span><span class="p">,</span> <span class="s2">&quot;log&quot;</span><span class="p">,</span> <span class="s2">&quot;tan&quot;</span><span class="p">])</span>
+	<span class="k">if</span> <span class="nb">any</span><span class="p">([</span><span class="n">feat</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">allowed_features</span> <span class="k">for</span> <span class="n">feat</span> <span class="ow">in</span> <span class="n">features</span><span class="p">]):</span>
+		<span class="k">raise</span> <span class="ne">RuntimeError</span><span class="p">(</span><span class="s2">&quot;Not all inputted features are allowed!&quot;</span><span class="p">)</span>
+	
+	<span class="n">theta</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">atleast_2d</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="n">theta</span><span class="p">))</span>
+	<span class="k">if</span> <span class="s2">&quot;2nd_poly&quot;</span> <span class="ow">in</span> <span class="n">features</span><span class="p">:</span>
+		<span class="k">for</span> <span class="n">x</span> <span class="ow">in</span> <span class="p">[</span><span class="s2">&quot;00&quot;</span><span class="p">,</span><span class="s2">&quot;11&quot;</span><span class="p">,</span><span class="s2">&quot;22&quot;</span><span class="p">,</span><span class="s2">&quot;01&quot;</span><span class="p">,</span><span class="s2">&quot;02&quot;</span><span class="p">,</span><span class="s2">&quot;12&quot;</span><span class="p">]:</span>
+			<span class="n">theta</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">c_</span><span class="p">[</span><span class="n">theta</span><span class="p">,</span> <span class="n">theta</span><span class="p">[:,</span><span class="nb">int</span><span class="p">(</span><span class="n">x</span><span class="p">[</span><span class="mi">0</span><span class="p">])]</span><span class="o">*</span><span class="n">theta</span><span class="p">[:,</span><span class="nb">int</span><span class="p">(</span><span class="n">x</span><span class="p">[</span><span class="mi">1</span><span class="p">])]]</span>
+				
+	<span class="k">if</span> <span class="s2">&quot;sym_mas&quot;</span> <span class="ow">in</span> <span class="n">features</span><span class="p">:</span>
+		<span class="n">theta</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">c_</span><span class="p">[</span><span class="n">theta</span><span class="p">,</span> <span class="n">theta</span><span class="p">[:,</span><span class="mi">0</span><span class="p">]</span> <span class="o">/</span> <span class="p">((</span><span class="mi">1</span><span class="o">+</span><span class="n">theta</span><span class="p">[:,</span><span class="mi">0</span><span class="p">])</span><span class="o">**</span><span class="mi">2</span><span class="p">)]</span> <span class="c1">#not calculated correctly</span>
+	
+	<span class="k">if</span> <span class="s2">&quot;eff_spin&quot;</span> <span class="ow">in</span> <span class="n">features</span><span class="p">:</span>
+		<span class="n">theta</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">c_</span><span class="p">[</span><span class="n">theta</span><span class="p">,</span> <span class="p">(</span><span class="n">theta</span><span class="p">[:,</span><span class="mi">1</span><span class="p">]</span> <span class="o">+</span> <span class="n">theta</span><span class="p">[:,</span><span class="mi">0</span><span class="p">]</span><span class="o">*</span><span class="n">theta</span><span class="p">[:,</span><span class="mi">2</span><span class="p">])</span> <span class="o">/</span> <span class="p">(</span><span class="mi">1</span> <span class="o">+</span> <span class="n">theta</span><span class="p">[:,</span><span class="mi">0</span><span class="p">])]</span>
+			
+	<span class="k">if</span> <span class="s2">&quot;eff_spin_powers&quot;</span> <span class="ow">in</span> <span class="n">features</span><span class="p">:</span>
+		<span class="k">for</span> <span class="n">x</span> <span class="ow">in</span> <span class="p">[</span><span class="mi">1</span><span class="p">,</span><span class="mi">2</span><span class="p">,</span><span class="mi">3</span><span class="p">]:</span>
+			<span class="n">theta</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">c_</span><span class="p">[</span><span class="n">theta</span><span class="p">,</span> <span class="p">(</span> <span class="p">(</span><span class="n">theta</span><span class="p">[:,</span><span class="mi">1</span><span class="p">]</span> <span class="o">+</span> <span class="n">theta</span><span class="p">[:,</span><span class="mi">0</span><span class="p">]</span><span class="o">*</span><span class="n">theta</span><span class="p">[:,</span><span class="mi">2</span><span class="p">])</span> <span class="o">/</span> <span class="p">(</span><span class="mi">1</span> <span class="o">+</span> <span class="n">theta</span><span class="p">[:,</span><span class="mi">0</span><span class="p">])</span> <span class="p">)</span><span class="o">**</span><span class="n">x</span> <span class="p">]</span>
+		
+	<span class="k">if</span> <span class="s2">&quot;sym_mas_powers&quot;</span> <span class="ow">in</span> <span class="n">features</span><span class="p">:</span>
+		<span class="k">for</span> <span class="n">x</span> <span class="ow">in</span> <span class="p">[</span><span class="mi">1</span><span class="p">,</span><span class="mi">2</span><span class="p">,</span><span class="mi">3</span><span class="p">,</span><span class="mi">4</span><span class="p">]:</span>
+			<span class="n">theta</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">c_</span><span class="p">[</span><span class="n">theta</span><span class="p">,</span> <span class="p">(</span><span class="n">theta</span><span class="p">[:,</span><span class="mi">0</span><span class="p">]</span> <span class="o">/</span> <span class="p">((</span><span class="mi">1</span><span class="o">+</span><span class="n">theta</span><span class="p">[:,</span><span class="mi">0</span><span class="p">])</span><span class="o">**</span><span class="mi">2</span><span class="p">))</span><span class="o">**</span><span class="n">x</span><span class="p">]</span>
+		
+	<span class="k">if</span> <span class="s2">&quot;eff_spin_sym_mas_2nd_poly&quot;</span> <span class="ow">in</span> <span class="n">features</span><span class="p">:</span>
+		<span class="n">eff_spin</span> <span class="o">=</span> <span class="p">(</span><span class="n">theta</span><span class="p">[:,</span><span class="mi">1</span><span class="p">]</span> <span class="o">+</span> <span class="n">theta</span><span class="p">[:,</span><span class="mi">0</span><span class="p">]</span><span class="o">*</span><span class="n">theta</span><span class="p">[:,</span><span class="mi">2</span><span class="p">])</span> <span class="o">/</span> <span class="p">(</span><span class="mi">1</span> <span class="o">+</span> <span class="n">theta</span><span class="p">[:,</span><span class="mi">0</span><span class="p">])</span>
+		<span class="n">sym_mas</span> <span class="o">=</span> <span class="n">theta</span><span class="p">[:,</span><span class="mi">0</span><span class="p">]</span> <span class="o">/</span> <span class="p">((</span><span class="mi">1</span><span class="o">+</span><span class="n">theta</span><span class="p">[:,</span><span class="mi">0</span><span class="p">])</span><span class="o">**</span><span class="mi">2</span><span class="p">)</span>
+		<span class="n">train</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">c_</span><span class="p">[</span><span class="n">sym_mas</span><span class="p">,</span> <span class="n">eff_spin</span><span class="p">]</span>
+		<span class="k">for</span> <span class="n">x</span> <span class="ow">in</span> <span class="p">[</span><span class="s2">&quot;00&quot;</span><span class="p">,</span><span class="s2">&quot;11&quot;</span><span class="p">,</span><span class="s2">&quot;01&quot;</span><span class="p">]:</span>
+			<span class="n">theta</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">c_</span><span class="p">[</span><span class="n">theta</span><span class="p">,</span> <span class="n">train</span><span class="p">[:,</span><span class="nb">int</span><span class="p">(</span><span class="n">x</span><span class="p">[</span><span class="mi">0</span><span class="p">])]</span> <span class="o">*</span> <span class="n">train</span><span class="p">[:,</span><span class="nb">int</span><span class="p">(</span><span class="n">x</span><span class="p">[</span><span class="mi">1</span><span class="p">])]]</span>
+		
+	<span class="k">if</span> <span class="s2">&quot;eff_spin_sym_mas_3rd_poly&quot;</span> <span class="ow">in</span> <span class="n">features</span><span class="p">:</span>
+		<span class="n">eff_spin</span> <span class="o">=</span> <span class="p">(</span><span class="n">theta</span><span class="p">[:,</span><span class="mi">1</span><span class="p">]</span> <span class="o">+</span> <span class="n">theta</span><span class="p">[:,</span><span class="mi">0</span><span class="p">]</span><span class="o">*</span><span class="n">theta</span><span class="p">[:,</span><span class="mi">2</span><span class="p">])</span> <span class="o">/</span> <span class="p">(</span><span class="mi">1</span> <span class="o">+</span> <span class="n">theta</span><span class="p">[:,</span><span class="mi">0</span><span class="p">])</span>
+		<span class="n">sym_mas</span> <span class="o">=</span> <span class="n">theta</span><span class="p">[:,</span><span class="mi">0</span><span class="p">]</span> <span class="o">/</span> <span class="p">((</span><span class="mi">1</span><span class="o">+</span><span class="n">theta</span><span class="p">[:,</span><span class="mi">0</span><span class="p">])</span><span class="o">**</span><span class="mi">2</span><span class="p">)</span>
+		<span class="n">train</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">c_</span><span class="p">[</span><span class="n">sym_mas</span><span class="p">,</span> <span class="n">eff_spin</span><span class="p">]</span>
+		<span class="k">for</span> <span class="n">x</span> <span class="ow">in</span> <span class="p">[</span><span class="s2">&quot;000&quot;</span><span class="p">,</span><span class="s2">&quot;111&quot;</span><span class="p">,</span><span class="s2">&quot;001&quot;</span><span class="p">,</span><span class="s2">&quot;011&quot;</span><span class="p">]:</span>
+			<span class="n">theta</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">c_</span><span class="p">[</span><span class="n">theta</span><span class="p">,</span> <span class="n">train</span><span class="p">[:,</span><span class="nb">int</span><span class="p">(</span><span class="n">x</span><span class="p">[</span><span class="mi">0</span><span class="p">])]</span> <span class="o">*</span> <span class="n">train</span><span class="p">[:,</span><span class="nb">int</span><span class="p">(</span><span class="n">x</span><span class="p">[</span><span class="mi">1</span><span class="p">])]</span> <span class="o">*</span> <span class="n">train</span><span class="p">[:,</span><span class="nb">int</span><span class="p">(</span><span class="n">x</span><span class="p">[</span><span class="mi">2</span><span class="p">])]]</span>
+		
+	<span class="k">if</span> <span class="s2">&quot;eff_spin_sym_mas_4th_poly&quot;</span> <span class="ow">in</span> <span class="n">features</span><span class="p">:</span>
+		<span class="n">eff_spin</span> <span class="o">=</span> <span class="p">(</span><span class="n">theta</span><span class="p">[:,</span><span class="mi">1</span><span class="p">]</span> <span class="o">+</span> <span class="n">theta</span><span class="p">[:,</span><span class="mi">0</span><span class="p">]</span><span class="o">*</span><span class="n">theta</span><span class="p">[:,</span><span class="mi">2</span><span class="p">])</span> <span class="o">/</span> <span class="p">(</span><span class="mi">1</span> <span class="o">+</span> <span class="n">theta</span><span class="p">[:,</span><span class="mi">0</span><span class="p">])</span>
+		<span class="n">sym_mas</span> <span class="o">=</span> <span class="n">theta</span><span class="p">[:,</span><span class="mi">0</span><span class="p">]</span> <span class="o">/</span> <span class="p">((</span><span class="mi">1</span><span class="o">+</span><span class="n">theta</span><span class="p">[:,</span><span class="mi">0</span><span class="p">])</span><span class="o">**</span><span class="mi">2</span><span class="p">)</span>
+		<span class="n">train</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">c_</span><span class="p">[</span><span class="n">sym_mas</span><span class="p">,</span> <span class="n">eff_spin</span><span class="p">]</span>
+		<span class="k">for</span> <span class="n">x</span> <span class="ow">in</span> <span class="p">[</span><span class="s2">&quot;0000&quot;</span><span class="p">,</span><span class="s2">&quot;0001&quot;</span><span class="p">,</span><span class="s2">&quot;0011&quot;</span><span class="p">,</span><span class="s2">&quot;0111&quot;</span><span class="p">,</span><span class="s2">&quot;1111&quot;</span><span class="p">]:</span>
+			<span class="n">theta</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">c_</span><span class="p">[</span><span class="n">theta</span><span class="p">,</span> <span class="n">train</span><span class="p">[:,</span><span class="nb">int</span><span class="p">(</span><span class="n">x</span><span class="p">[</span><span class="mi">0</span><span class="p">])]</span> <span class="o">*</span> <span class="n">train</span><span class="p">[:,</span><span class="nb">int</span><span class="p">(</span><span class="n">x</span><span class="p">[</span><span class="mi">1</span><span class="p">])]</span> <span class="o">*</span> <span class="n">train</span><span class="p">[:,</span><span class="nb">int</span><span class="p">(</span><span class="n">x</span><span class="p">[</span><span class="mi">2</span><span class="p">])]</span> <span class="o">*</span> <span class="n">train</span><span class="p">[:,</span><span class="nb">int</span><span class="p">(</span><span class="n">x</span><span class="p">[</span><span class="mi">3</span><span class="p">])]]</span>
+	
+	<span class="k">if</span> <span class="s2">&quot;chirp&quot;</span> <span class="ow">in</span> <span class="n">features</span><span class="p">:</span>
+		<span class="n">theta</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">c_</span><span class="p">[</span><span class="n">theta</span><span class="p">,</span> <span class="p">(</span><span class="n">theta</span><span class="p">[:,</span><span class="mi">0</span><span class="p">]</span> <span class="o">/</span> <span class="p">(</span><span class="mi">1</span><span class="o">+</span><span class="n">theta</span><span class="p">[:,</span><span class="mi">0</span><span class="p">]</span><span class="o">**</span><span class="mi">2</span><span class="p">))</span><span class="o">**</span><span class="p">(</span><span class="mi">3</span><span class="o">/</span><span class="mi">5</span><span class="p">)]</span>
+		
+	<span class="k">if</span> <span class="s2">&quot;1_inverse&quot;</span> <span class="ow">in</span> <span class="n">features</span><span class="p">:</span>
+		<span class="k">for</span> <span class="n">x</span> <span class="ow">in</span> <span class="p">[</span><span class="s2">&quot;0&quot;</span><span class="p">,</span><span class="s2">&quot;1&quot;</span><span class="p">,</span><span class="s2">&quot;2&quot;</span><span class="p">]:</span>
+			<span class="n">theta</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">c_</span><span class="p">[</span><span class="n">theta</span><span class="p">,</span> <span class="mi">1</span><span class="o">/</span><span class="n">theta</span><span class="p">[:,</span><span class="nb">int</span><span class="p">(</span><span class="n">x</span><span class="p">[</span><span class="mi">0</span><span class="p">])]]</span>
+				
+	<span class="k">if</span> <span class="s2">&quot;q_cube&quot;</span> <span class="ow">in</span> <span class="n">features</span><span class="p">:</span>
+		<span class="n">theta</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">c_</span><span class="p">[</span><span class="n">theta</span><span class="p">,</span> <span class="n">theta</span><span class="p">[:,</span><span class="mi">0</span><span class="p">]</span><span class="o">**</span><span class="mi">3</span><span class="p">]</span>
+		
+	<span class="k">if</span> <span class="s2">&quot;q_quart&quot;</span> <span class="ow">in</span> <span class="n">features</span><span class="p">:</span>
+		<span class="n">theta</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">c_</span><span class="p">[</span><span class="n">theta</span><span class="p">,</span> <span class="n">theta</span><span class="p">[:,</span><span class="mi">0</span><span class="p">]</span><span class="o">**</span><span class="mi">4</span><span class="p">]</span>
+		
+	<span class="k">if</span> <span class="s2">&quot;q_min1inverse&quot;</span> <span class="ow">in</span> <span class="n">features</span><span class="p">:</span>
+		<span class="k">for</span> <span class="n">x</span> <span class="ow">in</span> <span class="p">[</span><span class="s2">&quot;0&quot;</span><span class="p">]:</span>
+			<span class="n">theta</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">c_</span><span class="p">[</span><span class="n">theta</span><span class="p">,</span> <span class="mi">1</span><span class="o">/</span><span class="p">(</span><span class="n">theta</span><span class="p">[:,</span><span class="nb">int</span><span class="p">(</span><span class="n">x</span><span class="p">[</span><span class="mi">0</span><span class="p">])]</span> <span class="o">-</span> <span class="mi">1</span><span class="p">)]</span>
+		
+	<span class="k">if</span> <span class="s2">&quot;q_squared&quot;</span> <span class="ow">in</span> <span class="n">features</span><span class="p">:</span>
+		<span class="k">for</span> <span class="n">x</span> <span class="ow">in</span> <span class="p">[</span><span class="s2">&quot;00&quot;</span><span class="p">]:</span>
+			<span class="n">theta</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">c_</span><span class="p">[</span><span class="n">theta</span><span class="p">,</span> <span class="n">theta</span><span class="p">[:,</span><span class="nb">int</span><span class="p">(</span><span class="n">x</span><span class="p">[</span><span class="mi">0</span><span class="p">])]</span><span class="o">*</span><span class="n">theta</span><span class="p">[:,</span><span class="nb">int</span><span class="p">(</span><span class="n">x</span><span class="p">[</span><span class="mi">1</span><span class="p">])]]</span>
+		
+	<span class="k">if</span> <span class="s2">&quot;q_inverse&quot;</span> <span class="ow">in</span> <span class="n">features</span><span class="p">:</span>
+		<span class="k">for</span> <span class="n">x</span> <span class="ow">in</span> <span class="p">[</span><span class="s2">&quot;0&quot;</span><span class="p">]:</span>
+			<span class="n">theta</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">c_</span><span class="p">[</span><span class="n">theta</span><span class="p">,</span> <span class="mi">1</span><span class="o">/</span><span class="n">theta</span><span class="p">[:,</span><span class="nb">int</span><span class="p">(</span><span class="n">x</span><span class="p">[</span><span class="mi">0</span><span class="p">])]]</span>
+		
+	<span class="k">if</span> <span class="s2">&quot;log&quot;</span> <span class="ow">in</span> <span class="n">features</span><span class="p">:</span>
+		<span class="n">theta</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">c_</span><span class="p">[</span><span class="n">theta</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">log</span><span class="p">(</span><span class="n">theta</span><span class="p">[:,</span><span class="mi">0</span><span class="p">])]</span>
+		
+	<span class="k">if</span> <span class="s2">&quot;tan&quot;</span> <span class="ow">in</span> <span class="n">features</span><span class="p">:</span>
+		<span class="n">theta</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">c_</span><span class="p">[</span><span class="n">theta</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">tan</span><span class="p">((</span><span class="n">np</span><span class="o">.</span><span class="n">pi</span><span class="o">/</span><span class="mi">2</span><span class="p">)</span> <span class="o">*</span> <span class="n">theta</span><span class="p">[:,</span><span class="mi">1</span><span class="p">])]</span>
+		<span class="n">theta</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">c_</span><span class="p">[</span><span class="n">theta</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">tan</span><span class="p">((</span><span class="n">np</span><span class="o">.</span><span class="n">pi</span><span class="o">/</span><span class="mi">2</span><span class="p">)</span> <span class="o">*</span> <span class="n">theta</span><span class="p">[:,</span><span class="mi">2</span><span class="p">])]</span>
+		
+	<span class="k">return</span> <span class="n">theta</span></div>
+
+
+<div class="viewcode-block" id="augment_features_polynomial"><a class="viewcode-back" href="../../api_reference/ML_routines.html#mlgw.ML_routines.augment_features_polynomial">[docs]</a><span class="k">def</span> <span class="nf">augment_features_polynomial</span><span class="p">(</span><span class="n">theta</span><span class="p">,</span> <span class="n">features</span> <span class="o">=</span> <span class="p">[],</span> <span class="n">order</span> <span class="o">=</span> <span class="mi">0</span><span class="p">):</span>
+	<span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">	Given features and order it computes all the polynomial features</span>
+<span class="sd">	&quot;&quot;&quot;</span>
+	<span class="n">theta</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">atleast_2d</span><span class="p">(</span><span class="n">theta</span><span class="p">)</span>
+	
+	<span class="k">if</span> <span class="ow">not</span> <span class="p">(</span><span class="n">features</span> <span class="ow">and</span> <span class="n">order</span><span class="p">):</span>
+		<span class="k">return</span> <span class="n">theta</span>
+	
+	<span class="n">feat_list</span> <span class="o">=</span> <span class="p">[]</span>
+	<span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span><span class="n">order</span><span class="p">):</span>
+		<span class="n">feat_list</span><span class="o">.</span><span class="n">extend</span><span class="p">(</span><span class="n">combinations_with_replacement</span><span class="p">(</span><span class="n">features</span><span class="p">,</span> <span class="n">i</span><span class="o">+</span><span class="mi">1</span><span class="p">))</span>
+	
+	<span class="n">feat_vals</span> <span class="o">=</span> <span class="p">{}</span>
+	<span class="k">for</span> <span class="n">f</span> <span class="ow">in</span> <span class="n">features</span><span class="p">:</span>
+		<span class="k">if</span> <span class="n">f</span> <span class="o">==</span> <span class="s1">&#39;eta&#39;</span><span class="p">:</span>
+			<span class="n">val</span> <span class="o">=</span> <span class="n">theta</span><span class="p">[:,</span><span class="mi">0</span><span class="p">]</span> <span class="o">/</span> <span class="p">(</span><span class="mi">1</span><span class="o">+</span><span class="n">theta</span><span class="p">[:,</span><span class="mi">0</span><span class="p">])</span><span class="o">**</span><span class="mi">2</span>
+		<span class="k">elif</span> <span class="n">f</span> <span class="o">==</span> <span class="s1">&#39;chieff&#39;</span><span class="p">:</span>
+			<span class="c1">#chieff = (m1*s1+m2*s2)/(m1+m2) = (q*s1+s2)/(1+q)</span>
+			<span class="n">val</span> <span class="o">=</span> <span class="p">(</span><span class="n">theta</span><span class="p">[:,</span><span class="mi">0</span><span class="p">]</span><span class="o">*</span><span class="n">theta</span><span class="p">[:,</span><span class="mi">1</span><span class="p">]</span> <span class="o">+</span> <span class="n">theta</span><span class="p">[:,</span><span class="mi">2</span><span class="p">])</span> <span class="o">/</span> <span class="p">(</span><span class="mi">1</span> <span class="o">+</span> <span class="n">theta</span><span class="p">[:,</span><span class="mi">0</span><span class="p">])</span>
+		<span class="k">elif</span> <span class="n">f</span> <span class="o">==</span> <span class="s1">&#39;q&#39;</span><span class="p">:</span>
+			<span class="n">val</span> <span class="o">=</span> <span class="n">theta</span><span class="p">[:,</span><span class="mi">0</span><span class="p">]</span>
+		<span class="k">elif</span> <span class="n">f</span> <span class="o">==</span> <span class="s1">&#39;s1&#39;</span><span class="p">:</span>
+			<span class="n">val</span> <span class="o">=</span> <span class="n">theta</span><span class="p">[:,</span><span class="mi">1</span><span class="p">]</span>
+		<span class="k">elif</span> <span class="n">f</span> <span class="o">==</span> <span class="s1">&#39;s2&#39;</span><span class="p">:</span>
+			<span class="n">val</span> <span class="o">=</span> <span class="n">theta</span><span class="p">[:,</span><span class="mi">2</span><span class="p">]</span>
+		<span class="k">else</span><span class="p">:</span>
+			<span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;Feature not recognized: please consider submitting a patch to add support for your favoutite feature.&quot;</span><span class="p">)</span>	
+		<span class="n">feat_vals</span><span class="p">[</span><span class="n">f</span><span class="p">]</span> <span class="o">=</span> <span class="n">val</span>
+	
+	<span class="n">feats_to_add</span> <span class="o">=</span> <span class="p">[]</span>
+	<span class="k">for</span> <span class="n">feats</span> <span class="ow">in</span> <span class="n">feat_list</span><span class="p">:</span>
+		<span class="n">val</span> <span class="o">=</span> <span class="mi">1</span>
+		<span class="k">for</span> <span class="n">f</span> <span class="ow">in</span> <span class="n">feats</span><span class="p">:</span>
+			<span class="n">val</span> <span class="o">*=</span> <span class="n">feat_vals</span><span class="p">[</span><span class="n">f</span><span class="p">]</span>
+		<span class="n">feats_to_add</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">val</span><span class="p">[:,</span><span class="kc">None</span><span class="p">])</span>
+	
+	<span class="k">return</span> <span class="n">np</span><span class="o">.</span><span class="n">concatenate</span><span class="p">([</span><span class="n">theta</span><span class="p">,</span> <span class="o">*</span><span class="n">feats_to_add</span><span class="p">],</span> <span class="n">axis</span> <span class="o">=</span> <span class="mi">1</span><span class="p">)</span></div>
+
+<span class="k">def</span> <span class="nf">augment_features_general</span><span class="p">(</span><span class="n">theta</span><span class="p">,</span> <span class="n">feature_list</span><span class="o">=</span><span class="p">[]):</span> 
+	<span class="c1">#would be faster if it just appended and not make a new list each time?</span>
+	<span class="k">for</span> <span class="n">feat</span> <span class="ow">in</span> <span class="n">feature_list</span><span class="p">:</span>
+		<span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">feat</span><span class="p">,</span> <span class="nb">str</span><span class="p">):</span>
+			<span class="n">theta</span> <span class="o">=</span> <span class="n">augment_features</span><span class="p">(</span><span class="n">theta</span><span class="p">,</span> <span class="p">[</span><span class="n">feat</span><span class="p">])</span>
+		<span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">feat</span><span class="p">,</span> <span class="nb">tuple</span><span class="p">):</span>
+			<span class="n">theta</span> <span class="o">=</span> <span class="n">augment_features_polynomial</span><span class="p">(</span><span class="n">theta</span><span class="p">,</span> <span class="n">features</span><span class="o">=</span><span class="n">feat</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="n">order</span><span class="o">=</span><span class="n">feat</span><span class="p">[</span><span class="mi">1</span><span class="p">])</span>
+	<span class="k">return</span> <span class="n">theta</span>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+</pre></div>
+
+                </article>
+              
+
+              
+              
+                <footer class="bd-footer-article">
+                  
+<div class="footer-article-items footer-article__inner">
+  
+    <div class="footer-article-item"><!-- Previous / next buttons -->
+<div class="prev-next-area">
+</div></div>
+  
+</div>
+
+                </footer>
+              
+            </div>
+            
+            
+              
+            
+          </div>
+          <footer class="bd-footer-content">
+            
+<div class="bd-footer-content__inner container">
+  
+  <div class="footer-item">
+    
+<p class="component-author">
+By Stefano Schmidt
+</p>
+
+  </div>
+  
+  <div class="footer-item">
+    
+  <p class="copyright">
+    
+      © Copyright 2023, Stefano Schmidt.
+      <br/>
+    
+  </p>
+
+  </div>
+  
+  <div class="footer-item">
+    
+  </div>
+  
+  <div class="footer-item">
+    
+  </div>
+  
+</div>
+          </footer>
+        
+
+      </main>
+    </div>
+  </div>
+  
+  <!-- Scripts loaded after <body> so the DOM is not blocked -->
+  <script src="../../_static/scripts/bootstrap.js?digest=e353d410970836974a52"></script>
+<script src="../../_static/scripts/pydata-sphinx-theme.js?digest=e353d410970836974a52"></script>
+
+  <footer class="bd-footer">
+  </footer>
+  </body>
+</html>

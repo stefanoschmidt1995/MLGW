@@ -1,13 +1,19 @@
 """
 Module GW_generator.py
 ======================
-	Definition of class MLGW_generator and mode_generator.
-	- GW_generator bounds together many mode_generator and builds the complete WF as a sum of different modes.	
-	- mode_generator generates a specific l,m mode of GW signal of a BBH coalescence when given orbital parameters of the BBH.
-		The model performs the regression:
-			theta = (q,s1,s2) ---> g ---> A, ph = W g
-		First regression is done by a MoE model; the second regression is a PCA model. Some optional parameters can be given to specify the observer position.
-		It makes use of modules EM_MoE.py and ML_routines.py for an implementation of a PCA model and a MoE fitted by EM algorithm.
+
+Definition of class MLGW_generator and mode_generator.
+
+- :class:`GW_generator` bounds together many mode_generator and builds the complete WF as a sum of different modes.	
+
+- :class:`mode_generator_NN` and :class:`mode_generator_MoE`: generate a specific l,m mode of GW signal of a BBH coalescence when given orbital parameters of the BBH. They uses different regression models
+
+The model performs the regression:
+
+	theta = (q,s1,s2) ---> g ---> A, ph = W g
+
+The first regression is done by a MoE model or by a neural network; the second regression is a PCA model. Some optional parameters can be given to specify the observer position.
+It makes use of modules EM_MoE.py and ML_routines.py for an implementation of a PCA model and a MoE fitted by EM algorithm.
 """
 #################
 
@@ -59,11 +65,11 @@ except:
 ################# GW_generator class
 def list_models(print_out = True):
 	"""
-list_models
-===========
 	Print to screen the models available by default in the relevant folder.
+
 	Input:
-		print_out	whether the output should be printed (if False, it is returned as a string)
+		print_out: bool
+			Whether the output should be printed (if False, it is returned as a string)
 	"""
 	if not print_out:
 		to_return = ""
@@ -97,26 +103,28 @@ list_models
 
 class GW_generator:
 	"""
-GW_generator
-============
 	This class holds a collection of mode_generator istances and provides the code to generate a full GW signal with the higher modes, with the ML model.
 	It builds the WF as:
-		h = h_+ + i h_x = sum_l sum_m Y_lm H_lm(t)
+	
+	.. math::
+
+		h = h_+ + i h_\\times = \sum_{\ell m} Y_{\ell m} H_{\ell m}(t)
+
 	The model shall be saved in a single folder, which collects a different subfolder "lm" for each mode to generate. Each mode is independent from the others and modes can be added at will.
 	Some default models are already included in the package.
 	"""
 
 	def __init__(self, folder = 0, verbose = False, isNN=False):
 		"""
-	__init__
-	========
 		Initialise class by loading the modes from file.
 		A number of pre-fitted models for the modes are released: they can be loaded with folder argument by specifying an integer index (default 0. They are all saved in "__dir__/TD_models/model_(index_given)". A list of the available models can be listed with list models().
 		Each model is composed by many modes. Each mode is represented by a mode_generator istance, each saved in a different folder within the folder.
 		
 		Inputs:
-			folder		address to folder in which everything is kept (if None, models must be loaded manually with load())
-			verbose		whether to print the output
+			folder: str
+				Folder in which everything is kept (if None, models must be loaded manually with load())
+			verbose: str
+				Whether to be verbose when loading the model
 		"""
 		self.modes = [] #list of modes (classes mode_generator)
 		self.mode_dict = {}
@@ -132,14 +140,15 @@ GW_generator
 
 	def __extract_mode(self, folder):
 		"""
-	__extract_mode
-	============
 		Given a folder name, it extract (if present) the tuple of the mode the folder contains.
 		Each mode folder must start with "lm".
+
 		Input:
-			folder		folder holding a mode
+			folder: str
+				folder holding a mode
 		Output:
-			mode 	tuple for the mode (None if no mode is found in name)
+			mode: tuple
+				(l,m) tuple for the mode (None if no mode is found in name)
 		"""
 		name = os.path.basename(folder)
 		l = name[0]	
@@ -154,15 +163,17 @@ GW_generator
 
 	def load(self, folder, verbose = False, isNN=False):
 		"""
-	load
-	====
 		Loads the GW generator by loading the different mode_generator classes.
 		Each mode is loaded from a dedicated folder in the given folder of the model.
 		An optional README files holds some information about the model.
 		
 		Inputs:
-			folder		address to folder in which everything is kept
-			verbose		whether to print output	
+			folder: str
+				Folder in which everything is kept
+			verbose: bool
+				Whether to be verbose
+			isNN: bool
+				Whether the regression model is neural network, as opposed to a MoE
 		"""
 		if not os.path.isdir(folder):
 			raise RuntimeError("Unable to load folder "+folder+": no such directory!")
@@ -206,24 +217,34 @@ GW_generator
 
 	def get_precessing_params(self, m1, m2, s1, s2):
 		"""
-	get_precessing_params
-	=====================
 		Given the two masses and (dimensionless) spins, it computes the angles between the two spins and the orbital angular momentum (theta1, theta2) and the angle between the projections of the two spins onto the orbital plane (delta_Phi). Please, refer to eqs. (1-4) of https://arxiv.org/abs/1605.01067.
 		Spins must be in the L frame, in which the orbital angular momentum has only the z compoment; they are evaluated when at a given orbital frequency f = 20 Hz (????????????????????????? check better here)
 		Returns the six variables (i.e. q, chi1, chi2, theta1, theta2, delta_Phi) useful for reconstructing precession angles alpha and beta with the NN.
 		Assumes that always (m1>m2)
+		
 		Inputs:
-			m1 ()/(N,)			mass of BH 1
-			m2 ()/(N,)			mass of BH 2
-			s1 (3,)/(N,3)		(dimensionless) spin components of BH 1			
-			s2 (3,)/(N,3)		(dimensionless) spin components of BH 2
+			m1: :class:`~numpy:numpy.ndarray`
+				shape ()/(N,) - mass of BH 1
+			m2: :class:`~numpy:numpy.ndarray`
+				shape ()/(N,) - mass of BH 2
+			s1: :class:`~numpy:numpy.ndarray`
+				shape (3,)/(N,3) - (dimensionless) spin components of BH 1			
+			s2: :class:`~numpy:numpy.ndarray`
+				shape: (3,)/(N,3) - (dimensionless) spin components of BH 2
+		
 		Ouput:
-			q ()/(N,)				mass ratio (>1)
-			chi1 ()/(N,)			dimensionless spin 1 magnitude
-			chi2 ()/(N,)			dimensionless spin 1 magnitude
-			theta1 ()/(N,)			angle between spin 1 and the orbital angular momentum
-			theta2 ()/(N,)			angle between spin 2 and the orbital angular momentum
-			delta_Phi ()/(N,)		angle between the projections of the two spins onto the orbital plane
+			q: :class:`~numpy:numpy.ndarray`
+				shape ()/(N,) - mass ratio (>1)
+			chi1: :class:`~numpy:numpy.ndarray`
+				()/(N,) - dimensionless spin 1 magnitude
+			chi2: :class:`~numpy:numpy.ndarray`
+				()/(N,)	- dimensionless spin 1 magnitude
+			theta1: :class:`~numpy:numpy.ndarray`
+				shape ()/(N,) - angle between spin 1 and the orbital angular momentum
+			theta2: :class:`~numpy:numpy.ndarray`
+				shape ()/(N,) - angle between spin 2 and the orbital angular momentum
+			delta_Phi: :class:`~numpy:numpy.ndarray`
+				shape ()/(N,) -angle between the projections of the two spins onto the orbital plane
 		"""
 		if s1.ndim == 1:
 			s1 = s1[None,:]
@@ -252,12 +273,12 @@ GW_generator
 		
 	def summary(self, filename = None):
 		"""
-	summary
-	=======
 		Prints to screen a summary of the model currently used.
 		If filename is given, output is also redirected to file.
+
 		Input:
-			filename	if not None, redirects the output to file
+			filename: str
+				if not `None`, redirects the output to file
 		"""
 		output = "###### Summary for MLGW model ######\n"
 		if self.readme is not None:
@@ -280,12 +301,12 @@ GW_generator
 
 	def list_modes(self, print_screen = False):
 		"""
-	list_modes
-	==========
 		Returns a list of the available modes.
 		If print_screen is True, it also prints to screen
+
 		Output:
-			mode_list	list with the available modes
+			mode_list: list
+				List with the available modes
 		"""
 		mode_list = []
 		for mode in self.modes:
@@ -296,26 +317,38 @@ GW_generator
 
 	def __call__(self, t_grid, m1, m2, spin1_x, spin1_y, spin1_z, spin2_x, spin2_y, spin2_z, D_L, i, phi_0, long_asc_nodes, eccentricity, mean_per_ano):
 		"""
-	__call__
-	========
 		Generates a WF according to the model. It makes all the required preprocessing to include wave dependance on the full 14 parameters space of the GW forms. It outputs the plus cross polarization of the WF.
 		All the available modes are employed to build the WF.
 		The WF is shifted such that the peak of the 22 mode is placed at t=0. If the reference phase is 0, the phase of the 22 mode is 0 at the beginning of the time grid.
 		Note that the dependence on the longitudinal ascension node, the eccentricity, the mean periastron anomaly and the orthogonal spin components is not currently implemented and it is mainted for compatibility with lal.
+		
 		Input:
-			t_grid	(N_grid,)		Grid of (physical) time points to evaluate the wave at
-			m1	()/(N,)				Mass of BH 1
-			m2	()/(N,)				Mass of BH 2
-			spin1_x/y/z	()/(N,)		Each variable represents a spin component of BH 1
-			spin2_x/y/z				Each variable represents a spin component of BH 2
-			D_L	()/(N,)				Luminosity distance
-			i ()/(N,)				Inclination
-			phi_0 ()/(N,)			Reference phase for the wave
-			long_asc_nodes ()/(N,)	Logitudinal ascentional nodes (currently not implemented)
-			eccentricity ()/(N,)	Eccentricity of the orbit (currently not implemented)
-			mean_per_ano ()/(N,)	Mean periastron anomaly (currently not implemented)
-		Ouput:
-			h_plus, h_cross (1,D)/(N,D)		desidered polarizations
+			t_grid: :class:`~numpy:numpy.ndarray`
+				shape (D,) - Grid of (physical) time points to evaluate the wave at
+			m1: :class:`~numpy:numpy.ndarray`
+				shape ()/(N,) - Mass of BH 1
+			m2: :class:`~numpy:numpy.ndarray`
+				shape ()/(N,) - Mass of BH 2
+			spin1_x/y/z: :class:`~numpy:numpy.ndarray`
+				shape ()/(N,) - Each variable represents a spin component of BH 1
+			spin2_x/y/z: :class:`~numpy:numpy.ndarray`
+				shape ()/(N,) - Each variable represents a spin component of BH 2
+			D_L: :class:`~numpy:numpy.ndarray`
+				shape ()/(N,) - Luminosity distance
+			i: :class:`~numpy:numpy.ndarray`
+				shape ()/(N,) - Inclination
+			phi_0: :class:`~numpy:numpy.ndarray`
+				shape ()/(N,) - Reference phase for the wave
+			long_asc_nodes: :class:`~numpy:numpy.ndarray`
+				shape ()/(N,) - Logitudinal ascentional nodes (currently not implemented)
+			eccentricity: :class:`~numpy:numpy.ndarray`
+				shape ()/(N,) - Eccentricity of the orbit (currently not implemented)
+			mean_per_ano: :class:`~numpy:numpy.ndarray`
+				shape ()/(N,) - Mean periastron anomaly (currently not implemented)
+		
+		Output:
+			h_plus, h_cross: :class:`~numpy:numpy.ndarray`
+				shape (1,D)/(N,D) - desidered polarizations
 		"""
 		theta = np.column_stack((m1, m2, spin1_x, spin1_y, spin1_z, spin2_x, spin2_y, spin2_z, D_L, i, phi_0, long_asc_nodes, eccentricity, mean_per_ano)) #(N,D)
 		return self.get_WF(theta, t_grid= t_grid, modes = (2,2))
@@ -323,30 +356,44 @@ GW_generator
 	#@do_profile(follow=[])
 	def get_WF(self, theta, t_grid, modes = (2,2) ):
 		"""
-	get_WF
-	======
 		Generates a WF according to the model. It makes all the required preprocessing to include wave dependance on the full 14 parameters space of the GW forms. It outputs the plus cross polarization of the WF.
 		All the available modes are employed to build the WF.
 		The WF is shifted such that the peak of the 22 mode is placed at t=0. If the reference phase is 0, the phase of the 22 mode is 0 at the beginning of the time grid.
 		If no geometrical variables are given, it is set by default D_L = 1 Mpc, iota = phi_0 = 0.
 		It accepts data in one of the following layout of D features:
+			
 			D = 3	[q, spin1_z, spin2_z]
+			
 			D = 4	[m1, m2, spin1_z, spin2_z]
+			
 			D = 5	[m1, m2, spin1_z , spin2_z, D_L]
+			
 			D = 6	[m1, m2, spin1_z , spin2_z, D_L, inclination]
+			
 			D = 7	[m1, m2, spin1_z , spin2_z, D_L, inclination, phi_0]
+			
 			D = 14	[m1, m2, spin1 (3,), spin2 (3,), D_L, inclination, phi_0, long_asc_nodes, eccentricity, mean_per_ano]
+			
 		In the D = 3 layout, the total mass is set to 20 M_sun by default.
 		Warning: last layout (D=14) is made only for compatibility with lalsuite software. The implemented variables are those in D=7 layout; the other are dummy variables and will not be considered.
 		Unit of measures:
+		
 			[mass] = M_sun
+		
 			[D_L] = Mpc
+		
 			[spin] = adimensional
+		
 		User might choose which modes are to be included in the WF.
+
 		Input:
-			theta (N,D)		source parameters to make prediction at
-			t_grid (D',)	a grid in (reduced) time to evaluate the wave at (uses np.interp)
-			modes			list of modes employed for building the WF (if None, every mode available is employed)
+			theta: :class:`~numpy:numpy.ndarray`
+				shape (D,)/(N,D) - source parameters to make prediction at
+			t_grid: :class:`~numpy:numpy.ndarray`
+				shape (D',) - a grid in (reduced) time to evaluate the wave at (uses np.interp)
+			modes: list
+				list of modes employed for building the WF (if None, every mode available is employed)
+
 		Ouput:
 			h_plus, h_cross (D,)/(N,D)		desidered polarizations (if it applies)
 		"""
@@ -400,17 +447,24 @@ GW_generator
 
 	def __check_modes_input(self, theta, modes):
 		"""
-	__check_modes_input
-	===================
 		Checks that all the inputs of get_modes and get_twisted_modes are fine and makes them ready for processing. It also states whether the output shall be squeezes over some axis.
+
 		Input:
-			theta (N,D)/(D,)	source parameters to compute the modes at
-			modes				list (or tuple) of modes to consider
+			theta: :class:`~numpy:numpy.ndarray`
+				shape (N,D)/(D,) - source parameters to compute the modes at
+			modes: list
+				list (or tuple) of modes to consider
+
 		Output:
-			theta (N,D)			as in input but (perhaps reshaped)
-			modes				list of modes (even if input was a tuple)
-			remove_first_dim	whether to remove the first axis on the ouput
-			remove_last_dim		whether to remove the last axis on the ouput
+
+			theta: :class:`~numpy:numpy.ndarray`
+				shape (N,D)/(D,) - as in input but perhaps reshaped
+			modes: list
+				list of modes (even if input was a tuple)
+			remove_first_dim: bool
+				whether to remove the first axis on the ouput
+			remove_last_dim: bool
+				whether to remove the last axis on the ouput
 		"""
 		if isinstance(modes,tuple): #it means that the last dimension should be deleted
 			modes = [modes]
@@ -434,13 +488,15 @@ GW_generator
 
 	def get_merger_frequency(self, theta):
 		"""
-	get_merger_frequency
-	====================
 		Returns the (approximate) merger frequency in Hz, computed as half the 22 mode frequency at the peak of amplitude.
+		
 		Input:
-			theta (N,4)		Values of intrinsic parameters
+			theta: :class:`~numpy:numpy.ndarray`
+				shape (N,4)/(4,) - Values of the intrinsic parameters
+		
 		Output:
-			f_merger (N,)	Merger frequency in Hz
+			f_merger: :class:`~numpy:numpy.ndarray`
+				shape ()/(N,) - Merger frequency in Hz
 		"""
 		theta = np.array(theta)
 		if theta.ndim == 1: theta = theta[None,:]
@@ -452,14 +508,17 @@ GW_generator
 	
 	def get_orbital_frequency(self, theta, t):
 		"""
-	get_merger_frequency
-	====================
 		Returns the (approximate) orbital frequency in Hz, computed as half the 22 mode frequency at a given time t.
+		
 		Input:
-			theta (N,4)		Values of intrinsic parameters
-			t 				Time at which the orbital frequency shall be evaluated (the 0 is the time of the merger)
+			theta: :class:`~numpy:numpy.ndarray`
+				shape (N,4)/(4,) - Values of the intrinsic parameters
+			t: float
+				Time at which the orbital frequency shall be evaluated (the 0 is the time of the merger)		
+
 		Output:
-			f_merger (N,)	Merger frequency in Hz
+			f_merger: :class:`~numpy:numpy.ndarray`
+				shape ()/(N,) - Merger frequency in Hz
 		"""
 		theta = np.array(theta)
 		if theta.ndim == 1: theta = theta[None,:]
@@ -472,14 +531,17 @@ GW_generator
 
 	def get_merger_time(self, f, theta):
 		"""
-	get_merger_time
-	===============
 		Given an orbital frequency, it computes the merger time for a given set of BBH parameters
+
 		Input:
-			f 					starting frequency of the WF
-			theta (N,4)/(4,)	source parameters (m1, m2, s1z, s2z)
+			f: float
+				starting frequency of the WF
+			theta: :class:`~numpy:numpy.ndarray`
+				shape (N,4)/(4,) - source parameters (m1, m2, s1z, s2z)
+
 		Output:
-			tau (N,)/(1,)	time to merger
+			tau: :class:`~numpy:numpy.ndarray`
+				shape (N,1)/(1,) - time to merger
 		"""
 		theta = np.array(theta)
 		if theta.ndim == 1: theta = theta[None,:]
@@ -499,13 +561,15 @@ GW_generator
 
 	def get_NP_theta(self, theta):
 		"""
-	get_NP_theta
-	============
 		Given a parameter vector theta with 6 dimensional spin parameter (second dim = 8), it computes the low dimensional spin version, suitable for generating the WF with spin twist.
+
 		Input:
-			theta (N,8)/(8,)	source parameters to make prediction at (m1, m2, s1 (3,), s2 (3,))
+			theta: :class:`~numpy:numpy.ndarray`
+				shape (N,8)/(8,) - source parameters to make prediction at (m1, m2, s1 (3,), s2 (3,))
+
 		Output:
-			theta (N,4)/(4,)
+			theta: :class:`~numpy:numpy.ndarray`
+				shape (N,8)/(8,) - The same orbital parameters with precession removed
 		"""
 		to_reshape = False
 		if theta.ndim == 1:
@@ -523,17 +587,21 @@ GW_generator
 	
 	def get_alpha_beta_gamma(self, theta, t_grid, f_ref, singlespin = False):
 		"""
-	get_alpha_beta_gamma
-	====================
 		Return the Euler angles alpha, beta and gamma as provided by the ML model.
 		They are evaluated on the given time grid and the parameters refer to the frequency f_ref.
+
 		Input:
-			theta (N,8)/(8,)	source parameters to make prediction at (m1, m2, s1 (3,), s2 (3,))
-			t_grid (D,)			a grid in (physical) time to evaluate the wave at (uses np.interp)
-			f_ref				reference frequency (in Hz) of the 22 mode at which the theta parameters refers to
-			singlespin			whether to use the single spin approximation
+			theta: :class:`~numpy:numpy.ndarray`
+				shape (N,8)/(8,) - source parameters to make prediction at (m1, m2, s1 (3,), s2 (3,))
+			t_grid: :class:`~numpy:numpy.ndarray`
+				shape (D,) - a grid in (physical) time to evaluate the wave at (uses np.interp)
+			f_ref: float
+				reference frequency (in Hz) of the 22 mode at which the theta parameters refers to
+			singlespin: bool
+				whether to use the single spin approximation
 		Output:
-			alpha, beta, gamma (N, D)	Euler angles
+			alpha, beta, gamma: :class:`~numpy:numpy.ndarray`
+				shape (N, D) - Euler angles
 		"""
 		#TODO: makes sure that theta has 2 dims!!
 		sys.path.insert(0, '/home/stefano/Dropbox/Stefano/PhD/mlgw_repository/precession/IMRPhenomTPHM/') #temporary, to load the IMRPhenomTPHM modes
@@ -574,21 +642,28 @@ GW_generator
 
 	def get_twisted_modes(self, theta, t_grid, modes, f_ref = 20., alpha0 = 0., gamma0 = 0., L0_frame = False, singlespin = False):
 		"""
-	get_twisted_modes
-	=================
 		Return the twisted modes of the model, evaluated in the given time grid.
 		The twisted mode depends on angles alpha, beta, gamma and it is performed as in eqs. (17-20) in https://arxiv.org/abs/2005.05338
 		The function returns the real and imaginary part of the twisted mode.
 		Each mode is aligned s.t. the peak of the (untwisted) 22 mode is at t=0
+		
 		Input:
-			theta (N,8)/(8,)	source parameters to make prediction at (m1, m2, s1 (3,), s2 (3,))
-			t_grid (D',)		a grid in (physical) time to evaluate the wave at (uses np.interp)
-			modes				list (or a single tuple) of modes to be returned
-			f_ref				reference frequency (in Hz) of the 22 mode at which the theta parameters refers to
-			L0_frame			whether to output the modes in the inertial L0_frame
-			singlespin			whether to use the single spin approximation
+			theta: :class:`~numpy:numpy.ndarray`
+				shape (N,8)/(8,) -source parameters to make prediction at (m1, m2, s1 (3,), s2 (3,))
+			t_grid: :class:`~numpy:numpy.ndarray`
+				shape (D',) -a grid in (physical) time to evaluate the wave at (uses np.interp)
+			modes: list 
+				list (or a single tuple) of modes to be returned
+			f_ref: float
+				reference frequency (in Hz) of the 22 mode at which the theta parameters refers to
+			L0_frame: bool
+				whether to output the modes in the inertial L0_frame
+			singlespin: bool
+				whether to use the single spin approximation
+		
 		Output:
-			real, imag (N, D', K)	real and imaginary part of the K modes required by the user (if mode is a tuple, no third dimension)
+			real, imag:: :class:`~numpy:numpy.ndarray`
+				shape (N, D', K) - real and imaginary part of the K modes required by the user (if mode is a tuple, no third dimension)
 		"""
 		#FIXME: here we have the serious issuf of the time at which L, S1, S2 are computed. It should be at a ref frequency or at the beginning of the time grid; but they are computed at a constant separation (which can be related to a frequency btw)
 		#FIXME: we need to make clear at which parameters we generate the NP WFs. Now, if we only take the norm (no sign) we do not recover correctly the NP limit!! 
@@ -661,16 +736,19 @@ GW_generator
 	#@do_profile()
 	def __get_WF(self, theta, t_grid, modes):
 		"""
-	__get_WF
-	========
 		Generates the waves in time domain, building it as a sum of modes weighted by spherical harmonics. Called by get_WF.
 		Accepts only input features as [q,s1,s2] or [m1, m2, spin1_z , spin2_z, D_L, inclination, phi_0].
+
 		Input:
-			theta (N,D)		source parameters to make prediction at (D=7)
-			t_grid (D',)	a grid in (reduced) time to evaluate the wave at (uses np.interp)
-			modes			list of modes employed for building the WF (if None, every mode available is employed)
+			theta: :class:`~numpy:numpy.ndarray`
+				shape (D,)/(N,D) - source parameters to make prediction at (D=7)
+			t_grid: :class:`~numpy:numpy.ndarray`
+				shape (D',) - a grid in (reduced) time to evaluate the wave at (uses np.interp)
+			modes: list
+				list of modes employed for building the WF (if None, every mode available is employed)
 		Ouput:
-			h_plus, h_cross (D,)/(N,D)		desidered polarizations (if it applies)
+			h_plus, h_cross: :class:`~numpy:numpy.ndarray`
+				shape (D,)/(N,D) - desidered polarizations (if it applies)
 		"""
 		D= theta.shape[1] #number of features given
 		assert D == 7
@@ -714,19 +792,25 @@ GW_generator
 
 	def get_modes(self, theta, t_grid, modes = (2,2), out_type = "ampph"):
 		"""
-	get_modes
-	=========
 		Return the modes in the model, evaluated in the given time grid.
 		It can return amplitude and phase (out_type = "ampph") or the real and imaginary part (out_type = "realimag").
 		Each mode is aligned s.t. the peak of the 22 mode is at t=0
+	
 		Input:
-			theta (N,D)/(D,)	source parameters to make prediction at (D = 3,4)
-			t_grid (D',)		a grid in time to evaluate the wave at (uses np.interp)
-			modes				list of modes to be returned (if None, every mode available is employed)
-			out_type			whether amplitude and phase ("ampph") or real and imaginary part ("realimag") shall be returned
+			theta: :class:`~numpy:numpy.ndarray`
+				shape (D,)/(N,D) - source parameters to make prediction at (D = 3,4)
+			t_grid: :class:`~numpy:numpy.ndarray`
+				shape (D',) - a grid in time to evaluate the wave at (uses np.interp)
+			modes: list
+				list of modes to be returned (if None, every mode available is employed)
+			out_type: bool
+				whether amplitude and phase ("ampph") or real and imaginary part ("realimag") shall be returned
+	
 		Output:
-			amp, ph (N, D', K)		amplitude and phase of the K modes required by the user (if K =1, no third dimension)
-			real, imag (N, D', K)	real and imaginary part of the K modes required by the user (if K =1, no third dimension)
+			amp, ph: :class:`~numpy:numpy.ndarray`
+				shape (N, D', K) - amplitude and phase of the K modes required by the user (if K =1, no third dimension)
+			real, imag: :class:`~numpy:numpy.ndarray`
+				shape (N, D', K) - real and imaginary part of the K modes required by the user (if K =1, no third dimension)
 		"""
 		if out_type not in ["realimag", "ampph"]:
 			raise ValueError("Wrong output type chosen. Expected \"realimag\", \"ampph\", given \""+out_type+"\"")
@@ -765,16 +849,20 @@ GW_generator
 		
 	def get_spherical_harmonics(self, mode, iota, phi_0):
 		"""
-	get_spherical_harmonics
-	=======================
 		Computes the sperical harmonics.
 		We parametrize: Y_lm(iota, phi_0) = d_lm(iota) * exp(i*m*phi_0)
+		
 		Input:
-			mode			(l,m) of the current mode
-			iota (N,)		inclination for each wave
-			phi_0 (N,)		reference phase for each wave
+			mode: tuple
+				(l,m) of the current mode
+			iota: :class:`~numpy:numpy.ndarray`
+				shape (N,) - inclination for each wave
+			phi_0: :class:`~numpy:numpy.ndarray`
+				shape (N,) - reference phase for each wave
+
 		Output:
-			Y_lm_real, Y_lm_imag (N,D)	real and imaginary part of the spherical harmonics
+			Y_lm_real, Y_lm_imag: :class:`~numpy:numpy.ndarray`
+				shape (N,D) - real and imaginary part of the spherical harmonics
 		"""
 		iota, phi_0 = np.asarray(iota), np.asarray(phi_0)
 		l,m = mode
@@ -787,16 +875,19 @@ GW_generator
 	#@do_profile(follow=[])
 	def __set_spherical_harmonics(self, mode, amp, ph, iota, phi_0):
 		"""
-	__set_spherical_harmonics
-	=========================
 		Given amplitude and phase of a mode, it returns the quantity [Y_lm*A*e^(i*ph)+ Y_l-m*A*e^(-i*ph)]. This amounts to the contribution to the WF given by the mode.
-		We parametrize: Y_lm(iota, phi_0) = d_lm(iota) * exp(i*m*phi_0)
-		It also include negative m modes with: h_{lm} = (-1)**l h*_{l-m} (https://arxiv.org/abs/1501.00918 eq. (5) )
+		We parametrize: math:`Y_{lm}(iota, phi_0) = d_lm(iota) * exp(i*m*phi_0)`
+		It also include negative m modes with: :math:`h_{lm} = (-1)**l h*_{l-m}` (`1501.00918 <https://arxiv.org/abs/1501.00918>`_ eq. (5))
+
 		Input:
-			mode			(l,m) of the current mode
-			amp, ph (N,D)	amplitude and phase of the WFs (as generated by the ML)
-			iota (N,)		inclination for each wave
-			phi_0 (N,)		reference phase for each wave
+			mode: tuple
+				(l,m) of the current mode
+			amp, ph: :class:`~numpy:numpy.ndarray`
+				shape (D,)/(N,D) - amplitude and phase of the WFs (as generated by the ML)
+			iota: :class:`~numpy:numpy.ndarray`
+				shape (,)/(N,) - inclination for each wave
+			phi_0: :class:`~numpy:numpy.ndarray`
+				shape (,)/(N,) - reference phase for each wave
 		Output:
 			h_lm_real, h_lm_imag (N,D)	processed strain, with d, iota, phi_0 dependence included.
 		"""
@@ -821,16 +912,19 @@ GW_generator
 
 	def __get_Wigner_d_function(self, l, n, m, iota):
 		"""
-	__get_Wigner_d_function
-	=======================
 		Return the general Wigner d function (or small Wigner matrix).
 		See eq. (16-18) of https://arxiv.org/pdf/2005.05338.pdf for an explicit expression.
+		
 		Input:
-			l				l parameter
-			n,m				matrix elements
-			iota (N,)		angle to evaluate the function at
+			l: int
+				l parameter
+			n,m: int
+				matrix elements
+			iota: :class:`~numpy:numpy.ndarray`
+				shape ()/(N,) - angle to evaluate the function at
 		Output:
-			d_lms (N,)		Amplitude of the spherical harmonics d_lm(iota)
+			d_lms: :class:`~numpy:numpy.ndarray`
+				shape ()/(N,) - Amplitude of the spherical harmonics d_lm(iota)
 		"""
 		d_lnm = np.zeros(iota.shape) #(N,)
     
@@ -850,19 +944,24 @@ GW_generator
 	
 	def __get_Wigner_D_matrix(self, l, m_prime, m, alpha, beta, gamma):
 		"""
-	__get_Wigner_D_matrix
-	=====================
 		Return the general Wigner D matrix. It takes in input l,n,m and the angles (might be time dependent)
 		For an explicit expression, see eq. (3.4) in https://arxiv.org/pdf/2004.06503.pdf or eq. (36-37) in https://arxiv.org/pdf/2004.08302.pdf
 		See also: (2.8) in https://dcc.ligo.org/LIGO-T2000446
+		
 		Input:
-			l					l parameter
-			m_prime,m			matrix elements (list)
-			alpha (N,)/(N,D)	Euler angle alpha
-			beta (N,)/(N,D)		Euler angle beta
-			alpha (N,)/(N,D)	Euler angle gamma
+			l: int
+				l parameter
+			m_prime, m: list
+				list of required matrix elements (of length M' and M)
+			alpha: :class:`~numpy:numpy.ndarray`
+				shape (N,)/(N,D) - Euler angle alpha
+			beta: :class:`~numpy:numpy.ndarray`
+				shape (N,)/(N,D) -Euler angle beta
+			alpha: :class:`~numpy:numpy.ndarray`
+				shape (N,)/(N,D) -Euler angle gamma
 		Output:
-			D_lms (N,D,M',M)/(N,M',M)		Wigner D matrix
+			D_lms: :class:`~numpy:numpy.ndarray`
+				shape (N,D,M',M)/(N,M',M) - Wigner D matrix
 		"""
 		#FIXME:check over the sign of exp(1j*alpha), exp(1j*gamma)!! There is an ambiguity...
 		if alpha.ndim == 1:
@@ -898,13 +997,15 @@ GW_generator
 	
 	def get_mode_obj(self, mode):
 		"""
-	get_mode_obj
-	============
 		Returns an instance of class mode_generator which hold the ML model for the required mode.
+
 		Input:
-			mode		(l,m) of the required mode
+			mode: tuple
+				(l,m) of the required mode
+
 		Output:
-			mode_obj	istance of mode_generator
+			mode_obj: :class:`mode_generator_base`
+				instance of mode_generator (depending on the model it can be :class:`mode_generator_NN` or :class:`mode_generator_MoE`)
 		"""
 		for mode_ in self.modes:	
 			if mode_.lm() == mode: #check if it is the correct mode
@@ -913,24 +1014,36 @@ GW_generator
 		
 	def get_mode_grads(self, theta, t_grid, modes = (2,2), out_type = "ampph", grad_var = 'M_q'):
 		"""
-	get_mode_grads
-	==============
 		Return the gradients of the GW higher order modes in the model; the gradients are evaluated on the given time grid.
 		It can return the gradient of the amplitude and phase (out_type = "ampph") or the gradient of the real and imaginary part (out_type = "realimag").
-		Gradients are computed w.r.t. 
-			[M,q,s1,s2] 	if grad_var = 'M_q' 
-			[Mc,eta,s1,s2] 	if grad_var = 'mchirp_eta'
-			[m1,m2,s1,s2] 	if grad_var = 'm1_m2'
+		
+		Depending on `grad_var`, gradients w.r.t. to different quantities are computed:
+		
+		- if grad_var = 'M_q', [M,q,s1,s2]
+		
+		- if grad_var = 'mchirp_eta', [Mc,eta,s1,s2]
+		
+		- if grad_var = 'm1_m2', [m1,m2,s1,s2]
+
 		They are returned in this order for each point of the time grid.
+
 		Input:
-			theta (N,D)/(D,)	source parameters to make prediction at (D = 4)
-			t_grid (D',)		a grid in time to evaluate the wave at (uses np.interp)
-			modes				list of modes to be returned (if None, every mode available is employed)
-			out_type			whether amplitude and phase ("ampph") or real and imaginary part ("realimag") shall be returned
-			grad_var			the variables which the gradients are computed w.r.t.
+			theta: :class:`~numpy:numpy.ndarray`
+				shape (N,)/(N,D) - source parameters to make prediction at (D = 4)
+			t_grid: :class:`~numpy:numpy.ndarray`
+				shape (D',) - a grid in time to evaluate the wave at (uses np.interp)
+			modes: list
+				list of modes to be returned (if None, every mode available is employed)
+			out_type: str
+				whether amplitude and phase ("ampph") or real and imaginary part ("realimag") shall be returned
+			grad_var: str
+				the variables which the gradients are computed w.r.t.
+		
 		Output:
-			grad_amp, grad_ph (N, D', 4, K)		amplitude and phase of the K modes required by the user
-			grad_real, grad_imag (N, D', 4, K)		real and imaginary part of the K modes required by the user
+			grad_amp, grad_ph: :class:`~numpy:numpy.ndarray`
+				shape (N, D', 4, K) - amplitude and phase of the K modes, if queried by the user
+			grad_real, grad_imag: :class:`~numpy:numpy.ndarray`
+				shape (N, D', 4, K) - real and imaginary part of the K modes, if queried by the user
 		"""
 		if out_type not in ["realimag", "ampph"]:
 			raise ValueError("Wrong output type chosen. Expected \"realimag\", \"ampph\", given \""+out_type+"\"")
@@ -996,21 +1109,21 @@ GW_generator
 	
 class mode_generator_base():
 	"""
-	mode_generator_base
-	===================
-		Base class for the mode generator. All modes generator hould inherit from it and implement methods ``load``, ``get_raw_mode``. If gradients are needed, it must implement ``get_raw_grads``.
+	Base class for the mode generator.
+	All modes generator should inherit from it and implement methods ``load``, ``get_raw_mode``. If gradients are needed, it must implement ``get_raw_grads``.
 	"""
 	def __init__(self, mode, folder = None):
 		"""
-	__init__
-	========
 		Initialise class by loading models from a given folder.
 		Everything useful for the model must be put within the folder with the standard names, readable by ``load``.
 		A compulsory file times must hold a list of grid points at which the generated ML wave is evaluated.
 		An optional README file holds more information about the model (in the format of a dictionary).
+		
 		Input:
-			mode		tuple (l,m) of the mode which the model refers to
-			folder		address to the folder in which everything is kept (if None, models must be loaded manually with load())
+			mode: tuple
+				tuple (l,m) of the mode which the model refers to
+			folder: str
+				Folder in which everything is kept (if None, models must be loaded manually with load())
 		"""
 		self.times = None
 		self.mode = mode #(l,m) tuple
@@ -1034,45 +1147,58 @@ class mode_generator_base():
 
 	def lm(self):
 		"""
-	lm
-	==
 		Returns the (l,m) index of the mode.
+		
+		Output:
+			mode: tuple
+				(l,m) tuple for the mode
 		"""
 		return self.mode
 
 	def get_time_grid(self):
 		"""
-	get_time_grid
-	=============
 		Returns the time grid at which the output of the models is evaluated. Grid is in reduced units (s/M_sun).
+
 		Output:
-			time_grid (D,)	points in time grid at which all waves are evaluated
+			time_grid: :class:`~numpy:numpy.ndarray`
+				shape (D',) - points in time grid at which all waves are evaluated
 		"""
 		return self.times
 
 
 	def get_mode(self, theta, t_grid, out_type = "ampph"):
 		"""
-	get_mode
-	========
 		Generates the mode according to the MLGW model.
 		hlm(t; theta) = A(t) * exp(1j*phi(t)) 
 		The mode is time-shifted such that zero of time is where the 22 mode has a peak.
 		It accepts data in one of the following layout of D features:
+		
 			D = 3	[q, spin1_z, spin2_z]
+		
 			D = 4	[m1, m2, spin1_z, spin2_z]
+		
 		Unit of measures:
+		
 			[mass] = M_sun
+		
 			[spin] = adimensional
+		
 		If D = 3, the mode is evalutated at the std total mass M = 20 M_sun
 		Output waveforms are returned with amplitude and pahse (out_type = "ampph") or with real and imaginary part (out_type = "realimag").
+
 		Input:
-			theta (N,D)			source parameters to make prediction at
-			t_grid (D',)		grid in time to evaluate the wave at (uses np.interp)
-			out_type (str)		the output to be returned ('ampph', 'realimag')
+			theta: :class:`~numpy:numpy.ndarray`
+				shape (D,)/(N,D) - source parameters to make prediction at
+			t_grid: :class:`~numpy:numpy.ndarray`
+				shape (D',) - grid in time to evaluate the wave at (uses np.interp)
+			out_type: str
+				the output to be returned ('ampph', 'realimag')
+
 		Ouput:
-			amp, phase (1,D)/(N,D)			desidered amplitude and phase (if it applies)
-			hlm_real, hlm_im (1,D)/(N,D)	desidered h_22 components (if it applies)
+			amp, phase :class:`~numpy:numpy.ndarray`
+				shape (1,D)/(N,D) - desidered amplitude and phase (if it applies)
+			hlm_real, hlm_im :class:`~numpy:numpy.ndarray`
+				shape (1,D)/(N,D) - desidered h_22 components (if it applies)
 		"""
 		if out_type not in ["realimag", "ampph"]:
 			raise ValueError("Wrong output type chosen. Expected \"realimag\", \"ampph\", given \""+out_type+"\"")
@@ -1106,17 +1232,22 @@ class mode_generator_base():
 	#@do_profile(follow=[])
 	def __get_mode(self, theta, t_grid, out_type):
 		"""
-	__get_mode
-	==========
+
 		Generates the mode in domain and perform. Called by get_mode.
 		Accepts only input features as [q,s1,s2] or [m1, m2, spin1_z , spin2_z, D_L, inclination, phi_0].
+		
 		Input:
-			theta (N,D)			source parameters to make prediction at (D=3 or D=4)
-			t_grid (D',)		a grid in time to evaluate the wave at (uses np.interp)
-			out_type (str)		the output to be returned ('ampph', 'realimag')
+			theta: :class:`~numpy:numpy.ndarray`
+				shape (N,D) - source parameters to make prediction at (D=3 or D=4)
+			t_grid: :class:`~numpy:numpy.ndarray`
+				shape (D',) - a grid in time to evaluate the wave at (uses np.interp)
+			out_type: str
+				the output to be returned ('ampph', 'realimag')
 		Output:
-			amp, phase (1,D)/(N,D)			desidered amplitude and phase (if it applies)
-			hlm_real, hlm_im (1,D)/(N,D)	desidered h_22 components (if it applies)
+			amp, phase: :class:`~numpy:numpy.ndarray`
+				shape (N,D') - desidered amplitude and phase (if it applies)
+			hlm_real, hlm_im: :class:`~numpy:numpy.ndarray`
+				shape (N,D') - desidered h_22 components (if it applies)
 		"""
 		D= theta.shape[1] #number of features given
 		assert D in [3,4] #check that the number of dimension is fine
@@ -1173,22 +1304,50 @@ class mode_generator_base():
 			hlm_imag = np.multiply(amp, np.sin(ph))
 			return hlm_real, hlm_imag
 
+	def PCA_models(self, model_type):
+		"""
+		Returns the PCA model.
+		
+		Input:
+			model_type:	str
+				"amp" or "ph" to state which PCA model shall be returned
+
+		Output:
+			PCA_model: :class:`PCA_model`
+				The required PCA model
+			
+		"""
+		if model_type == "amp":
+			return self.amp_PCA
+		if model_type == "ph":
+			return self.ph_PCA
+		return None
+
 	def get_grads(self, theta, t_grid, out_type ="realimag"):
 		"""
-	get_grads
-	=========
 		Returns the gradient of the mode
-			hlm = A exp(1j*phi) = A cos(phi) + i* A sin(phi)
+
+		.. math::
+
+			h_{lm} = A e^{i\phi} = A \cos(\phi) + i A sin(\phi)
+
 		with respect to theta = (M, q, s1, s2).
 		Gradients are evaluated on the user given time grid t_grid.
 		It returns the real and imaginary part of the gradients.
+		
 		Input:
-			theta (N,4)		orbital parameters with format (m1, m2, s1, s2)
-			t_grid (D,)		time grid to evaluate the gradients at
-			out_type		whether to compute gradients of the real and imaginary part ('realimag') or of amplitude and phase ('ampph')
+			theta: :class:`~numpy:numpy.ndarray`
+				shape (N,D) - orbital parameters with format (m1, m2, s1, s2)
+			t_grid: :class:`~numpy:numpy.ndarray`
+				shape (D',) - time grid to evaluate the gradients at
+			out_type: str
+				whether to compute gradients of the real and imaginary part ('realimag') or of amplitude and phase ('ampph')
+		
 		Output:
-			grad_Re(h) (N,D,4)		Gradients of the real part of the waveform
-			grad_Im(h) (N,D,4)		Gradients of the imaginary part of the waveform
+			grad_Re(h): :class:`~numpy:numpy.ndarray`
+				shape (N,D,4) - Gradients of the real part of the waveform
+			grad_Im(h): :class:`~numpy:numpy.ndarray`
+				shape (N,D,4) - Gradients of the imaginary part of the waveform
 		"""
 		if out_type not in ["realimag", "ampph"]:
 			raise ValueError("Wrong output type chosen. Expected \"realimag\", \"ampph\", given \""+out_type+"\"")
@@ -1253,11 +1412,27 @@ class mode_generator_base():
 			return grad_Re, grad_Im
 
 class mode_generator_NN(mode_generator_base):
+	"""
+	This class holds all the parts of ML models and acts as single (l,m) mode generator. Model is composed by a PCA model to reduce dimensionality of a WF datasets and by several NN models to fit PCA in terms of source parameters. WFs are generated in time domain.
+	Everything is hold in a PCA model (:class:`PCA_model` defined in ML_routines) and in an ensemble of NN models. All models are loaded from files in a folder given by user. The folder structure should strictly follow this convention:
+
+		#WRITEME
+
+	"""
 
 	def load(self, folder, verbose = False, batch_size=10):
-		'''
-		collects all relevant pca models, features and NN models.
-		'''
+		"""
+		Loads all relevant PCA models, features and NN models.
+		
+		Inputs:
+			folder: str
+				Folder in which everything is kept
+			verbose: bool
+				Whether to be verbose
+			batch_size: int
+				Batch size for inference. A large number may provide a speed up at the cost of a large memory usage
+
+		"""
 		if not os.path.isdir(folder):
 			raise RuntimeError("Unable to load folder "+folder+": no such directory!")
 
@@ -1318,15 +1493,17 @@ class mode_generator_NN(mode_generator_base):
 	#@do_profile(follow=[])
 	def get_raw_mode(self, theta):
 		"""
-	get_raw_mode
-	============
 		Generates a mode according to the MLGW model with a parameters vector in MLGW model style (params=  [q,s1z,s2z]).
-		All waves are evaluated at a luminosity distance of 1 Mpc and inclination 0. They are generated at masses m1 = q * m2 and m2 = 20/(1+q), so that M_tot = 20.
+		They are generated at masses m1 = q * m2 and m2 = 20/(1+q), so that M_tot = 20.
 		Grid is the standard one.
+		
 		Input:
-			theta (N,3)		source parameters to make prediction at
+			theta: :class:`~numpy:numpy.ndarray`
+				shape (N,3) - source parameters to make prediction at
+
 		Ouput:
-			amp,ph (N,D)	desidered amplitude and phase
+			amp,ph: :class:`~numpy:numpy.ndarray`
+				shape (N,D) - desidered amplitude and phase, evaluated on the internal default time grid
 		"""
 		theta = np.atleast_2d(np.asarray(theta))
 		if theta.shape[0]> self.batch_size:
@@ -1343,6 +1520,17 @@ class mode_generator_NN(mode_generator_base):
 
 	#@do_profile(follow=[])
 	def get_red_coefficients(self, theta):
+		"""
+		Returns the PCA reduced coefficients, as estimated by the neural network models.
+
+		Input:
+			theta: :class:`~numpy:numpy.ndarray`
+				shape (N,3) - source parameters to make prediction at
+
+		Output:
+			red_amp,red_ph: :class:`~numpy:numpy.ndarray`
+				shape (N,K) - PCA reduced amplitude and phase
+		"""
 		#new way
 		amp_pred = np.zeros((theta.shape[0], self.amp_PCA.get_dimensions()[1]))
 		ph_pred = np.zeros((theta.shape[0], self.ph_PCA.get_dimensions()[1]))
@@ -1387,15 +1575,19 @@ class mode_generator_NN(mode_generator_base):
 
 class mode_generator_MoE(mode_generator_base):
 	"""
-mode_generator
-==============
 	This class holds all the parts of ML models and acts as single (l,m) mode generator. Model is composed by a PCA model to reduce dimensionality of a WF datasets and by several MoE models to fit PCA in terms of source parameters. WFs are generated in time domain.
 	Everything is hold in a PCA model (class PCA_model defined in ML_routines) and in two lists of MoE models (class MoE_model defined in EM_MoE). All models are loaded from files in a folder given by user. Files must be named exactly as follows:
+	
 		amp(ph)_exp_#		for amplitude (phase) of expert model for PCA component #
+	
 		amp(ph)_gat_#		for amplitude (phase) of gating function for PCA component #
+	
 		amp(ph)_feat		for list of features to use for MoE models
+	
 		amp(ph)_PCA_model	for PCA model for amplitude (phase)
+	
 		times/frequencies	file holding grid points at which waves generated by PCA are evaluated
+	
 	No suffixes shall be given to files.
 	The class doesn't implement methods for fitting: it only provides a useful tool to gather them.
 	"""
@@ -1409,18 +1601,23 @@ mode_generator
 		A compulsory file times must hold a list of grid points at which the generated ML wave is evaluated.
 		An optional README file holds more information about the model (in the format of a dictionary).
 		Input:
-			mode		tuple (l,m) of the mode which the model refers to
-			folder		address to the folder in which everything is kept (if None, models must be loaded manually with load())
+			mode: tuple
+				tuple (l,m) of the mode which the model refers to
+			folder: str
+				Folder in which everything is kept (if None, models must be loaded manually with load())
 	"""
 
 	def PCA_models(self, model_type):
 		"""
-	PCA_models
-	==========
 		Returns the PCA model.
+		
 		Input:
-			model_type		"amp" or "ph" to state which PCA model shall be returned
+			model_type:	str
+				"amp" or "ph" to state which PCA model shall be returned
+
 		Output:
+			PCA_model: :class:`PCA_model`
+				The required PCA model
 			
 		"""
 		if model_type == "amp":
@@ -1431,15 +1628,17 @@ mode_generator
 
 	def get_raw_mode(self, theta):
 		"""
-	get_raw_mode
-	============
 		Generates a mode according to the MLGW model with a parameters vector in MLGW model style (params=  [q,s1z,s2z]).
-		All waves are evaluated at a luminosity distance of 1 Mpc and inclination 0. They are generated at masses m1 = q * m2 and m2 = 20/(1+q), so that M_tot = 20.
+		They are generated at masses m1 = q * m2 and m2 = 20/(1+q), so that M_tot = 20.
 		Grid is the standard one.
+		
 		Input:
-			theta (N,3)		source parameters to make prediction at
+			theta: :class:`~numpy:numpy.ndarray`
+				shape (N,3) - source parameters to make prediction at
+
 		Ouput:
-			amp,ph (N,D)	desidered amplitude and phase
+			amp,ph: :class:`~numpy:numpy.ndarray`
+				shape (N,D) - desidered amplitude and phase, evaluated on the internal default time grid
 		"""
 		rec_PCA_amp, rec_PCA_ph = self.get_red_coefficients(theta) #(N,K)
 
@@ -1450,13 +1649,15 @@ mode_generator
 
 	def __read_features(self, feat_file):	
 		"""
-	__read_features
-	===============
 		Extract the features of a MoE regression from a given file.
+
 		Input:
-			feat_file	path to file
+			feat_file: str
+				path to file
+
 		Output:
-			feat_list	list of features
+			feat_list: list
+				list of features
 		"""
 		f = open(feat_file, "r")
 		feat_list = f.readlines()
@@ -1467,17 +1668,20 @@ mode_generator
 
 	def load(self, folder, verbose = False):
 		"""
-	load
-	====
 		Builds up all the models from given folder.
 		Everything useful for the model must be put within the folder with the standard names:
+
 			{amp(ph)_exp_# ; amp(ph)_gat_#	; amp(ph)_feat ; amp(ph)_PCA_model}
+
 		There can be an arbitrary number of exp and gating functions as long as they match with each other and they are less than PCA components.
 		It loads time vector.
 		If given, it loads as a dictionary the README file. Dictionary should include entries (all optional): 'description', 'mode', 'train model', 'q range', 's1 range', 's2 range'.
+
 		Input:
-			folder		address to folder in which everything is kept
-			verbose		whether to print output
+			folder: str
+				folder in which everything is kept
+			verbose: bool
+				whether to print output
 		"""
 		if not os.path.isdir(folder):
 			raise RuntimeError("Unable to load folder "+folder+": no such directory!")
@@ -1553,14 +1757,17 @@ mode_generator
 
 	def MoE_models(self, model_type, k_list=None):
 		"""
-	MoE_models
-	==========
 		Returns the MoE model(s).
+
 		Input:
-			model_type		"amp" or "ph" to state which MoE models shall be returned
-			k_list []		index(indices) of the model to be returned (if None all models are returned)
+			model_type: str
+				"amp" or "ph" to state which MoE models shall be returned
+			k_list: list
+				index(indices) of the model to be returned (if None all models are returned)
+
 		Output:
-			models []	list of models to be returned
+			models: list
+				list of MoE models :class:`MoE_model` to be returned
 		"""
 		if k_list is None:
 			k_list = range(self.K)
@@ -1572,13 +1779,12 @@ mode_generator
 
 	def summary(self, filename = None):
 		"""
-	summary
-	=======
 		Prints to screen a summary of the model currently used.
 		If filename is given, output is redirected to file.
+
 		Input:
-		Output:
-			filename	if not None, redirects the output to file
+			filename: str
+				if not None, redirects the output to file
 		"""
 		amp_exp_list = [str(model.get_iperparams()[1]) for model in self.MoE_models_amp]
 		ph_exp_list = [str(model.get_iperparams()[1]) for model in self.MoE_models_ph]
@@ -1621,13 +1827,15 @@ mode_generator
 	#@do_profile(follow=[])
 	def get_red_coefficients(self, theta):
 		"""
-	get_red_coefficients
-	====================
 		Returns the PCA reduced coefficients, as estimated by the MoE models.
+
 		Input:
-			theta (N,3)		source parameters to make prediction at
-		Ouput:
-			red_amp,red_ph (N,K)	PCA reduced amplitude and phase
+			theta: :class:`~numpy:numpy.ndarray`
+				shape (N,3) - source parameters to make prediction at
+
+		Output:
+			red_amp,red_ph: :class:`~numpy:numpy.ndarray`
+				shape (N,K) - PCA reduced amplitude and phase
 		"""
 		assert theta.shape[1] == 3, ValueError("Wrong number of features given: expected 3 but {} given".format(theta.shape[1])) #DEBUG
 
@@ -1651,18 +1859,22 @@ mode_generator
 
 	def __MoE_gradients(self, theta, MoE_model, feature_list):
 		"""
-	__MoE_gradients
-	===============
 		Computes the gradient of a MoE model with basis function expansion at the given value of theta.
 		Gradient is computed with the chain rule:
 			D_i y= D_j y * D_j/D_i
 		where D_j/D_i is the jacobian of the feature augmentation.
+		
 		Input:
-			theta (N,3)		Values of orbital parameters to compute the gradient at
-			MoE_model		A mixture of expert model to make the gradient of
-			feature_list	List of features used in data augmentation
+			theta: :class:`~numpy:numpy.ndarray`
+				shape (N,3) - Values of orbital parameters to compute the gradient at
+			MoE_model: :class:`MoE_model`
+				A mixture of expert model to make the gradient of
+			feature_list: list
+				List of features used in data augmentation
+		
 		Output:
-			gradients (N,3)		Gradients for the model
+			gradients: :class:`~numpy:numpy.ndarray`
+				shape (N,3) - Gradients for the model
 		"""
 			#L = len(feature_list)
 		jac_transf = jac_extra_features(theta, feature_list, log_list = [0]) #(N,3+L,3)
@@ -1673,15 +1885,18 @@ mode_generator
 
 	def get_raw_grads(self, theta):
 		"""
-	get_raw_grads
-	=============
 		Computes the gradients of the amplitude and phase w.r.t. (q,s1,s2).
 		Gradients are functions dependent on time and are evaluated on the internal reduced grid (mode_generator.get_time_grid()).
+
 		Input:
-			theta (N,3)		Values of orbital parameters to compute the gradient at
+			theta: :class:`~numpy:numpy.ndarray`
+				shape (N,3) - Values of orbital parameters to compute the gradient at
+		
 		Output:
-			grad_amp (N,D,3)	Gradients of the amplitude
-			grad_ph (N,D,3)		Gradients of the phase
+			grad_amp: :class:`~numpy:numpy.ndarray`
+				shape (N,D,3) - Gradients of the amplitude
+			grad_ph: :class:`~numpy:numpy.ndarray`
+				shape (N,D,3) - Gradients of the phase
 		"""
 			#computing gradient for the reduced coefficients g
 		#amp
