@@ -1,188 +1,83 @@
-import numpy as np
-from sklearn.metrics import mean_squared_error
-import matplotlib.pyplot as plt
-import tensorflow as tf
-import os
 import sys
-import time
+import os
+import numpy as np
+import json
+import matplotlib.pyplot as plt
+from shutil import copy2
 
-from .ML_routines import PCA_model, augment_features
+os.environ['TF_CPP_MIN_LOG_LEVEL'] = '2'
 
-class PcaData:
-	def __init__(self, PCA_data_location, PC_comp, quant, modes=[], features=[], ratio=1):
+from keras_tuner import BayesianOptimization, HyperModel
+import tensorflow as tf
+from tensorflow import keras
+from GW_helper import compute_optimal_mismatch
+from ML_routines import PCA_model, augment_features_general
+from keras.layers import Dense
+from keras.optimizers import Nadam
+from keras.callbacks import EarlyStopping, LearningRateScheduler
+
+from pathlib import Path
+
+class PcaData: #needs to be cleaned up still
+	#FIXME: PCA data needs not to take care of data augmentation, since this is taken care by the NN
+	def __init__(self, PCA_data_location, PC_comp, quant, features=[], ratio=1, N=None):
 		'''
-		PC should be an integer/list refering to the amount of PC components to be fitted
-		Option to give extra val_data set, should have same amount of components as training data
+		Loads PCA data from file location (PCA_data_location, str) of the specified quantity (quant, str) either "ph" or "amp". If PC_comp=None then it loads all of the components, if an integer it will load the all PCs up to that integer, and if a list it will load the specified PCs in the list.
 		
-		Currently not yet added:
-			multiple modes
-			combining multiple datasets
 		'''
 		
-		
+		PCA_data_location = Path(PCA_data_location)
 		self.data_loc = PCA_data_location
 		
-		self.times = np.genfromtxt(PCA_data_location+"times.dat")
+		self.times = np.genfromtxt(PCA_data_location/"times.dat")
 		self.features = features
 		self.PC_comp = PC_comp
 		self.quantity = quant
 		
-		train_theta = np.genfromtxt(PCA_data_location+"PCA_train_theta.dat")
-		test_theta = np.genfromtxt(PCA_data_location+"PCA_test_theta.dat")
+		train_theta = np.genfromtxt(PCA_data_location/"PCA_train_theta.dat")
+		test_theta = np.genfromtxt(PCA_data_location/"PCA_test_theta.dat")
 		
 		if quant == 'ph':
-			self.pca = PCA_model(PCA_data_location+"ph_PCA_model.dat")
-			train_var = np.genfromtxt(PCA_data_location+"PCA_train_ph.dat")
-			test_var = np.genfromtxt(PCA_data_location+"PCA_test_ph.dat")
+			self.pca = PCA_model(PCA_data_location/"ph_PCA_model.dat")
+			train_var = np.genfromtxt(PCA_data_location/"PCA_train_ph.dat")
+			test_var = np.genfromtxt(PCA_data_location/"PCA_test_ph.dat")
 			if len(train_var.shape) == 1:
 				train_var = np.reshape(train_var, (train_var.shape[0],1))
 				test_var = np.reshape(test_var, (test_var.shape[0],1))
 				print(train_var.shape)
 		if quant == 'amp':
-			self.pca = PCA_model(PCA_data_location+"amp_PCA_model.dat")
-			train_var = np.genfromtxt(PCA_data_location+"PCA_train_amp.dat")
-			test_var = np.genfromtxt(PCA_data_location+"PCA_test_amp.dat")
+			self.pca = PCA_model(PCA_data_location/"amp_PCA_model.dat")
+			train_var = np.genfromtxt(PCA_data_location/"PCA_train_amp.dat")
+			test_var = np.genfromtxt(PCA_data_location/"PCA_test_amp.dat")
 		
+		if PC_comp == None: 
+			PC_comp = list(range(train_var.shape[1]))
 		if isinstance(PC_comp,int): PC_comp = list(range(PC_comp))
-		if ratio == 1:
-			self.train_theta = train_theta
+
+		self.PC_comp = PC_comp
+		if N == None:
+			if ratio == 1:
+				self.train_theta = train_theta
+				self.test_theta = test_theta
+				self.train_var = train_var[:,PC_comp]
+				self.test_var = test_var[:,PC_comp]
+			if ratio < 1:
+				train_indc = np.random.sample(range(len(train_theta)),round(ratio*len(train_theta)))
+				test_indc = np.random.sample(range(len(test_theta)),round(ratio*len(test_theta)))
+				self.train_theta = train_theta[train_indc]
+				self.test_theta = test_theta[test_indc]
+				self.train_var = train_var[train_indc][:,PC_comp]
+				self.test_var = test_var[test_indc][:,PC_comp]
+		else:
+			self.train_theta = train_theta[:N]
 			self.test_theta = test_theta
-			self.train_var = train_var[:,PC_comp]
+			self.train_var = train_var[:N,PC_comp]
 			self.test_var = test_var[:,PC_comp]
-		if ratio < 1:
-			train_indc = random.sample(range(len(train_theta)),round(ratio*len(train_theta)))
-			test_indc = random.sample(range(len(test_theta)),round(ratio*len(test_theta)))
-			self.train_theta = train_theta[train_indc]
-			self.test_theta = test_theta[test_indc]
-			self.train_var = train_var[train_indc][:,PC_comp]
-			self.test_var = test_var[test_indc][:,PC_comp]
 
 		#self.augment_features()
-		self.train_theta = augment_features(self.train_theta, features = self.features)
-		self.test_theta = augment_features(self.test_theta, features = self.features)
+		self.train_theta = augment_features_general(self.train_theta, feature_list = self.features)
+		self.test_theta = augment_features_general(self.test_theta, feature_list = self.features)
 
-	def augment_features(self, theta = [], features = []):
-		"""
-		Performs feature augmentation for the neural network model
-		"""
-		#FIXME: this function is deprecated: we must remove it!
-		ret = True
-		if len(theta)==0: #augment features of theta_vectors of self
-			train_theta = self.train_theta
-			test_theta = self.test_theta
-			ret = False
-		else:
-			train_theta = theta
-			test_theta = theta #dummy array
-			
-		if len(features) == 0:
-			features = self.features
-
-			#BEWARE OF ORDER
-		if "2nd_poly" in features:
-			for x in ["00","11","22","01","02","12"]:
-				train_theta = np.c_[train_theta, train_theta[:,int(x[0])]*train_theta[:,int(x[1])]]
-				test_theta = np.c_[test_theta, test_theta[:,int(x[0])]*test_theta[:,int(x[1])]]
-					
-		if "sym_mas" in features:
-			train_theta = np.c_[train_theta, train_theta[:,0] / (1+train_theta[:,0]**2)]
-			test_theta = np.c_[test_theta,  test_theta[:,0] / (1+test_theta[:,0]**2)]
-			
-		if "eff_spin" in features:
-			train_theta = np.c_[train_theta, (train_theta[:,1] + train_theta[:,0]*train_theta[:,2]) / (1 + train_theta[:,0])]
-			test_theta = np.c_[test_theta, (test_theta[:,1] + test_theta[:,0]*test_theta[:,2]) / (1 + test_theta[:,0])]
-				
-		if "eff_spin_powers" in features:
-			for x in [1,2,3]:
-				train_theta = np.c_[train_theta, ( (train_theta[:,1] + train_theta[:,0]*train_theta[:,2]) / (1 + train_theta[:,0]) )**x ]
-				test_theta = np.c_[test_theta, ( (test_theta[:,1] + test_theta[:,0]*test_theta[:,2]) / (1 + test_theta[:,0]) )**x ]
-			
-		if "sym_mas_powers" in features:
-			for x in [1,2,3,4]:
-				train_theta = np.c_[train_theta, (train_theta[:,0] / (1+train_theta[:,0]**2))**x]
-				test_theta = np.c_[test_theta,  (test_theta[:,0] / (1+test_theta[:,0]**2))**x]
-			
-		if "eff_spin_sym_mas_2nd_poly" in features:
-			eff_spin_train = (train_theta[:,1] + train_theta[:,0]*train_theta[:,2]) / (1 + train_theta[:,0])
-			eff_spin_test = (test_theta[:,1] + test_theta[:,0]*test_theta[:,2]) / (1 + test_theta[:,0])
-			sym_mas_train = train_theta[:,0] / (1+train_theta[:,0]**2)
-			sym_mas_test = test_theta[:,0] / (1+test_theta[:,0]**2)
-			train = np.c_[sym_mas_train, eff_spin_train]
-			test = np.c_[sym_mas_test, eff_spin_test]
-			for x in ["00","11","01"]:
-				train_theta = np.c_[train_theta, train[:,int(x[0])] * train[:,int(x[1])]]
-				test_theta = np.c_[test_theta, test[:,int(x[0])] * test[:,int(x[1])]]
-			
-		if "eff_spin_sym_mas_3rd_poly" in features:
-			eff_spin_train = (train_theta[:,1] + train_theta[:,0]*train_theta[:,2]) / (1 + train_theta[:,0])
-			eff_spin_test = (test_theta[:,1] + test_theta[:,0]*test_theta[:,2]) / (1 + test_theta[:,0])
-			sym_mas_train = train_theta[:,0] / (1+train_theta[:,0]**2)
-			sym_mas_test = test_theta[:,0] / (1+test_theta[:,0]**2)
-			train = np.c_[sym_mas_train, eff_spin_train]
-			test = np.c_[sym_mas_test, eff_spin_test]
-			for x in ["000","111","001","011"]:
-				train_theta = np.c_[train_theta, train[:,int(x[0])] * train[:,int(x[1])] * train[:,int(x[2])]]
-				test_theta = np.c_[test_theta, test[:,int(x[0])] * test[:,int(x[1])] * test[:,int(x[2])]]
-			
-		if "eff_spin_sym_mas_4th_poly" in features:
-			eff_spin_train = (train_theta[:,1] + train_theta[:,0]*train_theta[:,2]) / (1 + train_theta[:,0])
-			eff_spin_test = (test_theta[:,1] + test_theta[:,0]*test_theta[:,2]) / (1 + test_theta[:,0])
-			sym_mas_train = train_theta[:,0] / (1+train_theta[:,0]**2)
-			sym_mas_test = test_theta[:,0] / (1+test_theta[:,0]**2)
-			train = np.c_[sym_mas_train, eff_spin_train]
-			test = np.c_[sym_mas_test, eff_spin_test]
-			for x in ["0000","0001","0011","0111","1111"]:
-				train_theta = np.c_[train_theta, train[:,int(x[0])] * train[:,int(x[1])] * train[:,int(x[2])] * train[:,int(x[3])]]
-				test_theta = np.c_[test_theta, test[:,int(x[0])] * test[:,int(x[1])] * test[:,int(x[2])] * test[:,int(x[3])]]
-			
-		if "chirp" in features:
-			train_theta = np.c_[train_theta, (train_theta[:,0] / (1+train_theta[:,0]**2))**(3/5)]
-			test_theta = np.c_[test_theta,  (test_theta[:,0] / (1+test_theta[:,0]**2))**(3/5)]
-			
-		if "1_inverse" in features:
-			for x in ["0","1","2"]:
-				train_theta = np.c_[train_theta, 1/train_theta[:,int(x[0])]]
-				test_theta = np.c_[test_theta, 1/test_theta[:,int(x[0])]]
-					
-		if "q_cube" in features:
-			train_theta = np.c_[train_theta, train_theta[:,0]**3]
-			test_theta = np.c_[test_theta, test_theta[:,0]**3]
-			
-		if "q_quart" in features:
-			train_theta = np.c_[train_theta, train_theta[:,0]**4]
-			test_theta = np.c_[test_theta, test_theta[:,0]**4]
-			
-		if "q_min1inverse" in features:
-			for x in ["0"]:
-				train_theta = np.c_[train_theta, 1/(train_theta[:,int(x[0])] - 1)]
-				test_theta = np.c_[test_theta, 1/(test_theta[:,int(x[0])] - 1)]
-			
-		if "q_squared" in features:
-			for x in ["00"]:
-				train_theta = np.c_[train_theta, train_theta[:,int(x[0])]*train_theta[:,int(x[1])]]
-				test_theta = np.c_[test_theta, test_theta[:,int(x[0])]*test_theta[:,int(x[1])]]
-			
-		if "q_inverse" in features:
-			for x in ["0"]:
-				train_theta = np.c_[train_theta, 1/train_theta[:,int(x[0])]]
-				test_theta = np.c_[test_theta, 1/test_theta[:,int(x[0])]]
-			
-		if "log" in features:
-			train_theta = np.c_[train_theta, np.log(train_theta[:,0])]
-			test_theta = np.c_[test_theta, np.log(test_theta[:,0])]
-			
-		if "tan" in features:
-			train_theta = np.c_[train_theta, np.tan((np.pi/2) * train_theta[:,1])]
-			train_theta = np.c_[train_theta, np.tan((np.pi/2) * train_theta[:,2])]
-			test_theta = np.c_[test_theta, np.tan((np.pi/2) * test_theta[:,1])]
-			test_theta = np.c_[test_theta, np.tan((np.pi/2) * test_theta[:,2])]
-
-		if ret:
-			return train_theta
-		else:
-			self.train_theta = train_theta
-			self.test_theta = test_theta
-	
 	def compute_WF(amp, ph, ratio=1, ph_shift = []):
 		(N,D) = amp.shape
 		
@@ -260,9 +155,9 @@ class PcaData:
 		times_2 = np.genfromtxt(file_loc_2+"times.dat")
 		
 		N1_train,N2_train = train_ph_1.shape[0], train_ph_2.shape[0]
-		indc_train = random.sample(range(N1_train+N2_train),N1_train+N2_train)
+		indc_train = np.random.sample(range(N1_train+N2_train),N1_train+N2_train)
 		N1_test,N2_test = test_ph_1.shape[0], test_ph_2.shape[0]
-		indc_test = random.sample(range(N1_test+N2_test),N1_test+N2_test)
+		indc_test = np.random.sample(range(N1_test+N2_test),N1_test+N2_test)
 		
 		train_theta = np.concatenate((train_theta_1,train_theta_2),axis=0)[indc_train,:]
 		test_theta = np.concatenate((test_theta_1,test_theta_2),axis=0)[indc_test,:]
@@ -281,7 +176,65 @@ class PcaData:
 		np.savetxt(save_loc+"PCA_train_ph.dat", train_ph)
 		np.savetxt(save_loc+"PCA_test_ph.dat", test_ph)
 		np.savetxt(save_loc+"times.dat", times)
+
+class CustomLoss:
+	def custom_MSE_loss(weights):
+		weights = np.array(weights)
+		# returns the custom loss function given the weights
+		def loss_function(y_true, y_pred):
+			if len(weights) != len(y_true[0]):
+				print("the length of weights does not match amount of PCA components")
+			
+			loss = tf.square((y_true - y_pred) * weights )
+			
+			return tf.math.reduce_mean(loss, axis=-1)
 		
+		return loss_function
+
+	def custom_exp_loss(exp, weights):
+		weights = np.array(weights)
+		
+		def loss_function(y_true, y_pred):
+			if len(weights) != len(y_true[0]):
+				print("the length of weights does not match amount of PCA components")
+			
+			loss = tf.abs((y_true - y_pred)*weights)**exp
+			
+			return tf.math.reduce_mean(loss, axis=-1)
+		
+		return loss_function
+
+class Schedulers:
+	def __init__(self, name, exp=0, decay_epoch = 500, min_lr = 0):
+		def scheduler(epoch, lr):
+			if epoch < decay_epoch or lr < min_lr:
+				return lr
+			else:
+				return lr * np.exp(exp) #exp 0 is just no decay
+		
+		self.scheduler = scheduler
+		self.exp = exp
+		self.name = name
+		self.decay_epoch = decay_epoch
+
+class LossFunctions:
+	def __init__(self, name, weights = [], exp=2):
+		self.weights = weights
+		if name == "mean_squared_error":
+			self.name = 'mean_squared_error'
+			self.LF = tf.keras.losses.mean_squared_error
+		if name == "mean_absolute_error":
+			self.name = 'mean_absolute_error'
+			self.LF = tf.keras.losses.mean_absolute_error
+		if name == 'mean_squared_logarithmic_error':
+			self.name = 'mean_squared_logarithmic_error'
+			self.LF = tf.keras.losses.msle
+		if name == 'custom_mse':
+			self.name = 'custom_mse'
+			self.LF = CustomLoss.custom_MSE_loss(weights)
+		if name == "custom_exp":
+			self.name = "custom_exp"
+			self.LF = CustomLoss.custom_exp_loss(exp, weights)
 
 class Optimizers:
 	def __init__(self, name, lr=0):
@@ -342,318 +295,624 @@ class Optimizers:
 				self.opt = tf.keras.optimizers.Adamax()
 				self.lr = "default"
 
-class LossFunctions:
-	def __init__(self, name, weights = [], time_evo=0, exp=2):
-		self.weights = weights
-		if name == "mean_squared_error":
-			self.name = 'mean_squared_error'
-			self.LF = tf.keras.losses.mean_squared_error
-			self.time_evo = time_evo
-		if name == "mean_absolute_error":
-			self.name = 'mean_absolute_error'
-			self.LF = tf.keras.losses.mean_absolute_error
-			self.time_evo = time_evo
-		if name == 'mean_squared_logarithmic_error':
-			self.name = 'mean_squared_logarithmic_error'
-			self.LF = tf.keras.losses.msle
-			self.time_evo = time_evo
-		if name == 'custom_mse':
-			self.name = 'custom_mse'
-			self.LF = CustomLoss.custom_MSE_loss(weights)
-			self.time_evo=time_evo
-		if name == "custom_exp":
-			self.name = "custom_exp"
-			self.LF = CustomLoss.custom_exp_loss(exp, weights)
-			self.time_evo = time_evo
+class mlgw_NN(keras.Sequential): #maybe this becomes too expensive anyway? adding the features so many times...
+	def __init__(self, features=[], *args, **kwargs):
+		super().__init__(*args, **kwargs)
+		self.features = features
 
-class Schedulers:
-	def __init__(self, name, exp=0, decay_epoch = 500):
-		def scheduler(epoch, lr):
-			if epoch < decay_epoch:
-				return lr
-			else:
-				return lr * math.exp(exp) #exp 0 is just no decay
-		
-		self.scheduler = scheduler
-		self.exp = exp
-		self.name = name
-		self.decay_epoch = decay_epoch
+	def fit(self, x = None, y = None, epochs = None, validation_data=None, batch_size=None, callbacks=None):
+		if x.shape[-1] == 3:
+			x = augment_features_general(x, feature_list=self.features)
+			if validation_data:
+				validation_data = (augment_features_general(validation_data[0], feature_list=self.features), validation_data[1]) 
+		return super().fit(x = x, y = y, epochs=epochs, validation_data = validation_data,
+				batch_size = batch_size, callbacks = callbacks)
 
-class CustomLoss:
-	def custom_MSE_loss(weights):
-		weights = np.array(weights)
-		# returns the custom loss function given the weights
-		def loss_function(y_true, y_pred):
-			if len(weights) != len(y_true[0]):
-				print("the length of weights does not match amount of PCA components")
-			
-			loss = tf.square((y_true - y_pred) * weights )
-			
-			return tf.math.reduce_mean(loss, axis=-1)
-		
-		return loss_function
-
-	def custom_exp_loss(exp, weights):
-		weights = np.array(weights)
-		
-		def loss_function(y_true, y_pred):
-			if len(weights) != len(y_true[0]):
-				print("the length of weights does not match amount of PCA components")
-			
-			loss = tf.abs((y_true - y_pred) * weights )**exp
-			
-			return tf.math.reduce_mean(loss, axis=-1)
-		
-		return loss_function
-
-
-
-
-class NeuralNetwork:
-	def __init__(self, PCA_data, quantity, layers_nodes=[10,10,10,10,10], activation = 'sigmoid',
-				 optimizer = ('Adam',0), initializer='glorot_uniform', loss_function = ('mean_squared_error',[],0)):
-		
-		#utility
-		self.time = 0 # time it takes to train the model
-		self.quantity = quantity
-		self.PCA_data = PCA_data
-		
-		#architecture
-		self.layers_nodes = layers_nodes
-		self.activation = activation
-		self.optimizer = Optimizers(optimizer[0],lr=optimizer[1])
-		self.loss_function = LossFunctions(loss_function[0], weights=loss_function[1], time_evo=loss_function[2], exp=loss_function[3])
-		
-		'''
-		self.weights_list = [0]*len(self.loss_function.weights) #make a list of weights like this so they are changeable in callbacks
-		for i,x in enumerate(self.loss_function.weights):
-			self.weights_list[i] = tf.keras.backend.variable(x)
-		'''
-		
-		K = len(self.PCA_data.train_var[0]) #number of PCA components as output
-		L = len(self.PCA_data.train_theta[0]) #number of parameters as input
-		
-		#build regression model
-		self.model = tf.keras.Sequential()
-		self.model.add(tf.keras.layers.Dense(layers_nodes[0],input_shape=(L,), kernel_initializer=initializer, activation=activation))
-		for i in range(1,len(layers_nodes)):
-			self.model.add(tf.keras.layers.Dense(layers_nodes[i], kernel_initializer=initializer, activation=activation))
-		self.model.add(tf.keras.layers.Dense(K,kernel_initializer=initializer,activation='linear'))
-		self.model.compile(loss=self.loss_function.LF, optimizer=self.optimizer.opt)
-		
-
-	def fit_model(self, max_epochs=5000, Batch_size=500, LRscheduler=Schedulers('exponential')):
-		self.batch_size = Batch_size
-		self.scheduler = LRscheduler
-		
-		start = time.time()
-		callback_list = []
-		early_stopping = tf.keras.callbacks.EarlyStopping(monitor='val_loss', patience=100)
-		callback_list.append(early_stopping)
-		
-		LR_scheduler =  tf.keras.callbacks.LearningRateScheduler(LRscheduler.scheduler)
-		callback_list.append(LR_scheduler)
-		'''
-		#don't use for now, does not improve results
-		if self.loss_function.time_evo != 0:
-			#create callback for changing loss_function
-			def call_back_LF(self,epoch):
-				if epoch <= 500:
-					#for i in range(1,len(self.loss_function.weights)):
-					#	tf.keras.backend.set_value(self.weights_list[0],tf.keras.backend.get_value(self.weights_list[0])-1/10000)
-					tf.keras.backend.set_value(self.weights_list[0],tf.keras.backend.get_value(self.weights_list[0])*1.011)
-			
-			callback_list.append(tf.keras.callbacks.LambdaCallback(on_epoch_begin= lambda epoch, log : call_back_LF(self,epoch)))
-			print("Succesfully added callback for loss_weights evolution")
-		'''	  
-		
-		self.history = self.model.fit(x=self.PCA_data.train_theta,y=self.PCA_data.train_var,batch_size=Batch_size,
-								 validation_data=(self.PCA_data.test_theta,self.PCA_data.test_var),
-								 epochs=max_epochs, verbose=0,callbacks=callback_list)
-		
-		pred_var = self.model.predict(self.PCA_data.test_theta)
-		MSE = mean_squared_error(self.PCA_data.test_var,pred_var)
-		MSE_PC1 = mean_squared_error(self.PCA_data.test_var[:,0],pred_var[:,0])
-		print("The MSE for all principal components of the fit is: ", MSE)
-		print("The MSE of first principal component of the fit is: ", MSE_PC1)
-		self.time = time.time()-start
-		
-	def save_model(self, location, dirname, quantity):
-		K = len(self.PCA_data.test_var[0]) #number of PCA components
-		self.MSE = np.zeros(K)
-		os.mkdir(location+dirname)
-		
-		pred_var = self.model.predict(self.PCA_data.test_theta)
-		for i in range(K):
-			self.MSE[i]=mean_squared_error(self.PCA_data.test_var[:,i],pred_var[:,i])
-		
-		self.model_loc = location+dirname
-		f = open(location+dirname+"/Model_fit_info.txt", 'x')
-		f.write("Generation 2 model for: " + self.PCA_data.quantity+'\n')
-		f.write("Trained on dataset: "+self.PCA_data.data_loc+'\n')
-		f.write("Features used: ["+", ".join(self.PCA_data.features)+']\n')
-		f.write("created model with params: \n")
-		f.write("layer_list : ["+",".join([str(x) for x in self.layers_nodes])+']\n')
-		f.write("optimizer : " + self.optimizer.name + " with learning rate " + str(self.optimizer.lr)+'\n')
-		f.write("activation : " + self.activation + '\n')
-		f.write("batch_size : " + str(self.batch_size) + "\n")
-		f.write("schedulers : " + self.scheduler.name + " with decay rate " + str(self.scheduler.exp)+'\n')
-		f.write("loss_function : " + self.loss_function.name + " with weights " +"["+",".join([str(x) for x in self.loss_function.weights])+"] and time evolution: "+str(self.loss_function.time_evo)+"\n")
-		
-		for i in range(K):
-			f.write("The MSE of principal component "+ str(i) + " of the fit is: "+ str(self.MSE[i])+"\n")
-			
-		f.write("Time taken for fit: "+str(self.time))
-		f.close()
-		
-		plt.figure('lossfunction')
-		plt.title('Loss function of '+self.PCA_data.quantity)
-		plt.plot(self.history.history['loss'], label='train')
-		plt.plot(self.history.history['val_loss'], label='test')
-		plt.yscale('log')
-		plt.legend()
-		plt.savefig(location+dirname+'/lossfunction.png')
-		plt.close(fig='lossfunction')
-		self.model.save(location+dirname+'/model.h5') #changed to h5, because else it does not work on cluster
+	def predict(self, x, **kwargs):
+		if x.shape[-1] == 3:
+			x = augment_features_general(x, feature_list=self.features)
+		return super().predict(x, **kwargs)
 	
-	def load_model2(self, weights_location): #don't use
-		self.model_loc = "".join(weights_location.split('/')[-2])
-		self.model.load_weights(weights_location)
-	
-	def load_model(model_location, custom_objects = None, as_h5=False):
-		if not as_h5:
-			#if custom_objects == None: tf.keras.models.load_model(model_location, compile = False)
-			return tf.keras.models.load_model(model_location, custom_objects=custom_objects, compile=False)
+	def load_weights_and_features(self, model_loc, quantity):
+		features = []
+		model_loc = Path(model_loc)
+		assert quantity in ['amp', 'ph'], "quantity can only be amplitude or phase"
+
+		for file in os.listdir(model_loc):
+			if file[-2:] == 'h5': #load the weights
+				self.model = keras.models.load_model(model_loc/file, compile=False)
+			elif (quantity == "ph" and file[:7] == 'ph_feat') or (quantity == "amp" and file[:8] == 'amp_feat'): #load the features
+				with open(model_loc/file) as f:
+					lines = f.readlines()
+					for line in lines:
+						if 'features' not in line:
+							print(line[:-1])
+							features.append(line[:-1]) #just append the ordinary string to list of features
+							continue
+
+						#get positions of colons
+						cols = [pos for pos, char in enumerate(line) if char == ':']
+
+						#find feature strings
+						cur_feat_list = line[cols[0]+3:cols[1]-8].split(', ')
+
+						#find order
+						order = int(line[(cols[1]+2):])
+						features.append((cur_feat_list, order))
+		self.features = features
+
+class NN_HyperModel(HyperModel):
+	def __init__(self,  output_nodes, hyperparameter_ranges, loss_weights):
+		self.hyperparameter_ranges = hyperparameter_ranges
+		self.loss_weights = [1]*output_nodes if not isinstance(loss_weights,list) else loss_weights
+		self.output_nodes = output_nodes
+		
+	def build(self, hp):
+
+		#FIXME: the enumeration here is super ugly: any chance to imrpove it?
+		if isinstance(self.hyperparameter_ranges["units"], (tuple, list)):
+			units = hp.Choice('units', self.hyperparameter_ranges["units"])
 		else:
-			#if custom_objects == None: tf.keras.models.load_model(model_location+'.h5', compile = False)
-			return tf.keras.models.load_model(model_location+'.h5', custom_objects=custom_objects, compile=False)
+			units = hp.Fixed('units', self.hyperparameter_ranges["units"])
+		if isinstance(self.hyperparameter_ranges["layers"], (tuple, list)):
+			layers = hp.Choice('layers', self.hyperparameter_ranges["layers"])
+		else:
+			layers = hp.Fixed('layers', self.hyperparameter_ranges["layers"])
+		if isinstance(self.hyperparameter_ranges["activation"], (tuple, list)):
+			activation = hp.Choice('activation', self.hyperparameter_ranges["activation"])
+		else:
+			activation = hp.Fixed('activation', self.hyperparameter_ranges["activation"])
+		if isinstance(self.hyperparameter_ranges["learning_rate"], (tuple, list)):
+			lr = hp.Choice('learning rate', self.hyperparameter_ranges["learning_rate"])
+		else:
+			lr = hp.Fixed('learning rate',self.hyperparameter_ranges["learning_rate"])
+		if isinstance(self.hyperparameter_ranges["feature_order"], (tuple, list)):
+			feature_order = hp.Choice('feature order', self.hyperparameter_ranges["feature_order"])
+		else:
+			feature_order = hp.Fixed('feature order', self.hyperparameter_ranges["feature_order"])
+		
+		print("The number of units are", units)
+		feats = [(['q','s1','s2'], feature_order)]
+		model = mlgw_NN(features=feats)
+		D = len(augment_features_general([1,1,1], feature_list=feats)[0]) #number of input features
+		print("number of features: ", D)
 
+		model.add(Dense(units,
+						activation=activation,
+						input_shape=(D,)))
+		for _ in range(layers):
+			model.add(Dense(units,
+						activation=activation))
+		model.add(Dense(self.output_nodes, activation='linear'))
 
+		model.compile(loss=LossFunctions('custom_mse',weights=self.loss_weights).LF,
+				optimizer=Nadam(learning_rate=lr))
+		return model
+
+def save_model(model, history, out_folder, hyperparameters, PCA_data, PCA_data_loc = None, residual=False):
+	#saves the weights and features of a trained model to a file.
+	#also saves the relevant hyperparameters.
+
+	if out_folder.ends_with('/'): out_folder = out_folder[:-1]
+
+	K = len(PCA_data.test_var[0]) #number of PCA components
+	MSE = np.zeros(K)
+
+	pred_var = model.predict(PCA_data.test_theta)
+	for i in range(K):
+		MSE[i]=np.sum( np.square(PCA_data.test_var[:,i]-pred_var[:,i]) / pred_var.shape[0])
+
+	PC_comp_string = "["+",".join(str(x) for x in PCA_data.PC_comp)+"]"
+
+	f = open(out_folder+"/Model_fit_info.txt", 'x')
+	f.write("Model for " + PC_comp_string + 'PCs for '+PCA_data.quantity+'\n')
+	if PCA_data_loc != None: f.write("Trained on dataset: "+PCA_data_loc+'\n')
+	f.write("created model with params: \n")
+	f.write("layer_list : ["+",".join([str(x) for x in hyperparameters['layer_list']])+']\n')
+	f.write("optimizer : " + hyperparameters['optimizers'].name + " with learning rate " + str(hyperparameters['optimizers'].lr)+'\n')
+	f.write("activation : " + hyperparameters['activation'] + '\n')
+	f.write("batch_size : " + str(hyperparameters['batch_size']) + "\n")
+	f.write("schedulers : " + hyperparameters['schedulers'].name + " with decay rate " + str(hyperparameters['schedulers'].exp)+'\n')
+
+	for i in range(K):
+		f.write("The MSE of principal component "+ str(i) + " of the fit is: "+ str(MSE[i])+"\n")
+
+	f.close()
+
+	plt.figure('lossfunction')
+	plt.title('Loss function of '+PCA_data.quantity)
+	plt.plot(history.history['loss'], label='train')
+	plt.plot(history.history['val_loss'], label='test')
+	plt.yscale('log')
+	plt.legend()
+	plt.savefig(out_folder+'/lossfunction.png')
+	plt.close(fig='lossfunction')
+	if residual:
+		model.save(out_folder+'/'+PCA_data.quantity+'_weights_'+PC_comp_string+'_res.h5')
+		coefficients = np.genfromtxt(PCA_data_loc+'coefficients')
+		np.savetxt(out_folder+'/coefficients', coefficients)
+	else:
+		model.save(out_folder+'/'+PCA_data.quantity+'_weights_'+PC_comp_string+'.h5')
+	return
+
+def tune_model(out_folder, project_name, quantity, PCA_data_loc, PC_to_fit, hyperparameters, max_epochs=1000, init_trials=None, trials = 10):
+	#this function does the tuning of a model on a dataset. The input should be: 
+	#- folder to which to save the tuning results
+	#- the principal components that you want to fit
+	#- the hyperparameters you want to tune
+	#- other parameters that are necessary for tuning
+
+	PCA_data = PcaData(PCA_data_loc, PC_to_fit, quantity)
+
+	loss_weights = np.sqrt(np.array(PCA_data.pca.PCA_params[2]))[PCA_data.PC_comp] 
+	loss_weights = loss_weights / min(loss_weights)
 	
-	def create_single_model(data_loc, save_loc, dirname, quantity, param_list):
-		D = PCAdata_v2.PcaData(data_loc)
-		M = NeuralNetwork(D,quantity)
-		M.fit_model()
-		M.save_model(save_loc,dirname,quantity)
-		
-	def HyperParametertesting(data_loc, save_loc, quantity, param_dict, PC_comp, epcs = 5000, feat = []):
-		'''
-			param_dict is a dictionary that can store several types of hyper_parameters
-			param_dict = {'layer_list' : [], 'optimizers' : [], 'activation' : [],
-						  'batch_size' : [], 'schedulers' : [], 'loss_functions' : []}
-			
-			if len(param_dict[HP]) == 0, then it will use default value
-			if len(param_dict[HP]) == 1, then it will use that value for all models
-			if len(param_dict[HP]) > 2, then it will loop over the specified values
-			
-			code creates a param_list that is essentially a list of lists of length 6
-			that indicate which params to be used
-		'''
-		
-		default = {'layer_list' : [10,10,10,10,10],
-				   'optimizers' : ('Adam',0),
-				   'activation' : 'sigmoid',
-				   'batch_size' : 500,
-				   'schedulers' : PCAdata_v2.Schedulers('exponential'),
-				   'loss_functions' : ('mean_squared_error',[],0)}
-		for key in param_dict:
-			if len(param_dict[key]) == 0:
-				param_dict[key] = [default[key]]
-		
-		param_list = []
-		for a in param_dict['layer_list']:
-			for b in param_dict['optimizers']:
-				for c in param_dict['activation']:
-					for d in param_dict['batch_size']:
-						for e in param_dict['schedulers']:
-							for f in param_dict['loss_functions']:
-								param_list.append([a,b,c,d,e,f])
-		
-		
-		
-		for (a,b,c,d,e,f) in param_list:
-			print("started creating model with params: \n")
-			print("layer_list : ["+",".join([str(x) for x in a])+']')
-			print("optimizer : " + b[0] + " with learning rate " + str(b[1]))
-			print("activation : " + c)
-			print("batch_size : " + str(d))
-			print("schedulers : " + e.name + " with decay rate " + str(e.exp))
-			print("loss_function : " + f[0] + " with weights " +"["+",".join([str(x) for x in f[1]])+"] and time evolution: "+str(f[2])+"\n")
-			dirname = quantity+'_'+"["+",".join([str(x) for x in a])+"]"
-			D = PCAdata_v2.PcaData(data_loc, PC_comp, quantity, features=feat)
-			M = NeuralNetwork(D, quantity ,layers_nodes=a, activation = c, optimizer = b, loss_function = f)
-			M.fit_model(Batch_size = d, LRscheduler = e, max_epochs = epcs)
-			M.save_model(save_loc, dirname, quantity)
-			del D
-			del M
+	if init_trials == None: init_trials = 3*len(hyperparameters)
 	
-	def ContinueTraining(data_loc, save_loc, quantity, PC, model_loc, model_param_dict, feat=[], epcs = 5000):
-		'''
-			model_param_dict is of the form:
-				{layer_list : [], activation : str, optimizer : (str,float),
-				 loss_function : (str,[]), batch_size : int, scheduler : PCAdataV2.loss_functions('exponential')}
-			and should correspond to the model that is continued.
-			
-			should implement: concatenation of new training set and old data set (what do do with PCA?)
-			
-		'''
-		
-		D = PCAdata_v2.PcaData(data_loc, PC, quantity, features=feat)
-		M = NeuralNetwork(D,quantity,
-						  layers_nodes=model_param_dict['layer_list'],
-						  activation=model_param_dict['activation'],
-						  optimizer=model_param_dict['optimizer'],
-						  loss_function=model_param_dict['loss_function'])
-		M.model = NeuralNetwork.load_model(model_loc)
-		print("model loaded and initialized, now starting fit")
-		M.fit_model(Batch_size = model_param_dict['batch_size'],
-					LRscheduler = model_param_dict['scheduler'],
-					max_epochs=epcs)
-		M.save_model(save_loc, model_loc.split('/')[-2]+"_updated",quantity)
-		print('model ftted and saved')
+	tuner = BayesianOptimization(
+		NN_HyperModel(PCA_data.train_var.shape[1], hyperparameters, loss_weights),
+		objective='val_loss',
+		max_trials=trials,
+		num_initial_points=init_trials,
+		overwrite=True,
+		directory=out_folder,
+		project_name=project_name
+	)
 
-	def CreateResidualPCAsets(PCA_data, pred, model_loc, save_loc, q, components=1):
-		times = PCA_data.times
-		train_theta = PCA_data.train_theta[:,:3]
-		test_theta = PCA_data.test_theta[:,:3]
-		train_pred = pred[0][:,:components]
-		test_pred = pred[1][:,:components]
-		
-		new_train_var = PCA_data.train_var[:,:components] - train_pred
-		new_test_var = PCA_data.test_var[:,:components] - test_pred
-		
-		#normalize the datasets
-		norm_coef = []
-		for i in range(components):
-			test_max = np.max(abs(new_test_var[:,i]))
-			new_train_var[:,i] /= test_max
-			new_test_var[:,i] /= test_max
-			norm_coef.append(test_max)
+	callback_list = []
+	early_stopping = EarlyStopping(monitor='val_loss', patience=100, restore_best_weights=True)
+	callback_list.append(early_stopping)
+	
+	LR_scheduler = LearningRateScheduler(Schedulers('exponential', exp=-0.0003).scheduler)
+	callback_list.append(LR_scheduler)
 
+	tuner.search(PCA_data.train_theta, PCA_data.train_var, epochs=max_epochs,
+			validation_data=(PCA_data.test_theta, PCA_data.test_var),
+			batch_size=128, callbacks=callback_list)
+	return tuner
+
+def analyse_tuner_results(file_loc, save_loc=None):
+	data = []
+	if not file_loc.endswith('/'): file_loc += '/'
+
+	for x in os.listdir(file_loc):
+		if x.startswith('trial'):
+			with open("{}{}/trial.json".format(file_loc, x), "r") as f:
+				cur_data = json.load(f)
+				if cur_data['score'] != None: #tuner is not finished yet
+					data.append([x[6:],cur_data['score'],cur_data['hyperparameters']['values']])
+	if len(data)==0:
+		raise ValueError("Unable to load any model from the given folder '{}'".format(file_loc))
+
+	hyperparams = data[0][2].keys()
+	for param in hyperparams:
+		x = plt.figure(param)
+		plt.title(param+" vs loss")
+		plt.scatter([data[i][2][param] for i in range(len(data))],
+					[data[i][1] for i in range(len(data))])
+		plt.yscale('log')
+		if param in ['learning rate']: plt.xscale('log')
+		if save_loc != None: plt.savefig(save_loc+"/"+param+".png")
+		plt.show()
+
+	data.sort(key=lambda x : x[1])
+	
+	print("Top ten hyperparameters are: \n")
+	for i in range(10):
+		print(data[i][2], ' with a score of ', data[0][1])
+	print("Averages of top 10:")
+	print("Units: ", np.mean([data[i][2]['units'] for i in range(10)]))
+	print("Layers: ", np.mean([data[i][2]['layers'] for i in range(10)]))
+	print("learning rate: ", np.mean([data[i][2]['learning rate'] for i in range(10)]))
+	print("feature order: ", np.mean([data[i][2]['feature order'] for i in range(10)]))
+	return
+
+def fit_NN(fit_type, in_folder, out_folder, hyperparameters = None, N_train = None, comp_to_fit = None, features = None, epochs = 2000, verbose = 1, residual=False):
+	"""
+fit_NN
+=======
+	Fit a NN model for the selected PC's of the PCA dataset
+	It loads a PCA dataset from in_folder and fits the regression
+		theta = (q,s1,s2) ---> PC_pojection(theta)
+	Outputs the fitted model to out_folder
+		amp(ph)_PCs.h5 (weights of the model)
+		feat_amp(ph)_PCs.txt
+		info.txt
+	Furthermore it copies PCA models and times files to the out folder.
+	Several of these NNs, for both amplitude and phase, can be combined with the NN_gather method (STILL HAEV TO IMPLEMENT!!!), which can then be inputted to mlgw.GW_generator.GW_generator.
+	User can choose some fitting hyperparameters.
+	Input:
+		fit_type ("amp","ph")	whether to fit the model for amplitude or phase
+		in_folder				path to folder with the PCA dataset. It must have the format of mlgw.fit_model.create_PCA_dataset
+		out_folder				path to folder to save models to. Several folder locations can be inputted to NN_gather which can then be used by mlgw.GW_generator.mode_generator_NN
+		hyperparameters			dictionary of the hyperparameters used for the NN structure. If none, default parameters are used.
+		N_train					integer for how many training samples to use. If none, all are used.
+		comp_to_fit	[]			list of PCs to fit. If None, all components will be fitted. If int, it denotes the maximum PC order to be fitted.
+		features []				list of strings for adding features. Note that only features implemented in PcaData_v2.PcaData.augment_features can be used. If None, a default second degree polynomial in q, s1, s2 will be used.
+		epochs					integer specifying for how many iterations (epochs) the NN should train
+		verbose					whether to display NN iteration messages
+		residual				whether this is a model for the residual 
+	"""
+	#if not fit_type in ["amp","ph"]:
+	#	raise RuntimeError("Data type for fit_type not understood. Required (\"amp\"/\"ph\") but \""+str(fit_type)+"\" given.")
+	#	return
+
+	os.makedirs(out_folder, exist_ok = True)
+
+	if not out_folder.endswith('/'):
+		out_folder = out_folder + "/"
+	if not in_folder.endswith('/'):
+		in_folder = in_folder + "/"
+
+	if features is None:
+		features = ["2nd_poly"]
+	if not isinstance(features, list):
+		raise RuntimeError("Features to use for regression must be given as list. Type "+str(type(features))+" given instead")
+		return
+	
+	if type(N_train) is not int and N_train is not None:
+		raise RuntimeError("Nunmber of training point to use must be be an integer. Type "+str(type(N_train))+" given instead")
+		return
+
+		#loading data
+	PCA_data = PcaData(in_folder, comp_to_fit, fit_type, features=features, N=N_train)
+	#print("Training parameters: ", PCA_data.train_var[0])
+	#print("Features used: ", PCA_data.features)
+	print("Using "+str(PCA_data.train_var.shape[0])+" train data")
+	
+	D = PCA_data.train_theta.shape[1] #dimensionality of input space for NN
+	if N_train == None: N_train = PCA_data.train_theta.shape[0]
+
+	mse_train_list = [] #list for holding mse of every PCs
+	mse_test_list = [] #list for holding mse of every PCs
+	
+		#starting fit procedure TODO: implement the training of neural network, and the tests and saving to files.
+	PC_comp_string = "["+",".join(str(x) for x in PCA_data.PC_comp)+"]"
+	print("Starting fitting components ", PC_comp_string)
+	if hyperparameters == None:
+		print("Default hyperparameters are used for the NN (see Model_fit_info.txt in the out_folder)")
+		hyperparameters = {'layer_list' : [20,20,15,15], 
+				'optimizers' : Optimizers("Nadam",0.002), 
+				'activation' : "sigmoid", 
+				'batch_size' : 64, 
+				'schedulers' : Schedulers('exponential', exp=-0.0005)}
+	
+	loss_weights = np.sqrt(np.array(PCA_data.pca.PCA_params[2]))[PCA_data.PC_comp]
+	loss_weights = loss_weights / min(loss_weights)
+	print("Weights used are: ", loss_weights)
+	
+	model = keras.Sequential()
+	#model = mlgw_NN(features=feats)
+	model.add(Dense(hyperparameters['layer_list'][0],
+						activation=hyperparameters['activation'],
+						input_shape=(D,)))
+	for units in hyperparameters['layer_list'][1:]:
+		model.add(Dense(units,
+					activation=hyperparameters['activation']))
+	
+	model.add(Dense(PCA_data.test_var.shape[1], activation='linear'))
+
+	model.compile(loss=LossFunctions('custom_mse', weights=loss_weights).LF,
+					optimizer=hyperparameters['optimizers'].opt)
+	
+	callback_list = []
+	early_stopping = EarlyStopping(monitor='val_loss', patience=100, restore_best_weights=True)
+	callback_list.append(early_stopping)
+
+	LR_scheduler = LearningRateScheduler(hyperparameters['schedulers'].scheduler)
+	callback_list.append(LR_scheduler)
+
+	history = model.fit(x=PCA_data.train_theta,  y=PCA_data.train_var, batch_size=hyperparameters['batch_size'], validation_data=(PCA_data.test_theta,PCA_data.test_var), epochs=epochs, verbose=verbose,callbacks=callback_list)
+	
+	print("successfuly trained model!")
+		#doing some test
 		
-		if q == 'ph':
-			PCA_data.pca.save_model(save_loc+"ph_PCA_model.dat")
-			np.savetxt(save_loc+"PCA_train_theta.dat", train_theta)
-			np.savetxt(save_loc+"PCA_test_theta.dat", test_theta)
-			np.savetxt(save_loc+"PCA_train_ph.dat", new_train_var)
-			np.savetxt(save_loc+"PCA_test_ph.dat", new_test_var)
-			
-		if q == 'amp':
-			PCA_data.pca.save_model(save_loc+"amp_PCA_model.dat")
-			np.savetxt(save_loc+"PCA_train_theta.dat", train_theta)
-			np.savetxt(save_loc+"PCA_test_theta.dat", test_theta)
-			np.savetxt(save_loc+"PCA_train_amp.dat", new_train_var)
-			np.savetxt(save_loc+"PCA_test_amp.dat", new_test_var)
-		
-		np.savetxt(save_loc+"times.dat", times)
-		
-		f = open(save_loc+"/info.txt", 'x')
-		f.write("Model location: "+model_loc+"\n")
-		f.write("Test scale coefficients: "+", ".join(str(x) for x in norm_coef))
-		f.close()
-		
-		plt.figure('new_pca PC1')
-		plt.title('delta pca/pred for test data, PC1')
-		plt.scatter(test_theta[:,0], new_test_var[:,0])
-		plt.savefig(save_loc+'/delta pca-pred.png')
-		plt.close(fig='new_pca') 
+	y_pred = model.predict(PCA_data.test_theta) #y_pred is now an ~(N,K) array
+	for i in range(len(PCA_data.PC_comp)):
+		mse_test_list.append(np.sum(np.square(y_pred[:,i]-PCA_data.test_var[:,i]))/(y_pred.shape[0]))
+	
+	print("Test square loss: ", mse_test_list)
+
+		#saving everything to file
+		#saving feature list
+	outfile = open(out_folder+fit_type+"_feat_"+PC_comp_string+".txt", "x")
+	for c in features:
+		if isinstance(c, str):
+			outfile.write(c+"\n")
+		if isinstance(c, tuple):
+			outfile.write('features: [' + ", ".join(x for x in c[0]) + '], order: ' + str(c[1]) + '\n')
+	outfile.close()
+	
+	#Not neccessary to save PCA model right?
+	#copyfile(in_folder+fit_type+"_PCA_model", out_folder+fit_type+"_PCA_model")
+	#copyfile(in_folder+"times", out_folder+"times")
+	
+		#saving NN model
+	save_model(model, history, out_folder, hyperparameters, PCA_data, in_folder, residual=residual)
+	print("Succesfully saved features and weights")
+
+	return
+
+def create_residual_PCA(pca_data_loc, model_loc, save_loc, quantity, components, savefigs=True):
+	pca_data_loc = Path(pca_data_loc)
+	model_loc = Path(model_loc)
+	save_loc = Path(save_loc)
+	assert quantity.lower()  in ['amp', 'ph'], "Quantity must be either amplitude or phase"
+
+	#load in the PCA dataset
+	data = PcaData(pca_data_loc, components, quantity)
+	if isinstance(components, int): components = list(range(components))
+
+	#load in the model
+	M = mlgw_NN()
+	M.load_weights_and_features(model_loc, quantity)
+
+	#do the predictions with the model
+
+	train_pred = M.predict(data.train_theta)[:,components]
+	test_pred = M.predict(data.test_theta)[:,components]
+
+	#print MSE for debugging purposes
+	for c in components:
+		print("MSE PC ", c, ' is ',  np.sum( np.square(test_pred[:,c] - data.test_var[:,c])) / test_pred.shape[0])
+
+	#subtract the predictions from the real data
+	new_train_var = data.train_var[:,components] - train_pred
+	new_test_var = data.test_var[:,components] - test_pred
+
+	#normalize the new data
+	norm_coef = []
+	for c in components:
+		test_max = np.max(abs(new_test_var[:,c]))
+		new_train_var[:,c] /= test_max
+		new_test_var[:,c] /= test_max
+		norm_coef.append(test_max)
+
+	#save the new data
+	np.savetxt(save_loc/"times.dat", data.times)
+	np.savetxt(save_loc/"PCA_train_theta.dat", data.train_theta)
+	np.savetxt(save_loc/"PCA_test_theta.dat", data.test_theta)
+	data.pca.save_model(save_loc/"ph_PCA_model.dat")
+	np.savetxt(save_loc/"coefficients", norm_coef)
+
+	np.savetxt(save_loc/"PCA_train_{}.dat".format(quantity), new_train_var)
+	np.savetxt(save_loc/"PCA_test_{}.dat".format(quantity), new_test_var)
+
+	if savefigs:
+		for i,c in enumerate(components):
+			plt.figure()
+			plt.title('delta pca/pred for test data as function of mass ratio')
+			plt.scatter(data.test_theta[:,0], data.test_var[:,c] - test_pred[:,i])
+			plt.savefig(save_loc+'/delta pca-pred comp'+str(c+1)+'.png')
+			plt.xlabel('mass ratio')
+			plt.close() 
+
+	return
+
+def compute_mismatch_WFS(ph_rec, amp_rec, ph_pca, amp_pca, time_grid, size, dt = 0.00001, plot = False):
+	F = np.zeros((size))
+	time_grid = time_grid[:]
+
+
+	num = round( (max(time_grid)-min(time_grid)) / dt)
+	new_x_grid = np.linspace(min(time_grid), max(time_grid),num)
+
+	batch_size = min(100,size) #should divide size, but not too large because memory issues
+
+	for j in range(size // batch_size):
+		new_ph_rec = np.empty((batch_size,num),dtype=float)
+		new_amp_rec = np.empty((batch_size,num),dtype=float)
+		new_ph_pca = np.empty((batch_size,num),dtype=float)
+		new_amp_pca = np.empty((batch_size,num),dtype=float)
+
+		for i in range(batch_size):
+			new_ph_rec[i,:] = np.interp(new_x_grid, time_grid, ph_rec[j*batch_size+i,:], left=0, right=0)
+			new_amp_rec[i,:] = np.interp(new_x_grid, time_grid, amp_rec[j*batch_size+i,:], left=0, right=0)
+			new_ph_pca[i,:] = np.interp(new_x_grid, time_grid, ph_pca[j*batch_size+i,:], left=0, right=0)
+			new_amp_pca[i,:] = np.interp(new_x_grid, time_grid, amp_pca[j*batch_size+i,:], left=0, right=0)
+
+		rec_WFs = PcaData.compute_WF(new_amp_rec,new_ph_rec,ratio=1)
+		pca_WFs = PcaData.compute_WF(new_amp_pca,new_ph_pca,ratio=1)
+
+		F_model,phase_shift_model = compute_optimal_mismatch(rec_WFs, pca_WFs)
+		F[j*batch_size:(j+1)*batch_size] = F_model
+
+
+	if plot:
+		plt.figure()
+		plt.hist(np.log(F)/np.log(10))
+
+	return F
+
+def load_models_from_directories(amp_model_locs, ph_model_locs):
+	testing_for_ph = True
+	if len(ph_model_locs) == 0: testing_for_ph = False
+
+	testing_for_amp = True
+	if len(amp_model_locs) == 0: testing_for_amp = False
+
+	if not (testing_for_ph or testing_for_amp):
+		print("please provide a list of model locations for either phase or ampltiude or both")
+		return
+
+	#infer what components for amp and phase are modeled
+	amp_models = {} #links tuple (of PCA components) to the model
+	ph_models = {}
+	ph_models_res = {}
+
+	amp_modeled_comps = set()
+	ph_modeled_comps = set()
+	ph_modeled_comps_res = {}
+
+	for loc in ph_model_locs:
+		M = mlgw_NN()
+		M.load_weights_and_features(loc, 'ph')
+
+		coefficients = None
+
+		for file in os.listdir(loc):
+			underscore_locs = [i for i,c in enumerate(file) if c == '_']
+			if file[-3:] == '.h5':
+				if len(underscore_locs) == 3: #residual weight locations have three underscores
+					comps = tuple(int(k) for k in file[underscore_locs[1]+2:-8].split(','))
+					for k in comps:
+						if k in ph_modeled_comps_res:
+							raise RuntimeError("residual ph models have overlap in PCs!")
+							ph_modeled_comps_res[k] = 0
+					ph_models_res[comps] = M 
+				elif len(underscore_locs) == 2: #residual weight locations have three underscores
+					comps = tuple(int(k) for k in file[underscore_locs[1]+2:-4].split(','))
+					for k in comps:
+						if k in ph_modeled_comps:
+							raise RuntimeError("ph models have overlap in PCs!")
+						ph_modeled_comps.add(k)
+					ph_models[comps] = M
+				else:
+					raise RuntimeError("weights file is not formatted correctly! Please format the file as: quantity_[PC1,PC2,...,PCk].h5 or quantity_[PC1,PC2,...,PCk]_res.h5" )
+
+			if file == 'coefficients':
+				coefficients = np.loadtxt(loc+'/coefficients')
+
+		#link up coefficients to correct components
+		if coefficients is not None:
+			for i,k in enumerate(comps):
+				ph_modeled_comps_res[k] = coefficients[i]
+
+	#perform some checks
+	if testing_for_ph:
+		if 0 not in ph_modeled_comps: 
+			raise RuntimeError("First principal component not present in ph folders")
+		if len(ph_modeled_comps)-1 != max(ph_modeled_comps):
+			raise RuntimeError("PCs in ph folder are not consecutive")
+		if not set(ph_modeled_comps_res).issubset(ph_modeled_comps):
+			raise RuntimeError("residual components are not a subset of the components")
+
+	print("Phase models loaded successfully")
+
+	for loc in amp_model_locs:
+		M = mlgw_NN()
+		M.load_weights_and_features(loc, 'amp')
+
+		for file in os.listdir(loc):
+			underscore_locs = [i for i,c in enumerate(file) if c == '_']
+			if file[-3:] == '.h5':
+				if len(underscore_locs) == 3: #residual weight locations have three underscores
+					raise RuntimeError("residual models currently not supported for amplitude")
+				elif len(underscore_locs) == 2: #residual weight locations have three underscores
+					comps = tuple(int(k) for k in file[underscore_locs[1]+2:-4].split(','))
+					for k in comps:
+						if k in amp_modeled_comps:
+							raise RuntimeError("ph models have overlap in PCs!")
+						amp_modeled_comps.add(k)
+					amp_models[comps] = M
+				else:
+					raise RuntimeError("weights file is not formatted correctly! Please format the file as: quantity_[PC1,PC2,...,PCk].h5 or quantity_[PC1,PC2,...,PCk]_res.h5" )
+
+	if testing_for_amp:
+		if 0 not in amp_modeled_comps:
+			raise RuntimeError("First principal component not present in amp folders")
+		if len(amp_modeled_comps)-1 != max(amp_modeled_comps):
+			raise RuntimeError("PCs in amp folder are not consecutive")
+	print("Amp models loaded successfully")
+	
+	print("Models loaded successfully from directories")
+	return testing_for_ph, testing_for_amp, ph_models, ph_models_res, amp_models, amp_modeled_comps, ph_modeled_comps, ph_modeled_comps_res
+
+
+def check_NN_performance(data_loc, amp_model_locs, ph_model_locs, save_loc, mismatch_N=0):
+	#TODO: seperate loading in the models from different files and checking the performance in to two different functions
+
+	#computes the MSE and optionally mismatch for inputted models on dataset
+	#if mismatch_N > 0, it will return the mismatches.
+
+	ph_data = PcaData(data_loc, None, 'ph')
+	amp_data = PcaData(data_loc, None, 'amp')
+
+	testing_for_ph, testing_for_amp, ph_models, ph_models_res, amp_models, amp_modeled_comps, ph_modeled_comps, ph_modeled_comps_res = load_models_from_directories(amp_model_locs, ph_model_locs)
+
+	#do the predictions, if not testing for either amplitude or phase, just use the "perfect" PCA coeffcients
+	if not testing_for_ph: ph_pred = ph_data.test_var
+	else:
+		ph_pred = np.zeros(ph_data.test_var.shape)
+		for comps in ph_models.keys():
+			ph_pred[:,list(comps)] = ph_models[comps].predict(ph_data.test_theta)
+
+		for comps in ph_models_res.keys():
+			cur_pred = ph_models_res[comps].predict(ph_data.test_theta)
+			for k in comps:
+				ph_pred[:,k] += cur_pred[:,k]*ph_modeled_comps_res[k]
+
+	if not testing_for_amp: amp_pred = amp_data.test_var
+	else:
+		amp_pred = np.zeros(amp_data.test_var.shape)
+
+		for comps in amp_models.keys():
+			amp_pred[:,list(comps)] = amp_models[comps].predict(amp_data.test_theta)
+
+	print("Predictions made successfully!")
+
+	if testing_for_ph:
+		print("MSE for phase: ")
+		N,K = ph_data.test_var.shape
+		for k in range(min(K, max(ph_modeled_comps)+1)):
+			print( np.sum( np.square(ph_pred[:,k]-ph_data.test_var[:,k]) / N) )
+
+	if testing_for_amp:
+		print("MSE for phase: ")
+		N,K = amp_data.test_var.shape
+		for k in range(min(K, max(amp_modeled_comps)+1)):
+			print( np.sum( np.square(amp_pred[:,k]-amp_data.test_var[:,k]) / N) )
+
+	if mismatch_N == 0: return 
+
+	ph_rec = ph_data.pca.reconstruct_data(ph_pred,K=ph_pred.shape[1])
+	amp_rec = amp_data.pca.reconstruct_data(amp_pred,K=amp_pred.shape[1])
+
+	ph_pca = ph_data.pca.reconstruct_data(ph_data.test_var,K=ph_data.test_var.shape[1])
+	amp_pca = amp_data.pca.reconstruct_data(amp_data.test_var,K=amp_data.test_var.shape[1])
+
+	x_grid = ph_data.times
+
+	F = compute_mismatch_WFS(ph_rec, amp_rec, ph_pca, amp_pca, x_grid, mismatch_N)
+
+	print('median mismatch is: ', np.median(F))
+
+	return F
+
+def gather_NN(mode, data_location, amp_model_locations, ph_model_locations, out_folder):
+	'''
+This function combines ampltidude and phase models for a specific mode and formats them in a folder inside the out_folder which can then be inputted in the mode_generator class. It assumes the folders in amp_model_locations are formatted as outputted by fit_NN.
+	mode : string "lm" that refers to the mode 
+	amp_model_locations : list of strings containing the model locations for amplitude
+	ph_model_locations : list of strings containing the model locations for phase
+	out_folder : string contaning the folder to which combined model should be saved.
+	'''
+	if not os.path.isdir(out_folder): #check if out_folder exists
+		try:
+			os.mkdir(out_folder)
+		except:
+			raise RuntimeError("Impossible to create output folder "+out_folder+". Please, choose a valid folder.")
+			return
+	os.mkdir(out_folder+'/'+mode)
+	os.mkdir(out_folder+'/'+mode+'/amp')
+	
+	os.mkdir(out_folder+'/'+mode+'/ph')
+	
+	copy2(data_location+'times.dat', out_folder+'/'+mode)
+	copy2(data_location+'amp_PCA_model.dat', out_folder+'/'+mode+'/amp')
+	copy2(data_location+'ph_PCA_model.dat', out_folder+'/'+mode+'/ph')
+
+	for i,amp_loc in enumerate(amp_model_locations):
+		os.mkdir(out_folder+'/'+mode+'/amp/model'+str(i+1))
+		for file in os.listdir(amp_loc):
+			if file[:3] != "amp" and file != 'coefficients': continue #not a relevant file
+			copy2(amp_loc+'/'+file, out_folder+'/'+mode+'/amp/model'+str(i+1)+'/')
+
+	for i,ph_loc in enumerate(ph_model_locations):
+		os.mkdir(out_folder+'/'+mode+'/ph/model'+str(i+1))
+		for file in os.listdir(ph_loc):
+			if file[:2] != "ph" and file != 'coefficients': continue
+			copy2(ph_loc+'/'+file, out_folder+'/'+mode+'/ph/model'+str(i+1)+'/')
+	
+	print("Neural Networks gathered successfully")
+	return

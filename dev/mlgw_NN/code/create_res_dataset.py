@@ -1,13 +1,36 @@
-import sys
-import os
-os.environ['TF_CPP_MIN_LOG_LEVEL'] = '2'
+"""
+Given a PCA dataset and a trained model, it creates a dataset with the residual of the given model.
 
-sys.path.insert(1,os.path.join(os.path.dirname(os.path.dirname(os.path.dirname(sys.path[0]))),'mlgw'))
+Typical usage:
+	
+	python create_res_dataset.py --pca-dataset ../pca_datasets/IMRPhenomTPHM/22/ --save-location ../new_models/test/ph_2_res --model-location ../	new_models/test/ph_2/22 --components 2
 
-from NN_model_improved import create_residual_PCA
-#%%
-data_loc = "/home/tim.grimbergen/PCA_Data/8_8_HM_spin/22/" #provide data location on which model is trained
-save_loc = "/home/tim.grimbergen/new_MLGW/MLGW-master/dev/mlgw_NN/res_datasets/attempt2" #provide location to save residual dataset to
-model_loc = "/home/tim.grimbergen/new_MLGW/MLGW-master/dev/mlgw_NN/new_models/some_ph_models/model_5/22" #provide model to create residual dataset of
+"""
+from mlgw.NN_model import create_residual_PCA
+import argparse
 
-create_residual_PCA(data_loc, model_loc, save_loc, "ph", 2)
+parser = argparse.ArgumentParser(__doc__)
+
+parser.add_argument(
+	"--pca-dataset", type = str, required = True,
+	help="Folder for the PCA dataset")
+
+parser.add_argument(
+	"--model-location", type = str, required = True,
+	help="Location for the model")
+
+parser.add_argument(
+	"--save-location", type = str, required = True,
+	help="Location to save the residual dataset")
+
+parser.add_argument(
+	"--quantity", type = str, required = False, choices = ['amp', 'ph'], default = 'ph',
+	help="Wheter to create the dataset for amplitude of phase")
+
+parser.add_argument(
+	"--components", type = int, required = False, nargs = '+', default = 2,
+	help="Wheter to create the dataset for amplitude of phase")
+
+args = parser.parse_args()
+
+create_residual_PCA(args.pca_dataset, args.model_location, args.save_location, args.quantity, args.components)

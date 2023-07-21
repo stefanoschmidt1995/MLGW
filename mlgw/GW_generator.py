@@ -24,9 +24,9 @@ import tensorflow as tf
 from tensorflow.keras import models as keras_models
 import inspect
 sys.path.insert(1, os.path.dirname(__file__)) 	#adding to path folder where mlgw package is installed (ugly?)
-#from .EM_MoE import MoE_model #WARNING commented out 
-from ML_routines import PCA_model, add_extra_features, jac_extra_features, augment_features_general
-from NN_model_improved import load_models_from_directories
+from .EM_MoE import MoE_model #WARNING commented out 
+from .ML_routines import PCA_model, add_extra_features, jac_extra_features, augment_features_general
+from .NN_model import load_models_from_directories
 from scipy.special import factorial as fact
 
 

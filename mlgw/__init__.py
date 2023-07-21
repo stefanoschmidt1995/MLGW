@@ -15,5 +15,6 @@ The packacke has 4 modules:
 		It holds some routines to effectively fit the model.
 		
 """
-
+import os
+os.environ['TF_CPP_MIN_LOG_LEVEL'] = '2'
 from .GW_generator import GW_generator, list_models

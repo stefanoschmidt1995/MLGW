@@ -527,7 +527,7 @@ def augment_features(theta, features = []):
 	return theta
 
 
-def augment_features_plynomial(theta, features = [], order = 0):
+def augment_features_polynomial(theta, features = [], order = 0):
 	"""
 	Given features and order it computes all the polynomial features
 	"""
@@ -537,7 +537,7 @@ def augment_features_plynomial(theta, features = [], order = 0):
 		return theta
 	
 	feat_list = []
-	for i in range(0,order):
+	for i in range(1,order):
 		feat_list.extend(combinations_with_replacement(features, i+1))
 	
 	feat_vals = {}
@@ -572,7 +572,7 @@ def augment_features_general(theta, feature_list=[]):
 		if isinstance(feat, str):
 			theta = augment_features(theta, [feat])
 		if isinstance(feat, tuple):
-			theta = augment_features_plynomial(theta, features=feat[0], order=feat[1])
+			theta = augment_features_polynomial(theta, features=feat[0], order=feat[1])
 	return theta
 
 

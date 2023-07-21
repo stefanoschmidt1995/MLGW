@@ -19,34 +19,31 @@ import sys
 import os
 os.environ['TF_CPP_MIN_LOG_LEVEL'] = '2'
 
-sys.path.insert(0,os.path.join(os.path.dirname(os.path.dirname(os.path.dirname(sys.path[0]))),'mlgw'))
-
-from NN_model_improved import fit_NN, Schedulers, Optimizers, LossFunctions
+from mlgw.NN_model import fit_NN, Schedulers, Optimizers, LossFunctions
 
 lm = "22"
 
 #I am just assuming the user already has a PCA dataset and that he does not want to create one with this script
 
-PCA_dataset_folder = "/home/tim.grimbergen/PCA_Data/SEOBNRv4PHM_100WF_HM_16_16/{}".format(lm)		#folder in which the PCA_model is stored
-#PCA_dataset_folder = '/home/tim.grimbergen/new_MLGW/MLGW-master/dev/mlgw_NN/res_datasets/attempt2/'
-model_folder = "../new_models/SEOBNRv4PHM_models/ph_2/{}".format(lm)		#folder in which the model for the current mode must be stored
+#PCA_dataset_folder = "/home/tim.grimbergen/PCA_Data/SEOBNRv4PHM_100WF_HM_16_16/{}".format(lm)		#folder in which the PCA_model is stored
+PCA_dataset_folder = '../pca_datasets/IMRPhenomTPHM/{}'.format(lm)
+PCA_dataset_folder = '../pca_datasets/IMRPhenomTPHM/residual'
+model_folder = "../new_models/test/ph_2/{}".format(lm)		#folder in which the model for the current mode must be stored
 
 print("Dealing with {} mode".format(lm))
 
-
-
 #specify the hyperparameters for the NN
 #if a weighted loss function is used, make sure the number of weights equals the number of specified PCs
-param_dict = {'layer_list' : [50,50], #a list with the number of nodes per hidden layer
-              'optimizers' : Optimizers("Nadam",0.0001), #the optimizer with (initial) learning rate
+param_dict = {'layer_list' : [5,5], #a list with the number of nodes per hidden layer
+              'optimizers' : Optimizers("Nadam", 0.001), #the optimizer with (initial) learning rate
               'activation' : "sigmoid", #activation function between hidden layers (default: sigmoid)
               'batch_size' : 128, #batch size
-              'schedulers' : Schedulers('exponential',exp=-0.0003, min_lr = 1e-6) #how the learning rate decays during training
+              'schedulers' : Schedulers('exponential',exp=-0.0003, min_lr = 1e-4) #how the learning rate decays during training
 			 }
 
 fit_type = "ph"
 features_ = [(['q' ,'s1' ,'s2'], 2)]
-epochs_ = 10000
+epochs_ = 20
 
 
 #Here we are fitting the NN for the specified quantity (amp or phase) with the specified hyperparameters and features 

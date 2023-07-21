@@ -1,22 +1,77 @@
-import sys
-import os
-os.environ['TF_CPP_MIN_LOG_LEVEL'] = '2'
+"""
+Launch an instance of keras tuner to find the best network to fit a PCA dataset
 
-sys.path.insert(1,os.path.join(os.path.dirname(os.path.dirname(os.path.dirname(sys.path[0]))),'mlgw'))
+Typical usage:
 
-from NN_model_improved import tune_model
+	python tune_NN.py --pca-dataset pca_datasets/IMRPhenomTPHM/22/ --working-dir bayesian_tuning_22/ --project-name tuning_amp_22_1234 --quantity amp --components 4 --units 1 2 3 5 10 20 35 50 75 100 200 --n-layers 1 2 4 6 8 10 --polynomial-features 1 2 3 4 5 --max-epochs 10000
 
-data_loc = "/home/tim.grimbergen/PCA_Data/8_8_HM_spin/22/"
 
-hyperparameters = { #tuple --> yields a choice in build_model
-		"units" : (1,2,3,5,10,15,20,25,30,35,40,45,50,60,70,80,90,100,120,150,200), #units per hidden layer
-		"layers" : (1,2,3,4,5,6,7,8,9,10), #num of hidden layers
-		"activation" : ("sigmoid"),
-		"learning_rate" : (0.000001, 0.000003, 0.00001, 0.00003, 0.0001,0.0003,0.001,0.003,0.01,0.03,0.1),
-		"feature_order" : (0,1,2,3,4,5)
-	}
+"""
+from mlgw.NN_model import tune_model, analyse_tuner_results
+import argparse
+from pathlib import Path
 
-out_folder = "/home/tim.grimbergen/new_MLGW/MLGW-master/dev/mlgw_NN/bayesian_tuning"
+parser = argparse.ArgumentParser(__doc__)
 
-tune_model(out_folder, "tuning_[1,2,3,4]_amp" , "amp", data_loc, 4, hyperparameters,
-			max_epochs = 10000, trials=100, init_trials=25)
+parser.add_argument(
+	"--pca-dataset", type = str, required = True,
+	help="Folder for the PCA dataset")
+
+parser.add_argument(
+	"--working-dir", type = str, required = True,
+	help="Folder where all the tuning products will be stored")
+
+parser.add_argument(
+	"--quantity", type = str, required = False, choices = ['amp', 'ph'], default = 'ph',
+	help="Wheter to create the dataset for amplitude of phase")
+
+parser.add_argument(
+	"--components", type = int, required = False, nargs = '+', default = 2,
+	help="PCA components to be included in the model")
+
+parser.add_argument(
+	"--project-name", type = str, required = False,
+	help="A name for the tuner project")
+
+parser.add_argument(
+	"--max-epochs", type = int, required = False, default = 10000,
+	help="Maximum number of epochs for each training istance")
+
+parser.add_argument(
+	"--units", type = int, required = False, nargs = '+', default = [1, 2, 3, 5, 10, 50, 100],
+	help="List of units per layers for the optimizer to try")
+
+parser.add_argument(
+	"--n-layers", type = int, required = False, nargs = '+', default = [1, 2, 4, 6, 8, 10],
+	help="Number of layers for the optimizer to try")
+
+parser.add_argument(
+	"--polynomial-features", type = int, required = False, nargs = '+', default = [1, 2, 3, 4, 5],
+	help="Data augmentation features for the optimizer to try")
+
+parser.add_argument(
+	"--analyse", action='store_true',
+	help="Whether to analyze the validation results")
+
+args = parser.parse_args()
+
+
+hyperparameters = {
+		#list --> keeps a choice in build_model
+	"units" : args.units, #units per hidden layer
+	"layers" : args.n_layers, #num of hidden layers
+	"activation" : ("sigmoid"),
+	"learning_rate" : (0.00001, 0.00003, 0.0001,0.0003,0.001,0.005),
+	"feature_order" : args.polynomial_features
+}
+
+if not args.project_name:
+	comp = str(args.components) if isinstance(args.components, float) else ''.join([str(s) for s in args.components])
+	args.project_name = 'tuning_{}_{}'.format(args.quantity, comp)
+
+if args.analyse:
+	analyse_tuner_results(Path(args.working_dir)/args.project_name, save_loc=None)
+else:
+	tune_model(args.working_dir, args.project_name , args.quantity, args.pca_dataset, args.components, hyperparameters,
+			max_epochs = args.max_epochs, trials=100, init_trials=25)
+
