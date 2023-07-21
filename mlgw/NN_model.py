@@ -549,8 +549,7 @@ def fit_NN(fit_type, in_folder, out_folder, hyperparameters, N_train = None, com
 		residual: bool
 			whether this is a model for the residual 
 	"""
-	if not fit_type in ["amp","ph"]:
-		raise RuntimeError("Data type for fit_type not understood. Required 'amp' or 'ph but {} given.".format(fit_type))
+	assert fit_type in ["amp","ph"], "Data type for fit_type not understood. Required 'amp' or 'ph but {} given.".format(fit_type)
 
 	os.makedirs(out_folder, exist_ok = True)
 
@@ -892,13 +891,13 @@ def check_NN_performance(data_loc, amp_model_locs, ph_model_locs, save_loc, mism
 	return F
 
 def gather_NN(mode, data_location, amp_model_locations, ph_model_locations, out_folder):
-	'''
-This function combines ampltidude and phase models for a specific mode and formats them in a folder inside the out_folder which can then be inputted in the mode_generator class. It assumes the folders in amp_model_locations are formatted as outputted by fit_NN.
+	"""
+	Combines ampltidude and phase models for a specific mode and formats them in a folder inside the out_folder which can then be inputted 	in the mode_generator class. It assumes the folders in amp_model_locations are formatted as outputted by fit_NN.
 	mode : string "lm" that refers to the mode 
 	amp_model_locations : list of strings containing the model locations for amplitude
 	ph_model_locations : list of strings containing the model locations for phase
 	out_folder : string contaning the folder to which combined model should be saved.
-	'''
+	"""
 	if not os.path.isdir(out_folder): #check if out_folder exists
 		try:
 			os.mkdir(out_folder)
