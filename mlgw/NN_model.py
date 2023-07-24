@@ -479,11 +479,11 @@ def tune_model(out_folder, project_name, quantity, PCA_data_loc, PC_to_fit, hype
 
 def analyse_tuner_results(file_loc, save_loc=None):
 	data = []
-	if not file_loc.endswith('/'): file_loc += '/'
+	if not isinstance(file_loc, Path): file_loc = Path(file_loc)
 
 	for x in os.listdir(file_loc):
 		if x.startswith('trial'):
-			with open("{}{}/trial.json".format(file_loc, x), "r") as f:
+			with open(file_loc/"{}/trial.json".format(x), "r") as f:
 				cur_data = json.load(f)
 				if cur_data['score'] != None: #tuner is not finished yet
 					data.append([x[6:],cur_data['score'],cur_data['hyperparameters']['values']])
@@ -503,8 +503,8 @@ def analyse_tuner_results(file_loc, save_loc=None):
 
 	data.sort(key=lambda x : x[1])
 	
-	print("Top 10 hyperparameters are: \n")
-	for i in range(100):
+	print("Top 50 hyperparameters are: \n")
+	for i in range(50):
 		print(data[i][2], '\n\twith a score of ', data[i][1])
 	return
 

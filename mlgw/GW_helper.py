@@ -16,6 +16,7 @@ Module GW_helper.py
 #################
 
 import numpy as np
+import time
 import os.path
 import matplotlib.pyplot as plt #debug
 import warnings
@@ -151,6 +152,7 @@ compute_optimal_mismatch
 
 ################# Dataset related stuff
 
+#@profile
 def create_dataset_TD(N_data, N_grid, modes, basefilename,  t_coal = 0.5, q_range = (1.,5.), m2_range = None, s1_range = (-0.8,0.8), s2_range = (-0.8,0.8), t_step = 1e-5, alpha = 0.35, approximant = "SEOBNRv2_opt", path_TEOBResumS = None):
 	"""
 create_dataset_TD
@@ -212,7 +214,7 @@ create_dataset_TD
 		if approximant == "SEOBNRv4PHM":
 			for mode in modes:
 				if mode not in [(2,2),(2,1), (3,3), (4,4), (5,5)]:
-					raise ValueError("Currently SEOBNRv4PHM approximants do not implement the chosen HM")
+					raise ValueError("Currently SEOBNRv4PHM approximant does not implement the chosen HMs")
 		elif approximant != "IMRPhenomTPHM":
 			if modes != [(2,2)]:
 				raise ValueError("The chosen lal approximant does not implement HMs")
@@ -402,7 +404,7 @@ create_dataset_TD
 			amp_prefactor = prefactor*(m1+m2)/1.
 			for i, lm in enumerate(modes):
 				#{(2,2): lal.ts} 
-				temp_hlm = lalsim.SphHarmTimeSeriesGetMode(hlm, lm[0], lm[1]).data.data
+				temp_hlm = np.array(lalsim.SphHarmTimeSeriesGetMode(hlm, lm[0], lm[1]).data.data)
 				temp_amp = np.abs(temp_hlm)/ amp_prefactor / nu #check that this conventions are for every lal part
 				temp_ph = np.unwrap(np.angle(temp_hlm))
 				amp_list[i] = temp_amp
@@ -410,7 +412,6 @@ create_dataset_TD
 				if (lm[0], lm[1]) == (2,2): #get grid
 					argpeak = locate_peak(temp_amp) #aligned at the peak of the 22
 			time_full = np.linspace(0.0, len(temp_amp)*t_step, len(temp_amp)) #time grid at which wave is computed
-
 		else: #another lal approximant (only 22 mode)
 			hp, hc = lalsim.SimInspiralChooseTDWaveform( #where is its definition and documentation????
 				m1*lalsim.lal.MSUN_SI, #m1
@@ -459,17 +460,20 @@ create_dataset_TD
 
 			to_save = np.concatenate((temp_theta, temp_amp, temp_ph))[None,:] #(1,D)
 			np.savetxt(buff_list[i], to_save)
+	
+		del temp_theta, temp_amp, temp_ph
+		del amp_list, ph_list
+		del to_save
+		del hlm
+			
 
 			#user communication
 		if n_WF%50 == 0 and n_WF != 0:
 		#if n_WF%1 == 0 and n_WF != 0: #debug
 			print("Generated WF ", n_WF)
 
-	if filename is None:
-		return theta_vector, amp_dataset.real, ph_dataset.real, time_grid
-	else:
-		filebuff.close()
-		return None
+	filebuff.close()
+	return
 
 def generate_mode(m1,m2, s1=0.,s2 = 0., d=1., t_coal = 0.4, t_step = 5e-5, f_min = None, t_min = None, verbose = False, approx = "IMRPhenomTPHM"):
 	"""

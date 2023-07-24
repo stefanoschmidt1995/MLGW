@@ -14,7 +14,7 @@ from pathlib import Path
 parser = argparse.ArgumentParser(__doc__)
 
 parser.add_argument(
-	"--pca-dataset", type = str, required = True,
+	"--pca-dataset", type = str, required = False,
 	help="Folder for the PCA dataset")
 
 parser.add_argument(
@@ -55,6 +55,11 @@ parser.add_argument(
 
 args = parser.parse_args()
 
+if args.analyse:
+	analyse_tuner_results(Path(args.working_dir)/args.project_name, save_loc=None)
+	quit()
+
+assert args.pca_dataset is not None, "--pca-dataset must be given if data are to be analysed"
 
 hyperparameters = {
 		#list --> keeps a choice in build_model
@@ -69,9 +74,6 @@ if not args.project_name:
 	comp = str(args.components) if isinstance(args.components, float) else ''.join([str(s) for s in args.components])
 	args.project_name = 'tuning_{}_{}'.format(args.quantity, comp)
 
-if args.analyse:
-	analyse_tuner_results(Path(args.working_dir)/args.project_name, save_loc=None)
-else:
-	tune_model(args.working_dir, args.project_name , args.quantity, args.pca_dataset, args.components, hyperparameters,
-			max_epochs = args.max_epochs, trials=100, init_trials=25)
+tune_model(args.working_dir, args.project_name , args.quantity, args.pca_dataset, args.components, hyperparameters,
+		max_epochs = args.max_epochs, trials=100, init_trials=25)
 
