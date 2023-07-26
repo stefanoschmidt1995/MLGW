@@ -286,11 +286,11 @@ create_dataset_TD
 		#####creating WFs
 	for n_WF in range(N_data):
 			#setting value for data
-		if isinstance(m2_range, tuple):
+		if isinstance(m2_range, (tuple, list)):
 			m2 = np.random.uniform(m2_range[0],m2_range[1])
 		elif m2_range is not None:
 			m2 = float(m2_range)
-		if isinstance(q_range, tuple):
+		if isinstance(q_range, (tuple, list)):
 			#q = np.random.uniform(q_range[0],q_range[1]) #uniform q distribution
 			
 			#biased q distribution for the boundaries
@@ -303,11 +303,11 @@ create_dataset_TD
 				q = np.max(np.random.uniform(low=q_range[0],high=q_range[1],size=4))
 		else:
 			q = float(q_range)
-		if isinstance(s1_range, tuple):
+		if isinstance(s1_range, (tuple, list)):
 			spin1z = np.random.uniform(s1_range[0],s1_range[1])
 		else:
 			spin1z = float(s1_range)
-		if isinstance(s2_range, tuple):
+		if isinstance(s2_range, (tuple, list)):
 			spin2z = np.random.uniform(s2_range[0],s2_range[1])
 		else:
 			spin2z = float(s2_range)

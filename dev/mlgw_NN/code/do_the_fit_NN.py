@@ -114,7 +114,7 @@ if args.waveform_dataset:
 
 #specify the hyperparameters for the NN
 #if a weighted loss function is used, make sure the number of weights equals the number of specified PCs
-param_dict = {'layer_list' : [args.n_layers for _ in range(args.units)], #a list with the number of nodes per hidden layer
+param_dict = {'layer_list' : [args.units for _ in range(args.n_layers)], #a list with the number of nodes per hidden layer
               'optimizers' : Optimizers("Nadam", args.learning_rate), #the optimizer with (initial) learning rate
               'activation' : args.activation, #activation function between hidden layers (default: sigmoid)
               'batch_size' : args.batch_size, #batch size

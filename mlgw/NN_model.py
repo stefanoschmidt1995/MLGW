@@ -408,9 +408,9 @@ def save_model(model, history, out_folder, hyperparameters, PCA_data, PCA_data_l
 	for i in range(K):
 		MSE[i]=np.sum( np.square(PCA_data.test_var[:,i]-pred_var[:,i]) / pred_var.shape[0])
 
-	PC_comp_string = "["+",".join(str(x) for x in PCA_data.PC_comp)+"]"
+	PC_comp_string = "".join(str(x) for x in PCA_data.PC_comp)
 
-	f = open(out_folder/"Model_fit_info.txt", 'x')
+	f = open(out_folder/"Model_fit_info_{}.txt".format(PC_comp_string), 'x')
 	f.write("Model for " + PC_comp_string + 'PCs for '+PCA_data.quantity+'\n')
 	if PCA_data_loc != None: f.write("Trained on dataset: {}\n".format(str(PCA_data_loc)))
 	f.write("created model with params: \n")
@@ -431,7 +431,7 @@ def save_model(model, history, out_folder, hyperparameters, PCA_data, PCA_data_l
 	plt.plot(history.history['val_loss'], label='test')
 	plt.yscale('log')
 	plt.legend()
-	plt.savefig(out_folder/'lossfunction.png')
+	plt.savefig(out_folder/'lossfunction_{}.png'.format(PC_comp_string))
 	plt.close(fig='lossfunction')
 	if residual:
 		model.save(out_folder/(PCA_data.quantity+'_weights_'+PC_comp_string+'_res.h5'))
@@ -578,7 +578,7 @@ def fit_NN(fit_type, in_folder, out_folder, hyperparameters, N_train = None, com
 	mse_test_list = [] #list for holding mse of every PCs
 	
 		#starting fit procedure TODO: implement the training of neural network, and the tests and saving to files.
-	PC_comp_string = "[{}]".format("".join(str(x) for x in PCA_data.PC_comp))
+	PC_comp_string = "".join(str(x) for x in PCA_data.PC_comp)
 	print("Starting fitting components ", PC_comp_string)
 	if hyperparameters == None:
 		warnings.warn("Default hyperparameters are being used for the NN (see Model_fit_info.txt in the out_folder)")
@@ -648,6 +648,8 @@ def create_residual_PCA(pca_data_loc, model_loc, save_loc, quantity, components,
 	pca_data_loc = Path(pca_data_loc)
 	model_loc = Path(model_loc)
 	save_loc = Path(save_loc)
+	os.makedirs(save_loc, exist_ok = True)
+	
 	assert quantity.lower()  in ['amp', 'ph'], "Quantity must be either amplitude or phase"
 
 	#load in the PCA dataset
@@ -694,7 +696,7 @@ def create_residual_PCA(pca_data_loc, model_loc, save_loc, quantity, components,
 			plt.figure()
 			plt.title('delta pca/pred for test data as function of mass ratio')
 			plt.scatter(data.test_theta[:,0], data.test_var[:,c] - test_pred[:,i])
-			plt.savefig(save_loc+'/delta pca-pred comp'+str(c+1)+'.png')
+			plt.savefig(save_loc/'delta pca-pred comp{}.png'.format(c+1))
 			plt.xlabel('mass ratio')
 			plt.close() 
 
@@ -736,11 +738,8 @@ def compute_mismatch_WFS(ph_rec, amp_rec, ph_pca, amp_pca, time_grid, size, dt =
 	return F
 
 def load_models_from_directories(amp_model_locs, ph_model_locs):
-	testing_for_ph = True
-	if len(ph_model_locs) == 0: testing_for_ph = False
-
-	testing_for_amp = True
-	if len(amp_model_locs) == 0: testing_for_amp = False
+	testing_for_ph = (len(ph_model_locs) > 0)
+	testing_for_amp = (len(amp_model_locs) > 0)
 
 	if not (testing_for_ph or testing_for_amp):
 		print("please provide a list of model locations for either phase or ampltiude or both")
@@ -890,7 +889,7 @@ def check_NN_performance(data_loc, amp_model_locs, ph_model_locs, save_loc, mism
 
 	return F
 
-def gather_NN(mode, data_location, amp_model_locations, ph_model_locations, out_folder):
+def gather_NN(mode, pca_data_location, amp_model_locations, ph_model_locations, out_folder):
 	"""
 	Combines ampltidude and phase models for a specific mode and formats them in a folder inside the out_folder which can then be inputted 	in the mode_generator class. It assumes the folders in amp_model_locations are formatted as outputted by fit_NN.
 	mode : string "lm" that refers to the mode 
@@ -898,32 +897,36 @@ def gather_NN(mode, data_location, amp_model_locations, ph_model_locations, out_
 	ph_model_locations : list of strings containing the model locations for phase
 	out_folder : string contaning the folder to which combined model should be saved.
 	"""
+	pca_data_location = Path(pca_data_location)
+	out_folder = Path(out_folder)
 	if not os.path.isdir(out_folder): #check if out_folder exists
-		try:
-			os.mkdir(out_folder)
-		except:
-			raise RuntimeError("Impossible to create output folder "+out_folder+". Please, choose a valid folder.")
-			return
-	os.mkdir(out_folder+'/'+mode)
-	os.mkdir(out_folder+'/'+mode+'/amp')
+			os.makedirs(out_folder)
+
+	out_folder = out_folder/mode
+	os.makedirs(out_folder)
+	out_folder_amp = out_folder/'amp'
+	os.makedirs(out_folder_amp)
+	out_folder_ph = out_folder/'ph'
+	os.makedirs(out_folder_ph)
+
 	
-	os.mkdir(out_folder+'/'+mode+'/ph')
-	
-	copy2(data_location+'times.dat', out_folder+'/'+mode)
-	copy2(data_location+'amp_PCA_model.dat', out_folder+'/'+mode+'/amp')
-	copy2(data_location+'ph_PCA_model.dat', out_folder+'/'+mode+'/ph')
+	copy2(pca_data_location/'times.dat', out_folder)
+	copy2(pca_data_location/'amp_PCA_model.dat', out_folder_amp)
+	copy2(pca_data_location/'ph_PCA_model.dat', out_folder_ph)
 
 	for i,amp_loc in enumerate(amp_model_locations):
-		os.mkdir(out_folder+'/'+mode+'/amp/model'+str(i+1))
+		current_dir = out_folder_amp/('model{}'.format(i+1))
+		os.mkdir(current_dir)
 		for file in os.listdir(amp_loc):
 			if file[:3] != "amp" and file != 'coefficients': continue #not a relevant file
-			copy2(amp_loc+'/'+file, out_folder+'/'+mode+'/amp/model'+str(i+1)+'/')
+			copy2(amp_loc+'/'+file, current_dir)
 
 	for i,ph_loc in enumerate(ph_model_locations):
-		os.mkdir(out_folder+'/'+mode+'/ph/model'+str(i+1))
+		current_dir = out_folder_ph/('model{}'.format(i+1))
+		os.mkdir(current_dir)
 		for file in os.listdir(ph_loc):
 			if file[:2] != "ph" and file != 'coefficients': continue
-			copy2(ph_loc+'/'+file, out_folder+'/'+mode+'/ph/model'+str(i+1)+'/')
+			copy2(ph_loc+'/'+file, current_dir)
 	
-	print("Neural Networks gathered successfully")
+	print("Neural Networks gathered successfully in folder {}".format(out_folder))
 	return

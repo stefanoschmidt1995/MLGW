@@ -3,7 +3,7 @@ Given a PCA dataset and a trained model, it creates a dataset with the residual 
 
 Typical usage:
 	
-	python create_res_dataset.py --pca-dataset ../pca_datasets/IMRPhenomTPHM/22/ --save-location ../new_models/test/ph_2_res --model-location ../	new_models/test/ph_2/22 --components 2
+	python create_res_dataset.py --pca-dataset ../pca_datasets/IMRPhenomTPHM/22/ --save-location ../pca_datasets/IMRPhenomTPHM/22_residual/ --model-location ../models_NN/model_IMRPhenomTPHM/ph/22/comp01/ --components 0 1 --quantity ph
 
 """
 from mlgw.NN_model import create_residual_PCA

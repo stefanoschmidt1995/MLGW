@@ -268,7 +268,7 @@ fit_MoE
 
 		#doing test
 	F_MoE, F_MoE_train = np.nan, np.nan
-	if test_mismatch and fit_type is "ph": #testing for phase
+	if test_mismatch and fit_type == "ph": #testing for phase
 		PCA_test_amp = np.loadtxt(in_folder+"PCA_test_amp.dat")
 		PCA_amp = PCA_model(in_folder+"amp_PCA_model")
 		rec_amp=PCA_amp.reconstruct_data(PCA_test_amp)
@@ -276,7 +276,7 @@ fit_MoE
 		rec_ph_pred=PCA.reconstruct_data(PCA_test_pred)
 		F_MoE = compute_mismatch(rec_amp, rec_ph, rec_amp, rec_ph_pred) 
 		
-	if test_mismatch and fit_type is "amp": #testing for amplitude
+	if test_mismatch and fit_type == "amp": #testing for amplitude
 		PCA_test_ph = np.loadtxt(in_folder+"PCA_test_ph.dat")
 		PCA_ph = PCA_model(in_folder+"ph_PCA_model")
 		rec_ph=PCA_ph.reconstruct_data(PCA_test_ph)
@@ -284,7 +284,7 @@ fit_MoE
 		rec_amp_pred=PCA.reconstruct_data(PCA_test_pred)
 		F_MoE = compute_mismatch(rec_amp, rec_ph, rec_amp_pred, rec_ph) 
 
-	if train_mismatch and fit_type is "ph": #testing for phase
+	if train_mismatch and fit_type == "ph": #testing for phase
 		PCA_train_amp = np.loadtxt(in_folder+"PCA_train_amp.dat")[:N_train,:]
 		PCA_amp = PCA_model(in_folder+"amp_PCA_model")
 		rec_amp=PCA_amp.reconstruct_data(PCA_train_amp)
@@ -292,7 +292,7 @@ fit_MoE
 		rec_ph_pred=PCA.reconstruct_data(PCA_train_pred)
 		F_MoE_train = compute_mismatch(rec_amp, rec_ph, rec_amp, rec_ph_pred) 
 
-	if train_mismatch and fit_type is "amp": #testing for amplitude
+	if train_mismatch and fit_type == "amp": #testing for amplitude
 		PCA_train_ph = np.loadtxt(in_folder+"PCA_train_ph.dat")[:N_train,:]
 		PCA_ph = PCA_model(in_folder+"ph_PCA_model")
 		rec_ph=PCA_ph.reconstruct_data(PCA_train_ph)
