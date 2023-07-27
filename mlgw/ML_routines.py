@@ -443,141 +443,66 @@ jac_extra_features
 
 	return jac
 
-def augment_features(theta, features = []):
+def augment_features(theta, features):
 	"""
-	Performs feature augmentation for the neural network model
-	"""
-	#FIXME: this function needs to be refactored more nicely!
-	allowed_features = set(["2nd_poly","sym_mas","eff_spin","eff_spin_powers","sym_mas_powers", "eff_spin_sym_mas_2nd_poly", "eff_spin_sym_mas_3rd_poly", "eff_spin_sym_mas_4th_poly", "chirp", "1_inverse", "q_cube", "q_quart", "q_min1inverse", "q_squared", "q_inverse", "log", "tan"])
-	if any([feat not in allowed_features for feat in features]):
-		raise RuntimeError("Not all inputted features are allowed!")
+	Given a list of features string, it computes all the polynomial features.
+	The feature string is of the format:
 	
-	theta = np.atleast_2d(np.asarray(theta))
-	if "2nd_poly" in features:
-		for x in ["00","11","22","01","02","12"]:
-			theta = np.c_[theta, theta[:,int(x[0])]*theta[:,int(x[1])]]
-				
-	if "sym_mas" in features:
-		theta = np.c_[theta, theta[:,0] / ((1+theta[:,0])**2)] #not calculated correctly
+		2-eta_chieff_s1
 	
-	if "eff_spin" in features:
-		theta = np.c_[theta, (theta[:,1] + theta[:,0]*theta[:,2]) / (1 + theta[:,0])]
-			
-	if "eff_spin_powers" in features:
-		for x in [1,2,3]:
-			theta = np.c_[theta, ( (theta[:,1] + theta[:,0]*theta[:,2]) / (1 + theta[:,0]) )**x ]
-		
-	if "sym_mas_powers" in features:
-		for x in [1,2,3,4]:
-			theta = np.c_[theta, (theta[:,0] / ((1+theta[:,0])**2))**x]
-		
-	if "eff_spin_sym_mas_2nd_poly" in features:
-		eff_spin = (theta[:,1] + theta[:,0]*theta[:,2]) / (1 + theta[:,0])
-		sym_mas = theta[:,0] / ((1+theta[:,0])**2)
-		train = np.c_[sym_mas, eff_spin]
-		for x in ["00","11","01"]:
-			theta = np.c_[theta, train[:,int(x[0])] * train[:,int(x[1])]]
-		
-	if "eff_spin_sym_mas_3rd_poly" in features:
-		eff_spin = (theta[:,1] + theta[:,0]*theta[:,2]) / (1 + theta[:,0])
-		sym_mas = theta[:,0] / ((1+theta[:,0])**2)
-		train = np.c_[sym_mas, eff_spin]
-		for x in ["000","111","001","011"]:
-			theta = np.c_[theta, train[:,int(x[0])] * train[:,int(x[1])] * train[:,int(x[2])]]
-		
-	if "eff_spin_sym_mas_4th_poly" in features:
-		eff_spin = (theta[:,1] + theta[:,0]*theta[:,2]) / (1 + theta[:,0])
-		sym_mas = theta[:,0] / ((1+theta[:,0])**2)
-		train = np.c_[sym_mas, eff_spin]
-		for x in ["0000","0001","0011","0111","1111"]:
-			theta = np.c_[theta, train[:,int(x[0])] * train[:,int(x[1])] * train[:,int(x[2])] * train[:,int(x[3])]]
-	
-	if "chirp" in features:
-		theta = np.c_[theta, (theta[:,0] / (1+theta[:,0]**2))**(3/5)]
-		
-	if "1_inverse" in features:
-		for x in ["0","1","2"]:
-			theta = np.c_[theta, 1/theta[:,int(x[0])]]
-				
-	if "q_cube" in features:
-		theta = np.c_[theta, theta[:,0]**3]
-		
-	if "q_quart" in features:
-		theta = np.c_[theta, theta[:,0]**4]
-		
-	if "q_min1inverse" in features:
-		for x in ["0"]:
-			theta = np.c_[theta, 1/(theta[:,int(x[0])] - 1)]
-		
-	if "q_squared" in features:
-		for x in ["00"]:
-			theta = np.c_[theta, theta[:,int(x[0])]*theta[:,int(x[1])]]
-		
-	if "q_inverse" in features:
-		for x in ["0"]:
-			theta = np.c_[theta, 1/theta[:,int(x[0])]]
-		
-	if "log" in features:
-		theta = np.c_[theta, np.log(theta[:,0])]
-		
-	if "tan" in features:
-		theta = np.c_[theta, np.tan((np.pi/2) * theta[:,1])]
-		theta = np.c_[theta, np.tan((np.pi/2) * theta[:,2])]
-		
-	return theta
+	This represents a second order polynomial in the variables eta, chieff and s1
 
-
-def augment_features_polynomial(theta, features = [], order = 0):
-	"""
-	Given features and order it computes all the polynomial features
 	"""
 	theta = np.atleast_2d(theta)
-	
-	if isinstance(features, str): features = [features]
-	
-	if not (features and order>1):
-		return theta
-	
-	feat_list = []
-	for i in range(1,order):
-		feat_list.extend(combinations_with_replacement(features, i+1))
-	
-	feat_vals = {}
-	for f in features:
-		if f == 'eta':
-			val = theta[:,0] / (1+theta[:,0])**2
-		elif f == 'chieff':
-			#chieff = (m1*s1+m2*s2)/(m1+m2) = (q*s1+s2)/(1+q)
-			val = (theta[:,0]*theta[:,1] + theta[:,2]) / (1 + theta[:,0])
-		elif f == 'q':
-			val = theta[:,0]
-		elif f == 's1':
-			val = theta[:,1]
-		elif f == 's2':
-			val = theta[:,2]
-		else:
-			raise ValueError("Feature not recognized: please consider submitting a patch to add support for your favoutite feature.")	
-		feat_vals[f] = val
-	
 	feats_to_add = []
-	for feats in feat_list:
-		val = 1
-		for f in feats:
-			val *= feat_vals[f]
-		feats_to_add.append(val[:,None])
+
+	if not isinstance(features, list): features = [features]
+	
+	for feat_str in features:
+
+		if not feat_str: continue
+		
+		if isinstance(feat_str, str):
+			order, features_ = feat_str.split('-')
+			order = int(order)
+			features_ = features_.split('_')
+		else:
+			raise ValueError("Each input feature must be a string")
+		
+		if not (features_ and order>1): continue
+
+		features_.sort()
+		feat_list = []
+		for i in range(1,order):
+			feat_list.extend(combinations_with_replacement(features_, i+1))
+		
+		feat_vals = {}
+		for f in features_:
+			if f == 'eta':
+				val = theta[:,0] / (1+theta[:,0])**2
+			elif f == 'chieff':
+				#chieff = (m1*s1+m2*s2)/(m1+m2) = (q*s1+s2)/(1+q)
+				val = (theta[:,0]*theta[:,1] + theta[:,2]) / (1 + theta[:,0])
+			elif f == 'q':
+				val = theta[:,0]
+			elif f == 's1':
+				val = theta[:,1]
+			elif f == 's2':
+				val = theta[:,2]
+			else:
+				raise ValueError("Feature '{}' not recognized: please consider submitting a patch to add support for your favoutite feature.".format(f))
+			feat_vals[f] = val
+		
+		for feats in feat_list:
+			val = 1
+			for f in feats:
+				val *= feat_vals[f]
+			feats_to_add.append(val[:,None])
 	
 	return np.concatenate([theta, *feats_to_add], axis = 1)
 
-def augment_features_general(theta, feature_list=[]): 
-	#would be faster if it just appended and not make a new list each time?
-	for feat in feature_list:
-		if isinstance(feat, str):
-			theta = augment_features(theta, [feat])
-		if isinstance(feat, tuple):
-			theta = augment_features_polynomial(theta, features=feat[0], order=feat[1])
-	return theta
-
-
+	
+	
 
 
 

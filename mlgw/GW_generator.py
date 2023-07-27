@@ -31,13 +31,14 @@ from tensorflow.keras import models as keras_models
 import inspect
 sys.path.insert(1, os.path.dirname(__file__)) 	#adding to path folder where mlgw package is installed (ugly?)
 from .EM_MoE import MoE_model #WARNING commented out 
-from .ML_routines import PCA_model, add_extra_features, jac_extra_features, augment_features_general
-from .NN_model import load_models_from_directories
+from .ML_routines import PCA_model, add_extra_features, jac_extra_features, augment_features
+from .NN_model import mlgw_NN
 from scipy.special import factorial as fact
-
+from pathlib import Path
 
 
 import matplotlib.pyplot as plt #DEBUG
+import re
 
 warnings.simplefilter("always", UserWarning) #always print a UserWarning message ??
 
@@ -114,7 +115,7 @@ class GW_generator:
 	Some default models are already included in the package.
 	"""
 
-	def __init__(self, folder = 0, verbose = False, isNN=False):
+	def __init__(self, folder = 0, verbose = False):
 		"""
 		Initialise class by loading the modes from file.
 		A number of pre-fitted models for the modes are released: they can be loaded with folder argument by specifying an integer index (default 0. They are all saved in "__dir__/TD_models/model_(index_given)". A list of the available models can be listed with list models().
@@ -135,7 +136,7 @@ class GW_generator:
 				folder = os.path.dirname(inspect.getfile(GW_generator))+"/TD_models/model_"+str(folder)
 				if not os.path.isdir(folder):
 					raise RuntimeError("Given value {0} for pre-fitted model is not valid. Available models are:\n{1}".format(str(int_folder), list_models(False)))
-			self.load(folder, verbose, isNN = isNN)
+			self.load(folder, verbose)
 		return
 
 	def __extract_mode(self, folder):
@@ -161,7 +162,7 @@ class GW_generator:
 			return None
 		return lm
 
-	def load(self, folder, verbose = False, isNN=False):
+	def load(self, folder, verbose = False):
 		"""
 		Loads the GW generator by loading the different mode_generator classes.
 		Each mode is loaded from a dedicated folder in the given folder of the model.
@@ -172,8 +173,6 @@ class GW_generator:
 				Folder in which everything is kept
 			verbose: bool
 				Whether to be verbose
-			isNN: bool
-				Whether the regression model is neural network, as opposed to a MoE
 		"""
 		if not os.path.isdir(folder):
 			raise RuntimeError("Unable to load folder "+folder+": no such directory!")
@@ -206,6 +205,7 @@ class GW_generator:
 				self.mode_dict[lm] = len(self.modes)
 
 					#Checking for the type of mode generator (FIXME: make this better! How to know which generator to use?)
+				isNN = len(glob.glob(folder+mode+'/*keras'))
 				if isNN:
 					self.modes.append(mode_generator_NN(lm, folder+mode)) #loads mode_generator
 				else:
@@ -1419,6 +1419,12 @@ class mode_generator_NN(mode_generator_base):
 		#WRITEME
 
 	"""
+	def __init__(self, mode, folder = None):
+		self.ph_models = {}
+		self.ph_models_res = {}
+		self.amp_models = {}
+		self.ph_res_coefficients = {}
+		super().__init__(mode, folder)
 
 	def load(self, folder, verbose = False, batch_size=10):
 		"""
@@ -1442,53 +1448,51 @@ class mode_generator_NN(mode_generator_base):
 		else:
 			verboseprint = lambda *a, **k: None # do-nothing function
 
-		if not folder.endswith('/'):
-			folder = folder + "/"
+		folder = Path(folder)
 
 		self.batch_size = batch_size
-		#loading PCA
+			#loading PCA
 		self.amp_PCA = PCA_model()
-		self.amp_PCA.load_model(folder+"amp/amp_PCA_model.dat")
+		self.amp_PCA.load_model(*glob.glob(str(folder/"amp_PCA_model*")))
 		self.ph_PCA = PCA_model()
-		self.ph_PCA.load_model(folder+"ph/ph_PCA_model.dat")
-		self.times = np.loadtxt(folder+"times.dat")
+		self.ph_PCA.load_model(*glob.glob(str(folder/"ph_PCA_model*")))
+		self.times = np.loadtxt(*glob.glob(str(folder/"times*")))
 		
-		amp_directories = [folder+'amp/'+dir_name for dir_name in os.listdir(folder+'amp') if os.path.isdir(folder+'amp/'+dir_name)]
-		ph_directories = [folder+'ph/'+dir_name for dir_name in os.listdir(folder+'ph') if os.path.isdir(folder+'ph/'+dir_name)]
 		
-		#new way of loading in models (make them tf.functions?)
-		using_ph, using_amp, self.ph_models, self.ph_models_res, self.amp_models, amp_modeled_comps, ph_modeled_comps, self.ph_modeled_comps_res = load_models_from_directories(amp_directories, ph_directories)
-		if not (using_ph and using_amp):
+			#Loading neural networks
+		for q_str in ['amp', 'ph']:
+			for nn_file in glob.glob(str(folder)+'/{}*[0-9]*keras'.format(q_str)):
+
+					#Loading residuals
+				if nn_file.find('residual')>-1:
+					comps = re.findall(r'_[0-9]+_', nn_file)
+					assert len(comps)==1, "Something wrong with residual neural network filename {}".format(nn_file)
+					comps = comps[0][1:-1]					
+					dict_to_fill = self.ph_models_res
+
+					try:
+						self.ph_res_coefficients[comps] = np.loadtxt(folder/'residual_coefficients_{}'.format(comps))
+					except FileNotFoundError:
+						msg = "Coefficient file for network '{}' not found: the residual network won't be loaded in the model.".format(nn_file)
+						warnings.warn(msg)
+						continue
+					
+				else:
+						#Loading normal file
+					comps = re.findall(r'_[0-9]+\.', nn_file)
+					assert len(comps)==1, "Something wrong with neural network filename {}".format(nn_file)
+					comps = comps[0][1:-1]
+					dict_to_fill = self.amp_models if q_str == 'amp' else self.ph_models
+
+			
+				new_model = mlgw_NN.load_from_file(nn_file)
+				
+				dict_to_fill[comps] = tf.function(new_model,
+						input_signature=(tf.TensorSpec(shape=new_model.inputs[0].shape, dtype=tf.float64),))
+
+		if not (self.amp_models and self.ph_models):
 			raise RuntimeError("Please supply both amplitude and phase models!")
 		
-		''' #old way of loading in the models
-		with open(folder+'amp_features.txt', 'r') as file:
-			self.amp_features = file.readline().split(", ")
-			#print(self.amp_features)
-		with open(folder+'ph_2_features.txt', 'r') as file:
-			self.ph_2_features = file.readline().split(", ")
-		with open(folder+'ph_3456_features.txt', 'r') as file:
-			self.ph_3456_features = file.readline().split(", ")
-		with open(folder+'ph_2res_features.txt', 'r') as file:
-			self.ph_2res_features = file.readline().split(", ")
-
-			#Loading the models for the various components
-		n_feat_amp = augment_features([1,1,1], self.amp_features).shape[1]
-		n_feat_ph_2 = augment_features([1,1,1], self.ph_2_features).shape[1]
-		n_feat_ph_3456 = augment_features([1,1,1], self.ph_3456_features).shape[1]
-		n_feat_ph_2res = augment_features([1,1,1], self.ph_2res_features).shape[1]
-		self.model_amp = tf.function(keras_models.load_model(folder+'model_amp.h5', custom_objects=None, compile=False),
-			input_signature=(tf.TensorSpec(shape=[None, n_feat_amp], dtype=tf.float64),))
-		self.model_ph_2 = tf.function(keras_models.load_model(folder+'model_ph_2.h5', custom_objects=None, compile=False),
-			input_signature=(tf.TensorSpec(shape=[None, n_feat_ph_2], dtype=tf.float64),))
-		self.model_ph_3456 = tf.function(keras_models.load_model(folder+'model_ph_3456.h5', custom_objects=None, compile=False),
-			input_signature=(tf.TensorSpec(shape=[None, n_feat_ph_3456], dtype=tf.float64),))
-		self.model_ph_2res = tf.function(keras_models.load_model(folder+'model_ph_2res.h5', custom_objects=None, compile=False),
-			input_signature=(tf.TensorSpec(shape=[None, n_feat_ph_2res], dtype=tf.float64),))
-		
-		self.res_coefficients = np.genfromtxt(folder+"res_coefficients.txt")
-		verboseprint("mode generator loaded succesfully")
-		'''
 
 	#@do_profile(follow=[])
 	def get_raw_mode(self, theta):
@@ -1507,7 +1511,7 @@ class mode_generator_NN(mode_generator_base):
 		"""
 		theta = np.atleast_2d(np.asarray(theta))
 		if theta.shape[0]> self.batch_size:
-			coeff_list = [self.get_red_coefficients(theta[i:i+batch_size]) for i in range(0, len(theta), self.batch_size)]
+			coeff_list = [self.get_red_coefficients(theta[i:i+self.batch_size]) for i in range(0, len(theta), self.batch_size)]
 			rec_PCA_amp = np.concatenate([c[0] for c in coeff_list], axis = 0)
 			rec_PCA_ph = np.concatenate([c[1] for c in coeff_list], axis = 0)
 		else:
@@ -1531,46 +1535,20 @@ class mode_generator_NN(mode_generator_base):
 			red_amp,red_ph: :class:`~numpy:numpy.ndarray`
 				shape (N,K) - PCA reduced amplitude and phase
 		"""
+		comps_to_list = lambda comps_str: [int(c) for c in comps_str]
 		#new way
 		amp_pred = np.zeros((theta.shape[0], self.amp_PCA.get_dimensions()[1]))
 		ph_pred = np.zeros((theta.shape[0], self.ph_PCA.get_dimensions()[1]))
 		
-		for comps in self.amp_models.keys():
-			amp_pred[:,list(comps)] = self.amp_models[comps].predict(theta)
+		for comps, model in self.amp_models.items():
+			amp_pred[:,comps_to_list(comps)] = model(augment_features(theta, model.features)).numpy()
 		
-		for comps in self.ph_models.keys():
-			ph_pred[:,list(comps)] = self.ph_models[comps].predict(theta)
+		for comps, model in self.ph_models.items():
+			ph_pred[:,comps_to_list(comps)] = model(augment_features(theta, model.features)).numpy()
         
-		for comps in self.ph_models_res.keys():
-			cur_pred = self.ph_models_res[comps].predict(theta)
-			for k in comps:
-				ph_pred[:,k] += cur_pred[:,k]*self.ph_modeled_comps_res[k]
-		
-		'''#old way
-		amp_theta = augment_features(theta, self.amp_features)
-		ph_2_theta = augment_features(theta, self.ph_2_features)
-		ph_3456_theta = augment_features(theta, self.ph_3456_features)
-		ph_2res_theta = augment_features(theta, self.ph_2res_features)
-		
-		amp_pred = np.zeros((amp_theta.shape[0], self.amp_PCA.get_dimensions()[1]))
-		ph_pred = np.zeros((ph_2_theta.shape[0], self.ph_PCA.get_dimensions()[1]))
-		
-		#amp_pred[:,:4] = self.model_amp.predict(amp_theta, verbose=0)
-		#ph_2_pred = self.model_ph_2.predict(ph_2_theta, verbose=0)
-		#ph_3456_pred = self.model_ph_3456.predict(ph_3456_theta, verbose=0)
-		#ph_2res_pred = self.model_ph_2res.predict(ph_2res_theta, verbose=0)
+		for comps, model in self.ph_models_res.items():
+			ph_pred[:,comps_to_list(comps)] += model(augment_features(theta, model.features)).numpy()*self.ph_res_coefficients[comps]
 
-		amp_pred[:,:4] = self.model_amp(amp_theta).numpy()
-		ph_2_pred = self.model_ph_2(ph_2_theta).numpy()
-		ph_3456_pred = self.model_ph_3456(ph_3456_theta).numpy()
-		ph_2res_pred = self.model_ph_2res(ph_2res_theta).numpy()
-			
-		ph_2res_pred[:,0]*=self.res_coefficients[0]
-		ph_2res_pred[:,1]*=self.res_coefficients[1]
-		
-		ph_2_pred += ph_2res_pred
-		ph_pred[:,:6] = np.concatenate((ph_2_pred,ph_3456_pred), axis=1)
-		'''
 		return amp_pred, ph_pred
 
 class mode_generator_MoE(mode_generator_base):

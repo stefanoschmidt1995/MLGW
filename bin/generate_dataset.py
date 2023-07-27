@@ -1,0 +1,112 @@
+"""
+Convenience script to generate a dataset of WFs
+
+Example usage:
+
+	python generate_dataset.py --n-wfs 50000 --n-grid 2000 --modes 22 21 33 44 55 --basefilename test --t-coal 2. --t-step 1e-4 --alpha 0.5 --approximant IMRPhenomTPHM --q-range 1 10 --s1-range -0.9 0.9 --s2-range -0.9 0.9 
+"""
+
+from mlgw.GW_helper import create_dataset_TD
+
+import argparse
+import sys
+import os
+
+
+#########################################################################
+
+parser = argparse.ArgumentParser(__doc__)
+
+parser.add_argument(
+	"--n-wfs", type = int, required = True,
+	help="Number of WFs to generate")
+
+parser.add_argument(
+	"--n-grid", type = int, required = True,
+	help="Number of grid points")
+
+parser.add_argument(
+	"--modes", type = str, required = False, nargs = '+', default = ['22'],
+	help="the modes to generate, in the format lm. Example: --modes 22 21")
+
+parser.add_argument(
+	"--basefilename", type = str, required = True,
+	help="a base filename to save the datasets at (each mode will be saved at basefilename.lm)")
+
+
+parser.add_argument(
+	"--t-coal", type = float, required = True,
+	help="time to coalescence for each generated WF (in s/M_sun)")
+
+
+parser.add_argument(
+	"--t-step", type = float, required = True,
+	help="Time step for the input waveform in the given model")
+
+parser.add_argument(
+	"--alpha", type = float, required = True, default = 0.5,
+	help="distortion parameter alpha for the time grid (between 0 and 1); a value of 0.3-0.5 is advised.")
+
+parser.add_argument(
+	"--approximant", type = str, required = True,
+	help="Time domain waveform approximant to be used")
+
+parser.add_argument(
+	"--q-range", type = float, required = True, nargs = 2,
+	help="Mass ratio range in which WF are generated")
+
+parser.add_argument(
+	"--s1-range", type = float, required = False, nargs = 2, default = (-0.9, 0.9),
+	help="S1 range in which WF are generated")
+
+parser.add_argument(
+	"--s2-range", type = float, required = False, nargs = 2, default = (-0.9, 0.9),
+	help="S2 range in which WF are generated")
+
+parser.add_argument(
+	"--m2-range", type = float, required = False, nargs = 2, default = None,
+	help="Range for the m2 quantity. If not given, the total mass of the system is set to be 20 M_sun")
+
+parser.add_argument(
+	"--teob-install", type = str, required = False,
+	help="Path to a local installation of TEOBResumS (only if --approximant is TEOBResumS) ")
+
+args = parser.parse_args()
+
+lm_list = []
+	#validating modes
+for lm in args.modes:
+	try:
+		assert len(lm)==2
+		l, m = int(lm[0]), int(lm[1])
+		assert l>=m
+		assert m>0
+	except (AssertionError, ValueError):
+		raise ValueError("Wrong format for the mode '{}'".format(lm))
+	lm_list.append((l,m))
+
+#lm_list = [(2,2), (2,1), (3,3), (4,4), (5,5)]
+
+	#With create_dataset_TD a dataset of WF is created. The user must provide
+	#	-the number of WFs to be generated
+	#	-the number of grid points
+	#	-the modes to generate [(l,m)]
+	#	-a base filename to save the datasets at (each mode will be saved at basefilename.lm)
+	#	-time to coalescence (in s/M_sun)
+	#	-range of random parameters q, s1, s2 to generate the WFs with. If m2_range is None, a std total mass of 20 M_sun is used.
+	#	-integration step for the EOB model
+	#	-distortion parameter alpha for the time grid (in range (0,1)); a value of 0.3-0.5 is advised.
+	#	-path to a local installation of TEOBResumS: it must have the module 'EOBRun_module'
+	#The dataset is saved to a file, one file for each mode. The WF is time aligned s.t. the peak of the 22 mode happens at t = 0
+	#Pay attention to the sampling rate!!! If it's too low, you will get very bad dataset
+
+create_dataset_TD(args.n_wfs, N_grid = args.n_grid, modes = lm_list, basefilename = args.basefilename,
+	t_coal = args.t_coal, q_range = args.q_range, m2_range = args.m2_range, s1_range = args.s1_range, s2_range = args.s2_range,
+	t_step = args.t_step, alpha = args.alpha,
+	approximant = args.approximant)
+
+#        create_dataset_TD(50000, N_grid = 2000, modes = lm_list, basefilename = "./dataset_SEOB_part1",
+#                t_coal = 2., q_range = (1., 10.), m2_range = None, s1_range = (-0.9,0.9), s2_range = (-0.9,0.9),
+#                t_step = 1e-4, alpha = 0.5,
+#                approximant = "SEOBNRv4PHM")
+

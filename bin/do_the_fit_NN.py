@@ -7,8 +7,7 @@ The ML models for each mode is stored in a dedicated folder, holding the time gr
 A NN model (in this case for the 22 mode) is thus stored in a folder as follows:
 ----22
 	----lossfunction.png 
-	----amp(ph)_PCs.h5 (weights)
-	----feat_PCs.txt
+	----amp(ph)_PCs.keras (weights)
 	----Model_fit_info.txt
 
 here PCs is a list of (advisedly consecutive) integers structured as [K_1,K_2,...,] where K_i refers to the ith PC.
@@ -24,8 +23,9 @@ import argparse
 import sys
 import os
 
-from mlgw.NN_model import fit_NN, Schedulers, Optimizers, LossFunctions
+from mlgw.NN_model import fit_NN, Schedulers, Optimizers, LossFunctions, create_residual_PCA
 from mlgw.fit_model import create_PCA_dataset
+from pathlib import Path
 
 #########################################################################
 
@@ -79,6 +79,9 @@ parser.add_argument(
 	"--residual-model", action = 'store_true', required = False, default = False,
 	help="Whether the current model is a residual model")
 
+parser.add_argument(
+	"--base-residual-model-file", type = str, required = False,
+	help="Location for the base model (from which the residual will be computed). Only active if --residual-model.")
 
 	# Options to create a PCA dataset
 parser.add_argument(
@@ -108,6 +111,15 @@ if args.waveform_dataset:
 		args.waveform_dataset, args.pca_dataset,
 		train_frac = 0.8, clean_dataset = False)
 
+if args.residual_model:
+	assert args.base_residual_model_file, "If --residual-model is set, a --base-residual-model-file must be provided"
+	if args.pca_dataset.endswith('/'): args.pca_dataset = args.pca_dataset[:-1]
+	residual_PCA_dir = args.pca_dataset+'_residual_{}'.format(''.join([str(c) for c in args.components]))
+	print(residual_PCA_dir)
+	create_residual_PCA(args.pca_dataset, args.base_residual_model_file, residual_PCA_dir, args.quantity, args.components)
+	args.pca_dataset = residual_PCA_dir
+
+
 #We are assuming the user already has a PCA dataset and that they don't want to create one with this script
 #FIXME: add support to create PCA dataset as well. It should be easy enough...
 
@@ -121,7 +133,7 @@ param_dict = {'layer_list' : [args.units for _ in range(args.n_layers)], #a list
               'schedulers' : Schedulers('exponential',exp=-0.0003, min_lr = 1e-4) #how the learning rate decays during training
 			 }
 
-features_ = [(['q' ,'s1' ,'s2'], args.polynomial_order)]
+features_ = ['{}-q_s1_s2'.format(args.polynomial_order)]
 
 
 #Here we are fitting the NN for the specified quantity (amp or phase) with the specified hyperparameters and features 

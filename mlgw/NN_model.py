@@ -10,6 +10,7 @@ import numpy as np
 import json
 import matplotlib.pyplot as plt
 from shutil import copy2
+import glob
 
 os.environ['TF_CPP_MIN_LOG_LEVEL'] = '2'
 
@@ -17,12 +18,14 @@ from keras_tuner import BayesianOptimization, HyperModel
 import tensorflow as tf
 from tensorflow import keras
 from GW_helper import compute_optimal_mismatch
-from ML_routines import PCA_model, augment_features_general
+from ML_routines import PCA_model, augment_features
 from keras.layers import Dense
 from keras.optimizers import Nadam
 from keras.callbacks import EarlyStopping, LearningRateScheduler
 
 from pathlib import Path
+
+############################################################
 
 class PcaData: #needs to be cleaned up still
 	#FIXME: PCA data needs not to take care of data augmentation, since this is taken care by the NN
@@ -81,8 +84,8 @@ class PcaData: #needs to be cleaned up still
 			self.test_var = test_var[:,PC_comp]
 
 		#self.augment_features()
-		self.train_theta = augment_features_general(self.train_theta, feature_list = self.features)
-		self.test_theta = augment_features_general(self.test_theta, feature_list = self.features)
+		self.train_theta = augment_features(self.train_theta, features = self.features)
+		self.test_theta = augment_features(self.test_theta, features = self.features)
 
 	def compute_WF(amp, ph, ratio=1, ph_shift = []):
 		(N,D) = amp.shape
@@ -301,52 +304,52 @@ class Optimizers:
 				self.opt = tf.keras.optimizers.Adamax()
 				self.lr = "default"
 
-class mlgw_NN(keras.Sequential): #maybe this becomes too expensive anyway? adding the features so many times...
-	def __init__(self, features=[], *args, **kwargs):
-		super().__init__(*args, **kwargs)
-		self.features = features
+class mlgw_NN(keras.Sequential):
+	def __init__(self, layers = None, name = None, features=None):
+		if name is None: name = 'sequential'
+		if isinstance(features, str): features = [features]
+		if features is None: features = ['']
 
-	def fit(self, x = None, y = None, epochs = None, validation_data=None, batch_size=None, callbacks=None):
+		id_ = name.find('---')
+		if id_ == -1:
+			name = name +'---' + '--'.join(features)
+		else:
+			if features[0] == '':
+				feat_str = name[id_+3:]
+				features = feat_str.split('--')
+			else:
+				name = name[:id_+3] + '--'.join(features)
+		super().__init__(layers, name)
+		self.features = [f.strip() for f in features]
+
+	def fit(self, x = None, y = None, epochs = None, validation_data=None, batch_size=None, callbacks=None, **kwargs):
 		if x.shape[-1] == 3:
-			x = augment_features_general(x, feature_list=self.features)
+			x = augment_features(x, features=self.features)
 			if validation_data:
-				validation_data = (augment_features_general(validation_data[0], feature_list=self.features), validation_data[1]) 
+				validation_data = (augment_features(validation_data[0], features=self.features), validation_data[1]) 
 		return super().fit(x = x, y = y, epochs=epochs, validation_data = validation_data,
-				batch_size = batch_size, callbacks = callbacks)
+				batch_size = batch_size, callbacks = callbacks, **kwargs)
 
 	def predict(self, x, **kwargs):
 		if x.shape[-1] == 3:
-			x = augment_features_general(x, feature_list=self.features)
+			x = augment_features(x, features=self.features)
 		return super().predict(x, **kwargs)
+
+	@classmethod
+	def load_from_folder(cls, model_loc, name = None):
+		model_loc = str(model_loc)
+		nn_file = glob.glob(model_loc+'*keras')
+		assert len(nn_file)	== 1, "More than one neural network model is in the given folder!"
+
+		return cls.load_weights_and_features(nn_file[0], feat_file[0], name)
 	
-	def load_weights_and_features(self, model_loc, quantity):
-		features = []
-		model_loc = Path(model_loc)
-		assert quantity in ['amp', 'ph'], "quantity can only be amplitude or phase"
-
-		for file in os.listdir(model_loc):
-			if file[-2:] == 'h5': #load the weights
-				self.model = keras.models.load_model(model_loc/file, compile=False)
-			elif (quantity == "ph" and file[:7] == 'ph_feat') or (quantity == "amp" and file[:8] == 'amp_feat'): #load the features
-				with open(model_loc/file) as f:
-					lines = f.readlines()
-					for line in lines:
-						if 'features' not in line:
-							print(line[:-1])
-							features.append(line[:-1]) #just append the ordinary string to list of features
-							continue
-
-						#get positions of colons
-						cols = [pos for pos, char in enumerate(line) if char == ':']
-
-						#find feature strings
-						cur_feat_list = line[cols[0]+3:cols[1]-8].split(', ')
-
-						#find order
-						order = int(line[(cols[1]+2):])
-						features.append((cur_feat_list, order))
-		self.features = features
-
+	@classmethod
+	def load_from_file(cls, nn_file, name = None):
+		with tf.keras.saving.custom_object_scope({'mlgw_NN': mlgw_NN}):
+			model = keras.models.load_model(nn_file, compile=False)
+		if name is None: name = model.name
+		return cls(model.layers, name, features = None)
+	
 class NN_HyperModel(HyperModel):
 	def __init__(self,  output_nodes, hyperparameter_ranges, loss_weights):
 		self.hyperparameter_ranges = hyperparameter_ranges
@@ -355,7 +358,7 @@ class NN_HyperModel(HyperModel):
 		
 	def build(self, hp):
 
-		#FIXME: the enumeration here is super ugly: any chance to imrpove it?
+		#FIXME: the enumeration here is super ugly: any chance to improve it?
 		if isinstance(self.hyperparameter_ranges["units"], (tuple, list)):
 			units = hp.Choice('units', self.hyperparameter_ranges["units"])
 		else:
@@ -378,9 +381,9 @@ class NN_HyperModel(HyperModel):
 			feature_order = hp.Fixed('feature order', self.hyperparameter_ranges["feature_order"])
 		
 		print("The number of units are", units)
-		feats = [(['q','s1','s2'], feature_order)]
+		feats = '{}-q_s1_s2'.format(feature_order)
 		model = mlgw_NN(features=feats)
-		D = len(augment_features_general([1,1,1], feature_list=feats)[0]) #number of input features
+		D = len(augment_features([1,1,1], features=feats)[0]) #number of input features
 		print("number of features: ", D)
 
 		model.add(Dense(units,
@@ -410,7 +413,9 @@ def save_model(model, history, out_folder, hyperparameters, PCA_data, PCA_data_l
 
 	PC_comp_string = "".join(str(x) for x in PCA_data.PC_comp)
 
-	f = open(out_folder/"Model_fit_info_{}.txt".format(PC_comp_string), 'x')
+	residual_str = '_residual' if residual else ''
+	fit_info_name = "Model_fit_info_{}{}.txt".format(PC_comp_string, residual_str)
+	f = open(out_folder/fit_info_name, 'w')
 	f.write("Model for " + PC_comp_string + 'PCs for '+PCA_data.quantity+'\n')
 	if PCA_data_loc != None: f.write("Trained on dataset: {}\n".format(str(PCA_data_loc)))
 	f.write("created model with params: \n")
@@ -431,14 +436,13 @@ def save_model(model, history, out_folder, hyperparameters, PCA_data, PCA_data_l
 	plt.plot(history.history['val_loss'], label='test')
 	plt.yscale('log')
 	plt.legend()
-	plt.savefig(out_folder/'lossfunction_{}.png'.format(PC_comp_string))
+	plt.savefig(out_folder/'lossfunction_{}{}.png'.format(PC_comp_string, residual_str))
 	plt.close(fig='lossfunction')
+	savemodel_file = '{}_weights_{}{}.keras'.format(PCA_data.quantity, PC_comp_string, residual_str)
+	model.save(out_folder/savemodel_file)
 	if residual:
-		model.save(out_folder/(PCA_data.quantity+'_weights_'+PC_comp_string+'_res.h5'))
-		coefficients = np.genfromtxt(PCA_data_loc+'coefficients')
-		np.savetxt(out_folder/'coefficients', coefficients)
-	else:
-		model.save(out_folder/(PCA_data.quantity+'_weights_'+PC_comp_string+'.h5'))
+		coefficients = np.genfromtxt(PCA_data_loc/'residual_coefficients_{}'.format(PC_comp_string))
+		np.savetxt(out_folder/'residual_coefficients_{}'.format(PC_comp_string), coefficients)
 	return
 
 def tune_model(out_folder, project_name, quantity, PCA_data_loc, PC_to_fit, hyperparameters, max_epochs=1000, init_trials=None, trials = 10):
@@ -517,9 +521,7 @@ def fit_NN(fit_type, in_folder, out_folder, hyperparameters, N_train = None, com
 	
 	Outputs the fitted model to out_folder
 	
-		amp(ph)_PCs.h5 (weights of the model)
-	
-		feat_amp(ph)_PCs.txt
+		amp(ph)_PCs.keras (weights of the model)
 	
 		info.txt
 	
@@ -592,8 +594,8 @@ def fit_NN(fit_type, in_folder, out_folder, hyperparameters, N_train = None, com
 	loss_weights = loss_weights / min(loss_weights)
 	print("Using loss function weights: ", loss_weights)
 	
-	model = keras.Sequential()
-	#model = mlgw_NN(features=feats)
+	#model = keras.Sequential()
+	model = mlgw_NN(name = 'nn_{}_{}'.format(fit_type, PC_comp_string),features=features)
 	model.add(Dense(hyperparameters['layer_list'][0],
 						activation=hyperparameters['activation'],
 						input_shape=(D,)))
@@ -624,16 +626,6 @@ def fit_NN(fit_type, in_folder, out_folder, hyperparameters, N_train = None, com
 	
 	print("Test square loss for each component: ", mse_test_list)
 
-		#saving everything to file
-		#saving feature list
-	outfile = open(out_folder/"{}_feat_{}.txt".format(fit_type, PC_comp_string), "x")
-	for c in features:
-		if isinstance(c, str):
-			outfile.write(c+"\n")
-		if isinstance(c, tuple):
-			outfile.write('features: [' + ", ".join(x for x in c[0]) + '], order: ' + str(c[1]) + '\n')
-	outfile.close()
-	
 	#Not neccessary to save PCA model right?
 	#copyfile(in_folder+fit_type+"_PCA_model", out_folder+fit_type+"_PCA_model")
 	#copyfile(in_folder+"times", out_folder+"times")
@@ -644,9 +636,8 @@ def fit_NN(fit_type, in_folder, out_folder, hyperparameters, N_train = None, com
 
 	return
 
-def create_residual_PCA(pca_data_loc, model_loc, save_loc, quantity, components, savefigs=True):
+def create_residual_PCA(pca_data_loc, base_model_file, save_loc, quantity, components, savefigs=True):
 	pca_data_loc = Path(pca_data_loc)
-	model_loc = Path(model_loc)
 	save_loc = Path(save_loc)
 	os.makedirs(save_loc, exist_ok = True)
 	
@@ -655,10 +646,10 @@ def create_residual_PCA(pca_data_loc, model_loc, save_loc, quantity, components,
 	#load in the PCA dataset
 	data = PcaData(pca_data_loc, components, quantity)
 	if isinstance(components, int): components = list(range(components))
+	PC_comp_string = "".join(str(x) for x in components)
 
 	#load in the model
-	M = mlgw_NN()
-	M.load_weights_and_features(model_loc, quantity)
+	M = mlgw_NN.load_from_file(base_model_file)
 
 	#do the predictions with the model
 
@@ -686,7 +677,7 @@ def create_residual_PCA(pca_data_loc, model_loc, save_loc, quantity, components,
 	np.savetxt(save_loc/"PCA_train_theta.dat", data.train_theta)
 	np.savetxt(save_loc/"PCA_test_theta.dat", data.test_theta)
 	data.pca.save_model(save_loc/"ph_PCA_model.dat")
-	np.savetxt(save_loc/"coefficients", norm_coef)
+	np.savetxt(save_loc/"residual_coefficients_{}".format(PC_comp_string), norm_coef)
 
 	np.savetxt(save_loc/"PCA_train_{}.dat".format(quantity), new_train_var)
 	np.savetxt(save_loc/"PCA_test_{}.dat".format(quantity), new_test_var)
@@ -736,98 +727,6 @@ def compute_mismatch_WFS(ph_rec, amp_rec, ph_pca, amp_pca, time_grid, size, dt =
 		plt.hist(np.log(F)/np.log(10))
 
 	return F
-
-def load_models_from_directories(amp_model_locs, ph_model_locs):
-	testing_for_ph = (len(ph_model_locs) > 0)
-	testing_for_amp = (len(amp_model_locs) > 0)
-
-	if not (testing_for_ph or testing_for_amp):
-		print("please provide a list of model locations for either phase or ampltiude or both")
-		return
-
-	#infer what components for amp and phase are modeled
-	amp_models = {} #links tuple (of PCA components) to the model
-	ph_models = {}
-	ph_models_res = {}
-
-	amp_modeled_comps = set()
-	ph_modeled_comps = set()
-	ph_modeled_comps_res = {}
-
-	for loc in ph_model_locs:
-		M = mlgw_NN()
-		M.load_weights_and_features(loc, 'ph')
-
-		coefficients = None
-
-		for file in os.listdir(loc):
-			underscore_locs = [i for i,c in enumerate(file) if c == '_']
-			if file[-3:] == '.h5':
-				if len(underscore_locs) == 3: #residual weight locations have three underscores
-					comps = tuple(int(k) for k in file[underscore_locs[1]+2:-8].split(','))
-					for k in comps:
-						if k in ph_modeled_comps_res:
-							raise RuntimeError("residual ph models have overlap in PCs!")
-							ph_modeled_comps_res[k] = 0
-					ph_models_res[comps] = M 
-				elif len(underscore_locs) == 2: #residual weight locations have three underscores
-					comps = tuple(int(k) for k in file[underscore_locs[1]+2:-4].split(','))
-					for k in comps:
-						if k in ph_modeled_comps:
-							raise RuntimeError("ph models have overlap in PCs!")
-						ph_modeled_comps.add(k)
-					ph_models[comps] = M
-				else:
-					raise RuntimeError("weights file is not formatted correctly! Please format the file as: quantity_[PC1,PC2,...,PCk].h5 or quantity_[PC1,PC2,...,PCk]_res.h5" )
-
-			if file == 'coefficients':
-				coefficients = np.loadtxt(loc+'/coefficients')
-
-		#link up coefficients to correct components
-		if coefficients is not None:
-			for i,k in enumerate(comps):
-				ph_modeled_comps_res[k] = coefficients[i]
-
-	#perform some checks
-	if testing_for_ph:
-		if 0 not in ph_modeled_comps: 
-			raise RuntimeError("First principal component not present in ph folders")
-		if len(ph_modeled_comps)-1 != max(ph_modeled_comps):
-			raise RuntimeError("PCs in ph folder are not consecutive")
-		if not set(ph_modeled_comps_res).issubset(ph_modeled_comps):
-			raise RuntimeError("residual components are not a subset of the components")
-
-	print("Phase models loaded successfully")
-
-	for loc in amp_model_locs:
-		M = mlgw_NN()
-		M.load_weights_and_features(loc, 'amp')
-
-		for file in os.listdir(loc):
-			underscore_locs = [i for i,c in enumerate(file) if c == '_']
-			if file[-3:] == '.h5':
-				if len(underscore_locs) == 3: #residual weight locations have three underscores
-					raise RuntimeError("residual models currently not supported for amplitude")
-				elif len(underscore_locs) == 2: #residual weight locations have three underscores
-					comps = tuple(int(k) for k in file[underscore_locs[1]+2:-4].split(','))
-					for k in comps:
-						if k in amp_modeled_comps:
-							raise RuntimeError("ph models have overlap in PCs!")
-						amp_modeled_comps.add(k)
-					amp_models[comps] = M
-				else:
-					raise RuntimeError("weights file is not formatted correctly! Please format the file as: quantity_[PC1,PC2,...,PCk].h5 or quantity_[PC1,PC2,...,PCk]_res.h5" )
-
-	if testing_for_amp:
-		if 0 not in amp_modeled_comps:
-			raise RuntimeError("First principal component not present in amp folders")
-		if len(amp_modeled_comps)-1 != max(amp_modeled_comps):
-			raise RuntimeError("PCs in amp folder are not consecutive")
-	print("Amp models loaded successfully")
-	
-	print("Models loaded successfully from directories")
-	return testing_for_ph, testing_for_amp, ph_models, ph_models_res, amp_models, amp_modeled_comps, ph_modeled_comps, ph_modeled_comps_res
-
 
 def check_NN_performance(data_loc, amp_model_locs, ph_model_locs, save_loc, mismatch_N=0):
 	#TODO: seperate loading in the models from different files and checking the performance in to two different functions
@@ -904,29 +803,20 @@ def gather_NN(mode, pca_data_location, amp_model_locations, ph_model_locations, 
 
 	out_folder = out_folder/mode
 	os.makedirs(out_folder)
-	out_folder_amp = out_folder/'amp'
-	os.makedirs(out_folder_amp)
-	out_folder_ph = out_folder/'ph'
-	os.makedirs(out_folder_ph)
-
 	
 	copy2(pca_data_location/'times.dat', out_folder)
-	copy2(pca_data_location/'amp_PCA_model.dat', out_folder_amp)
-	copy2(pca_data_location/'ph_PCA_model.dat', out_folder_ph)
+	copy2(pca_data_location/'amp_PCA_model.dat', out_folder/'amp_PCA_model')
+	copy2(pca_data_location/'ph_PCA_model.dat', out_folder/'ph_PCA_model')
 
 	for i,amp_loc in enumerate(amp_model_locations):
-		current_dir = out_folder_amp/('model{}'.format(i+1))
-		os.mkdir(current_dir)
 		for file in os.listdir(amp_loc):
-			if file[:3] != "amp" and file != 'coefficients': continue #not a relevant file
-			copy2(amp_loc+'/'+file, current_dir)
+			if not file.startswith("amp") and not file.startswith('coefficients'): continue #not a relevant file
+			copy2(amp_loc+'/'+file, out_folder)
 
 	for i,ph_loc in enumerate(ph_model_locations):
-		current_dir = out_folder_ph/('model{}'.format(i+1))
-		os.mkdir(current_dir)
 		for file in os.listdir(ph_loc):
-			if file[:2] != "ph" and file != 'coefficients': continue
-			copy2(ph_loc+'/'+file, current_dir)
+			if not file.startswith("ph") and not file.startswith('coefficients'): continue
+			copy2(ph_loc+'/'+file, out_folder)
 	
 	print("Neural Networks gathered successfully in folder {}".format(out_folder))
 	return
