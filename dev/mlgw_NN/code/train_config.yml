@@ -1,0 +1,44 @@
+# Config file to train several neural networks of mlgw
+
+modes: 22 21 33 44 55
+pca-dataset: ../pca_datasets/IMRPhenomTPHM/
+model-dir: ../models_NN/model_IMRPhenomTPHM/
+
+networks:
+
+    amp:
+        quantity: amp
+        components: 0 1 2 3
+        max-epoch: 10000
+        units: 35
+        n-layers: 1
+        polynomial-order: 1
+        learning-rate: 0.005
+
+    ph_01:
+        quantity: ph
+        components: 0 1
+        max-epoch: 10000
+        units: 50
+        n-layers: 1
+        polynomial-order: 3
+        learning-rate: 0.00003
+
+    ph_2345:
+        quantity: ph
+        components: 2 3 4 5
+        max-epoch: 10000
+        units: 50
+        n-layers: 1
+        polynomial-order: 1
+        learning-rate: 0.005
+
+    ph_01_residual:
+        quantity: ph
+        components: 0 1
+        max-epoch: 10000
+        units: 50
+        n-layers: 1
+        polynomial-order: 1
+        learning-rate: 0.005
+        residual: 
