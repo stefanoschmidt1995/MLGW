@@ -133,13 +133,64 @@ def plot_speed_accuracy_hist(json_file):
 	
 	plt.show()
 
+def mse_table():
+	import mlgw.NN_model
+	from mlgw.GW_generator import mode_generator_NN
+	from mlgw.ML_routines import augment_features
+	
+	modes = ['22', '21', '33', '44', '55']
+	
+	df = []
+	pca_folder = '/home/stefano/Dropbox/Stefano/PhD/mlgw_repository/dev/mlgw_NN/pca_datasets/IMRPhenomTPHM'
+	model_folder = '/home/stefano/Dropbox/Stefano/PhD/mlgw_repository/dev/mlgw_NN/models_NN/model_IMRPhenomTPHM/{}/'
+	#model_folder = '/home/stefano/Dropbox/Stefano/PhD/mlgw_repository/dev/mlgw_NN/models_NN/model_IMRPhenomTPHM_mc_chieff/{}/'
+
+	#pca_folder = '../pca_datasets/IMRPhenomTPHM'
+	#model_folder = '../models_NN/model_IMRPhenomTPHM/{}/'
+	
+	for mode in modes:
+		PCA_data_amp = mlgw.NN_model.PcaData('{}/{}/'.format(pca_folder, mode), [0,1,2,3], 'amp')
+		PCA_data_ph = mlgw.NN_model.PcaData('{}/{}/'.format(pca_folder, mode), [0,1], 'ph')
+		PCA_data_ph_2345 = mlgw.NN_model.PcaData('{}/{}/'.format(pca_folder, mode), [2,3,4,5], 'ph')
+		PCA_data_residual = mlgw.NN_model.PcaData('{}/{}_residual_01'.format(pca_folder, mode), [0,1], 'ph')
+
+		generator = mode_generator_NN((2,2), model_folder.format(mode))
+
+		ph_res_pred = generator.ph_residual_models['01'](augment_features(PCA_data_residual.test_theta, generator.ph_residual_models['01'].features))
+		residual_mse = [0]# np.sum(np.square(ph_res_pred - PCA_data_residual.test_var), axis =0)/ph_res_pred.shape[0]
+		
+		#generator.ph_residual_models = {}; print("Removing residual models")
+		
+		amp_pred, ph_pred = generator.get_red_coefficients(PCA_data_ph.test_theta)
+		
+		#ph_pred[:,[0,1]] += PCA_data_residual.test_var*generator.ph_res_coefficients['01']
+
+		amp_mse = np.sum(np.square(amp_pred[:,:4] - PCA_data_amp.test_var), axis =0)/amp_pred.shape[0]
+		ph_mse = np.sum(np.square(ph_pred[:,:2] - PCA_data_ph.test_var), axis =0)/ph_pred.shape[0]
+		ph_2345_mse = np.sum(np.square(ph_pred[:,2:6] - PCA_data_ph_2345.test_var), axis =0)/ph_pred.shape[0]
+	
+		print('mode {}:\n\tamp: {}\n\tph: {}\n\tph2345: {}\n\tphres: {}'.format(mode, amp_mse, ph_mse, ph_2345_mse, residual_mse))
+		
+		f = '{:.2e}'.format
+		df.append({'mode':mode, 'amp': [f(a) for a in amp_mse],
+				'ph': [f(a) for a in ph_mse],
+				'ph_2345': [f(a) for a in ph_2345_mse],
+				'ph_residual': [f(a) for a in residual_mse]})
+	
+	df = pd.DataFrame(df)
+	#print(df.to_latex(index_names = False))
+
+		
+
 if __name__=='__main__':
-
+	#mse_table()
 	plot_speed_accuracy_hist('model_IMR.json')
+	quit()
+	
 
-	plot_validation('/home/stefano/Dropbox/Stefano/PhD/mlgw_repository/dev/mlgw_NN/bayesian_tuning_22/tuning_amp_22_0123', "Tuning of amplitude", 'tuning_amp.pdf')
-	plot_validation('/home/stefano/Dropbox/Stefano/PhD/mlgw_repository/dev/mlgw_NN/bayesian_tuning_22/tuning_ph_22_01', "Tuning of phase", 'tuning_ph_01.pdf')
-	plot_validation('/home/stefano/Dropbox/Stefano/PhD/mlgw_repository/dev/mlgw_NN/bayesian_tuning_22/tuning_ph_22_2345', "Tuning of phase (high PC)", 'tuning_ph_2345.pdf')
-	#plot_validation('/home/stefano/Dropbox/Stefano/PhD/mlgw_repository/dev/mlgw_NN/bayesian_tuning_22/tuning_ph_22_01_residual')
+	#plot_validation('/home/stefano/Dropbox/Stefano/PhD/mlgw_repository/dev/mlgw_NN/bayesian_tuning_22/tuning_amp_22_0123', "Tuning of amplitude", 'tuning_amp.pdf')
+	#plot_validation('/home/stefano/Dropbox/Stefano/PhD/mlgw_repository/dev/mlgw_NN/bayesian_tuning_22/tuning_ph_22_01', "Tuning of phase", 'tuning_ph_01.pdf')
+	#plot_validation('/home/stefano/Dropbox/Stefano/PhD/mlgw_repository/dev/mlgw_NN/bayesian_tuning_22/tuning_ph_22_2345', "Tuning of phase (high PC)", 'tuning_ph_2345.pdf')
+	plot_validation('/home/stefano/Dropbox/Stefano/PhD/mlgw_repository/dev/mlgw_NN/bayesian_tuning_22/tuning_ph_22_01_residual', "Tuning of residual model", 'tuning_ph_01_residual.pdf')
 
 

@@ -489,8 +489,11 @@ def augment_features(theta, features):
 				val = theta[:,1]
 			elif f == 's2':
 				val = theta[:,2]
+			elif f == 'mc':
+				val = np.power(theta[:,0] / (1+theta[:,0])**2, 3/5)
 			else:
 				raise ValueError("Feature '{}' not recognized: please consider submitting a patch to add support for your favoutite feature.".format(f))
+			if f not in ['q', 's1', 's2']: feats_to_add.append(val[:,None])
 			feat_vals[f] = val
 		
 		for feats in feat_list:

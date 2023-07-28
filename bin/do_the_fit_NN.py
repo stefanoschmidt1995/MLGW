@@ -17,6 +17,10 @@ Example usage:
 	
 	python do_the_fit_NN.py --pca-dataset ../pca_datasets/IMRPhenomTPHM/22 --model-directory ../new_models/test/amp/22 --quantity amp --components 0 1 2 3 4 --max-epoch 100 --units 1 --n-layers 20 --polynomial-order 2 
 
+To create just the PCA dataset:
+	
+	python do_the_fit_NN.py --pca-dataset ../pca_datasets/SEOBNRv4/22 --waveform-dataset ../dataset_SEOBNRv4HM/dataset_SEOB.22 --n-comp-amp 4 --n-comp-ph 6 --train-frac 0.85
+
 """
 
 import argparse
@@ -36,7 +40,7 @@ parser.add_argument(
 	help="Folder to load the PCA dataset from")
 
 parser.add_argument(
-	"--model-directory", type = str, required = True,
+	"--model-directory", type = str, required = False,
 	help="Folder where the model files will be stored")
 
 parser.add_argument(
@@ -44,7 +48,7 @@ parser.add_argument(
 	help="Wheter to create a model for amplitude of phase")
 
 parser.add_argument(
-	"--components", type = int, required = True, nargs = '+',
+	"--components", type = int, required = False, nargs = '+',
 	help="PCA components to be included in the model")
 
 parser.add_argument(
@@ -56,16 +60,20 @@ parser.add_argument(
 	help="Batch size for the training")
 
 parser.add_argument(
-	"--units", type = int, required = True,
+	"--units", type = int, required = False,
 	help="List of units per layer")
 
 parser.add_argument(
-	"--n-layers", type = int, required = True,
+	"--n-layers", type = int, required = False,
 	help="Number of layers")
 
 parser.add_argument(
 	"--polynomial-order", type = int, required = False, default = 1,
 	help="Polynomial order for data augmentation features")
+
+parser.add_argument(
+	"--features", type=str, required = False, default = 'q_s1_s2',
+	help="The features to use, they must be in the format of augment_features")
 
 parser.add_argument(
 	"--learning-rate", type = float, required = False, default = 1e-3,
@@ -97,12 +105,13 @@ parser.add_argument(
 	help="Number of components for the PCA phase model (only applies if --waveform-dataset is given)")
 
 parser.add_argument(
-	"--train-frac", type = int, required = False,
+	"--train-frac", type = float, required = False, default = 0.85,
 	help="Training fraction for the PCA dataset train/validation split (only applies if --waveform-dataset is given)")
 
 args = parser.parse_args()
 
 ############################
+assert (args.model_directory or args.waveform_dataset), "At least one argument between --waveform-dataset and --model-directory must be given"
 
 if args.waveform_dataset:
 	if not (args.n_comp_amp and args.n_comp_ph):
@@ -110,6 +119,10 @@ if args.waveform_dataset:
 	create_PCA_dataset((args.n_comp_amp, args.n_comp_ph),
 		args.waveform_dataset, args.pca_dataset,
 		train_frac = 0.8, clean_dataset = False)
+	if not args.model_directory: quit()
+
+if not (args.components and args.units and args.n_layers):
+	raise ValueError("If -model-directory is given, the following arguments are required: --components, --units, --n-layers")
 
 if args.residual_model:
 	assert args.base_residual_model_file, "If --residual-model is set, a --base-residual-model-file must be provided"
@@ -133,7 +146,7 @@ param_dict = {'layer_list' : [args.units for _ in range(args.n_layers)], #a list
               'schedulers' : Schedulers('exponential',exp=-0.0003, min_lr = 1e-4) #how the learning rate decays during training
 			 }
 
-features_ = ['{}-q_s1_s2'.format(args.polynomial_order)]
+features_ = ['{}-{}'.format(args.polynomial_order, args.features)]
 
 
 #Here we are fitting the NN for the specified quantity (amp or phase) with the specified hyperparameters and features 

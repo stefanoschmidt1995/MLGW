@@ -381,7 +381,7 @@ class NN_HyperModel(HyperModel):
 			feature_order = hp.Fixed('feature order', self.hyperparameter_ranges["feature_order"])
 		
 		print("The number of units are", units)
-		feats = '{}-q_s1_s2'.format(feature_order)
+		feats = '{}-mc_chieff'.format(feature_order)
 		model = mlgw_NN(features=feats)
 		D = len(augment_features([1,1,1], features=feats)[0]) #number of input features
 		print("number of features: ", D)
@@ -665,6 +665,7 @@ def create_residual_PCA(pca_data_loc, base_model_file, save_loc, quantity, compo
 	new_test_var = data.test_var[:,components] - test_pred
 
 	#normalize the new data
+	#FIXME: do this without the for loop
 	norm_coef = []
 	for c in components:
 		test_max = np.max(abs(new_test_var[:,c]))

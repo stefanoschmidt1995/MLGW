@@ -1421,7 +1421,7 @@ class mode_generator_NN(mode_generator_base):
 	"""
 	def __init__(self, mode, folder = None):
 		self.ph_models = {}
-		self.ph_models_res = {}
+		self.ph_residual_models = {}
 		self.amp_models = {}
 		self.ph_res_coefficients = {}
 		super().__init__(mode, folder)
@@ -1468,7 +1468,7 @@ class mode_generator_NN(mode_generator_base):
 					comps = re.findall(r'_[0-9]+_', nn_file)
 					assert len(comps)==1, "Something wrong with residual neural network filename {}".format(nn_file)
 					comps = comps[0][1:-1]					
-					dict_to_fill = self.ph_models_res
+					dict_to_fill = self.ph_residual_models
 
 					try:
 						self.ph_res_coefficients[comps] = np.loadtxt(folder/'residual_coefficients_{}'.format(comps))
@@ -1546,7 +1546,7 @@ class mode_generator_NN(mode_generator_base):
 		for comps, model in self.ph_models.items():
 			ph_pred[:,comps_to_list(comps)] = model(augment_features(theta, model.features)).numpy()
         
-		for comps, model in self.ph_models_res.items():
+		for comps, model in self.ph_residual_models.items():
 			ph_pred[:,comps_to_list(comps)] += model(augment_features(theta, model.features)).numpy()*self.ph_res_coefficients[comps]
 
 		return amp_pred, ph_pred
