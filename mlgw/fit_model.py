@@ -114,8 +114,8 @@ create_PCA_dataset
 		out_folder = out_folder + "/"
 
 		#saving to files
-	PCA_amp.save_model(out_folder+"amp_PCA_model")				#saving amp PCA model
-	PCA_ph.save_model(out_folder+"ph_PCA_model")				#saving ph PCA model
+	PCA_amp.save_model(out_folder+"amp_PCA_model.dat")			#saving amp PCA model
+	PCA_ph.save_model(out_folder+"ph_PCA_model.dat")			#saving ph PCA model
 	np.savetxt(out_folder+"PCA_train_theta.dat", train_theta)	#saving train theta
 	np.savetxt(out_folder+"PCA_test_theta.dat", test_theta)		#saving test theta
 	np.savetxt(out_folder+"PCA_train_amp.dat", red_train_amp)	#saving train reduced amplitudes
@@ -270,7 +270,7 @@ fit_MoE
 	F_MoE, F_MoE_train = np.nan, np.nan
 	if test_mismatch and fit_type == "ph": #testing for phase
 		PCA_test_amp = np.loadtxt(in_folder+"PCA_test_amp.dat")
-		PCA_amp = PCA_model(in_folder+"amp_PCA_model")
+		PCA_amp = PCA_model(in_folder+"amp_PCA_model.dat")
 		rec_amp=PCA_amp.reconstruct_data(PCA_test_amp)
 		rec_ph=PCA.reconstruct_data(PCA_test)
 		rec_ph_pred=PCA.reconstruct_data(PCA_test_pred)
@@ -278,7 +278,7 @@ fit_MoE
 		
 	if test_mismatch and fit_type == "amp": #testing for amplitude
 		PCA_test_ph = np.loadtxt(in_folder+"PCA_test_ph.dat")
-		PCA_ph = PCA_model(in_folder+"ph_PCA_model")
+		PCA_ph = PCA_model(in_folder+"ph_PCA_model.dat")
 		rec_ph=PCA_ph.reconstruct_data(PCA_test_ph)
 		rec_amp=PCA.reconstruct_data(PCA_test)
 		rec_amp_pred=PCA.reconstruct_data(PCA_test_pred)
@@ -286,7 +286,7 @@ fit_MoE
 
 	if train_mismatch and fit_type == "ph": #testing for phase
 		PCA_train_amp = np.loadtxt(in_folder+"PCA_train_amp.dat")[:N_train,:]
-		PCA_amp = PCA_model(in_folder+"amp_PCA_model")
+		PCA_amp = PCA_model(in_folder+"amp_PCA_model.dat")
 		rec_amp=PCA_amp.reconstruct_data(PCA_train_amp)
 		rec_ph=PCA.reconstruct_data(PCA_train)
 		rec_ph_pred=PCA.reconstruct_data(PCA_train_pred)
@@ -294,7 +294,7 @@ fit_MoE
 
 	if train_mismatch and fit_type == "amp": #testing for amplitude
 		PCA_train_ph = np.loadtxt(in_folder+"PCA_train_ph.dat")[:N_train,:]
-		PCA_ph = PCA_model(in_folder+"ph_PCA_model")
+		PCA_ph = PCA_model(in_folder+"ph_PCA_model.dat")
 		rec_ph=PCA_ph.reconstruct_data(PCA_train_ph)
 		rec_amp=PCA.reconstruct_data(PCA_train)
 		rec_amp_pred=PCA.reconstruct_data(PCA_train_pred)

@@ -2,8 +2,8 @@
 
 #modes: 22 21 33 44 55
 modes: 22
-pca-dataset: ../pca_datasets/SEOBNRv4HM/
-model-dir: ../models_NN/model_SEOBNRv4HM/
+pca-dataset: ../pca_datasets/IMRPhenomTPHM/
+model-dir: ../models_NN/model_IMRPhenomTPHM/
 
 networks:
 
