@@ -1,3 +1,4 @@
+#!/usr/bin/env python
 """
 Convenience script to generate a dataset of WFs
 

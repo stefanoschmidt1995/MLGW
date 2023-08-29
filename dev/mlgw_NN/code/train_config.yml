@@ -1,8 +1,9 @@
 # Config file to train several neural networks of mlgw
 
-modes: 22 21 33 44 55
-pca-dataset: ../pca_datasets/IMRPhenomTPHM/
-model-dir: ../models_NN/model_IMRPhenomTPHM_mc_chieff/
+#modes: 22 21 33 44 55
+modes: 22
+pca-dataset: ../pca_datasets/SEOBNRv4HM/
+model-dir: ../models_NN/model_SEOBNRv4HM/
 
 networks:
 
@@ -21,9 +22,9 @@ networks:
         components: 0 1
         max-epoch: 10000
         units: 50
-        n-layers: 1
+        n-layers: 2
         polynomial-order: 3
-        features: mc_chieff
+        features: mc_eta_logq_chieff
         learning-rate: 0.00003
 
     ph_2345:
@@ -41,8 +42,8 @@ networks:
         components: 0 1
         max-epoch: 10000
         units: 50
-        n-layers: 1
+        n-layers: 2
         polynomial-order: 3
-        features: mc_chieff
+        features: mc_eta_logq_chieff
         learning-rate: 0.0005
         residual: 

@@ -485,6 +485,8 @@ def augment_features(theta, features):
 				val = (theta[:,0]*theta[:,1] + theta[:,2]) / (1 + theta[:,0])
 			elif f == 'q':
 				val = theta[:,0]
+			elif f == 'logq':
+				val = np.log(theta[:,0])
 			elif f == 's1':
 				val = theta[:,1]
 			elif f == 's2':

@@ -157,9 +157,9 @@ def mse_table():
 		generator = mode_generator_NN((2,2), model_folder.format(mode))
 
 		ph_res_pred = generator.ph_residual_models['01'](augment_features(PCA_data_residual.test_theta, generator.ph_residual_models['01'].features))
-		residual_mse = [0]# np.sum(np.square(ph_res_pred - PCA_data_residual.test_var), axis =0)/ph_res_pred.shape[0]
+		residual_mse = np.sum(np.square(ph_res_pred - PCA_data_residual.test_var), axis =0)/ph_res_pred.shape[0]
 		
-		#generator.ph_residual_models = {}; print("Removing residual models")
+		generator.ph_residual_models = {}; print("Removing residual models")
 		
 		amp_pred, ph_pred = generator.get_red_coefficients(PCA_data_ph.test_theta)
 		
@@ -183,8 +183,8 @@ def mse_table():
 		
 
 if __name__=='__main__':
-	#mse_table()
-	plot_speed_accuracy_hist('model_IMR.json')
+	mse_table()
+	#plot_speed_accuracy_hist('model_IMR_featqs1s1.json')
 	quit()
 	
 
