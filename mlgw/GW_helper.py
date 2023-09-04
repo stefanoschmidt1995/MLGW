@@ -211,7 +211,7 @@ create_dataset_TD
 		prefactor = 4.7864188273360336e-20 # G/c^2*(M_sun/Mpc)
 
 			#checking that all is good with modes
-		if approximant == "SEOBNRv4PHM":
+		if approximant in ["SEOBNRv4PHM", "SEOBNRv4HM"]:
 			for mode in modes:
 				if mode not in [(2,2),(2,1), (3,3), (4,4), (5,5)]:
 					raise ValueError("Currently SEOBNRv4PHM approximant does not implement the chosen HMs")
@@ -329,7 +329,7 @@ create_dataset_TD
 		else:
 			temp_theta = [m1/m2, spin1z, spin2z]
 
-			#getting the wave
+			#getting the waveform
 			#output of the if:
 				#amp_list, ph_list (same order as in modes)
 				#time_full, argpeak
@@ -360,7 +360,8 @@ create_dataset_TD
 				ph_list[i] = temp_ph
 			argpeak = locate_peak(hlm['1'][0]*nu) #aligned at the peak of the 22
 
-		elif approximant == "SEOBNRv4HM:old": #using SEOBNRv4HM
+		elif approximant == "SEOBNRv4HM": #using SEOBNRv4HM
+			warnings.warn("The dataset generation with SEOBNRv4HM has not been extensively tested!")
 			nqcCoeffsInput=lal.CreateREAL8Vector(10)
 			sp, dyn, dynHi = lalsim.SimIMRSpinAlignedEOBModes(t_step, m1*lal.MSUN_SI, m2*lal.MSUN_SI, f_min, 1e6*lal.PC_SI, spin1z, spin2z,41, 0., 0., 0.,0.,0.,0.,0.,0.,1.,1.,nqcCoeffsInput, 0)
 			amp_prefactor = prefactor*(m1+m2)/1. # G/c^2 (M / d_L)
@@ -384,23 +385,27 @@ create_dataset_TD
 		elif approximant == "IMRPhenomTPHM" or approximant == "SEOBNRv4PHM":
 			#https://lscsoft.docs.ligo.org/lalsuite/lalsimulation/test___s_e_o_b_n_rv4_p_h_m__vs__4_h_m__ringdown_8py_source.html
 			approx = lalsim.SEOBNRv4PHM if approximant == "SEOBNRv4PHM" else lalsim.IMRPhenomTPHM
-			hlm = lalsim.SimInspiralChooseTDModes(0.,
-				t_step,
-				m1*lalsim.lal.MSUN_SI,
-				m2*lalsim.lal.MSUN_SI,
-				0.,
-				0.,
-				spin1z,
-				0.,
-				0.,
-				spin2z,
-				f_min,
-				f_min,
-				1e6*lalsim.lal.PC_SI,
-				LALpars,
-				5,			#lmax
-				approx
-			)
+			try:
+				hlm = lalsim.SimInspiralChooseTDModes(0.,
+					t_step,
+					m1*lalsim.lal.MSUN_SI,
+					m2*lalsim.lal.MSUN_SI,
+					0.,
+					0.,
+					spin1z,
+					0.,
+					0.,
+					spin2z,
+					f_min,
+					f_min,
+					1e6*lalsim.lal.PC_SI,
+					LALpars,
+					5,			#lmax
+					approx
+				)
+			except RuntimeError:
+				print("Unable to generate WF @ theta = {}".format(temp_theta))
+				continue
 			amp_prefactor = prefactor*(m1+m2)/1.
 			for i, lm in enumerate(modes):
 				#{(2,2): lal.ts} 

@@ -59,8 +59,8 @@ class PcaData: #needs to be cleaned up still
 			train_var = np.genfromtxt(PCA_data_location/"PCA_train_amp.dat")
 			test_var = np.genfromtxt(PCA_data_location/"PCA_test_amp.dat")
 		
-		if PC_comp == None: 
-			PC_comp = list(range(train_var.shape[1]))
+		if PC_comp is None: 
+			PC_comp = train_var.shape[1]
 		if isinstance(PC_comp,int): PC_comp = list(range(PC_comp))
 
 		self.PC_comp = PC_comp
@@ -379,9 +379,13 @@ class NN_HyperModel(HyperModel):
 			feature_order = hp.Choice('feature order', self.hyperparameter_ranges["feature_order"])
 		else:
 			feature_order = hp.Fixed('feature order', self.hyperparameter_ranges["feature_order"])
+		if isinstance(self.hyperparameter_ranges["features"], (tuple, list)):
+			features = hp.Choice('features', self.hyperparameter_ranges["features"])
+		else:
+			features = hp.Fixed('features', self.hyperparameter_ranges["features"])
 		
 		print("The number of units are", units)
-		feats = '{}-mc_chieff'.format(feature_order)
+		feats = '{}-{}'.format(feature_order, features)
 		model = mlgw_NN(features=feats)
 		D = len(augment_features([1,1,1], features=feats)[0]) #number of input features
 		print("number of features: ", D)
@@ -628,7 +632,7 @@ def fit_NN(fit_type, in_folder, out_folder, hyperparameters, N_train = None, com
 
 	#Not neccessary to save PCA model right?
 	#copyfile(in_folder+fit_type+"_PCA_model", out_folder+fit_type+"_PCA_model")
-	#copyfile(in_folder+"times", out_folder+"times")
+	#copyfile(in_folder+"times.dat", out_folder+"times.dat")
 	
 		#saving NN model
 	save_model(model, history, out_folder, hyperparameters, PCA_data, in_folder, residual=residual)

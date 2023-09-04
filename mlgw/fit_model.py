@@ -35,7 +35,7 @@ create_PCA_dataset
 		train(test) amp(ph)		training(test) set for the reduced components of amplitude(phase)
 		times					times at which waves are evalueted in the high dimensional representation (not useful for MoE but required by mlgw.GW_generator
 	Dataset will be saved to output folder in the following files (total 9):
-		"amp(ph)_PCA_model"    "PCA_train(test)_theta.dat"    "PCA_train(test)_amp(ph).dat"    "times"
+		"amp(ph)_PCA_model.dat"    "PCA_train(test)_theta.dat"    "PCA_train(test)_amp(ph).dat"    "times.dat"
 	Input:
 		K (tuple)		number of PC to consider (K_amp, K_ph); if int amp and ph have the same number of PC
 		dataset_file	path to file holding input waveform dataset
@@ -122,7 +122,7 @@ create_PCA_dataset
 	np.savetxt(out_folder+"PCA_test_amp.dat", red_test_amp)		#saving test reduced amplitudes
 	np.savetxt(out_folder+"PCA_train_ph.dat", red_train_ph)		#saving train reduced phases
 	np.savetxt(out_folder+"PCA_test_ph.dat", red_test_ph)		#saving test reduced phases
-	np.savetxt(out_folder+"times", times)						#saving times
+	np.savetxt(out_folder+"times.dat", times)					#saving times
 
 		#computing mismatch
 	F_PCA = compute_mismatch((test_amp), test_ph, (rec_test_amp), rec_test_ph) 
@@ -261,7 +261,7 @@ fit_MoE
 	outfile.close()
 		#copying PCA model and times, for making out_folder ready to be used in 
 	copyfile(in_folder+fit_type+"_PCA_model", out_folder+fit_type+"_PCA_model")
-	copyfile(in_folder+"times", out_folder+"times")
+	copyfile(in_folder+"times.dat", out_folder+"times.dat")
 		#saving MoE models
 	for i in range(len(MoE_models)):
 		MoE_models[i].save(out_folder+fit_type+"_exp_"+str(i),out_folder+fit_type+"_gat_"+str(i))

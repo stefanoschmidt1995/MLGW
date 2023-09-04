@@ -183,8 +183,8 @@ def mse_table():
 		
 
 if __name__=='__main__':
-	mse_table()
-	#plot_speed_accuracy_hist('model_IMR_featqs1s1.json')
+	#mse_table()
+	plot_speed_accuracy_hist('model_SEOB.json')
 	quit()
 	
 

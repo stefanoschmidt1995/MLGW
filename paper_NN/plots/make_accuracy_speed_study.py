@@ -108,10 +108,11 @@ s2_range = (-0.9,0.9)
 d_range = (.5,100.)
 i_range = (0, np.pi) 
 phi_0_range = (0, 2*np.pi)
-f_range = (10, 30)
+f_range = (10, 20)
 LALpars = lal.CreateDict()
-approx = lalsim.SimInspiralGetApproximantFromString("IMRPhenomTPHM")
-t_step = 1/4096. #srate = 4069 Hz
+#approx = lalsim.SimInspiralGetApproximantFromString("IMRPhenomTPHM")
+approx = lalsim.SimInspiralGetApproximantFromString("SEOBNRv4PHM")
+t_step = 1/(2*4096.) #srate = 4069 Hz
 
 modes = [(2,2), (2,1), (3,3), (4,4), (5,5)]
 

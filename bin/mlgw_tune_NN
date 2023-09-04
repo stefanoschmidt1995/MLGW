@@ -47,8 +47,13 @@ parser.add_argument(
 	help="Number of layers for the optimizer to try")
 
 parser.add_argument(
-	"--polynomial-features", type = int, required = False, nargs = '+', default = [1, 2, 3, 4, 5],
+	"--polynomial-order", type = int, required = False, nargs = '+', default = [1, 2, 3, 4, 5],
 	help="Data augmentation features for the optimizer to try")
+	
+parser.add_argument(
+	"--features", type = str, required = False, nargs = '+', default = 'mc_chieff',
+	help="Features to use for data augmenation purposes")
+	
 
 parser.add_argument(
 	"--analyse", action='store_true',
@@ -68,7 +73,8 @@ hyperparameters = {
 	"layers" : args.n_layers, #num of hidden layers
 	"activation" : ("sigmoid"),
 	"learning_rate" : (0.00001, 0.00003, 0.0001,0.0003,0.001,0.005),
-	"feature_order" : args.polynomial_features
+	"feature_order" : args.polynomial_order,
+	"features": args.features
 }
 
 if not args.project_name:

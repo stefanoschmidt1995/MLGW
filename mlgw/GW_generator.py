@@ -1711,9 +1711,9 @@ class mode_generator_MoE(mode_generator_base):
 			verboseprint("    Loaded phase model for comp: ", k)
 			k += 1
 
-		if "times" in file_list:
+		if ("times" in file_list) or ("times.dat" in file_list):
 			verboseprint("  Loaded time vector")
-			self.times = np.loadtxt(folder+"times")
+			self.times = np.loadtxt(*glob.glob(str(folder+"times*")))
 		else:
 			raise RuntimeError("Unable to load model: no time vector given!")
 

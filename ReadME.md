@@ -134,13 +134,13 @@ and you are good to go!
 ## Info
 
 Two papers describing the methods and different versions of the model have been published:
-- Machine learning gravitational waves from binary black hole mergers ([link](https://journals.aps.org/prd/abstract/10.1103/PhysRevD.103.043020))
-- Coming soon
+- S. Schmidt et al., Machine learning gravitational waves from binary black hole mergers ([link](https://journals.aps.org/prd/abstract/10.1103/PhysRevD.103.043020))
+- T. Grimbergen et al., Coming soon
 
 You can also read two thesis, which described version 1 and version 3 of the code respectively:
 
-- S. Schmidt, Gravitational wave modelling with machine learning [link](docs/img/schmidt_thesis.pdf)
-- T. Grimbergen, Deriving the Einstein Field Equations and predicting its Gravitational Wave Solutions using Neural Networks [link](docs/img/grimbergen_thesis.pdf)
+- S. Schmidt, Gravitational wave modelling with machine learning ([link](docs/img/schmidt_thesis.pdf))
+- T. Grimbergen, Deriving the Einstein Field Equations and predicting its Gravitational Wave Solutions using Neural Networks ([link](docs/img/grimbergen_thesis.pdf))
 
 For more information, you can contact me at [stefanoschmidt1995@gmail.com](mailto:stefanoschmidt1995@gmail.com)
 
