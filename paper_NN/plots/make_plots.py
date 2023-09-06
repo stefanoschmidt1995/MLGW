@@ -6,6 +6,7 @@ from matplotlib.lines import Line2D
 from matplotlib import rc
 #rc('font',**{'family':'sans-serif','sans-serif':['Helvetica']})
 rc('text', usetex=True)
+from scipy.stats import binned_statistic_2d, gaussian_kde
 
 from pathlib import Path
 import os
@@ -102,11 +103,28 @@ def plot_validation(run_folder, title = None, savefile = None):
 
 	plt.show()
 
+def plot_2d_data(data, values, ax = None, statistic= 'mean', bins = 30, cbar = True):
+	stat, x_edges, y_edges, binnumber = binned_statistic_2d(*data.T, values = values, statistic = statistic, bins = bins)
+
+	if ax is None:
+		fig = plt.figure()
+		ax = plt.gca()
+
+	X, Y = np.meshgrid(x_edges,y_edges)
+	mesh = ax.pcolormesh(X, Y, stat.T)
+	if cbar:
+		cbar = plt.colorbar(mesh, ax = ax)
+		return ax, mesh, cbar
+	return ax, mesh
+
 def plot_speed_accuracy_hist(json_file):
 	dataset = pd.read_json(json_file, lines = True)
+	dataset['M'] = np.array(dataset['m1']+dataset['m2'])
+	dataset['q'] = np.array(dataset['m1']/dataset['m2'])
 	
 	kwargs = {'histtype':'step', 'density': True, 'bins': 100}
 	
+		#Accuracy histogram
 	fig, axes = plt.subplots(2,1, sharex = True, figsize = (3.54, 3.54))
 	plt.suptitle(r"$\textrm{Model accuracy}$")
 	axes[0].hist(np.log10(dataset['mismatch']), color = 'k', label = 'overall', **kwargs)
@@ -114,11 +132,29 @@ def plot_speed_accuracy_hist(json_file):
 		if k.find('mismatch_')==-1: continue
 		mode = k.replace('mismatch_', '') 
 		axes[1].hist(np.log10(dataset[k]), label = "$({},{})$".format(*mode), **kwargs)
-	plt.xlabel(r'$\mathcal{F}$')
+	plt.xlabel(r'$\log_{10}\mathcal{F}$')
 	axes[0].legend(*axes[1].get_legend_handles_labels())
+	plt.xticks(list(range(-6,1)))
 	plt.tight_layout()
 	plt.savefig('../tex/img/accuracy.pdf')
 	
+	
+		#Binned histograms
+	print(dataset.keys())
+	l_latex = { 'M': r'$M (M_\odot)$', 'q': r'$q$',
+		's1z': r'$s_\mathrm{1z}$', 's2z': r'$s_\mathrm{2z}$'}
+	for k1, k2 in [('M', 'q'), ('q', 's1z'), ('q', 's2z')]:
+		print("Making colored plot for {}-{}".format(k1,k2))
+		fig = plt.figure(figsize = (3.54, 3.54))
+		ax = plt.gca()
+		ax, mesh, cbar = plot_2d_data(np.array(dataset[[k1,k2]]), np.log10(dataset['mismatch']), ax = ax, statistic= 'mean', bins = 30, cbar = True)
+		plt.xlabel(l_latex[k1])
+		plt.ylabel(l_latex[k2])
+		cbar.set_label(r'$\log_{10}\mathcal{F}$', rotation=270, labelpad = 15)
+		plt.tight_layout()
+		plt.savefig('../tex/img/colormesh_{}_{}.pdf'.format(k1,k2))
+
+		#Speed up histogram
 	plt.figure(figsize = (3.54, 3.54))
 	plt.title(r'$\textrm{Timing analysis}$')
 	plt.hist(dataset['time_lal']/dataset['time_mlgw'], label = r"$\textrm{no batch}$", **kwargs)
@@ -141,8 +177,8 @@ def mse_table():
 	modes = ['22', '21', '33', '44', '55']
 	
 	df = []
-	pca_folder = '/home/stefano/Dropbox/Stefano/PhD/mlgw_repository/dev/mlgw_NN/pca_datasets/IMRPhenomTPHM'
-	model_folder = '/home/stefano/Dropbox/Stefano/PhD/mlgw_repository/dev/mlgw_NN/models_NN/model_IMRPhenomTPHM/{}/'
+	pca_folder = '/home/stefano/Dropbox/Stefano/PhD/mlgw_repository/dev/mlgw_NN/pca_datasets/SEOBNRv4PHM'
+	model_folder = '/home/stefano/Dropbox/Stefano/PhD/mlgw_repository/dev/mlgw_NN/models_NN/model_SEOBNRv4PHM/{}/'
 	#model_folder = '/home/stefano/Dropbox/Stefano/PhD/mlgw_repository/dev/mlgw_NN/models_NN/model_IMRPhenomTPHM_mc_chieff/{}/'
 
 	#pca_folder = '../pca_datasets/IMRPhenomTPHM'

@@ -99,7 +99,7 @@ We train our model on the widely used approximant \texttt{IMRPhenomTHM} \stefano
 Our experiments showed that our model offers a substantial speed up with respect to the original model, matching the speed of the state-of-the-art surrogate models.
 
 This paper is organized as follows. In Sec.~\ref{sec:model} we introduce the details of the model presented here, stressing the differences with the model in  \cite{Schmidt:2020yuu}.
-Sec.~\ref{sec:performance} is devoted to the validation of our model: we will motivate our choice of several hyperparameters and perform an accuracy a speed study. Finally, we analyse the GW event GW150914, showing that our model does not introduce any bias with respect to the training model.
+Sec.~\ref{sec:performance} is devoted to the validation of our model: we will motivate our choice of several hyperparameters and perform an accuracy a speed study.
 In Sec.~\ref{sec:end}, we present some final remarks and highlight future perspective.
 
 \begin{itemize}
@@ -230,16 +230,19 @@ The minimisation of the loss function is performed by stochastic gradient descen
 To perform our regression $\theta \longmapsto \boldsymbol{g}$, we employ an ensemble of networks, that suitably combined delivers accurate results.
 To improve the representative power or the ANN, we employ feature augmentation on the vector $\boldsymbol{\vartheta} = (q, s_1, s_2)$, effectively using the augmented vector $\tilde{\boldsymbol{\vartheta}}$ as input for the regression. The features added needs to be chosen with a validation process: this will be discussed in the next section.
 
+Before the training, the regression targets $\boldsymbol{y}_i$ are rescaled such that $\boldsymbol{y}_i \rightarrow \frac{\boldsymbol{y}_i}{\boldsymbol{w}}$, where $\boldsymbol{w}$ keeps the maximum of $|\boldsymbol{y}_i|$ along each axis. %${w}_j = \max_i(|(\boldsymbol{y}_i)_j|)$.
+In this way all the regression targets span the same order or magnitude, making the regression task easier.
+
 For the amplitude $\boldsymbol{A}_{\ell m}$ of each mode, we employ a single ANN $\mathcal{N}_{A_{\ell m}}$.
 The predicted amplitude $\hat{\boldsymbol{A}}_{\ell m}$, including the PCA reconstruction, has the following form:
 \begin{equation}
 	\hat{\boldsymbol{A}}_{\ell m}(\boldsymbol{\vartheta}) = H_{A_{\ell m}}^T \mathcal{N}_{A_{\ell m}}(\tilde{\boldsymbol{\vartheta}}) + \boldsymbol{\mu}_{A_{\ell m}}
 \end{equation}
 
-For the phase $\boldsymbol{\phi}_{\ell m}$, we employ one ANN $\mathcal{N}_{\phi_{\ell m}\text{- 12}}$ only to predict the first two PCA components.
+For the phase $\boldsymbol{\phi}_{\ell m}$, we employ one ANN $\mathcal{N}_{\phi_{\ell m}\text{- 12}}$ to predict only the first two PCA components.
 Another ANN will take care of the remaining components $\mathcal{N}_{\phi_{\ell m}\text{- 2:K}}$.
 On top of this, we build an additional ANN $\mathcal{N}_{\phi_{\ell m}\text{- residual}}$ to target the residual of the predictions of $\mathcal{N}_{\phi_{\ell m}\text{- 12}}$.
-Such scheme make sure that the first two PC are predicted with much larger accuracy than the others. This is needed since in the reconstructed WF depends largely on the first two components, hence a small fractional error can potentially have a large impact on the overall accuracy.
+The scheme make sure that the first two PCs are predicted with much larger accuracy than the others. Indeed, the reconstructed WF depends largely on the first two components and a small fractional error can potentially have a large impact on the overall accuracy.
 
 The predicted phase $\hat{\boldsymbol{\phi}}_{\ell m}$ is then given by:
 %
@@ -257,13 +260,27 @@ We train our model using the PCA dataset, obtained by PCA reducing the training 
 	\mathcal{L} = \frac{1}{N} \sum_{i=1}^N \Bigl((\mathcal{N}(\boldsymbol{\vartheta}_i) - \boldsymbol{y}_i)}\boldsymbol{w} \Bigr)^2
 \end{equation}
 %
-where $\boldsymbol{y}_i$ is the regression target of each network and the $\boldsymbol{w} \in \R^K$ is a vector of weights. The multiplication is performed elementwise.
-The role of $\boldsymbol{w}$ is to weight differently contribution from different PCs: this allows us to take into account the fact that the contribution of different PC to the reconstructed waveform can vary of different order of magnitude.
+where $\boldsymbol{y}_i$ is the (scaled) regression target of each network and $\boldsymbol{w} \in \R^K$ takes into account the fact that different PCs have different orders of magnitude.
 
 %%%%%%%%%%%%%%%%%%%
 \section{Performance study}
 \label{sec:performance}
-\blindtext
+In this section, we first study how the model performance depends on the different choices of hyperparameters (network architecture, learning rate, features etc...): this makes sure that we reproduce our data at best.
+We then evaluate the accuracy of our model and report the speed up that we obtain when using \texttt{mlgw-NN} instead of the training model \texttt{SEOBNRv4PHM}.
+
+In what follows, we use the {\it match} $\mathcal{M}$ to measure the discrepancy between two waveforms.
+For two modes $h^1_{\ell m}$, $h^2_{\ell m}$ we define the match as:
+\begin{equation}
+	\mathcal{M}	= \max_t \int_{-\infty}^{\infty} \text{d}f \; \frac{{\tilde{\hat{h}}^*}^1_{\ell m} \tilde{\hat{h}}^2_{\ell m}}{S_n(f)} e^{i2\pi ft}
+\end{equation}
+where $\hat{h}$ refers to a normalized waveform (i.e. with an unitary match with itself) and $\tilde{\phantom{h}}$ denotes the Fourier transform.
+
+Scalar product
+
+Match for modes
+
+Symphony match
+
 \subsection{Hyperparameter optimization}
 \label{sec:hyperparameter}
 

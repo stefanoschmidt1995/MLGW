@@ -2,7 +2,7 @@
 Script to test the accuracy and the performance a mlgw model
 """
 import mlgw
-from mlgw.GW_helper import generate_waveform, compute_optimal_mismatch
+from mlgw.GW_helper import generate_waveform
 
 import numpy as np
 import matplotlib.pyplot as plt
@@ -98,11 +98,10 @@ if args.model_folder.isnumeric():
 
 generator = mlgw.GW_generator(args.model_folder)	#initializing the generator with standard model
 
-np.random.seed(21071995)
-
 		#getting random theta
-m1_range = (10.,50.)
-m2_range = (10.,50.)
+		#Safe zone: m1_range = (10, 50)
+M_range = (30., 80.)
+q_range = (1.,10.)
 s1_range = (-0.9,0.9)
 s2_range = (-0.9,0.9)
 d_range = (.5,100.)
@@ -116,8 +115,8 @@ t_step = 1/(2*4096.) #srate = 4069 Hz
 
 modes = [(2,2), (2,1), (3,3), (4,4), (5,5)]
 
-low_list = [m1_range[0],m2_range[0], s1_range[0], s2_range[0], d_range[0], i_range[0], phi_0_range[0]]
-high_list = [m1_range[1],m2_range[1], s1_range[1], s2_range[1], d_range[1], i_range[1], phi_0_range[1]]
+low_list = [M_range[0],q_range[0], s1_range[0], s2_range[0], d_range[0], i_range[0], phi_0_range[0]]
+high_list = [M_range[1],q_range[1], s1_range[1], s2_range[1], d_range[1], i_range[1], phi_0_range[1]]
 
 print("Saving output to file: ", args.output_file)
 if os.path.isfile(args.output_file):
@@ -128,8 +127,11 @@ for i in tqdm(range(args.n_wfs), disable = args.verbose, desc = 'Loops on WFs'):
 			#computing test WFs
 			#add support also for lal WFs, 'cause you need to check!
 	theta = np.random.uniform(low = low_list, high = high_list, size = (7, ))
+	theta[:2] = theta[0]*theta[1]/(1+theta[1]), theta[0]/(1+theta[1]) #from M, q to m1, m2
 	f_min = np.random.uniform(*f_range)
+
 	m1, m2, s1z, s2z, d, iota, phi_ref  = theta
+
 	new_dict_row = {'m1':m1, 'm2':m2, 's1z':s1z, 's2z':s1z, 'd':d, 'iota':iota, 'phi_ref':phi_ref, 'f_min':f_min}
 	if args.verbose: print("it: {} - theta {} ".format( i, theta[:4]))
 	

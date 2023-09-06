@@ -22,6 +22,8 @@ from ML_routines import PCA_model, augment_features
 from keras.layers import Dense
 from keras.optimizers import Nadam
 from keras.callbacks import EarlyStopping, LearningRateScheduler
+from keras import backend as backend
+
 
 from pathlib import Path
 
@@ -357,7 +359,11 @@ class NN_HyperModel(HyperModel):
 		self.output_nodes = output_nodes
 		
 	def build(self, hp):
-
+		
+			#This apparently helps to save memory
+			#https://stackoverflow.com/questions/42047497/keras-out-of-memory-when-doing-hyper-parameter-grid-search
+		backend.clear_session()
+		
 		#FIXME: the enumeration here is super ugly: any chance to improve it?
 		if isinstance(self.hyperparameter_ranges["units"], (tuple, list)):
 			units = hp.Choice('units', self.hyperparameter_ranges["units"])
@@ -473,12 +479,10 @@ def tune_model(out_folder, project_name, quantity, PCA_data_loc, PC_to_fit, hype
 		project_name=project_name
 	)
 
-	callback_list = []
-	early_stopping = EarlyStopping(monitor='val_loss', patience=100, restore_best_weights=True)
-	callback_list.append(early_stopping)
-	
-	LR_scheduler = LearningRateScheduler(Schedulers('exponential', exp=-0.0003).scheduler)
-	callback_list.append(LR_scheduler)
+	callback_list = [
+		EarlyStopping(monitor='val_loss', patience=100, restore_best_weights=True),
+		LearningRateScheduler(Schedulers('exponential', exp=-0.0003).scheduler)
+	]
 
 	tuner.search(PCA_data.train_theta, PCA_data.train_var, epochs=max_epochs,
 			validation_data=(PCA_data.test_theta, PCA_data.test_var),

@@ -67,7 +67,7 @@ PCA_model
 		to_save[:D,:] = first_row
 		to_save[D,:K] = max_PC
 		to_save[D+1,:K] = E.real
-		to_save[D:,-1] = np.NAN		
+		to_save[D:,-1] = np.NAN	
 
 		np.savetxt(filename, to_save)
 		return None 
