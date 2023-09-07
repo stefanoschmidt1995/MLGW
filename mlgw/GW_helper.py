@@ -300,7 +300,7 @@ create_dataset_TD
 			elif 0.3 <= x < 0.8:
 				q = np.random.uniform(low=q_range[0],high=q_range[1])
 			else:
-				q = np.max(np.random.uniform(low=q_range[0],high=q_range[1],size=4))
+				q = np.max(np.random.uniform(low=q_range[0],high=q_range[1],size=5))
 		else:
 			q = float(q_range)
 		if isinstance(s1_range, (tuple, list)):

@@ -10,6 +10,7 @@ superscriptaddress,10pt]{revtex4-1}
 \usepackage{bm}
 \usepackage{afterpage}
 \usepackage{graphicx}
+\graphicspath{{img/}} %setting img path
 \usepackage{psfrag}
 \usepackage{mathtools}
 \usepackage{tensor}
@@ -23,7 +24,6 @@ superscriptaddress,10pt]{revtex4-1}
 \usepackage{tabularx}
 \usepackage{ragged2e}
 \usepackage{blindtext}
-\usepackage{graphicx}
 \usepackage{siunitx}
 	\sisetup{output-decimal-marker={.}}
 	
@@ -35,6 +35,9 @@ superscriptaddress,10pt]{revtex4-1}
 %argmin and argmax
 \DeclareMathOperator*{\argmax}{arg\,max}
 \DeclareMathOperator*{\argmin}{arg\,min}
+\newcommand{\scalar}[2]{\langle #1|#2 \rangle}
+\newcommand{\scalarnonorm}[2]{\langle #1|#2 \rangle_{\text{not normalized}}}
+\newcommand{\rescalar}[2]{( #1 |#2 )}
 
 % comments command
 \newcommand{\stefano}[1]{{\textcolor{red}{\texttt{S: #1}} }}
@@ -157,6 +160,21 @@ This is a good compromise between the need of having a faithful representation o
 
 The starting point of the grid $\tau_0$ sets the length of the waveform that our model is able to generate. We choose $\tau_0 = \text{???}$.
 
+To make sure that the distribution of $q$ is skewed towards towards the boundaries, where the regression is less accurate, we sample the mass ratio $q$ in the range $[1,10]$ with the following procedure:
+\begin{itemize}
+	\item We sample $q_1, \hdots, q_5 \sim \mathcal{U}_{[1,10]}$
+	\item We sample $x \sim \mathcal{U}_{[1,10]}$
+	\item We select q, based on the value of $x$:
+	\begin{itemize}
+		\item If $x \in [0,0.3)$, $\min q_1, \hdots, q_5$
+		\item If $x \in [0.3, 0.8)$, $q_1$
+		\item If $x \in [0.8, 1]$, $\min q_1, \hdots, q_5$
+	\end{itemize}
+\end{itemize}
+where $\mathcal{U}_{[a,b]}$ is the uniform distribution in $[a,b]$.
+The spins are drawn uniformly in the range $[-0.99, 0.99]$.
+\stefano{This mechanism is complicated but it's late to change it}
+
 Once a time grid is set, we evaluate all the modes (amplitude and phase) on the time grid and represent them as vectors in $\R^D$.
 We then create a dataset $\{X, Y\}$ of $N$ elements. Each row of the dataset is of the form:
 \begin{align}
@@ -265,55 +283,81 @@ where $\boldsymbol{y}_i$ is the (scaled) regression target of each network and $
 %%%%%%%%%%%%%%%%%%%
 \section{Performance study}
 \label{sec:performance}
-In this section, we first study how the model performance depends on the different choices of hyperparameters (network architecture, learning rate, features etc...): this makes sure that we reproduce our data at best.
-We then evaluate the accuracy of our model and report the speed up that we obtain when using \texttt{mlgw-NN} instead of the training model \texttt{SEOBNRv4PHM}.
+In this section, we first study how the model performance depends on the different choices of hyperparameters (network architecture, learning rate, features etc...).
+The architecture details of the model (chosen after hyperparameters tuning) are described in App.~\ref{app:model}.
+We then evaluate the faithfulness of our model and report the speed up that we obtain when using \texttt{mlgw-NN} instead of the training model \texttt{SEOBNRv4PHM}.
 
-In what follows, we use the {\it match} $\mathcal{M}$ to measure the discrepancy between two waveforms.
-For two modes $h^1_{\ell m}$, $h^2_{\ell m}$ we define the match as:
+To measure the discrepancy between two waveforms  $h_1$, $h_2$, we define a scalar product:
 \begin{equation}
-	\mathcal{M}	= \max_t \int_{-\infty}^{\infty} \text{d}f \; \frac{{\tilde{\hat{h}}^*}^1_{\ell m} \tilde{\hat{h}}^2_{\ell m}}{S_n(f)} e^{i2\pi ft}
+	\rescalar{h_1}{h_2} = 4 \Re \int_{-\infty}^{\infty} \text{d}f \; \frac{{\tilde{h}^*}_1(f) \tilde{h}_2(f)}{S_n(f)}
 \end{equation}
-where $\hat{h}$ refers to a normalized waveform (i.e. with an unitary match with itself) and $\tilde{\phantom{h}}$ denotes the Fourier transform.
+where $\tilde{\phantom{h}}$ denotes the Fourier transform and $S_n(f)$ is the Power Spectral Density (PSD) of the detector's noise.
+We can use the scalar product to normalize a waveform: we denote by $\hat{h} = \frac{h}{\sqrt{\rescalar{h}{h}}}$ the normalized waveform $h$.
 
-Scalar product
+To measure the discrepancy between two individual modes $h^1_{\ell m}$ and $h^2_{\ell m}$, we define the {\it match} $\mathcal{M}$:
+\begin{equation}\label{eq:match}
+	\mathcal{M} = \max_t \; \rescalar{\hat{h}^1_{\ell m}}{\hat{h}^2_{\ell m} e^{i 2\pi ft}}
+\end{equation}
+where $h e^{i 2\pi ft}$ denotes (with a slight abuse of notation) $h$ translated in time by a factor of $t$.
+We call {\it mismatch} the quantity $\mathcal{F} = 1 - \mathcal{M}$.
 
-Match for modes
+The match defined above amounts to the the search statistics being used for matched filtering searches of non-precessing/non-HM signals \cite{}.
+A different stastics is needed to search for HM signals, hence the match defined above is not suitable to compare two different waveforms with HM content Eq.~\eqref{eq:h_parametrization}.
+In this case, we need to compare the two polarizations $h_+$, $h_\times$ of a waveform with a signal $s$ observed at the detector:
+\begin{equation}
+	s = F_+ h_+ + F_\times h_\times
+\end{equation}
+where $F_+, F_\times$ are called antenna pattern functions, depending on the sky location of the source and on the polarization angle \cite{}.
 
-Symphony match
+We then introduce the {\it symphony match}\footnote{The name comes from the paper \cite{} first introducing it} between a signal $s$ and a waveform $h$:
+\begin{equation}\label{eq:match_sym}
+	\mathcal{M}_\mathrm{sym} = \max_t \;
+		\frac{ \rescalar{\hat{s}}{\hat{h}_+}^2 + \rescalar{\hat{s}}{\hat{h}_\times}^2 - 2 \rescalar{\hat{h}_\times}{\hat{h}_+} \rescalar{\hat{s}}{\hat{h}_+} \rescalar{\hat{s}}{\hat{h}_\times}}
+		{1-\rescalar{\hat{h}_\times}{\hat{h}_+}^2}
+\end{equation}
+note that the $\mathcal{M}_\mathrm{sym}$ depends on the signal $s$, hence it depends on the sky location and polarization angle.
+As above, we define the symphony mismatch as $\mathcal{F}_\mathrm{sym} = 1 - \mathcal{M}_\mathrm{sym}$.
+\stefano{I didn't want to go into too many details here but maybe the whole discussion is unclear and needs more details}
 
 \subsection{Hyperparameter optimization}
 \label{sec:hyperparameter}
 
-\subsection{Accuracy study}
+\subsection{Accuracy study}\label{sec:accuracy}
 
-\begin{table*}
-\begin{tabular}{lllll}
-\toprule
-mode &                                       amp &                    ph &                                   ph\_2345 &           ph\_residual \\
-\midrule
-22 &  [9.47e-06, 2.12e-04, 1.86e-03, 6.74e-03] &  [3.60e-08, 8.25e-07] &  [3.97e-05, 1.08e-04, 6.22e-04, 2.11e-03] &  [2.87e-02, 9.43e-03] \\
-21 &  [4.11e-01, 3.85e-01, 1.45e-01, 7.55e-02] &  [1.50e-05, 3.13e-05] &  [2.09e-03, 3.07e-02, 3.70e-02, 5.01e-02] &  [1.01e-02, 6.41e-03] \\
-33 &  [2.68e-02, 2.59e-02, 1.17e-01, 8.74e-02] &  [1.23e-05, 1.73e-05] &  [1.29e-04, 6.78e-04, 9.13e-02, 6.50e-02] &  [1.92e-02, 3.01e-03] \\
-44 &  [5.63e-01, 3.27e-01, 1.36e-01, 1.42e-01] &  [1.68e-05, 1.89e-06] &  [1.65e-04, 1.29e-03, 1.47e-01, 2.05e-01] &  [3.36e-02, 1.89e-02] \\
-55 &  [2.19e-02, 6.88e-02, 1.78e-01, 5.95e-02] &  [3.49e-05, 2.02e-06] &  [1.21e-04, 2.53e-01, 2.07e-02, 2.77e-02] &  [2.06e-02, 2.28e-02] \\
-\bottomrule
-\end{tabular}
-\caption{Table for the model accuracy}
-\label{tab:table_accuracy}
-\end{table*}
+To test the accuracy of our model, we generate a test set with $50000$ randomly chosen waveforms generated with the training model \texttt{SEOBNRv4PHM}.
+The waveforms masses are characterized by a total mass in the range $[30, 80] M_\odot$, by a mass ratio $q \in [1, 10]$. The spins are chosen in the range $[-0.99, 0.99]$ and the inclination angle $\iota$ and reference phase $\varphi_0$ are drawn uniformly from a sphere.
+We set the starting frequency in the range $[10, 20]Hz$.
 
-\label{sec:accuracy}
-\begin{itemize}
-	\item mode by mode
-	\item overall
-\end{itemize}
+In Fig.~\ref{fig:accuracy_hist}, we report the histogram of the distribution of the mismatches between \texttt{mlgw} and the test waveforms. The upper part refers to the mismatches Eq.~\eqref{eq:match_sym} computed on the overall waveforms (with sky location sampled uniformly over the sky); the lower box refers to mismatches computed mode by mode with Eq.~\eqref{eq:match}.
+We note that ...
 
-\subsection{Parameter Estimation}
-\label{sec:PE}
-gw150914? Or other events?
+In Fig.~\ref{fig:countour_plots} we report the dependency of the mismatch as a function of the different orbital parameters.
+From the figure, it is manifest that the model has very stable performance across the parameter space.
+The faithfulness decreases for high positive values of the spins and for mass ratio $q\sim 1$: such cases are at the boundaries of the waveform dataset, hence they correspond to extreme values in the PCA reduction, making harder for the network to predict such cases. Despite this, in such ``extreme" regions, the average mismatch is still of the order of $10^{-3}$.
+
+\begin{figure}[t]
+	\centering
+	\includegraphics[scale = 1]{accuracy}
+	\caption{}
+	\label{fig:accuracy_hist}
+\end{figure}
+
+\begin{figure*}[t]
+	\centering
+	\includegraphics[width=\textwidth]{colormesh}
+	\caption{WRITEME}
+	\label{fig:countour_plots}
+\end{figure*}
 
 \subsection{Timing study}
 \label{sec:timing}
+
+\begin{figure}[t]
+	\centering
+	\includegraphics[scale = 1]{timing}
+	\caption{}
+	\label{fig:timing_hist}
+\end{figure}
 
 %%%%%%%%%%%%%%%%%%%
 
@@ -321,8 +365,7 @@ gw150914? Or other events?
 \label{sec:end}
 \blindtext
 
-
-	%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% END & BIB
+	%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% END
 
 
         \begin{acknowledgments}
@@ -336,8 +379,17 @@ gw150914? Or other events?
           Dutch Nikhef, with contributions by Polish and Hungarian institutes.
         \end{acknowledgments}
 
+	%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% APPENDIX
+	
+\appendix
+
+\section{Details of the model employed}\label{app:model}
+
+	%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% BIBLIO
+
 	\bibliography{biblio.bib}
 	\bibliographystyle{ieeetr}
+
 
 \end{document}
 

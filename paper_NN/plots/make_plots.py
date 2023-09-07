@@ -4,7 +4,7 @@ import matplotlib.pyplot as plt
 import matplotlib.ticker as tck
 from matplotlib.lines import Line2D
 from matplotlib import rc
-#rc('font',**{'family':'sans-serif','sans-serif':['Helvetica']})
+rc('font',**{'size': 9})
 rc('text', usetex=True)
 from scipy.stats import binned_statistic_2d, gaussian_kde
 
@@ -103,7 +103,7 @@ def plot_validation(run_folder, title = None, savefile = None):
 
 	plt.show()
 
-def plot_2d_data(data, values, ax = None, statistic= 'mean', bins = 30, cbar = True):
+def plot_2d_data(data, values, ax = None, statistic= 'mean', bins = 30, vmin = None, vmax = None, cbar = True):
 	stat, x_edges, y_edges, binnumber = binned_statistic_2d(*data.T, values = values, statistic = statistic, bins = bins)
 
 	if ax is None:
@@ -111,11 +111,12 @@ def plot_2d_data(data, values, ax = None, statistic= 'mean', bins = 30, cbar = T
 		ax = plt.gca()
 
 	X, Y = np.meshgrid(x_edges,y_edges)
-	mesh = ax.pcolormesh(X, Y, stat.T)
+	mesh = ax.pcolormesh(X, Y, stat.T, vmin = vmin, vmax = vmax)
+	
 	if cbar:
 		cbar = plt.colorbar(mesh, ax = ax)
 		return ax, mesh, cbar
-	return ax, mesh
+	return ax, mesh, None
 
 def plot_speed_accuracy_hist(json_file):
 	dataset = pd.read_json(json_file, lines = True)
@@ -126,7 +127,7 @@ def plot_speed_accuracy_hist(json_file):
 	
 		#Accuracy histogram
 	fig, axes = plt.subplots(2,1, sharex = True, figsize = (3.54, 3.54))
-	plt.suptitle(r"$\textrm{Model accuracy}$")
+	#plt.suptitle(r"$\textrm{Model accuracy}$")
 	axes[0].hist(np.log10(dataset['mismatch']), color = 'k', label = 'overall', **kwargs)
 	for k in dataset.keys():
 		if k.find('mismatch_')==-1: continue
@@ -136,34 +137,40 @@ def plot_speed_accuracy_hist(json_file):
 	axes[0].legend(*axes[1].get_legend_handles_labels())
 	plt.xticks(list(range(-6,1)))
 	plt.tight_layout()
-	plt.savefig('../tex/img/accuracy.pdf')
+	plt.savefig('../tex/img/accuracy.pdf', bbox_inches='tight')
 	
 	
 		#Binned histograms
 	print(dataset.keys())
 	l_latex = { 'M': r'$M (M_\odot)$', 'q': r'$q$',
 		's1z': r'$s_\mathrm{1z}$', 's2z': r'$s_\mathrm{2z}$'}
-	for k1, k2 in [('M', 'q'), ('q', 's1z'), ('q', 's2z')]:
+	fig, axes = plt.subplots(1, 3, figsize = (3.54*2, 3.54/1.5))
+	for ax, (k1, k2) in zip(axes, [('M', 'q'), ('q', 's1z'), ('q', 's2z')]):
 		print("Making colored plot for {}-{}".format(k1,k2))
-		fig = plt.figure(figsize = (3.54, 3.54))
-		ax = plt.gca()
-		ax, mesh, cbar = plot_2d_data(np.array(dataset[[k1,k2]]), np.log10(dataset['mismatch']), ax = ax, statistic= 'mean', bins = 30, cbar = True)
-		plt.xlabel(l_latex[k1])
-		plt.ylabel(l_latex[k2])
-		cbar.set_label(r'$\log_{10}\mathcal{F}$', rotation=270, labelpad = 15)
-		plt.tight_layout()
-		plt.savefig('../tex/img/colormesh_{}_{}.pdf'.format(k1,k2))
+		ax, mesh, cbar = plot_2d_data(np.array(dataset[[k1,k2]]), np.log10(dataset['mismatch']),
+			ax = ax, statistic= 'mean', bins = 30, cbar = False ,
+			vmin = np.percentile(np.log10(dataset['mismatch']), 5), vmax = np.percentile(np.log10(dataset['mismatch']), 95))
+		ax.set_xlabel(l_latex[k1])
+		ax.set_ylabel(l_latex[k2], labelpad = None if k2=='q' else 1)
+
+	fig.subplots_adjust(right=0.85, left = 0.08, top = 0.98, bottom = 0.19, wspace = 0.4)
+	cbar_ax = fig.add_axes([0.87, 0.25, 0.02, 0.7])
+	cbar = fig.colorbar(mesh, cax=cbar_ax)
+	cbar.set_label(r'$\log_{10}\mathcal{F}$', rotation=270, labelpad = 15)
+
+	#plt.tight_layout()
+	plt.savefig('../tex/img/colormesh.pdf'.format(k1,k2), bbox_inches='tight')
 
 		#Speed up histogram
 	plt.figure(figsize = (3.54, 3.54))
-	plt.title(r'$\textrm{Timing analysis}$')
+	#plt.title(r'$\textrm{Timing analysis}$')
 	plt.hist(dataset['time_lal']/dataset['time_mlgw'], label = r"$\textrm{no batch}$", **kwargs)
 	plt.hist(dataset['time_lal']/dataset['time_mlgw_100'], label = r"$\textrm{batch}$", **kwargs)
 	plt.axvline(1, c='k', ls ='dashed')
 	plt.xlabel(r'$t_{\textrm{train model}}/t_{\texttt{mlgw}}$')
 	plt.legend()
 	plt.tight_layout()
-	plt.savefig('../tex/img/timing.pdf')
+	plt.savefig('../tex/img/timing.pdf', bbox_inches='tight')
 	plt.show()
 	
 	
