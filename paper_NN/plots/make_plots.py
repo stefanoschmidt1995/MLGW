@@ -53,7 +53,7 @@ def dodge_points(points, offset):
 			
 	return points
 
-def plot_validation(run_folder, title = None, savefile = None):
+def plot_validation(run_folder, title = None, savefile = None, put_legend = True):
 	
 	if not isinstance(run_folder, Path): file_loc = Path(run_folder)
 
@@ -72,7 +72,7 @@ def plot_validation(run_folder, title = None, savefile = None):
 	features = np.array([v['hyperparameters']['feature order'] for k, v in trials.items()])
 
 		#Printing the best models
-	ids_sort = np.argsort(scores)[:50]
+	ids_sort = np.argsort(scores)[:5]
 	print("Best {} models: ".format(len(ids_sort)))
 	for id_ in ids_sort:
 		print('\t', *[v for i, (k, v) in enumerate(trials.items()) if i == id_])
@@ -83,25 +83,28 @@ def plot_validation(run_folder, title = None, savefile = None):
 	markers = {1: 'o', 2: '*', 3: '^', 4: 's', 5: 'p', 6: 'H'}
 	handles = []
 	
-	plt.figure(figsize = (3.54*2, 3.54))
-	if title: plt.title(r'$\textrm{'+title+r'}$')
+	plt.figure(figsize = (3.54, 3.54*0.95))
+	if title: plt.title(r'$\textrm{'+title+r'}$', fontsize = 9)
 	for feat in set(features):
 		ids = np.where(features == feat)
 		plt.scatter(*points[ids].T, c = scores[ids], marker = markers[feat], label = '{} order'.format(feat))
 		h =  Line2D([0], [0], marker=markers[feat], color='k', label='{} order'.format(feat),
                           markerfacecolor='k', lw = 0)
 		handles.append(h)
+	plt.xlim([0,11])
+	plt.gca().xaxis.set_major_locator(tck.MaxNLocator(integer = True))
 	plt.xlabel(r'$\textrm{\# layers}$')
 	plt.ylabel(r'$\textrm{\# units}$')
 	plt.yscale('log')
 	
 	cbar = plt.colorbar()
 	cbar.set_label(r'$\textrm{Validation score}$', rotation=270, labelpad = 25)
-	leg = plt.legend(handles = handles)
+	if put_legend: leg = plt.legend(handles = handles, loc = 'lower right')
+	plt.tight_layout()
 
-	if savefile: plt.savefig('../tex/img/'+savefile)
+	if savefile: plt.savefig('../tex/img/'+savefile, bbox_inches='tight')
 
-	plt.show()
+	#plt.show()
 
 def plot_2d_data(data, values, ax = None, statistic= 'mean', bins = 30, vmin = None, vmax = None, cbar = True):
 	stat, x_edges, y_edges, binnumber = binned_statistic_2d(*data.T, values = values, statistic = statistic, bins = bins)
@@ -134,16 +137,50 @@ def plot_speed_accuracy_hist(json_file):
 		mode = k.replace('mismatch_', '') 
 		axes[1].hist(np.log10(dataset[k]), label = "$({},{})$".format(*mode), **kwargs)
 	plt.xlabel(r'$\log_{10}\mathcal{F}$')
-	axes[0].legend(*axes[1].get_legend_handles_labels())
+		#Doing annotations
+	ann_str = "\\\\{}: {:.2E}\\\\{}: {:.2E}\\\\{}: {:.2E}".format(
+		r'\textrm{mean}', np.mean(dataset['mismatch']),
+		r'\textrm{median}',np.median(dataset['mismatch']),
+		r'90^\textrm{th} \textrm{ perc.}', np.percentile(dataset['mismatch'], 90))
+	ann_str = ann_str.replace(r'E-04', r'\times 10^{-4}')
+	ann_str = '$'+ann_str+'$'
+	print(ann_str)
+	axes[0].annotate(ann_str,
+		xy = (0.2,0.4),
+		xycoords = 'axes fraction',
+		fontsize = 7
+		)
+	axes[0].legend(*axes[1].get_legend_handles_labels(), loc = 'upper right')
+	axes[0].set_yscale('log')
+	axes[1].set_yscale('log')
 	plt.xticks(list(range(-6,1)))
 	plt.tight_layout()
 	plt.savefig('../tex/img/accuracy.pdf', bbox_inches='tight')
 	
-	
-		#Binned histograms
+		#Countor plots
 	print(dataset.keys())
 	l_latex = { 'M': r'$M (M_\odot)$', 'q': r'$q$',
 		's1z': r'$s_\mathrm{1z}$', 's2z': r'$s_\mathrm{2z}$'}
+	
+	fig, axes = plt.subplots(2, 3, figsize = (3.54*2, 3.54))
+	modes = ['22', '21', '33', '44', '55']
+	k1, k2 = 'q', 's1z'
+	for lm, ax in zip(modes, axes.flatten()):
+		ax.set_title('$({},{})$'.format(*lm))
+		ax, mesh, cbar = plot_2d_data(np.array(dataset[[k1,k2]]), np.log10(dataset['mismatch_{}'.format(lm)]),
+			ax = ax, statistic= 'mean', bins = 30, cbar = True)
+		ax.set_xlabel(l_latex[k1])
+		ax.set_ylabel(l_latex[k2], labelpad = None if k2=='q' else 1)
+		cbar.set_label(r'$\log_{10}\mathcal{F}$', rotation=270, labelpad = 12)
+	axes[1][2].set_visible(False)
+	plt.tight_layout()
+	fig.subplots_adjust(hspace = 1)
+	#fig.subplots_adjust(right=0.85, left = 0.08, top = 0.98, bottom = 0.19, wspace = 0.4)
+	#cbar_ax = fig.add_axes([0.87, 0.25, 0.02, 0.7])
+	#cbar = fig.colorbar(mesh, cax=cbar_ax)
+	#cbar.set_label(r'$\log_{10}\mathcal{F}$', rotation=270, labelpad = 15)
+	plt.savefig('../tex/img/colormesh_modes.pdf', bbox_inches='tight')
+	
 	fig, axes = plt.subplots(1, 3, figsize = (3.54*2, 3.54/1.5))
 	for ax, (k1, k2) in zip(axes, [('M', 'q'), ('q', 's1z'), ('q', 's2z')]):
 		print("Making colored plot for {}-{}".format(k1,k2))
@@ -159,15 +196,15 @@ def plot_speed_accuracy_hist(json_file):
 	cbar.set_label(r'$\log_{10}\mathcal{F}$', rotation=270, labelpad = 15)
 
 	#plt.tight_layout()
-	plt.savefig('../tex/img/colormesh.pdf'.format(k1,k2), bbox_inches='tight')
+	plt.savefig('../tex/img/colormesh.pdf', bbox_inches='tight')
 
 		#Speed up histogram
-	plt.figure(figsize = (3.54, 3.54))
+	plt.figure(figsize = (3.54, 3.54/2))
 	#plt.title(r'$\textrm{Timing analysis}$')
 	plt.hist(dataset['time_lal']/dataset['time_mlgw'], label = r"$\textrm{no batch}$", **kwargs)
 	plt.hist(dataset['time_lal']/dataset['time_mlgw_100'], label = r"$\textrm{batch}$", **kwargs)
 	plt.axvline(1, c='k', ls ='dashed')
-	plt.xlabel(r'$t_{\textrm{train model}}/t_{\texttt{mlgw}}$')
+	plt.xlabel(r'$t_{\texttt{SEOBNRv4PHM}}/t_{\texttt{mlgw}}$')
 	plt.legend()
 	plt.tight_layout()
 	plt.savefig('../tex/img/timing.pdf', bbox_inches='tight')
@@ -226,14 +263,13 @@ def mse_table():
 		
 
 if __name__=='__main__':
+	plot_validation('/home/stefano/Dropbox/Stefano/PhD/mlgw_repository/dev/mlgw_NN/bayesian_tuning_SEOB_22/tuning_amp_22_0123', "Tuning of amplitude", 'tuning_amp.pdf', False)
+	plot_validation('/home/stefano/Dropbox/Stefano/PhD/mlgw_repository/dev/mlgw_NN/bayesian_tuning_SEOB_22/tuning_ph_22_01', "Tuning of phase - PC 0 1", 'tuning_ph_01.pdf', False)
+	plot_validation('/home/stefano/Dropbox/Stefano/PhD/mlgw_repository/dev/mlgw_NN/bayesian_tuning_SEOB_22/tuning_ph_22_2345', "Tuning of phase - PC 2 3 4 5", 'tuning_ph_2345.pdf', False)
+	plot_validation('/home/stefano/Dropbox/Stefano/PhD/mlgw_repository/dev/mlgw_NN/bayesian_tuning_SEOB_22/tuning_ph_22_01_residual', "Tuning of residual model for phase", 'tuning_ph_01_residual.pdf', True)
+
 	#mse_table()
 	plot_speed_accuracy_hist('model_SEOB.json')
 	quit()
 	
-
-	#plot_validation('/home/stefano/Dropbox/Stefano/PhD/mlgw_repository/dev/mlgw_NN/bayesian_tuning_22/tuning_amp_22_0123', "Tuning of amplitude", 'tuning_amp.pdf')
-	#plot_validation('/home/stefano/Dropbox/Stefano/PhD/mlgw_repository/dev/mlgw_NN/bayesian_tuning_22/tuning_ph_22_01', "Tuning of phase", 'tuning_ph_01.pdf')
-	#plot_validation('/home/stefano/Dropbox/Stefano/PhD/mlgw_repository/dev/mlgw_NN/bayesian_tuning_22/tuning_ph_22_2345', "Tuning of phase (high PC)", 'tuning_ph_2345.pdf')
-	plot_validation('/home/stefano/Dropbox/Stefano/PhD/mlgw_repository/dev/mlgw_NN/bayesian_tuning_22/tuning_ph_22_01_residual', "Tuning of residual model", 'tuning_ph_01_residual.pdf')
-
 
