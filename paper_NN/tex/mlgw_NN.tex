@@ -356,7 +356,10 @@ As above, we define the symphony mismatch as $\mathcal{F}_\mathrm{sym} = 1 - \ma
 				& 5 & 50 & $\mathcal{M}_c, \eta, \log q, \chi_\text{eff}$ & 2 \\
 	\end{tabular}
 	\label{tab:model}
-	\caption{}
+	\caption{Architecture of the 4 ANNs employed to generate each mode. For each ANN we report the number of layers and the number of units per layer. We perform data augmentation by adding all the polynomials terms in the chosen features.
+	The architecture have been chosen after hyperparameter tuning (see Fig.~\ref{fig:tuning}).
+	Among the features, we use the chirp mass $\mathcal{M}_c =\frac{(m_1 m_2)^{3/5}}{(m_1+m_2)^{1/5}}$, the symmetric mass ratio $\eta = \frac{m_1 m_2}{(m_1+m_2)^2}$ and the effective spin parameter $\chi_\text{eff} = \frac{m_1 s_\text{1z} +m_2 s_\text{2z}}{m_1+m_2}$.
+	}
 \end{table}
 
 \begin{figure}[t]
