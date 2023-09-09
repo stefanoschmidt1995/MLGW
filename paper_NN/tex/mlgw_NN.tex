@@ -231,14 +231,14 @@ As a consequence, the regression for a lower order PC needs to be more accurate 
 \subsection{Neural network regression}
 \label{sec:NN}
 
-An Artificial Neural Network (ANN) is a popular regression model, consisting in a powerful parametric function, whose parameters (or weights), when properly set, can represent a large variety of relations between inputs and output.
-An ANN is built by stacking together $N_\text{L}$ layers in such a way the output of a layer is the input of the following. \tim{$D$ is already a reserved variable for the number of grid points, so I put some more primes on the $D's$ in this section to avoid confusion.} Each layer is a function $L: \R^D\prime \rightarrow \R^{D^\prime\prime} $ and has the following functional form
+An Artificial Neural Network (ANN) is a popular regression model, consisting of a powerful parametric function, whose parameters (or weights), when properly set, can represent a large variety of relations between input and output.
+An ANN is built by stacking together $N_\text{L}$ layers in such a way that the output of a layer is the input of the following layer. \tim{$D$ is already a reserved variable for the number of grid points, so I put some more primes on the $D's$ in this section to avoid confusion.} Each layer is a function $L: \R^D\prime \rightarrow \R^{D^\prime\prime} $ and has the following functional form
 
 \begin{equation}
-	\boldsymbol{y} = a(W\boldsymbol{x})
+	\boldsymbol{y} = a(W^{\prime}_{\prime\prime}\boldsymbol{x})
 \end{equation}
 %
-Where W is $D^\prime\prime \times D\prime$ matrix and $a: \R \rightarrow \R$ is an activation function that acts elementwise on the vector $W\boldsymbol{x}$.
+Where $W^{\prime}_{\prime\prime}$ is a $D^\prime\prime \times D\prime$ matrix and $a: \R \rightarrow \R$ is an activation function that acts elementwise on the vector $W^{\prime}_{\prime\prime}\boldsymbol{x}$.
 Each component $y_i$ of the output of the layer is called a node and the number of nodes is a tunable parameter, controlling the representative power of the layer.
 
 An ANN $\mathcal{N}$ is obtained by composing $N_\text{L}$ different layers (each with a suitable number of nodes):
@@ -249,11 +249,11 @@ An ANN $\mathcal{N}$ is obtained by composing $N_\text{L}$ different layers (eac
 %
 where we denote by $W$ the set of all the parameters the ANN depends on.
 
-The number of layers, together with the number of nodes per layer are hyperparameters that needs to be carefully chosen, to balance model accuracy and model complexity.
-Another sensibile choice is the activation function: several possible choices are possible, the most popular being the {\it sigmoid}, the hyperbolic tangent or the so called ReLU function. In our work, we consider ???? function.
+The number of layers, together with the number of nodes per layer are hyperparameters that need to be carefully chosen, to balance model accuracy and model complexity.
+Another important choice is the activation function: several possible choices are possible, the most popular being the {\it sigmoid}, the hyperbolic tangent or the so called ReLU function. In our work, we consider the sigmoid function between all layers, except for the very last layer which has linear/identity activation so that negative values are also possible.
 
 Once the ANN is set up, we need to set its weights to the values that achieve our regression task.
-This procedure is called training, where we minimise a loss function with respect to the weights $\boldsymbol{W}$ of the model.
+This procedure is called training, where we minimize a loss function with respect to the weights $\boldsymbol{W}$ of the model.
 The loss function depends on the dataset at hand ${\{\boldsymbol{x}_i, \boldsymbol{y}_i\}_i}$.
 Mathematically, the weights are given by:
 %
@@ -261,23 +261,23 @@ Mathematically, the weights are given by:
 	\boldsymbol{W} = \argmin_W \mathcal{L}(W; \{\boldsymbol{x}_i, \boldsymbol{y}_i\}_i)
 \end{equation}
 
-The minimisation of the loss function is performed by stochastic gradient descent (SGD), which relies on the gradients $\partial_W \mathcal{L}$ of the loss function. The gradients are computing through the backpropagation algorithm \cite{}.
+The minimization of the loss function is performed by stochastic gradient descent (SGD) \tim{More specific: the optimizer is the "Nadam" optimizer https://keras.io/api/optimizers/Nadam/}, which relies on the gradients $\partial_W \mathcal{L}$ of the loss function. The gradients are computing through the backpropagation algorithm \cite{}.
 
-To perform our regression $\theta \longmapsto \boldsymbol{g}$, we employ an ensemble of networks, that suitably combined delivers accurate results.
-To improve the representative power or the ANN, we employ feature augmentation on the vector $\boldsymbol{\vartheta} = (q, s_1, s_2)$, effectively using the augmented vector $\tilde{\boldsymbol{\vartheta}}$ as input for the regression. The features added needs to be chosen with a validation process: this will be discussed in the next section.
+To perform our regression $\theta \longmapsto \boldsymbol{g}$, we employ an ensemble of networks that suitably combined delivers accurate results.
+To improve the representative power or the ANN, we employ feature augmentation on the vector $\boldsymbol{\vartheta} = (q, s_1, s_2)$, effectively using the augmented vector $\tilde{\boldsymbol{\vartheta}}$ as input for the regression. Although different ANN's will need different features, we will for convenience abuse the notation $\tilde{\boldsymbol{\vartheta}}$ to any augmented vector. Indeed, the features to add need to be chosen with a validation process: this will be discussed in the next section.
 
-Before the training, the regression targets $\boldsymbol{y}_i$ are rescaled such that $\boldsymbol{y}_i \rightarrow \frac{\boldsymbol{y}_i}{\boldsymbol{w}}$, where $\boldsymbol{w}$ keeps the maximum of $|\boldsymbol{y}_i|$ along each axis. %${w}_j = \max_i(|(\boldsymbol{y}_i)_j|)$.
+Before the training, the regression targets $\boldsymbol{y}_i$ are scaled such that $\boldsymbol{y}_i \rightarrow \frac{\boldsymbol{y}_i}{\boldsymbol{w}}$, where $\boldsymbol{w}$ keeps the maximum of $|\boldsymbol{y}_i|$ along each axis. %${w}_j = \max_i(|(\boldsymbol{y}_i)_j|)$.
 In this way all the regression targets span the same order or magnitude, making the regression task easier.
 
-For the amplitude $\boldsymbol{A}_{\ell m}$ of each mode, we employ a single ANN $\mathcal{N}_{A_{\ell m}}$.
+For the amplitude $\boldsymbol{A}_{\ell m}$ of each mode, we employ a single ANN $\mathcal{N}_{A_{\ell m}}$ that predicts the first four PCA components.
 The predicted amplitude $\hat{\boldsymbol{A}}_{\ell m}$, including the PCA reconstruction, has the following form:
 \begin{equation}\label{eq:amp_pred}
-	\hat{\boldsymbol{A}}_{\ell m}(\boldsymbol{\vartheta}) = H_{A_{\ell m}}^T \mathcal{N}_{A_{\ell m}}(\tilde{\boldsymbol{\vartheta}}) + \boldsymbol{\mu}_{A_{\ell m}}
+	\hat{\boldsymbol{A}}_{\ell m}(\boldsymbol{\vartheta}) = \boldsymbol{\mu}_{A_{\ell m}} + H_{A_{\ell m}}^T \mathcal{N}_{A_{\ell m}}(\tilde{\boldsymbol{\vartheta}})
 \end{equation}
 
 For the phase $\boldsymbol{\phi}_{\ell m}$, we employ one ANN $\mathcal{N}_{\phi_{\ell m}\text{- 12}}$ to predict only the first two PCA components.
-Another ANN will take care of the remaining components $\mathcal{N}_{\phi_{\ell m}\text{- 2345}}$.
-On top of this, we build an additional ANN $\mathcal{N}_{\phi_{\ell m}\text{- residual}}$ to target the residual of the predictions of $\mathcal{N}_{\phi_{\ell m}\text{- 12}}$.
+Another ANN will take care of the remaining components $\mathcal{N}_{\phi_{\ell m}\text{- 2345}}$ \tim{Should we refer to \cite{Schmidt:2020yuu} to argue why only these PCA components have to be considered?}.
+On top of this, we build an additional ANN $\mathcal{N}_{\phi_{\ell m}\text{- residual}}$ to target the residual of the predictions of $\mathcal{N}_{\phi_{\ell m}\text{- 12}}$ \tim{Is the term "residual" a well-known term (or clear enough from context) or does it require more explanation?}.
 The scheme make sure that the first two PCs are predicted with much larger accuracy than the others. Indeed, the reconstructed WF depends largely on the first two components and a small fractional error can potentially have a large impact on the overall accuracy.
 
 The predicted phase $\hat{\boldsymbol{\phi}}_{\ell m}$ is then given by:
@@ -291,7 +291,7 @@ The predicted phase $\hat{\boldsymbol{\phi}}_{\ell m}$ is then given by:
 \end{equation}
 
 
-We train our model using the PCA dataset, obtained by PCA reducing the training set. Each ANN is trained using the following loss function:
+We train our model using the PCA dataset, obtained by PCA reducing the training set. Each ANN is trained using the following loss function: \tim{I know in the definition of the custom loss function the w for the weights is inside the square, but (at least in the fitNN function that I wrote) I think we take the square root of $\boldsymbol{w}$ as input of the loss weights, so that the $\boldsymbol{w}$ in the definition below should be outside of the square...}
 \begin{equation}\label{eq:loss}
 	\mathcal{L} = \frac{1}{N} \sum_{i=1}^N \Bigl((\mathcal{N}(\boldsymbol{\vartheta}_i) - \boldsymbol{y}_i)}\boldsymbol{w} \Bigr)^2
 \end{equation}
