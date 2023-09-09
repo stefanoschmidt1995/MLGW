@@ -91,26 +91,26 @@ WRITEME
 
 With almost a hundred of confirmed detections, Gravitational Waves (GW) astronomy is entering a mature state, where many loud GW events will force the scientific community to develop a fast analysis to deliver precision measurement. The recent transient catalogue GWTC-3 \cite{} is the latest achievment of the effort carried on by the LIGO-Virgo-KAGRA collaboration and it relies on both instrument and data analysis development.
 
-A crucial element of the data analysis is the ability to generate accurate prediction of the GW signal emitted by a Binary Black Hole (BBH) system. Such waveforms are used for the expensive bayesian estimation of the parameters characterizing a BBH: the analysis of a single event requires the online generation of up to a billions of waveform.
-As we move towards the next generation of detectors, it is mandatory to deploy accurate waveform models, that are fast and, at the same time, incorporates many phyics effect. Failing to do this may lead to systematic errors in the parameter recovery, due to a bad modelling of the source.
+A crucial element of the data analysis is the ability to generate accurate prediction of the GW signal emitted by a Binary Black Hole (BBH) system. Such waveforms are used for the expensive bayesian estimation of the parameters characterizing a BBH: the analysis of a single event requires the online generation of up to billions of waveforms.
+As we move towards the next generation of detectors, it is mandatory to deploy accurate waveform models, that are fast and, at the same time, incorporate many physics effects. Failing to do this may lead to systematic errors in the parameter recovery, due to a bad modelling of the source.
 This is challenging since, speed and accuracy are often at trade.
 
-One importante piece for a realistic BBH signal is the inclusion of the Higher Order Modes (HMs) of the multipole expansion of the waveform. For mass symmetric systems, the leading mode is orders of magnitude larger and including HMs doesn't affect the parameter estimation. On the other hand, it has been shown \cite{} that HMs are obervable in very asymmetric binary systems, hence the need to include them to avoid any bias.
+One important piece for a realistic BBH signal is the inclusion of the Higher Order Modes (HMs) of the multipole expansion of the waveform. For mass symmetric systems, the leading mode is orders of magnitude larger and including HMs doesn't affect the parameter estimation. On the other hand, it has been shown \cite{} that HMs are observable in very asymmetric binary systems, hence the need to include them to avoid any bias.
 
 Throughout decades of developments, two families of models have been developed, both being able to incorporate HMs.
 One family relies on the Effective One Body (EOB) formalism, which maps the complicated general relativistic binary system into a problem governed by an effective Hamiltonian. EOB models tend to be accurate but are quite costly to evaluate, since for each waveform one needs to solve the hamiltonian equation of motion.
 On the other hand, the phenomenological waveforms are based on analytical expressions (within the post-newtonian formalism). They tend to be faster to evaluate, but don't achieve the same accuracy.
-Both families, EOB and phenomenological, need to be calibrated with Numerical Relativity waveform, computed by solving directly the Einstein equations. The calibration makes sure that a model retains its accuracy even close to merger, where an approximate treatment, such as the post-newtonian or EOB formalism are not applicable anymore.
+Both families, EOB and phenomenological, need to be calibrated with Numerical Relativity waveforms, computed by solving directly the Einstein equations. The calibration makes sure that a model retains its accuracy even close to merger, where an approximate treatment, such as the post-newtonian or EOB formalism are not applicable anymore.
 
-Besides the standard families, surrogate waveform models have been developed for years with the intent of reproducing the output of a target model and of making feasible the usage of the underlying model. Several surrogates have been developed to accelarate several EOB models \cite{Gadre:2022sed}, even including HMs. While traditional surrogate models \cite{} builds an empirical interpolant on the waveform space, a more modern approach relies on performing a regression using Machine Learning techniques \cite{}.
+Besides the standard families, surrogate waveform models have been developed for years with the intent of reproducing the output of a target model and of making feasible the usage of the underlying model. Several surrogates have been developed to accelerate several EOB models \cite{Gadre:2022sed}, even including HMs. While traditional surrogate models \cite{} build an empirical interpolant on the waveform space, a more modern approach relies on performing a regression using Machine Learning techniques \cite{}.
 
-Among others, \cite{Schmidt:2020yuu} introduced a Machine Learning surrogate model, based on a dimensionality reduction scheme followed by a regression. In this work, we extend such model to HMs and we improve the accuracy of the regression. Our model marks a step towards the development of a fast, yet precise, waveform model, by achieving state-of-the-art accuracy and speed, and will enable the accurate analysis of the next generation detectors' data.
+Among others, \cite{Schmidt:2020yuu} introduced a Machine Learning surrogate model, based on a dimensionality reduction scheme followed by a regression. In this work, we extend this model to HMs and we improve the accuracy of the regression. Our model marks a step towards the development of a fast, yet precise, waveform model by achieving state-of-the-art accuracy and speed, and will enable the accurate analysis of the next generation detectors' data.
 
-We train our model on the widely used approximant \texttt{SEOBNRv4PHM} and we achieve a ??\% faithfulness when averaged across a wide range in the parameter space.
+We train our model on the widely used approximant \texttt{SEOBNRv4PHM} and we achieve a \tim{This is just the average mismatch then, right?} ??\% faithfulness when averaged across a wide range in the parameter space.
 Our experiments showed that our model offers a substantial speed up with respect to the original model, matching the speed of the state-of-the-art surrogate models.
 
 This paper is organized as follows. In Sec.~\ref{sec:model} we introduce the details of the model presented here, stressing the differences with the model in  \cite{Schmidt:2020yuu}.
-Sec.~\ref{sec:performance} is devoted to the validation of our model: we will motivate our choice of several hyperparameters and perform an accuracy a speed study.
+Sec.~\ref{sec:performance} is devoted to the validation of our model: we will motivate our choice of several hyperparameters and perform an accuracy and speed study.
 In Sec.~\ref{sec:end}, we present some final remarks and highlight future perspective.
 
 %%%%%%%%%%%%%%%%%%%
@@ -118,18 +118,18 @@ In Sec.~\ref{sec:end}, we present some final remarks and highlight future perspe
 \label{sec:model}
 
 A non-precessing BBH can be described by four {\it intrisic} parameters, which specify the two BH masses $m_1$ and $m_2$ and the z-component of the two spin $s_1$ and $s_2$.
-Moreover, since the total mass $M = m_1 + m_2$ sets an overall amplitude scaling, a non-precessing BBH signal only depends on the mass ratio $q = m_1/m2 \geq 1$ as well as on the spins. We may refers to these parameter as $\boldsymbol{\vartheta} = (q, s_1, s_2)$.
+Moreover, since the total mass $M = m_1 + m_2$ sets an overall amplitude scaling, a non-precessing BBH signal only depends on the mass ratio $q = m_1/m_2 \geq 1$ as well as on the spins. We may refer to these parameter as $\boldsymbol{\vartheta} = (q, s_1, s_2)$.
 Besides the masses and spins, the gravitational wave emitted by the system depends also on luminosity distance to the source $d_L$, the inclination angle $\iota$ of the source and the reference phase $\varphi_0$: we call them {\it extrinsic}.
 
-As it is standard, we expand the angular dependence on $\iota, \varphi_0$ of the {\it complex} waveform $h(t)$ in terms of a sum of spin -2 spherical harmonics, leading to the following expression for the waveform:
-A GW is then parametrized\footnote{Such parametrization is particularly convenient as it separates the waveform dependence over intrinsic and extrisinc parameters.} as~\cite{Estelles:2021gvs}:
+As it is standard, we expand the angular dependence on $\iota, \varphi_0$ of the {\it complex} waveform $h(t)$ in terms of a sum of spin -2 spherical harmonics.
+A GW is then parameterized\footnote{Such parameterization is particularly convenient as it separates the waveform dependence over intrinsic and extrinsic parameters.} as~\cite{Estelles:2021gvs}:
 \begin{align} \label{eq:h_parametrization}
 	&h(t; d_L,\iota,\varphi_0, m_1, m_2, s_1, s_2) = h_+ + i h_\times \nonumber \\
 		&\qquad= \frac{G}{c^2} \frac{M}{d_L}\sum_{\ell = 2}^{\infty} \sum_{m = -\ell}^{\ell} \tensor[^{-2}]{Y}{_{\ell m}}(\iota, \varphi_0) h_{\ell m}(t/M; \boldsymbol{\vartheta})
 \end{align}
 where we refer to the functions $h_{\ell m}(t; \boldsymbol{\vartheta})$ as {\it modes} of the waveform. We note that that, for non-precessing systems, $h_{\ell m} = (-1)^\ell h^*_{\ell -m}$, hence we will only consider modes with $m>0$.
 
-The mode $\ell, m = 2,2$ is by far the largest in amplitude, hence it is often referred to as the {\it dominant mode}. The other sub-dominant modes are few orders of magnitude smaller in amplitude and become more relevant (and measurable!) for high of mass ratios \cite{}.
+The mode $(\ell, m) = (2,2)$ is by far the largest in amplitude, hence it is often referred to as the {\it dominant mode}. The other sub-dominant modes are few orders of magnitude smaller in amplitude and become more relevant (and measurable!) for high mass ratios \cite{}.
 
 In this work, we introduce a Machine Learning model to perform a regression
 \begin{align}\label{eq:objective}
@@ -163,12 +163,12 @@ The starting point of the grid $\tau_0$ sets the length of the waveform that our
 To make sure that the distribution of $q$ is skewed towards towards the boundaries, where the regression is less accurate, we sample the mass ratio $q$ in the range $[1,10]$ with the following procedure:
 \begin{itemize}
 	\item We sample $q_1, \hdots, q_5 \sim \mathcal{U}_{[1,10]}$
-	\item We sample $x \sim \mathcal{U}_{[1,10]}$
+	\item We sample $x \sim \mathcal{U}_{[0,1]}$
 	\item We select q, based on the value of $x$:
 	\begin{itemize}
 		\item If $x \in [0,0.3)$, $\min q_1, \hdots, q_5$
 		\item If $x \in [0.3, 0.8)$, $q_1$
-		\item If $x \in [0.8, 1]$, $\min q_1, \hdots, q_5$
+		\item If $x \in [0.8, 1]$, $\max q_1, \hdots, q_5$
 	\end{itemize}
 \end{itemize}
 where $\mathcal{U}_{[a,b]}$ is the uniform distribution in $[a,b]$.
@@ -183,7 +183,7 @@ We then create a dataset $\{X, Y\}$ of $N$ elements. Each row of the dataset is 
 \end{align}
 %
 The dataset $Y$ gathers the amplitude and phase for the different modes in the dataset.
-We include all the modes available in \texttt{SEOBNRv4PHM}: $\ell, m = \{(2,2),(2,1), (3,3), (4,4), (5,5)\}$.
+We include all the modes available in \texttt{SEOBNRv4PHM}: $(\ell, m) = \{(2,2),(2,1), (3,3), (4,4), (5,5)\}$.
 
 In what follows we will refer to any of the vectors $\boldsymbol{A}_{\ell m}$ or $\boldsymbol{\phi}_{\ell m}$ as $\boldsymbol{f}$.
 Note that we use the same grid for all the modes.
@@ -192,14 +192,14 @@ Note that we use the same grid for all the modes.
 \label{sec:PCA}
 
 It is unfeasibile to perform a regression targeting a large dimensional vector such as $\boldsymbol{f} \in \R^D$. For this reason, in \cite{Schmidt:2020yuu} we introduced a Principal Component Analysis (PCA) dimensionality reduction scheme.
-It is an approximately invertible linear mapping between a vector $\boldsymbol{f} \in \R^D$ in a large dimensional space to lower dimensional vector  $\boldsymbol{g} \in \R^K$:
+It is an approximately invertible linear mapping between a vector $\boldsymbol{f} \in \R^D$ in a large dimensional space to lower dimensional vector  $\boldsymbol{g} \in \R^K$: \tim{I put a hat on the $\mathbf{f}$ in equation 7 since otherwise it looks like the operations is actually mathematically invertible}
 %
 \begin{align}
 	\mathbf{g} = H (\mathbf{f} - \boldsymbol{\mu}) \label{eq:PCA_reduction_model}\\
-	\mathbf{f} = H^T \mathbf{g} + \boldsymbol{\mu} \label{eq:PCA_reconstruction_model}
+	\hat{\mathbf{f}} = H^T \mathbf{g} + \boldsymbol{\mu} \label{eq:PCA_reconstruction_model}
 \end{align}
-where $\boldsymbol{\mu} \in \R^D$ and $H$ is a $K \times D$ matrix. The rows $H_{i:}$ of $H$, also called {\it Principal Components} (PC), form an orthonormal set of vector, i.e. it holds ${\sum_{k=1}^D H_{ik} H_{jk} = \delta_{ij}}$.
-The PCs are the first K eigenvectors of the $D \times D$ covariance matrix of the dataset, as described in \cite[Sec. 12]{murphy2012machine}.
+where $\boldsymbol{\mu} \in \R^D$ and $H$ is a $K \times D$ matrix. The rows $H_{i:}$ of $H$, also called {\it Principal Components} (PC), form an orthonormal set of vector, i.e. it holds ${\sum_{k=1}^D H_{ik} H_{kj} = \delta_{ij}}$.
+The PCs are the first $K$ eigenvectors of the $D \times D$ covariance matrix of the dataset, as described in \cite[Sec. 12]{murphy2012machine}.
 
 One can have a deeper insight on PCA considering the following formula for the reconstructed vector $\mathbf{f}$ (setting $\boldsymbol{\mu}=0$ without loss of generality):
 \begin{equation} \label{eq:perturbative_exp}
@@ -232,14 +232,14 @@ As a consequence, the regression for a lower order PC needs to be more accurate 
 \label{sec:NN}
 
 An Artificial Neural Network (ANN) is a popular regression model, consisting in a powerful parametric function, whose parameters (or weights), when properly set, can represent a large variety of relations between inputs and output.
-An ANN is built by stacking together $N_\text{L}$ layers in such a way the the input of one is the output of the following. Each layer is a function $L: \R^D \rightarrow \R^{D^\prime} $ and has the following functional form
+An ANN is built by stacking together $N_\text{L}$ layers in such a way the output of a layer is the input of the following. \tim{$D$ is already a reserved variable for the number of grid points, so I put some more primes on the $D's$ in this section to avoid confusion.} Each layer is a function $L: \R^D\prime \rightarrow \R^{D^\prime\prime} $ and has the following functional form
 
 \begin{equation}
 	\boldsymbol{y} = a(W\boldsymbol{x})
 \end{equation}
 %
-Where W is $D^\prime \times D$ matrix and $a$ is an activation function that acts elementwise on the a vector.
-Each component $y_i$ of the output of the layer is called node and the number of nodes is a tunable parameter, controlling the representative power of the layer.
+Where W is $D^\prime\prime \times D\prime$ matrix and $a: \R \rightarrow \R$ is an activation function that acts elementwise on the vector $W\boldsymbol{x}$.
+Each component $y_i$ of the output of the layer is called a node and the number of nodes is a tunable parameter, controlling the representative power of the layer.
 
 An ANN $\mathcal{N}$ is obtained by composing $N_\text{L}$ different layers (each with a suitable number of nodes):
 %
