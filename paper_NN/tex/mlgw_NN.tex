@@ -231,6 +231,7 @@ As a consequence, the regression for a lower order PC needs to be more accurate 
 \subsection{Neural network regression}
 \label{sec:NN}
 
+\tim{General remark: We should choose a convention whether we index the first principal component with a 0 or a 1. Right now we are using them both (for phase)...}
 An Artificial Neural Network (ANN) is a popular regression model, consisting of a powerful parametric function, whose parameters (or weights), when properly set, can represent a large variety of relations between input and output.
 An ANN is built by stacking together $N_\text{L}$ layers in such a way that the output of a layer is the input of the following layer. \tim{$D$ is already a reserved variable for the number of grid points, so I put some more primes on the $D's$ in this section to avoid confusion.} Each layer is a function $L: \R^D\prime \rightarrow \R^{D^\prime\prime} $ and has the following functional form
 
@@ -369,6 +370,7 @@ As above, we define the symphony mismatch as $\mathcal{F}_\mathrm{sym} = 1 - \ma
 	\label{fig:accuracy_hist}
 \end{figure}
 
+\tim{I believe you used the exact same plot in Fig.~\ref{fig:countour_plots} for ($q$,$s_{1z}$) and ($q$,$s_{2z}$), or is it a super coincidence? :)}
 \begin{figure*}[t]
 	\centering
 	\includegraphics[width=\textwidth]{colormesh}
@@ -384,51 +386,53 @@ As above, we define the symphony mismatch as $\mathcal{F}_\mathrm{sym} = 1 - \ma
 \end{figure*}
 
 The performance of the model depends on a number of crucial choices about some non-trainable parameters, usually called hyperparameters. The hyperparameters usually defines the architecture of the ANN as well as some parameters relevant to the training.
-Setting the right values for the hyperparameters is crucial for the ANN performance, as one needs to balance between accuracy and speed: this procedure is called {\it hyperparameters tuning} and can be done authomatically to optimize manual work and to make sure to find a good minimum.
+Setting the right values for the hyperparameters is crucial for the ANN performance, as one needs to balance between accuracy and speed: this procedure is called {\it hyperparameters tuning} and can be done automatically to optimize manual work and to make sure to find a good minimum.
 
+\tim{There a "2" below in the PDF-version, but I don't know how to remove this.}
 We optimize the following hyperparameters:
 \begin{multicols}{2}
 	\begin{itemize}
-		\item \texttt{n-layers}: number of layers in the ANN
-		\item \texttt{units}: number of hidden features per layer
+		\item \texttt{n-layers}: number of hidden layers in the ANN
+		\item \texttt{units}: number of nodes per hidden layer
 		\item \texttt{features}: features to use for data augmentation
-		\item \texttt{order}: the data will be agumented with all the monomials of the chosen features up th given order
+		\item \texttt{order}: the data will be augmented with all the monomials of the chosen features up the given order
 	\end{itemize}
 \end{multicols}
 
-For each of the 4 ANN useful to reproduce a single mode (see Eq.~(\ref{eq:amp_pred}-\ref{eq:ph_pred})), we train a network for different combinations of hyperparameters. The figure of merit of each hyperparameter choice is the logarithm of the loss function Eq.~\eqref{eq:loss} evaluated on the validation set. \stefano{@Tim: is this true?}
+For each of the 4 ANN useful to produce a single mode (see Eq.~(\ref{eq:amp_pred}-\ref{eq:ph_pred})), we train a network for different combinations of hyperparameters. The figure of merit of each hyperparameter choice is the logarithm of the loss function Eq.~\eqref{eq:loss} evaluated on the validation set. \stefano{@Tim: is this true?} \tim{@Stefano: I don't really know why it would be the logarithm... It shouldn't really matter though for comparing the results since the logarithm is a strictly monotonically increasing function but looking at Fig.~\ref{fig:tuning} we are using the logarithm.}
+
 For our experiments we only use the dataset of the $(2,2)$ mode and we employ the package \texttt{keras-tuner} \cite{omalley2019kerastuner}.
 
-We report our results in Fig.~\ref{fig:tuning}, where each combination of hyperparameters tested is represented in the \texttt{n-layers}-\texttt{units} plane and coloured by the validation scored. 
+We report our results in Fig.~\ref{fig:tuning}, where each combination of hyperparameters tested is represented in the \texttt{n-layers}-\texttt{units} plane and colored by the validation scored. 
 We can see that all the four ANN share the same trend: the most effective way to improve regression accuracy is to increase the number of units as opposed to the number of layers.
 The number of layers is far more important the extra features added and the polynomial order for data augmentation.
 
-Furthermore, we note that the regressions for the amplitude and for the high phase PCs (i.e. compoenents 2,3,4,5) can be performed with a smaller model, compared to the models for the first two PCs of the phase. This can be explained by the fact that most of the physical information is stored in the first two components of the phase, making this an harder regression problem.
+Furthermore, we note that the regressions for the amplitude and for the high phase PCs (i.e. components 2,3,4,5) can be performed with a smaller model, compared to the models for the first two PCs of the phase. This can be explained by the fact that most of the physical information is stored in the first two components of the phase, making this an harder regression problem.
 
 In table Tab.~\ref{tab:model} we report the final hyperparameter choice we made for each of the networks. The architectures are the same across the different modes considered.
 
-As discussed above, we note that models $\mathcal{N}_{A_{\ell m}$ and $\mathcal{N}_{\phi_{\ell m}\text{- 2345}}$ are very simple, having only one layer and a small polynomial order, while the other ANNs have a more complicated architeture.
+As discussed above, we note that models $\mathcal{N}_{A_{\ell m}$ and $\mathcal{N}_{\phi_{\ell m}\text{- 2345}}$ are very simple, having only one layer and a small polynomial order, while the other ANNs have a more complicated architecture.
 We note here that an accurate ANN for the residuals of the phase is crucial to obtain a good accuracy: indeed $\mathcal{N}_{\phi_{\ell m}\text{- residual}}$ is the most complex model we employ, meaning that the residual phase dataset is the ``hardest" to learn.
 
 \subsection{Accuracy study}\label{sec:accuracy}
 
 To test the accuracy of our model, we generate a test set with $50000$ randomly chosen waveforms generated with the training model \texttt{SEOBNRv4PHM}.
 The waveforms masses are characterized by a total mass in the range $[30, 80] M_\odot$, by a mass ratio $q \in [1, 10]$. The spins are chosen in the range $[-0.99, 0.99]$ and the inclination angle $\iota$ and reference phase $\varphi_0$ are drawn uniformly from a sphere.
-We set the starting frequency in the range $[10, 20]Hz$.
+We set the starting frequency in the range $[10, 20]Hz$ \tim{By what procedure do we set this starting frequency? I know I can look it up at the GitHub code, but is this something worthy to write down here?}.
 
-In Fig.~\ref{fig:accuracy_hist}, we report the histogram of the distribution of the mismatches between \texttt{mlgw} and the test waveforms. The upper part refers to the mismatches Eq.~\eqref{eq:match_sym} computed on the overall waveforms (with sky location sampled uniformly over the sky); the lower box refers to mismatches computed mode by mode with Eq.~\eqref{eq:match}.
+In Fig.~\ref{fig:accuracy_hist}, we report the histogram of the distribution of the mismatches between \texttt{mlgw} and the test waveforms. The upper part refers to the mismatches Eq.~\eqref{eq:match_sym} computed on the overall waveforms (with sky location sampled uniformly over the sky); the lower box refers to mismatches computed mode by mode with Eq.~\eqref{eq:match}. \tim{I think it is a bit weird that the legend of the bottom figure is in the figure above... though this is an efficient way of using the space I guess.}
 
-First of all, we note that the model show very high faithfulness. With a median value of $2\times 10^{-4}$ and with virtually no signals with a ``symphony" mismatch higher than $10^{-2}$, \texttt{mlgw} is indistinguishable from \texttt{SEOBNRv4PHM} for the current generation detectors \cite{WF_systematics}.
+First of all, we note that the model shows very high faithfulness. With a median value of $2\times 10^{-4}$ and with virtually no signals with a ``symphony" mismatch higher than $10^{-2}$, \texttt{mlgw-NN} is indistinguishable from \texttt{SEOBNRv4PHM} for the current generation detectors \cite{WF_systematics}.
 The faithfulness for the $(2,2)$ mode is even higher with no signals with mismatch higher than $2\times 10^{-3}$.
 On the other hand, the higher order modes are less accurately reproduced than the dominant mode. In particular, for the modes $(2,1), (3,3), (5,5)$ a limited number of waveforms show very high mismatches $\mathcal{O}(1)$.
 
-The cause of the decreased faithfulness for sub-dominant modes needs more investigation. However, it likely due to the fact that the physics of subdominant modes is less understood, hence the uncertainties in waveform modelling results in a more noisy regression for the ANN to learn.
-This problem can be probably mitigated by using a larger network for such modes. Indeed, we tuned the hyperparameters on the $(2,2)$ (an ``easy" regression target): performing a tuning on the dataset of such modes might reveal that our chosen architecture is not optimal.
+The cause of the decreased faithfulness for sub-dominant modes needs more investigation. However, it is likely due to the fact that the physics of subdominant modes is less understood, hence the uncertainties in waveform modeling results in a more noisy regression for the ANN to learn.
+This problem can be probably mitigated by using a larger network for such modes. Indeed, we tuned the hyperparameters on the $(2,2)$ mode (an ``easy" regression target). Performing a tuning on the dataset of higher order modes might reveal that our chosen architecture is not optimal.
 
 In Fig.~\ref{fig:countour_plots} we report the dependence of the ``symphony" mismatch as a function of the different orbital parameters.
 From the figure, it is manifest that the model has very stable performance across the parameter space.
 The faithfulness decreases for high positive values of the spins and for mass ratio $q\sim 1$: such cases are at the boundaries of the waveform dataset, hence they correspond to extreme values in the PCA reduction, making harder for the network to predict such cases. Despite this, in such ``extreme" regions, the average mismatch is still of the order of $10^{-4}$.
-We also note that for $q\sim 1$, the sub-dominant modes have a vanishing amplitude: a large mismatch in the sub-dominant mode for $q\sim 1$ has very little impact on the overall waveform Eq~\eqref{eq:h_parametrization}.
+We also note that for $q\sim 1$, the sub-dominant modes have a vanishing amplitude: a large mismatch in the sub-dominant mode for $q\sim 1$ has very little impact on the overall waveform Eq~\eqref{eq:h_parametrization}. 
 
 In Fig.\ref{fig:countour_plots_modes}, for each mode we report the mismatch as a function of the mass ratio and of $s_\text{1z}$. One more time, we can see that the model faithfulness decreases for low mass ratios and for high spins. Moreover, the subdominant modes shows a poorer performance as compared to the dominant one.
 
@@ -439,7 +443,7 @@ A speed up in the waveform generation is the main motivation to build a ML wavef
 For this reason, we use our test set to measure the ratio between the time to generate a waveform with \texttt{SEOBNRv4PHM} and \texttt{mlgw}. Our model offers further speed by generating waveform in batches: in this case, some operations are efficiently parallelized and happen more efficiently.
 We report our findings in Fig.~\ref{fig:timing_hist}.
 
-We achieve a speed up between a factor of $100$ and $200$, depending on the length of the waveform. For waveform batch generation, the speed up can be twice as much, ranging between $200$ and $400$.
+We achieve a speed up between a factor of $100$ and $200$, depending on the length of the waveform. \tim{The sentence ``depending on the length of the waveform" makes sense, but does it need any ``proof"?} For waveform batch generation, the speed up can be twice as much, ranging between $200$ and $400$.
 The speed up achieved by \texttt{mlgw} is slightly larger than the one obtained by a surrogate model \texttt{SEOBNRv4PHMSur} obtained with standard techniques \cite{Gadre:2022sed}.
 
 \begin{figure}[t]
@@ -454,18 +458,19 @@ The speed up achieved by \texttt{mlgw} is slightly larger than the one obtained 
 \section{Final remarks and future prospects}
 \label{sec:end}
 
-Building over our previous work \cite{}, we generate a ML surrogate model \texttt{mlgw} able to reproduce with very high fidelity the output of the widely used approximant \texttt{SEOBNRv4PHM}. \texttt{mlgw} can generate wavforms in a rectangle $q\times s_\text{1z} \times s_\text{2z} = [1,10]\times[-0.9,0.9]\times[-0.9,0.9]$ with on (reduce) grid of maximum length of $\SI{2}{s/M_\odot}$.
+Building on our previous work \cite{Schmidt:2020yuu}, we generate a ML surrogate model \texttt{mlgw-NN} able to reproduce with very high fidelity the output of the widely used approximant \texttt{SEOBNRv4PHM}. \texttt{mlgw-NN} can generate waveforms in a cuboid $q\times s_\text{1z} \times s_\text{2z} = [1,10]\times[-0.9,0.9]\times[-0.9,0.9]$ on a (reduced) time grid of maximum length of $\SI{2}{s/M_\odot}$.
 Our model offers a two orders of magnitude speed up over the training model, without trading for accuracy, hence it is an attractive alternative for any data analysis application.
 Our method is fully general and is applicable to any chirp-like gravitational wave signal.
-To encourage new applications, we release our code (and our trained model) publicly as a python package throught the PyPI repository.
+To encourage new applications, we release our code (and our trained model) publicly as a python package through the PyPI repository.
 
 Future work should also include precession. This can be achieved by means of the {\it spin twist} procedure. It consist on a time dependent rotation of the plane of emission, resulting in a phase and amplitude modulation which approximates the effect of precession.
 Training an ANN to predict the time dependent rotation is a promising step towards a complete ML surrogate model.
 
-While the model is already applicable for most of the parameter estimation problems with current detectors, it is desiderable to increase to increase its range of validatity of our model, both in parameter space and in time.
+While the model is already applicable for most of the parameter estimation problems with current detectors, it is desirable to increase its range of validatity of our model, both in parameter space and in time.
 Such improvement will become mandatory for the next generation detectors \cite{}, when fast and reliable waveform models will be needed to mitigate the huge computational cost posed by very long observed waveforms.
 Our framework is ideal to achieve such ambitious goal.
 \stefano{I don't feel like adding more will be beneficial. On the other hand, this section is very short}
+\tim{Maybe we could add a paragraph on different neural network topologies (not the same number of units for each hidden layer) and repeat what we said about improving HMs by using separate tuning?}
 
 	%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% END
 
