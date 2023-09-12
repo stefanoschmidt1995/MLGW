@@ -132,7 +132,7 @@ for i in tqdm(range(args.n_wfs), disable = args.verbose, desc = 'Loops on WFs'):
 
 	m1, m2, s1z, s2z, d, iota, phi_ref  = theta
 
-	new_dict_row = {'m1':m1, 'm2':m2, 's1z':s1z, 's2z':s1z, 'd':d, 'iota':iota, 'phi_ref':phi_ref, 'f_min':f_min}
+	new_dict_row = {'m1':m1, 'm2':m2, 's1z':s1z, 's2z':s2z, 'd':d, 'iota':iota, 'phi_ref':phi_ref, 'f_min':f_min}
 	if args.verbose: print("it: {} - theta {} ".format( i, theta[:4]))
 	
 		########

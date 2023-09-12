@@ -193,7 +193,7 @@ def plot_speed_accuracy_hist(json_file):
 	fig.subplots_adjust(right=0.85, left = 0.08, top = 0.98, bottom = 0.19, wspace = 0.4)
 	cbar_ax = fig.add_axes([0.87, 0.25, 0.02, 0.7])
 	cbar = fig.colorbar(mesh, cax=cbar_ax)
-	cbar.set_label(r'$\log_{10}\mathcal{F}$', rotation=270, labelpad = 15)
+	cbar.set_label(r'$\log_{10}\mathcal{F}_\mathrm{sym}$', rotation=270, labelpad = 15)
 
 	#plt.tight_layout()
 	plt.savefig('../tex/img/colormesh.pdf', bbox_inches='tight')

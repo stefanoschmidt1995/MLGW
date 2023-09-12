@@ -84,7 +84,6 @@ WRITEME
 \stefano{TODO:
 \begin{itemize}
 	\item Abstract
-	\item Captions
 	\item Citations
 \end{itemize}
 }
@@ -106,7 +105,7 @@ Besides the standard families, surrogate waveform models have been developed for
 
 Among others, \cite{Schmidt:2020yuu} introduced a Machine Learning surrogate model, based on a dimensionality reduction scheme followed by a regression. In this work, we extend this model to HMs and we improve the accuracy of the regression. Our model marks a step towards the development of a fast, yet precise, waveform model by achieving state-of-the-art accuracy and speed, and will enable the accurate analysis of the next generation detectors' data.
 
-We train our model on the widely used approximant \texttt{SEOBNRv4PHM} and we achieve a \tim{This is just the average mismatch then, right?} ??\% faithfulness when averaged across a wide range in the parameter space.
+We train our model on the widely used approximant \texttt{SEOBNRv4PHM} and we achieve a \tim{This is just the average mismatch then, right?} \stefano{Yes, it's just to quote a number that people can remeber easily} ??\% faithfulness when averaged across a wide range in the parameter space.
 Our experiments showed that our model offers a substantial speed up with respect to the original model, matching the speed of the state-of-the-art surrogate models.
 
 This paper is organized as follows. In Sec.~\ref{sec:model} we introduce the details of the model presented here, stressing the differences with the model in  \cite{Schmidt:2020yuu}.
@@ -192,24 +191,29 @@ Note that we use the same grid for all the modes.
 \label{sec:PCA}
 
 It is unfeasibile to perform a regression targeting a large dimensional vector such as $\boldsymbol{f} \in \R^D$. For this reason, in \cite{Schmidt:2020yuu} we introduced a Principal Component Analysis (PCA) dimensionality reduction scheme.
-It is an approximately invertible linear mapping between a vector $\boldsymbol{f} \in \R^D$ in a large dimensional space to lower dimensional vector  $\boldsymbol{g} \in \R^K$: \tim{I put a hat on the $\mathbf{f}$ in equation 7 since otherwise it looks like the operations is actually mathematically invertible}
+It is an {\it approximately} invertible linear mapping between a vector $\boldsymbol{f} \in \R^D$ in a large dimensional space to lower dimensional vector  $\boldsymbol{g} \in \R^K$:
 %
 \begin{align}
 	\mathbf{g} = H (\mathbf{f} - \boldsymbol{\mu}) \label{eq:PCA_reduction_model}\\
 	\hat{\mathbf{f}} = H^T \mathbf{g} + \boldsymbol{\mu} \label{eq:PCA_reconstruction_model}
 \end{align}
-where $\boldsymbol{\mu} \in \R^D$ and $H$ is a $K \times D$ matrix. The rows $H_{i:}$ of $H$, also called {\it Principal Components} (PC), form an orthonormal set of vector, i.e. it holds ${\sum_{k=1}^D H_{ik} H_{kj} = \delta_{ij}}$.
+where $\boldsymbol{\mu} \in \R^D$ and $H$ is a $K \times D$ matrix.
+The rows $H_{i:}$ of $H$, also called {\it Principal Components} (PC), form an orthonormal set of vector, i.e. it holds ${\sum_{k=1}^D H_{ik} H_{kj} = \delta_{ij}}$.
 The PCs are the first $K$ eigenvectors of the $D \times D$ covariance matrix of the dataset, as described in \cite[Sec. 12]{murphy2012machine}.
+
+The mapping is only approximately invertible, in the sense that $\hat{\mathbf{f}}$ is only an approximation of the high dimensional vector $\mathbf{f}$. The goodness of the approximation is controlled by the number $K$ of PCs considered: the more PCs, the most accurate is the reconstruction of $\mathbf{f}$. \stefano{I added a paragraph to clarify the introduction of $\hat{\mathbf{f}}$. Does it look good?}
 
 One can have a deeper insight on PCA considering the following formula for the reconstructed vector $\mathbf{f}$ (setting $\boldsymbol{\mu}=0$ without loss of generality):
 \begin{equation} \label{eq:perturbative_exp}
-	\mathbf{f} = \sum_{i=1}^K \langle \mathbf{f} | H_{i:} \rangle \; H_{i:}
+	\mathbf{f} = \sum_{i=0}^{K-1} \langle \mathbf{f} | H_{i:} \rangle \; H_{i:}
 \end{equation}
 %
 where $\langle \cdot | \cdot \rangle$ is the usual scalar product.
 
 Since less important PCs are more orthogonal to data, the typical magnitude of $g_i = \langle \mathbf{f} | H_{i:} \rangle$ decreases as $i$ increases.\footnote{For this reason PCA can be seen as a perturbative expansion on the basis vectors $H_{i:}$, where the accuracy is roughly measured by the eigenvalues of the first neglected PC. Increasing the number K of PCs considered increases the accuracy of the model (but also the complexity of the model).}.
 As a consequence, the regression for a lower order PC needs to be more accurate than the one for the higher order PC. This will be taken care by a suitable choice for the loss function for the regression (see next section).
+
+Following \cite{Schmidt:2020yuu}, in this work we employ $6$ PCA compontents for the phase model and $4$ for the amplitude.
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 \begin{figure*}[t]
@@ -223,7 +227,10 @@ As a consequence, the regression for a lower order PC needs to be more accurate 
 		\includegraphics[scale = 0.9]{tuning_ph_2345}\hfill
 		\includegraphics[scale = 0.9]{tuning_ph_01_residual}
 	\end{end}
-	\caption{}
+	\caption{Results from the validation of our ANN models, using the $\ell, m = 2,2$ mode dataset. We tune the number of layers and the number of features per layer, together with the features and the polynomial order for the data augmentation.
+	Each panel in the figure refers to a different ANN, taking care of different parts of the regression, as described in Sec.~\ref{sec:NN}.
+	For each regression, we train 100 ANNs with different choices of hyperparameters. Each point in the plot, refers to a trained network and it is colored with the logarithm of the validation score. Note that we do not report the features used for data augmentation, so that the plot is degenarate in this quantity.
+	}
 	\label{fig:tuning}
 \end{figure*}
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -232,14 +239,15 @@ As a consequence, the regression for a lower order PC needs to be more accurate 
 \label{sec:NN}
 
 \tim{General remark: We should choose a convention whether we index the first principal component with a 0 or a 1. Right now we are using them both (for phase)...}
+\stefano{You're right. I would start numbering from index zero, but would call it {\it first PC}. Do you think it's confusing?}
 An Artificial Neural Network (ANN) is a popular regression model, consisting of a powerful parametric function, whose parameters (or weights), when properly set, can represent a large variety of relations between input and output.
-An ANN is built by stacking together $N_\text{L}$ layers in such a way that the output of a layer is the input of the following layer. \tim{$D$ is already a reserved variable for the number of grid points, so I put some more primes on the $D's$ in this section to avoid confusion.} Each layer is a function $L: \R^D\prime \rightarrow \R^{D^\prime\prime} $ and has the following functional form
+An ANN is built by stacking together $N_\text{L}$ layers in such a way that the output of a layer is the input of the following layer. Each layer is a function $L: \R^{D^\prime} \rightarrow \R^{D^{\prime\prime}} $ and has the following functional form
 
 \begin{equation}
 	\boldsymbol{y} = a(W^{\prime}_{\prime\prime}\boldsymbol{x})
 \end{equation}
 %
-Where $W^{\prime}_{\prime\prime}$ is a $D^\prime\prime \times D\prime$ matrix and $a: \R \rightarrow \R$ is an activation function that acts elementwise on the vector $W^{\prime}_{\prime\prime}\boldsymbol{x}$.
+Where $W^{\prime}_{\prime\prime}$ is a $D^{\prime\prime} \times D^{\prime}$ matrix and $a: \R \rightarrow \R$ is an activation function that acts elementwise on the vector $W^{\prime}_{\prime\prime}\boldsymbol{x}$.
 Each component $y_i$ of the output of the layer is called a node and the number of nodes is a tunable parameter, controlling the representative power of the layer.
 
 An ANN $\mathcal{N}$ is obtained by composing $N_\text{L}$ different layers (each with a suitable number of nodes):
@@ -262,7 +270,7 @@ Mathematically, the weights are given by:
 	\boldsymbol{W} = \argmin_W \mathcal{L}(W; \{\boldsymbol{x}_i, \boldsymbol{y}_i\}_i)
 \end{equation}
 
-The minimization of the loss function is performed by stochastic gradient descent (SGD) \tim{More specific: the optimizer is the "Nadam" optimizer https://keras.io/api/optimizers/Nadam/}, which relies on the gradients $\partial_W \mathcal{L}$ of the loss function. The gradients are computing through the backpropagation algorithm \cite{}.
+The minimization of the loss function is performed by stochastic gradient descent (SGD), as implemented by the \texttt{Nadam} algorithm \cite{Kingma2014AdamAM, dozat.2016}. The optimization relies on the gradients $\partial_W \mathcal{L}$ of the loss function, computed through the backpropagation algorithm \cite{}.
 
 To perform our regression $\theta \longmapsto \boldsymbol{g}$, we employ an ensemble of networks that suitably combined delivers accurate results.
 To improve the representative power or the ANN, we employ feature augmentation on the vector $\boldsymbol{\vartheta} = (q, s_1, s_2)$, effectively using the augmented vector $\tilde{\boldsymbol{\vartheta}}$ as input for the regression. Although different ANN's will need different features, we will for convenience abuse the notation $\tilde{\boldsymbol{\vartheta}}$ to any augmented vector. Indeed, the features to add need to be chosen with a validation process: this will be discussed in the next section.
@@ -276,9 +284,9 @@ The predicted amplitude $\hat{\boldsymbol{A}}_{\ell m}$, including the PCA recon
 	\hat{\boldsymbol{A}}_{\ell m}(\boldsymbol{\vartheta}) = \boldsymbol{\mu}_{A_{\ell m}} + H_{A_{\ell m}}^T \mathcal{N}_{A_{\ell m}}(\tilde{\boldsymbol{\vartheta}})
 \end{equation}
 
-For the phase $\boldsymbol{\phi}_{\ell m}$, we employ one ANN $\mathcal{N}_{\phi_{\ell m}\text{- 12}}$ to predict only the first two PCA components.
-Another ANN will take care of the remaining components $\mathcal{N}_{\phi_{\ell m}\text{- 2345}}$ \tim{Should we refer to \cite{Schmidt:2020yuu} to argue why only these PCA components have to be considered?}.
-On top of this, we build an additional ANN $\mathcal{N}_{\phi_{\ell m}\text{- residual}}$ to target the residual of the predictions of $\mathcal{N}_{\phi_{\ell m}\text{- 12}}$ \tim{Is the term "residual" a well-known term (or clear enough from context) or does it require more explanation?}.
+For the phase $\boldsymbol{\phi}_{\ell m}$, we employ one ANN $\mathcal{N}_{\phi_{\ell m}\text{- 01}}$ to predict only the first two PCA components.
+Another ANN will take care of the remaining components $\mathcal{N}_{\phi_{\ell m}\text{- 2345}}$. \stefano{Added in the PCA section a remark on how many PCs we are using, citing the previous work}
+On top of this, we build an additional ANN $\mathcal{N}_{\phi_{\ell m}\text{- residual}}$ to target the residual of the predictions of $\mathcal{N}_{\phi_{\ell m}\text{- 01}}$ \tim{Is the term "residual" a well-known term (or clear enough from context) or does it require more explanation?} \stefano{I would say it's pretty clear, but I'm happy to add a clarification, if needed.}.
 The scheme make sure that the first two PCs are predicted with much larger accuracy than the others. Indeed, the reconstructed WF depends largely on the first two components and a small fractional error can potentially have a large impact on the overall accuracy.
 
 The predicted phase $\hat{\boldsymbol{\phi}}_{\ell m}$ is then given by:
@@ -286,15 +294,15 @@ The predicted phase $\hat{\boldsymbol{\phi}}_{\ell m}$ is then given by:
 \begin{equation}\label{eq:ph_pred}
 	\hat{\boldsymbol{\phi}}_{\ell m}(\boldsymbol{\vartheta}) = \boldsymbol{\mu}_{\phi_{\ell m}} + H_{\phi_{\ell m}}^T 
 	\begin{pmatrix}
-        \mathcal{N}_{\phi_{\ell m}\text{- 12}}(\tilde{\boldsymbol{\vartheta}}) + \mathcal{N}_{\phi_{\ell m}\text{- residual}}(\tilde{\boldsymbol{\vartheta}}) \\
+        \mathcal{N}_{\phi_{\ell m}\text{- 01}}(\tilde{\boldsymbol{\vartheta}}) + \mathcal{N}_{\phi_{\ell m}\text{- residual}}(\tilde{\boldsymbol{\vartheta}}) \\
         \mathcal{N}_{\phi_{\ell m}\text{- 2345}}(\tilde{\boldsymbol{\vartheta}}) \hfill
 	 \end{pmatrix}.
 \end{equation}
 
 
-We train our model using the PCA dataset, obtained by PCA reducing the training set. Each ANN is trained using the following loss function: \tim{I know in the definition of the custom loss function the w for the weights is inside the square, but (at least in the fitNN function that I wrote) I think we take the square root of $\boldsymbol{w}$ as input of the loss weights, so that the $\boldsymbol{w}$ in the definition below should be outside of the square...}
+We train our model using the PCA dataset, obtained by PCA reducing the training set. Each ANN is trained using the following loss function: \tim{I know in the definition of the custom loss function the w for the weights is inside the square, but (at least in the fitNN function that I wrote) I think we take the square root of $\boldsymbol{w}$ as input of the loss weights, so that the $\boldsymbol{w}$ in the definition below should be outside of the square...} \stefano{You're right. But in this case, the heuristics of why we chose such weights is less clear. Do you have a good explaination of why this works?}
 \begin{equation}\label{eq:loss}
-	\mathcal{L} = \frac{1}{N} \sum_{i=1}^N \Bigl((\mathcal{N}(\boldsymbol{\vartheta}_i) - \boldsymbol{y}_i)}\boldsymbol{w} \Bigr)^2
+	\mathcal{L} = \frac{1}{N} \sum_{i=1}^N \Bigl((\mathcal{N}(\boldsymbol{\vartheta}_i) - \boldsymbol{y}_i)}\Bigr)^2 \; \boldsymbol{w}
 \end{equation}
 %
 where $\boldsymbol{y}_i$ is the (scaled) regression target of each network and $\boldsymbol{w} \in \R^K$ takes into account the fact that different PCs have different orders of magnitude.
@@ -340,6 +348,9 @@ note that the $\mathcal{M}_\mathrm{sym}$ depends on the signal $s$, hence it dep
 As above, we define the symphony mismatch as $\mathcal{F}_\mathrm{sym} = 1 - \mathcal{M}_\mathrm{sym}$.
 \stefano{I didn't want to go into too many details here but maybe the whole discussion is unclear and needs more details}
 
+In what follows, we always use a constant (i.e. flat) PSD. While this certainly does not correspond to any actual detector, it makes sure that all the frequencies are weighted equally, hence giving a detector agnostic measure of the mismatch.
+\stefano{Does it make sense? Or rather should we use a PSD?}
+
 \subsection{Hyperparameters tuning}
 \label{sec:hyperparameter}
 
@@ -349,7 +360,7 @@ As above, we define the symphony mismatch as $\mathcal{F}_\mathrm{sym} = 1 - \ma
 		\hline\hline
 			$\mathcal{N}_{A_{\ell m}$
 				& 1 & 35 & $\mathcal{M}_c, \chi_\text{eff}$ & 1 \\
-			$\mathcal{N}_{\phi_{\ell m}\text{- 12}}$ 
+			$\mathcal{N}_{\phi_{\ell m}\text{- 01}}$ 
 				& 2 & 50 & $\mathcal{M}_c, \eta, \log q, \chi_\text{eff}$ & 3 \\
 			$\mathcal{N}_{\phi_{\ell m}\text{- 2345}}$
 				& 1 & 50 & $\mathcal{M}_c, \eta, \log q, \chi_\text{eff}$ & 1 \\
@@ -359,48 +370,58 @@ As above, we define the symphony mismatch as $\mathcal{F}_\mathrm{sym} = 1 - \ma
 	\label{tab:model}
 	\caption{Architecture of the 4 ANNs employed to generate each mode. For each ANN we report the number of layers and the number of units per layer. We perform data augmentation by adding all the polynomials terms in the chosen features.
 	The architecture have been chosen after hyperparameter tuning (see Fig.~\ref{fig:tuning}).
-	Among the features, we use the chirp mass $\mathcal{M}_c =\frac{(m_1 m_2)^{3/5}}{(m_1+m_2)^{1/5}}$, the symmetric mass ratio $\eta = \frac{m_1 m_2}{(m_1+m_2)^2}$ and the effective spin parameter $\chi_\text{eff} = \frac{m_1 s_\text{1z} +m_2 s_\text{2z}}{m_1+m_2}$.
+	Among other features, we use the chirp mass $\mathcal{M}_c =\frac{(m_1 m_2)^{3/5}}{(m_1+m_2)^{1/5}}$, the symmetric mass ratio $\eta = \frac{m_1 m_2}{(m_1+m_2)^2}$ and the effective spin parameter $\chi_\text{eff} = \frac{m_1 s_\text{1z} +m_2 s_\text{2z}}{m_1+m_2}$
 	}
 \end{table}
 
 \begin{figure}[t]
 	\centering
 	\includegraphics[scale = 1]{accuracy}
-	\caption{}
+	\caption{We report the results of the mismatch between the $50000$ test waveforms produced by \texttt{mlgw} and by the training model \texttt{SEOBNRv4PHM}.
+	In the top panel, we report the histogram of the ``symphony" mismatch $F_\text{sym}$ for the overall waveforms, where we compare the $h_+$ and $h_\times$ polarizations (see Eq.~\eqref{eq:perturbative_exp}). For the computation, we set random sky location. We also report the median and the mean mismatch, together with the value of the $90^\text{th}$ percentile.
+	In the bottom panel, we report the histograms for the mismatches computed mode by mode.
+	The composition of the test set is described in the text.
+	}
 	\label{fig:accuracy_hist}
 \end{figure}
 
 \tim{I believe you used the exact same plot in Fig.~\ref{fig:countour_plots} for ($q$,$s_{1z}$) and ($q$,$s_{2z}$), or is it a super coincidence? :)}
+\stefano{You are so right! There was a bug in the code that produced the json of the results. Will need to run again :D}
 \begin{figure*}[t]
 	\centering
 	\includegraphics[width=\textwidth]{colormesh}
-	\caption{WRITEME}
+	\caption{
+	Depency of the ``symphony" mismatch $F_\text{sym}$ between \texttt{mlgw} and the training model \texttt{SEOBNRv4PHM}, as a function of some chosen orbital paramers. The mismatch is computed on the $50000$ waveforms on the test set described in the text.
+	On the left plot, we display the quantities $M-q$ on the two axis, while on the center and left plot we show on the axis the variables $q-s_\text{1z}$ and $q-s_\text{2z}$ respectively. 
+	Each bin is colored according to the \textit{average} mismatch and the three plots shares the same color scale.
+	We note that \texttt{mlgw}'s faithfulness tends to decreases for low values of $q$ and large positive values of $s_\text{1z}$
+	\stefano{This plot will need to be updated - working on it :D}}
 	\label{fig:countour_plots}
 \end{figure*}
 
 \begin{figure*}[t]
 	\centering
 	\includegraphics[width=\textwidth]{colormesh_modes}
-	\caption{WRITEME}
+	\caption{
+	For each mode, we report the mismatch between \texttt{mlgw} and the training model \texttt{SEOBNRv4PHM}, as a function of $q$ and $s_\text{1z}$. The mismatch is computed on the $50000$ waveforms on the test set described in the text.
+	Each bin is colored according to the \textit{average} mismatch.
+	We note that the performance between different modes can vary significantly and in general they decrease for low values of $q$ and high values of spins.
+	}
 	\label{fig:countour_plots_modes}
 \end{figure*}
 
 The performance of the model depends on a number of crucial choices about some non-trainable parameters, usually called hyperparameters. The hyperparameters usually defines the architecture of the ANN as well as some parameters relevant to the training.
 Setting the right values for the hyperparameters is crucial for the ANN performance, as one needs to balance between accuracy and speed: this procedure is called {\it hyperparameters tuning} and can be done automatically to optimize manual work and to make sure to find a good minimum.
 
-\tim{There a "2" below in the PDF-version, but I don't know how to remove this.}
 We optimize the following hyperparameters:
-\begin{multicols}{2}
-	\begin{itemize}
-		\item \texttt{n-layers}: number of hidden layers in the ANN
-		\item \texttt{units}: number of nodes per hidden layer
-		\item \texttt{features}: features to use for data augmentation
-		\item \texttt{order}: the data will be augmented with all the monomials of the chosen features up the given order
-	\end{itemize}
-\end{multicols}
+\begin{itemize}
+	\item \texttt{n-layers}: number of hidden layers in the ANN
+	\item \texttt{units}: number of nodes per hidden layer
+	\item \texttt{features}: features to use for data augmentation
+	\item \texttt{order}: the data will be augmented with all the monomials of the chosen features up the given order
+\end{itemize}
 
-For each of the 4 ANN useful to produce a single mode (see Eq.~(\ref{eq:amp_pred}-\ref{eq:ph_pred})), we train a network for different combinations of hyperparameters. The figure of merit of each hyperparameter choice is the logarithm of the loss function Eq.~\eqref{eq:loss} evaluated on the validation set. \stefano{@Tim: is this true?} \tim{@Stefano: I don't really know why it would be the logarithm... It shouldn't really matter though for comparing the results since the logarithm is a strictly monotonically increasing function but looking at Fig.~\ref{fig:tuning} we are using the logarithm.}
-
+For each of the 4 ANN useful to produce a single mode (see Eq.~(\ref{eq:amp_pred}-\ref{eq:ph_pred})), we train a network for different combinations of hyperparameters. The figure of merit of each hyperparameter choice is the logarithm of the loss function Eq.~\eqref{eq:loss} evaluated on the validation set.
 For our experiments we only use the dataset of the $(2,2)$ mode and we employ the package \texttt{keras-tuner} \cite{omalley2019kerastuner}.
 
 We report our results in Fig.~\ref{fig:tuning}, where each combination of hyperparameters tested is represented in the \texttt{n-layers}-\texttt{units} plane and colored by the validation scored. 
@@ -418,9 +439,10 @@ We note here that an accurate ANN for the residuals of the phase is crucial to o
 
 To test the accuracy of our model, we generate a test set with $50000$ randomly chosen waveforms generated with the training model \texttt{SEOBNRv4PHM}.
 The waveforms masses are characterized by a total mass in the range $[30, 80] M_\odot$, by a mass ratio $q \in [1, 10]$. The spins are chosen in the range $[-0.99, 0.99]$ and the inclination angle $\iota$ and reference phase $\varphi_0$ are drawn uniformly from a sphere.
-We set the starting frequency in the range $[10, 20]Hz$ \tim{By what procedure do we set this starting frequency? I know I can look it up at the GitHub code, but is this something worthy to write down here?}.
+We sample the starting frequency uniformly in the range $[10, 20]Hz$.
 
 In Fig.~\ref{fig:accuracy_hist}, we report the histogram of the distribution of the mismatches between \texttt{mlgw} and the test waveforms. The upper part refers to the mismatches Eq.~\eqref{eq:match_sym} computed on the overall waveforms (with sky location sampled uniformly over the sky); the lower box refers to mismatches computed mode by mode with Eq.~\eqref{eq:match}. \tim{I think it is a bit weird that the legend of the bottom figure is in the figure above... though this is an efficient way of using the space I guess.}
+\stefano{Yes! The figure above was empty otherwise... Unless you strongly object, I'd keep it as it is.}
 
 First of all, we note that the model shows very high faithfulness. With a median value of $2\times 10^{-4}$ and with virtually no signals with a ``symphony" mismatch higher than $10^{-2}$, \texttt{mlgw-NN} is indistinguishable from \texttt{SEOBNRv4PHM} for the current generation detectors \cite{WF_systematics}.
 The faithfulness for the $(2,2)$ mode is even higher with no signals with mismatch higher than $2\times 10^{-3}$.
@@ -443,13 +465,18 @@ A speed up in the waveform generation is the main motivation to build a ML wavef
 For this reason, we use our test set to measure the ratio between the time to generate a waveform with \texttt{SEOBNRv4PHM} and \texttt{mlgw}. Our model offers further speed by generating waveform in batches: in this case, some operations are efficiently parallelized and happen more efficiently.
 We report our findings in Fig.~\ref{fig:timing_hist}.
 
-We achieve a speed up between a factor of $100$ and $200$, depending on the length of the waveform. \tim{The sentence ``depending on the length of the waveform" makes sense, but does it need any ``proof"?} For waveform batch generation, the speed up can be twice as much, ranging between $200$ and $400$.
+We achieve a speed up between a factor of $100$ and $200$, depending on the waveform. \tim{The sentence ``depending on the length of the waveform" makes sense, but does it need any ``proof"?} \stefano{You're right. If we don't provide any dependence of the speed up on the WF length, we cannot make such claim. Since I don't think we want to add another plot (do we?), I changed the sentence into a less controversial statement.}
+For waveform batch generation, the speed up can be twice as much, ranging between $200$ and $400$.
 The speed up achieved by \texttt{mlgw} is slightly larger than the one obtained by a surrogate model \texttt{SEOBNRv4PHMSur} obtained with standard techniques \cite{Gadre:2022sed}.
 
 \begin{figure}[t]
 	\centering
 	\includegraphics[scale = 1]{timing}
-	\caption{}
+	\caption{Speed up provided by \texttt{mlgw} over the training model \texttt{SEOBNRv4PHM}.
+	In the histogram, we report the ration between the time $t_\texttt{SEOBNRv4PHM}$ and the time $t_\texttt{mlgw}$ taken by the two models to generate each of the waveform in the test set.
+	We note that \texttt{mlgw} offers a speed up between a $100$ and $200$ with respect to the training model.
+	\texttt{mlgw} offers the option to generate waveforms in batches, effectively parallelizing some linear algebra operations. As shown in the plot, the batch generation provides a speed up of roughly a factor of two as compared with the non-parallelized version.
+	}
 	\label{fig:timing_hist}
 \end{figure}
 
@@ -463,14 +490,21 @@ Our model offers a two orders of magnitude speed up over the training model, wit
 Our method is fully general and is applicable to any chirp-like gravitational wave signal.
 To encourage new applications, we release our code (and our trained model) publicly as a python package through the PyPI repository.
 
-Future work should also include precession. This can be achieved by means of the {\it spin twist} procedure. It consist on a time dependent rotation of the plane of emission, resulting in a phase and amplitude modulation which approximates the effect of precession.
+Future work should also include precession. This can be achieved by means of the {\it spin twist} procedure \cite{}. It consist on a time dependent rotation of the plane of emission, resulting in a phase and amplitude modulation which approximates the effect of precession.
 Training an ANN to predict the time dependent rotation is a promising step towards a complete ML surrogate model.
 
-While the model is already applicable for most of the parameter estimation problems with current detectors, it is desirable to increase its range of validatity of our model, both in parameter space and in time.
-Such improvement will become mandatory for the next generation detectors \cite{}, when fast and reliable waveform models will be needed to mitigate the huge computational cost posed by very long observed waveforms.
+\stefano{GENERAL COMMENT: we should stress somewhere, maybe in the intro, that next generation ifos will need surrogate models and that we don't quite match yet the accuracy. This is the whole motivation of exploring new stuff like we are doing.}
+
+While the model is already applicable for most of the parameter estimation problems with current detectors, it is desirable to increase its range of validatity of our model, both in parameter space and in time span.
+
+In principle, such extension should be straightforward using the current architeture. On the other hand, due to an increased complexity of the regression task, probably more flexible architetures should be explored, using layers of different size. This would require a more careful (and computationally expensive!) hyperparameters tuning.
+In this context, tuning the network separately for each mode can also be beneficial. As noted in Sec.~\ref{sec:accuracy}, some HMs have worse performance than others, implying that the same architecture may not be valid for the prediction of different modes.
+Tayloring the architecture to each regression problem could be an elegant way to improve substantially the performance of our model.
+
+These improvements will become mandatory for the next generation detectors \cite{}, when fast and reliable waveform models will be needed to mitigate the huge computational cost posed by very long observed waveforms.
 Our framework is ideal to achieve such ambitious goal.
 \stefano{I don't feel like adding more will be beneficial. On the other hand, this section is very short}
-\tim{Maybe we could add a paragraph on different neural network topologies (not the same number of units for each hidden layer) and repeat what we said about improving HMs by using separate tuning?}
+\tim{Maybe we could add a paragraph on different neural network topologies (not the same number of units for each hidden layer) and repeat what we said about improving HMs by using separate tuning?} \stefano{Added this: how does this look?}
 
 	%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% END
 
