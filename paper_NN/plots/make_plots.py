@@ -73,6 +73,7 @@ def plot_validation(run_folder, title = None, savefile = None, put_legend = True
 
 		#Printing the best models
 	ids_sort = np.argsort(scores)[:5]
+	if title: print('###### ', title)
 	print("Best {} models: ".format(len(ids_sort)))
 	for id_ in ids_sort:
 		print('\t', *[v for i, (k, v) in enumerate(trials.items()) if i == id_])
@@ -144,7 +145,6 @@ def plot_speed_accuracy_hist(json_file):
 		r'90^\textrm{th} \textrm{ perc.}', np.percentile(dataset['mismatch'], 90))
 	ann_str = ann_str.replace(r'E-04', r'\times 10^{-4}')
 	ann_str = '$'+ann_str+'$'
-	print(ann_str)
 	axes[0].annotate(ann_str,
 		xy = (0.2,0.4),
 		xycoords = 'axes fraction',
@@ -263,12 +263,13 @@ def mse_table():
 		
 
 if __name__=='__main__':
+	#mse_table();quit()
+
 	plot_validation('/home/stefano/Dropbox/Stefano/PhD/mlgw_repository/dev/mlgw_NN/bayesian_tuning_SEOB_22/tuning_amp_22_0123', "Tuning of amplitude", 'tuning_amp.pdf', False)
 	plot_validation('/home/stefano/Dropbox/Stefano/PhD/mlgw_repository/dev/mlgw_NN/bayesian_tuning_SEOB_22/tuning_ph_22_01', "Tuning of phase - PC 0 1", 'tuning_ph_01.pdf', False)
 	plot_validation('/home/stefano/Dropbox/Stefano/PhD/mlgw_repository/dev/mlgw_NN/bayesian_tuning_SEOB_22/tuning_ph_22_2345', "Tuning of phase - PC 2 3 4 5", 'tuning_ph_2345.pdf', False)
 	plot_validation('/home/stefano/Dropbox/Stefano/PhD/mlgw_repository/dev/mlgw_NN/bayesian_tuning_SEOB_22/tuning_ph_22_01_residual', "Tuning of residual model for phase", 'tuning_ph_01_residual.pdf', True)
 
-	#mse_table()
 	plot_speed_accuracy_hist('model_SEOB.json')
 	quit()
 	

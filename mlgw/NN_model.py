@@ -479,10 +479,8 @@ def tune_model(out_folder, project_name, quantity, PCA_data_loc, PC_to_fit, hype
 		project_name=project_name
 	)
 
-	callback_list = [
-		EarlyStopping(monitor='val_loss', patience=100, restore_best_weights=True),
-		LearningRateScheduler(Schedulers('exponential', exp=-0.0003).scheduler)
-	]
+	callback_list = [EarlyStopping(monitor='val_loss', patience=100, restore_best_weights=True),
+		LearningRateScheduler(Schedulers('exponential', exp=-0.0003).scheduler)]
 
 	tuner.search(PCA_data.train_theta, PCA_data.train_var, epochs=max_epochs,
 			validation_data=(PCA_data.test_theta, PCA_data.test_var),
