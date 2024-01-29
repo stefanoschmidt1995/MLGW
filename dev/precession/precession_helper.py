@@ -15,7 +15,7 @@ import scipy.signal
 sys.path.insert(0,'../mlgw_v2') #this should be removed eventually
 from GW_helper import *
 from tqdm import tqdm
-from PyEMD import EMD
+#from PyEMD import EMD
 
 sys.path.insert(0,'./IMRPhenomTPHM')
 from run_IMR import get_IMRPhenomTPHM_angles

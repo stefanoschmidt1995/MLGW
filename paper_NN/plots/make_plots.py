@@ -204,10 +204,12 @@ def plot_speed_accuracy_hist(json_file):
 	plt.hist(dataset['time_lal']/dataset['time_mlgw'], label = r"$\textrm{no batch}$", **kwargs)
 	plt.hist(dataset['time_lal']/dataset['time_mlgw_100'], label = r"$\textrm{batch}$", **kwargs)
 	plt.axvline(1, c='k', ls ='dashed')
-	plt.xlabel(r'$t_{\texttt{SEOBNRv4PHM}}/t_{\texttt{mlgw}}$')
+	#plt.xlabel(r'$t_{\texttt{SEOBNRv4PHM}}/t_{\texttt{mlgw}}$')
+	plt.xlabel(r'$t_{\texttt{IMRPhenomTPHM}}/t_{\texttt{mlgw}}$')
 	plt.legend()
 	plt.tight_layout()
 	plt.savefig('../tex/img/timing.pdf', bbox_inches='tight')
+	#plt.savefig('../tex/img/timing_IMR.pdf', bbox_inches='tight')
 	plt.show()
 	
 	
@@ -265,10 +267,10 @@ def mse_table():
 if __name__=='__main__':
 	#mse_table();quit()
 
-	plot_validation('/home/stefano/Dropbox/Stefano/PhD/mlgw_repository/dev/mlgw_NN/bayesian_tuning_SEOB_22/tuning_amp_22_0123', "Tuning of amplitude", 'tuning_amp.pdf', False)
-	plot_validation('/home/stefano/Dropbox/Stefano/PhD/mlgw_repository/dev/mlgw_NN/bayesian_tuning_SEOB_22/tuning_ph_22_01', "Tuning of phase - PC 0 1", 'tuning_ph_01.pdf', False)
-	plot_validation('/home/stefano/Dropbox/Stefano/PhD/mlgw_repository/dev/mlgw_NN/bayesian_tuning_SEOB_22/tuning_ph_22_2345', "Tuning of phase - PC 2 3 4 5", 'tuning_ph_2345.pdf', False)
-	plot_validation('/home/stefano/Dropbox/Stefano/PhD/mlgw_repository/dev/mlgw_NN/bayesian_tuning_SEOB_22/tuning_ph_22_01_residual', "Tuning of residual model for phase", 'tuning_ph_01_residual.pdf', True)
+	#plot_validation('/home/stefano/Dropbox/Stefano/PhD/mlgw_repository/dev/mlgw_NN/bayesian_tuning_SEOB_22/tuning_amp_22_0123', "Tuning of amplitude", 'tuning_amp.pdf', False)
+	#plot_validation('/home/stefano/Dropbox/Stefano/PhD/mlgw_repository/dev/mlgw_NN/bayesian_tuning_SEOB_22/tuning_ph_22_01', "Tuning of phase - PC 0 1", 'tuning_ph_01.pdf', False)
+	#plot_validation('/home/stefano/Dropbox/Stefano/PhD/mlgw_repository/dev/mlgw_NN/bayesian_tuning_SEOB_22/tuning_ph_22_2345', "Tuning of phase - PC 2 3 4 5", 'tuning_ph_2345.pdf', False)
+	#plot_validation('/home/stefano/Dropbox/Stefano/PhD/mlgw_repository/dev/mlgw_NN/bayesian_tuning_SEOB_22/tuning_ph_22_01_residual', "Tuning of residual model for phase", 'tuning_ph_01_residual.pdf', True)
 
 	plot_speed_accuracy_hist('model_SEOB.json')
 	quit()

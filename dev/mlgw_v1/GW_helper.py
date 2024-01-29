@@ -785,8 +785,8 @@ def create_dataset_FD(N_data, N_grid = None, filename = None, q_range = (1.,5.),
 			spin2z = s2_range
 
 			#debug!!!
-		if m1/m2 >4.6 and (np.abs(spin1z) >0.8 or np.abs(spin2z) > 0.8):
-			continue
+		#if m1/m2 >4.6 and (np.abs(spin1z) >0.8 or np.abs(spin2z) > 0.8):
+		#	continue
 
 			#getting the wave
 		hptilde, hctilde = lalsim.SimInspiralChooseFDWaveform( #where is its definition and documentation????

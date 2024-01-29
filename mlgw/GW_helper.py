@@ -21,6 +21,7 @@ import os.path
 import matplotlib.pyplot as plt #debug
 import warnings
 import scipy.signal
+from tqdm import tqdm
 
 ################# Overlap related stuff
 def overlap(amp_1, ph_1, amp_2, ph_2, df, low_freq = None, high_freq = None, PSD = None):
@@ -145,7 +146,7 @@ compute_optimal_mismatch
 	
 	if return_F:
 		return 1-overlap, phi_optimal
-	if not return_F:
+	else:
 		return overlap, phi_optimal
 
 
@@ -284,7 +285,7 @@ create_dataset_TD
 		buff_list.append(filebuff)
 
 		#####creating WFs
-	for n_WF in range(N_data):
+	for n_WF in tqdm(range(N_data), desc = 'Generating dataset'):
 			#setting value for data
 		if isinstance(m2_range, (tuple, list)):
 			m2 = np.random.uniform(m2_range[0],m2_range[1])
@@ -443,6 +444,7 @@ create_dataset_TD
 			amp_list = [temp_amp]
 			ph_list = [temp_ph]
 			argpeak = locate_peak(temp_amp) #aligned at the peak of the 22
+			hlm = None
 
 			#setting time grid
 		t_peak = time_full[argpeak]
@@ -473,9 +475,9 @@ create_dataset_TD
 			
 
 			#user communication
-		if n_WF%50 == 0 and n_WF != 0:
+		#if n_WF%50 == 0 and n_WF != 0:
 		#if n_WF%1 == 0 and n_WF != 0: #debug
-			print("Generated WF ", n_WF)
+		#	print("Generated WF ", n_WF)
 
 	filebuff.close()
 	return
@@ -717,8 +719,10 @@ def locate_peak(amp, start = 0.3):
 	assert amp.ndim == 1
 	id_start = int(len(amp)*start)
 	extrema = scipy.signal.argrelextrema(np.abs(amp[id_start:]), np.greater)
-	argpeak = extrema[0][0]+id_start
-	return argpeak
+	if len(extrema[0]):
+		return extrema[0][0]+id_start
+	else:
+		return np.argmax(np.abs(amp[id_start:]))+id_start
 
 
 

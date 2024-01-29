@@ -50,10 +50,16 @@ superscriptaddress,10pt]{revtex4-1}
 	%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% ABSTRACT
 \begin{abstract}
 
-We develop a machine learning model to fast and accurately predict the time domain gravitational wave emission non-precessing binary black hole system. Our model incorporates the effect of higher order modes of the multipole expansion of the waveform.
-Building on our previous work \cite{Schmidt:2020yuu} we decompose each mode by amplitude and phase and we reduce the dimensionality with Principal Component Analysis. We train an ensemble of Artificial Neural Networks to learn the relation between orbital parameters and the low dimensional representation of each mode.
-We train our model, called \texttt{mlgw-NN}, on $\sim 10^5$ signals generated with the state-of-the-art approximant \texttt{SEOBNRv4PHM} and we find that \texttt{mlgw-NN} achieves a median faithfulness of $10^{-4}$, averaged across the parameter space.
-We show that our model generates a single waveform two orders of magnitude faster than the training model, with the speed up increasing when waveforms are generated in batches.
+We develop a machine learning model to quickly and accurately predict the time domain gravitational wave emission 
+of non-precessing binary black hole coalescences. However, our model incorporates the effect of higher order modes of the 
+multipole expansion of the waveform. Building on our previous work \cite{Schmidt:2020yuu} we decompose each mode by 
+amplitude and phase and we reduce the dimensionality with principal component analysis. We train an ensemble of 
+artificial neural networks to learn the relation between orbital parameters and the low dimensional representation of 
+each mode.
+We train our model, called \texttt{mlgw-NN}, on $\sim 10^5$ signals generated with the state-of-the-art approximant 
+\texttt{SEOBNRv4PHM} and we find that \texttt{mlgw-NN} achieves a median faithfulness of $10^{-4}$, averaged across the 
+parameter space. We show that our model generates a single waveform two orders of magnitude faster than the training model, 
+with the speed up increasing when waveforms are generated in batches.
 Our framework is fully general and can be applied to any other time domain approximant.
 \end{abstract}
 	
@@ -84,100 +90,155 @@ Our framework is fully general and can be applied to any other time domain appro
 \section{Introduction}
 \label{sec:intro}
 
-With almost a hundred of confirmed detections, Gravitational Waves (GW) astronomy is entering a mature state, where many loud GW events will force the scientific community to develop a fast analysis to deliver precision measurement. Expanding on past results \cite{LIGOScientific:2018mvr, GWTC-2, GWTC-2.1}, the recent transient catalogue GWTC-3 \cite{GWTC-3} is the latest achievment of the effort carried on by the LIGO-Virgo-KAGRA collaboration \cite{KAGRA:2013rdx, LIGOScientific:2014pky, VIRGO:2014yos, KAGRA:2020tym} and it relies on both instrument and data analysis development.
+With almost a hundred of confirmed detections, gravitational wave (GW) astronomy is entering a mature state, 
+where many loud GW events will force the scientific community to develop faster analyses to deliver 
+precision measurements. Expanding on past results \cite{LIGOScientific:2018mvr, LIGOScientific:2020ibl, LIGOScientific:2021usb}, 
+the recent transient catalogue GWTC-3 \cite{KAGRA:2021vkt} is the latest achievment of the effort carried on by the 
+LIGO-Virgo-KAGRA collaboration \cite{KAGRA:2013rdx, LIGOScientific:2014pky, VIRGO:2014yos, KAGRA:2020tym} 
+and it relies on both instrument and data analysis development.
 
-A crucial element of the data analysis is the ability to generate accurate prediction of the GW signal emitted by a Binary Black Hole (BBH) system. Such waveforms are used for the expensive bayesian estimation of the parameters \cite{Veitch:2014wba} characterizing a BBH: the analysis of a single event requires the online generation of up to billions of waveforms.
+A crucial element of the data analysis is the ability to quickly and accurately generate waveforms for GW signals 
+emitted by coalescing binary black holes (BBHs). Such waveforms are used for the expensive Bayesian estimation of 
+the parameters characterizing a BBH \cite{Veitch:2014wba}: the analysis of a single event requires the online 
+generation of up to billions of waveforms. As we move towards the next generation of detectors, such as Einstein Telescope 
+\cite{Punturo:2010zz, Maggiore:2019uih} 
+and Cosmic explorer \cite{Reitze:2019iox, Evans:2021gyd}, it will become even more necessary to deploy accurate waveform models 
+that are fast and, at the same time, incorporate the full physics of the problem, otherwise our analyses will  
+become subject to systematic errors in the parameter recovery \cite{Purrer:2019jcp}. On the other hand, 
+accurate models are often slow to generate on a computer and the analyses might struggle to keep up with the large 
+event rate expected in the next-generation observatories  \cite{Samajdar:2021egv}.
+Balancing the two needs is challenging, since speed and accuracy are often at trade.
 
-As we move towards the next generation of detectors, such as Einstein Telescope \cite{Punturo:2010zz, Maggiore:2019uih} or Cosmic explorer \cite{Reitze:2019iox}, it is mandatory to deploy accurate waveform models, that are fast and, at the same time, incorporate many physics effects. Failing to incorporate accurate physics may lead to systematic errors \cite{Purrer:2019jcp} in the parameter recovery, due to a bad modelling of the source. On the other hand, accurate models are often slow to run and the analysis might struggle to keep up with the enourmous event rate expected in the next generation observatories.
-Balancing the two needs is challenging since, speed and accuracy are often at trade.
+An essential aspect for a realistic BBH signal model is the incorporation of higher-order modes (HMs) of the
+multipole expansion of the waveform \cite{Maggiore:2007ulw}. For nearly equal mass systems, 
+the leading-order mode is orders of magnitude larger than the others and, including the HMs does not 
+significantly affect the parameter estimation. However, it has been demonstrated \cite{Varma:2014jxa, Varma:2016dnf, Mills:2020thr} 
+that HMs are observable in highly asymmetric binary systems. In fact, the effect of HMs has already been observed 
+in at least two BBH events originating from asymmetric binaries \cite{LIGOScientific:2020stg, LIGOScientific:2020zkf}. This underscores the importance of including HMs in any parameter estimation pipeline in order to avoid biases in the recovered parameters.
 
-One important piece for a realistic BBH signal is the inclusion of the Higher Order Modes (HMs) of the multipole expansion of the waveform \cite{Maggiore:2007ulw}. For mass symmetric systems, the leading mode is orders of magnitude larger and including HMs doesn't affect the parameter estimation. On the other hand, it has been shown \cite{Varma:2014jxa, Varma:2016dnf, Mills:2020thr} that HMs are observable in very asymmetric binary systems, hence the need to include them to avoid any bias.
+Two main families of models have been developed, both being able to incorporate HMs.
+One family relies on the Effective One Body (EOB) formalism 
+\cite{Buonanno:2000ef, Damour:2009kr,Nagar:2020pcj,Chiaramello:2020ehz,Ossokine:2020kjp, Ramos-Buades:2023ehm, Nagar:2021gss}, 
+which maps the complicated general relativistic binary system into a problem governed by an effective Hamiltonian. 
+EOB models tend to be accurate but are quite costly to generate, since for each waveform one needs to solve the 
+Hamiltonian equation of motion.
+On the other hand, the phenomenological waveforms \cite{Khan:2015jqa,Pratten:2020ceb,Estelles:2020osj} are based on 
+analytical expressions, making use of the post-Newtonian formalism to model the inspiral, and on fits to numerical
+simulations to describe the intermediate and merger-ringdown regimes. They tend to be faster to evaluate than the EOB models.
+Both families, EOB and phenomenological, need to be calibrated with numerical relativity waveforms, 
+computed by directly solving the Einstein equations in discretized form. The calibration makes sure that a model 
+retains its accuracy even close to merger, where approximate treatments such as the the post-Newtonian or EOB formalisms 
+are no longer applicable by themselves.
 
-Throughout decades of developments, two families of models have been developed, both being able to incorporate HMs.
-One family relies on the Effective One Body (EOB) formalism \cite{Buonanno:2000ef, Damour:2009kr,Nagar:2020pcj,Chiaramello:2020ehz,Ossokine:2020kjp, Ramos-Buades:2023ehm, Nagar:2021gss}, which maps the complicated general relativistic binary system into a problem governed by an effective Hamiltonian. EOB models tend to be accurate but are quite costly to evaluate, since for each waveform one needs to solve the hamiltonian equation of motion.
-On the other hand, the phenomenological waveforms \cite{Khan:2015jqa,Pratten:2020ceb,Estelles:2020osj} are based on analytical expressions (within the post-newtonian formalism). They tend to be faster to evaluate, but don't achieve the same accuracy.
-Both families, EOB and phenomenological, need to be calibrated with Numerical Relativity waveforms, computed by solving directly the Einstein equations. The calibration makes sure that a model retains its accuracy even close to merger, where an approximate treatment, such as the post-newtonian or EOB formalism are not applicable anymore.
+Besides the standard families, surrogate waveform models have been developed with the aim of reproducing the 
+output of a target model and of making feasible the usage of the underlying model. Various surrogates have been developed 
+to accelerate several EOB models \cite{Gadre:2022sed}, even including HMs. While traditional surrogate 
+models \cite{Varma:2018mmi,Williams:2019vub,Varma:2019csw,Rifat:2019ltp,Khan:2020fso, Gadre:2022sed} 
+build an empirical interpolant on the waveform space, a more recent approach relies on performing a regression 
+using machine learning techniques \cite{Chua:2018woh, Khan:2020fso, Thomas:2022rmc, Tissino:2022thn}.
 
-Besides the standard families, surrogate waveform models have been developed for years with the intent of reproducing the output of a target model and of making feasible the usage of the underlying model. Several surrogates have been developed to accelerate several EOB models \cite{Gadre:2022sed}, even including HMs. While traditional surrogate models \cite{Varma:2018mmi,Williams:2019vub,Varma:2019csw,Rifat:2019ltp,Khan:2020fso, Gadre:2022sed} build an empirical interpolant on the waveform space, a more modern approach relies on performing a regression using Machine Learning techniques \cite{Chua:2018woh, Khan:2020fso, Thomas:2022rmc, Tissino:2022thn}.
+Among others, \cite{Schmidt:2020yuu} introduced a machine learning surrogate model, based on a dimensionality 
+reduction scheme followed by a regression. In this work, we extend this model to HMs and we improve the accuracy 
+of the regression. Our model marks a step towards the development of a faster, yet precise, waveform model, and will 
+help enable the accurate analysis of next-generation detector data.
 
-Among others, \cite{Schmidt:2020yuu} introduced a Machine Learning surrogate model, based on a dimensionality reduction scheme followed by a regression. In this work, we extend this model to HMs and we improve the accuracy of the regression. Our model marks a step towards the development of a fast, yet precise, waveform model by achieving state-of-the-art accuracy and speed, and will enable the accurate analysis of the next generation detectors' data.
+We train our model on the widely used approximant \texttt{SEOBNRv4PHM} \cite{Ossokine:2020kjp} and we achieve a 
+$10^{-4}$ median faithfulness (with tails up to $10^{-2}$) when averaged across a wide range in parameter space.
+Our numerical experiments show that our model offers a substantial speed-up with respect to the original model, matching 
+the speed of the state-of-the-art surrogate models.
 
-We train our model on the widely used approximant \texttt{SEOBNRv4PHM} \cite{Ossokine:2020kjp} and we achieve a $10^{-4}$ median faithfulness (with tails up to $10^{-2}$) when averaged across a wide range in the parameter space.
-Our experiments showed that our model offers a substantial speed up with respect to the original model, matching the speed of the state-of-the-art surrogate models.
-
-This paper is organized as follows. In Sec.~\ref{sec:model} we introduce the details of the model presented here, stressing the differences with the model in  \cite{Schmidt:2020yuu}.
-Sec.~\ref{sec:performance} is devoted to the validation of our model: we will motivate our choice of several hyperparameters and perform an accuracy and speed study.
-In Sec.~\ref{sec:end}, we present some final remarks and highlight future perspective.
+This paper is organized as follows. In Sec.~\ref{sec:model} we introduce the details of the model presented here, 
+stressing the differences with the model in  \cite{Schmidt:2020yuu}.
+Sec.~\ref{sec:performance} is devoted to the validation of our model: we will motivate our choice of several 
+hyperparameters and perform an accuracy and speed study.
+In Sec.~\ref{sec:end}, we present some final remarks and highlight future perspectives.
 
 %%%%%%%%%%%%%%%%%%%
 \section{Building the model}
 \label{sec:model}
 
-A non-precessing BBH can be described by four {\it intrisic} parameters, which specify the two BH masses $m_1$ and $m_2$ and the z-component of the two spin $s_1$ and $s_2$.
-Moreover, since the total mass $M = m_1 + m_2$ sets an overall amplitude scaling, a non-precessing BBH signal only depends on the mass ratio $q = m_1/m_2 \geq 1$ as well as on the spins. We may refer to these parameter as $\boldsymbol{\vartheta} = (q, s_1, s_2)$.
-Besides the masses and spins, the gravitational wave emitted by the system depends also on luminosity distance to the source $d_L$, the inclination angle $\iota$ of the source and the reference phase $\varphi_0$: we call them {\it extrinsic}.
+A non-precessing BBH can be described by four {\it intrisic} parameters, which specify the two BH masses $m_1$ and $m_2$ 
+and the z-components of the two spins, $s_1$ and $s_2$.
+Since the total mass $M = m_1 + m_2$ acts as a scaling parameter, when generating non-precessing BBH signals one  
+only needs to consider the mass ratio $q = m_1/m_2 \geq 1$ together with the spins. 
+We refer to the relevant parameters as $\boldsymbol{\vartheta} = (q, s_1, s_2)$.
+Besides the masses and spins, the gravitational wave emitted by the system depends also on 
+luminosity distance to the source $d_L$, the inclination angle $\iota$ of the source, and the reference phase 
+$\varphi_0$; these are the {\it extrinsic} parameters.
 
-As it is standard, we expand the angular dependence on $\iota, \varphi_0$ of the {\it complex} waveform $h(t)$ in terms of a sum of spin -2 spherical harmonics.
-A GW is then parameterized\footnote{Such parameterization is particularly convenient as it separates the waveform dependence over intrinsic and extrinsic parameters.} as~\cite{Estelles:2021gvs}:
+As is standard, we expand the angular dependence on $\iota, \varphi_0$ of the {\it complex} waveform $h(t)$ 
+in terms of a sum of spin -2 spherical harmonics.
+A GW is then parameterized\footnote{Such parameterization is particularly convenient as it separates 
+the waveform dependence over intrinsic and extrinsic parameters.} as~\cite{Estelles:2021gvs}:
 \begin{align} \label{eq:h_parametrization}
 	&h(t; d_L,\iota,\varphi_0, m_1, m_2, s_1, s_2) = h_+ + i h_\times \nonumber \\
-		&\qquad= \frac{G}{c^2} \frac{M}{d_L}\sum_{\ell = 2}^{\infty} \sum_{m = -\ell}^{\ell} \tensor[^{-2}]{Y}{_{\ell m}}(\iota, \varphi_0) h_{\ell m}(t/M; \boldsymbol{\vartheta})
+		&\qquad= \frac{G}{c^2} \frac{M}{d_L}\sum_{\ell = 2}^{\infty} \sum_{m = -\ell}^{\ell} \tensor[^{-2}]{Y}{_{\ell m}}(\iota, \varphi_0) h_{\ell m}(t/M; \boldsymbol{\vartheta}),
 \end{align}
-where we refer to the functions $h_{\ell m}(t; \boldsymbol{\vartheta})$ as {\it modes} of the waveform. We note that that, for non-precessing systems, $h_{\ell m} = (-1)^\ell h^*_{\ell -m}$, hence we will only consider modes with $m>0$.
+where we refer to the functions $h_{\ell m}(t; \boldsymbol{\vartheta})$ as {\it modes} of the waveform. We note that that, 
+for non-precessing systems, $h_{\ell m} = (-1)^\ell h^*_{\ell -m}$, hence we will only consider modes with $m>0$.
 
-The mode $(\ell, m) = (2,2)$ is by far the largest in amplitude, hence it is often referred to as the {\it dominant mode}. The other sub-dominant modes are few orders of magnitude smaller in amplitude and become more relevant (and measurable!) for high mass ratios \cite{Mills:2020thr}.
+The mode $(\ell, m) = (2,2)$ is the largest in amplitude, hence it is often referred to as the {\it dominant mode}. 
+The other sub-dominant modes are usually few orders of magnitude smaller in amplitude and become more relevant 
+(and measurable) for high mass ratios \cite{Mills:2020thr, LIGOScientific:2020stg, LIGOScientific:2020zkf}.
 
-In this work, we introduce a Machine Learning model to perform a regression
+In this work, we introduce a machine learning model to perform a regression
 \begin{align}\label{eq:objective}
 	(q, s_1, s_2) &\longmapsto h_{\ell m}(t; \boldsymbol{\vartheta})
 \end{align}
 for each mode $(\ell,m)$.
-The regression is designed to reproduce waveforms from a given dataset; such waveforms can be generated by {\it any} time-domain approximant.
+The regression is designed to reproduce waveforms from a given data set; such waveforms can be generated 
+by {\it any} time-domain approximant.
 
-We decompose each mode in amplitude and phase
+We decompose each mode in amplitude and phase,
 \begin{equation}
-	h_{\ell m}(t; \boldsymbol{\vartheta}) = A_{\ell m}(t; \boldsymbol{\vartheta}) e^{i \phi_{\ell m}(t; \boldsymbol{\vartheta})}
+	h_{\ell m}(t; \boldsymbol{\vartheta}) = A_{\ell m}(t; \boldsymbol{\vartheta}) e^{i \phi_{\ell m}(t; \boldsymbol{\vartheta})},
 \end{equation}
 and, for each mode, we perform a regression for amplitude and phase separately. The regression scheme closely follows \cite{Schmidt:2020yuu} and relies on:
 \begin{enumerate}[label=(\alph*)]
-	\item a suitable vector representation of the regression target by choosing a fixed time grid
-	\item a Principal Component Analysis (PCA) model to reduce the dimensionality of each waveform
-	\item an Artificial Neural Network (ANN) regression to learn the dependence on $\boldsymbol{\vartheta}$ of the reduced waveform
+	\item A suitable vector representation of the regression target by choosing a fixed time grid;
+	\item A principal component analysis (PCA) model to reduce the dimensionality of each waveform;
+	\item An artificial neural network (ANN) regression to learn the dependence on $\boldsymbol{\vartheta}$ of the 
+	reduced waveform.
 \end{enumerate}
 
 While the first two elements are unchanged from the previous work, the ANN regression is first introduced here. Indeed a NN has more representation power than the Mixture of Experts (MoE) model \cite{Jacobs1991AdaptiveMoE}, used in \cite{Schmidt:2020yuu}: the change was needed to achieve better accuracy for the model.
 
-\subsection{Dataset creation}
-\label{sec:dataset}
+\subsection{data set creation}
+\label{sec:data set}
 
-To construct a dataset, we follow \cite{Schmidt:2020yuu} and we set a dimensionless time grid. We construct the grid by setting $D$ points equally spaced in $\tau^\alpha$, where $\tau$ is the physical time scaled by the total mass of the system $M$: $\tau = t/M$. Using the findings of \cite{Schmidt:2020yuu}, we set $D = \text{2000}$ and $\alpha = \text{0.5}$.
+To construct a data set, we follow \cite{Schmidt:2020yuu} and we set a dimensionless time grid. We construct the grid 
+by setting $D$ points equally spaced in $\tau^\alpha$, where $\tau$ is the physical time scaled by the total mass of 
+the system $M$: $\tau = t/M$. Using the findings of \cite{Schmidt:2020yuu}, we set $D = \text{2000}$ and 
+$\alpha = \text{0.5}$.
 %
-This is a good compromise between the need of having a faithful representation of the waveform (which requires a large grid) and the need of having a compact model (which points to a sparse grid).
+This is a good compromise between the need of having a faithful representation of the waveform (which requires 
+a large grid) and the need of having a compact model (which points to a sparse grid).
 
-The starting point of the grid $\tau_0$ sets the length of the waveform that our model is able to generate. We choose $\tau_0 = \SI{2}{s/M_\odot}$ and we populate the dataset with $68000$ waveforms.
+The starting point of the grid $\tau_0$ sets the length of the waveform that our model is able to generate. 
+We choose $\tau_0 = \SI{2}{s/M_\odot}$ and we populate the data set with $68000$ waveforms.
 
 To make sure that the distribution of $q$ is skewed towards towards the boundaries, where the regression is less accurate, we sample the mass ratio $q$ in the range $[1,10]$ with the following procedure:
 \begin{itemize}
-	\item We sample $q_1, \hdots, q_5 \sim \mathcal{U}_{[1,10]}$
-	\item We sample $x \sim \mathcal{U}_{[0,1]}$
-	\item We select q, based on the value of $x$:
+	\item We sample $q_1, \hdots, q_5 \sim \mathcal{U}_{[1,10]}$;
+	\item We sample $x \sim \mathcal{U}_{[0,1]}$;
+	\item We select $q$, based on the value of $x$:
 	\begin{itemize}
-		\item If $x \in [0,0.3)$, $\min q_1, \hdots, q_5$
-		\item If $x \in [0.3, 0.8)$, $q_1$
-		\item If $x \in [0.8, 1]$, $\max q_1, \hdots, q_5$
+		\item If $x \in [0,0.3)$, $\min q_1, \hdots, q_5$,
+		\item If $x \in [0.3, 0.8)$, $q_1$,
+		\item If $x \in [0.8, 1]$, $\max q_1, \hdots, q_5$,
 	\end{itemize}
 \end{itemize}
 where $\mathcal{U}_{[a,b]}$ is the uniform distribution in $[a,b]$.
 The spins are drawn uniformly in the range $[-0.99, 0.99]$.
 
 Once a time grid is set, we evaluate all the modes (amplitude and phase) on the time grid and represent them as vectors in $\R^D$.
-We then create a dataset $\{X, Y\}$ of $N$ elements. Each row of the dataset is of the form:
+We then create a data set $\{X, Y\}$ of $N$ elements. Each row of the data set is of the form:
 \begin{align}
 	X &= [q, s_1, s_2] \\
 	Y &= [\boldsymbol{A}^T_{\ell m}, \boldsymbol{\phi}^T_{\ell m}, \hdots ] 
 \end{align}
 %
-The dataset $Y$ gathers the amplitude and phase for the different modes in the dataset.
+The data set $Y$ gathers the amplitude and phase for the different modes in the data set.
 We include all the modes available in \texttt{SEOBNRv4PHM}: $(\ell, m) = \{(2,2),(2,1), (3,3), (4,4), (5,5)\}$.
 
 In what follows we will refer to any of the vectors $\boldsymbol{A}_{\ell m}$ or $\boldsymbol{\phi}_{\ell m}$ as $\boldsymbol{f}$.
@@ -186,16 +247,20 @@ Note that we use the same grid for all the modes.
 \subsection{Dimensionality reduction}
 \label{sec:PCA}
 
-It is unfeasibile to perform a regression targeting a large dimensional vector such as $\boldsymbol{f} \in \R^D$. For this reason, in \cite{Schmidt:2020yuu} we introduced a Principal Component Analysis (PCA) dimensionality reduction scheme.
+It is unfeasibile to perform a regression targeting a high-dimensional vector such as $\boldsymbol{f} \in \R^D$. 
+For this reason, in \cite{Schmidt:2020yuu} we introduced a principal component analysis (PCA) dimensionality 
+reduction scheme.
 It is an {\it approximately} invertible linear mapping between a vector $\boldsymbol{f} \in \R^D$ in a large dimensional space to lower dimensional vector  $\boldsymbol{g} \in \R^K$:
 %
 \begin{align}
-	\mathbf{g} = H (\mathbf{f} - \boldsymbol{\mu}) \label{eq:PCA_reduction_model}\\
-	\hat{\mathbf{f}} = H^T \mathbf{g} + \boldsymbol{\mu} \label{eq:PCA_reconstruction_model}
+	\mathbf{g} = H (\mathbf{f} - \boldsymbol{\mu}) \label{eq:PCA_reduction_model},\\
+	\hat{\mathbf{f}} = H^T \mathbf{g} + \boldsymbol{\mu}, \label{eq:PCA_reconstruction_model}
 \end{align}
 where $\boldsymbol{\mu} \in \R^D$ and $H$ is a $K \times D$ matrix.
-The rows $H_{i:}$ of $H$, also called {\it Principal Components} (PC), form an orthonormal set of vector, i.e. it holds ${\sum_{k=1}^D H_{ik} H_{kj} = \delta_{ij}}$.
-The PCs are the first $K$ eigenvectors of the $D \times D$ covariance matrix of the dataset, as described in \cite[Sec. 12]{murphy2012machine}.
+The rows $H_{i:}$ of $H$, also called {\it principal components} (PC), form an orthonormal set of vectors, 
+i.e.~${\sum_{k=1}^D H_{ik} H_{kj} = \delta_{ij}}$.
+The PCs are the first $K$ eigenvectors of the $D \times D$ covariance matrix of the data set, as described in 
+\cite[Sec. 12]{murphy2012machine}.
 
 The mapping is only approximately invertible, in the sense that $\hat{\mathbf{f}}$ is only an approximation of the high dimensional vector $\mathbf{f}$. The quality of the approximation is controlled by the number $K$ of PCs considered: the more PCs, the more accurate the reconstruction of $\mathbf{f}$ is.
 
@@ -204,10 +269,10 @@ One can have a deeper insight on PCA considering the following formula for the r
 	\hat{\mathbf{f}} = \sum_{i=0}^{K-1} \langle \mathbf{f} | H_{i:} \rangle \; H_{i:}
 \end{equation}
 %
-where $\langle \cdot | \cdot \rangle$ is the usual scalar product.
-
+where $\langle \mathbf{a} | \mathbf{b} \rangle = \sum_{i=0}^{D-1} a_i b_i$ is the {\it euclidean} scalar product between two vectors $\mathbf{a}, \mathbf{b} \in \R^D$.
+%
 Since less important PCs are more orthogonal to data, the typical magnitude of $g_i = \langle \mathbf{f} | H_{i:} \rangle$ decreases as $i$ increases.\footnote{For this reason PCA can be seen as a perturbative expansion on the basis vectors $H_{i:}$, where the accuracy is roughly measured by the eigenvalues of the first neglected PC. Increasing the number K of PCs considered increases the accuracy of the model (but also the complexity of the model).}.
-As a consequence, the regression for a lower order PC needs to be more accurate than the one for the higher order PC. This will be taken care by a suitable choice for the loss function for the regression (see next section).
+As a consequence, the regression for a lower order PC needs to be more accurate than the one for the higher order PC. This will be taken care of by a suitable choice for the loss function for the regression (see next section).
 
 Following \cite{Schmidt:2020yuu}, in this work we employ $6$ PCA compontents for the phase model and $4$ for the amplitude.
 
@@ -223,7 +288,7 @@ Following \cite{Schmidt:2020yuu}, in this work we employ $6$ PCA compontents for
 		\includegraphics[scale = 0.9]{tuning_ph_2345}\hfill
 		\includegraphics[scale = 0.9]{tuning_ph_01_residual}
 	\end{end}
-	\caption{Results from the validation of our ANN models, using the $\ell, m = 2,2$ mode dataset. We tune the number of layers and the number of features per layer, together with the features and the polynomial order for the data augmentation.
+	\caption{Results from the validation of our ANN models, using the $\ell, m = 2,2$ mode data set. We tune the number of layers and the number of features per layer, together with the features and the polynomial order for the data augmentation.
 	Each panel in the figure refers to a different ANN, taking care of different parts of the regression, as described in Sec.~\ref{sec:NN}.
 	For each regression, we train 100 ANNs with different choices of hyperparameters. Each point in the plot, refers to a trained network and it is colored with the logarithm of the validation score. Note that we do not report the features used for data augmentation, so that the plot is degenarate in this quantity.
 	}
@@ -234,14 +299,16 @@ Following \cite{Schmidt:2020yuu}, in this work we employ $6$ PCA compontents for
 \subsection{Neural network regression}
 \label{sec:NN}
 
-An Artificial Neural Network (ANN) is a popular regression model, consisting of a powerful parametric function, whose parameters (or weights), when properly set, can represent a large variety of relations between input and output.
-An ANN is built by stacking together $N_\text{L}$ layers in such a way that the output of a layer is the input of the following layer. Each layer is a function $L: \R^{D^\prime} \rightarrow \R^{D^{\prime\prime}} $ and has the following functional form
-
+An artificial neural network (ANN) is a popular regression model, consisting of a powerful parametric function, 
+whose parameters (or weights), when properly set, can represent a large variety of relations between input and output \cite{Bishop2006machinelearning, murphy2012machine, Goodfellow-et-al-2016}.
+An ANN is built by stacking together $N_\text{L}$ layers in such a way that the output of a layer is the input of the 
+following layer. Each layer is a function $L: \R^{D^\prime} \rightarrow \R^{D^{\prime\prime}} $ and has the following 
+functional form:
 \begin{equation}
 	\boldsymbol{y} = a(W^{\prime}_{\prime\prime}\boldsymbol{x})
 \end{equation}
 %
-Where $W^{\prime}_{\prime\prime}$ is a $D^{\prime\prime} \times D^{\prime}$ matrix and $a: \R \rightarrow \R$ is an activation function that acts elementwise on the vector $W^{\prime}_{\prime\prime}\boldsymbol{x}$.
+Where $W^{\prime}_{\prime\prime}$ is a $D^{\prime\prime} \times D^{\prime}$ matrix and $a: \R \rightarrow \R$ is an activation function that acts element-wise on the vector $W^{\prime}_{\prime\prime}\boldsymbol{x}$.
 Each component $y_i$ of the output of the layer is called a node and the number of nodes is a tunable parameter, controlling the representative power of the layer.
 
 An ANN $\mathcal{N}$ is obtained by composing $N_\text{L}$ different layers (each with a suitable number of nodes):
@@ -257,17 +324,19 @@ Another important choice is the activation function: several possible choices ar
 
 Once the ANN is set up, we need to set its weights to the values that achieve our regression task.
 This procedure is called training, where we minimize a loss function with respect to the weights $\boldsymbol{W}$ of the model.
-The loss function depends on the dataset at hand ${\{\boldsymbol{x}_i, \boldsymbol{y}_i\}_i}$.
+The loss function depends on the data set at hand ${\{\boldsymbol{x}_i, \boldsymbol{y}_i\}}$.
 Mathematically, the weights are given by:
 %
 \begin{equation}\label{eq:loss_general}
 	\boldsymbol{W} = \argmin_W \mathcal{L}(W; \{\boldsymbol{x}_i, \boldsymbol{y}_i\}_i)
 \end{equation}
 
-The minimization of the loss function is performed by stochastic gradient descent (SGD), as implemented by the \texttt{Nadam} algorithm \cite{Kingma2014AdamAM, dozat.2016}. The optimization relies on the gradients $\partial_W \mathcal{L}$ of the loss function, computed through the backpropagation algorithm \cite{backprop}.
+The minimization of the loss function is performed by stochastic gradient descent (SGD), as implemented by the \texttt{Nadam} algorithm \cite{Kingma2014AdamAM, dozat.2016}. The optimization relies on the gradients $\partial_W \mathcal{L}$ of the loss function, computed through the 
+back-propagation algorithm \cite{backprop}.
 
 To perform our regression $\theta \longmapsto \boldsymbol{g}$, we employ an ensemble of networks that suitably combined delivers accurate results.
-To improve the representative power or the ANN, we employ feature augmentation on the vector $\boldsymbol{\vartheta} = (q, s_1, s_2)$, effectively using the augmented vector $\tilde{\boldsymbol{\vartheta}}$ as input for the regression. Although different ANN's will need different features, we will for convenience abuse the notation $\tilde{\boldsymbol{\vartheta}}$ to any augmented vector. Indeed, the features to add need to be chosen with a validation process: this will be discussed in the next section.
+To improve the representative power or the ANN, we employ feature augmentation on the vector $\boldsymbol{\vartheta} = (q, s_1, s_2)$, effectively using the augmented vector $\tilde{\boldsymbol{\vartheta}}$ as input for the regression. Although different ANN's will need different features, we will for convenience 
+abuse the notation $\tilde{\boldsymbol{\vartheta}}$ to denote any augmented vector. Indeed, the features to add need to be chosen with a validation process: this will be discussed in the next section.
 
 Before the training, the regression targets $\boldsymbol{y}_i$ are scaled such that $\boldsymbol{y}_i \rightarrow \frac{\boldsymbol{y}_i}{\boldsymbol{w}}$, where $\boldsymbol{w}$ keeps the maximum of $|\boldsymbol{y}_i|$ along each axis. %${w}_j = \max_i(|(\boldsymbol{y}_i)_j|)$.
 In this way all the regression targets span the same order or magnitude, facilitating the ``learning" task.
@@ -275,15 +344,15 @@ In this way all the regression targets span the same order or magnitude, facilit
 For the amplitude $\boldsymbol{A}_{\ell m}$ of each mode, we employ a single ANN $\mathcal{N}_{A_{\ell m}}$ that predicts the first four PCA components.
 The predicted amplitude $\hat{\boldsymbol{A}}_{\ell m}$, including the PCA reconstruction, has the following form:
 \begin{equation}\label{eq:amp_pred}
-	\hat{\boldsymbol{A}}_{\ell m}(\boldsymbol{\vartheta}) = \boldsymbol{\mu}_{A_{\ell m}} + H_{A_{\ell m}}^T \mathcal{N}_{A_{\ell m}}(\tilde{\boldsymbol{\vartheta}})
+	\hat{\boldsymbol{A}}_{\ell m}(\boldsymbol{\vartheta}) = \boldsymbol{\mu}_{A_{\ell m}} + H_{A_{\ell m}}^T \mathcal{N}_{A_{\ell m}}(\tilde{\boldsymbol{\vartheta}}).
 \end{equation}
 
 For the phase $\boldsymbol{\phi}_{\ell m}$, we employ one ANN $\mathcal{N}_{\phi_{\ell m}\text{- 01}}$ to predict only the first two PCA components.
 Another ANN will take care of the remaining components $\mathcal{N}_{\phi_{\ell m}\text{- 2345}}$.
 On top of this, we build an additional ANN $\mathcal{N}_{\phi_{\ell m}\text{- residual}}$ to target the residual of the predictions of $\mathcal{N}_{\phi_{\ell m}\text{- 01}}$.
-The scheme make sure that the first two PCs are predicted with much larger accuracy than the others. Indeed, the reconstructed WF depends largely on the first two components and a small fractional error can potentially have a large impact on the overall accuracy.
+The scheme makes sure that the first two PCs are predicted with much larger accuracy than the others. Indeed, the reconstructed WF depends largely on the first two components and a small fractional error can potentially have a large impact on the overall accuracy.
 
-The predicted phase $\hat{\boldsymbol{\phi}}_{\ell m}$ is then given by:
+The predicted phase $\hat{\boldsymbol{\phi}}_{\ell m}$ is then given by
 %
 \begin{equation}\label{eq:ph_pred}
 	\hat{\boldsymbol{\phi}}_{\ell m}(\boldsymbol{\vartheta}) = \boldsymbol{\mu}_{\phi_{\ell m}} + H_{\phi_{\ell m}}^T 
@@ -294,9 +363,9 @@ The predicted phase $\hat{\boldsymbol{\phi}}_{\ell m}$ is then given by:
 \end{equation}
 
 
-We train our model using the PCA dataset, obtained by PCA reducing the training set. Each ANN is trained using the following loss function:
+We train our model using the PCA data set, obtained by PCA reducing the training set. Each ANN is trained using the following loss function:
 \begin{equation}\label{eq:loss}
-	\mathcal{L} = \frac{1}{N} \sum_{i=1}^N \Bigl((\mathcal{N}(\boldsymbol{\vartheta}_i) - \boldsymbol{y}_i)}\Bigr)^2 \; \boldsymbol{w}
+	\mathcal{L} = \frac{1}{N} \sum_{i=1}^N \Bigl((\mathcal{N}(\boldsymbol{\vartheta}_i) - \boldsymbol{y}_i)}\Bigr)^2 \; \boldsymbol{w},
 \end{equation}
 %
 where $\boldsymbol{y}_i$ is the (scaled) regression target of each network and $\boldsymbol{w} \in \R^K$ takes into account the fact that different PCs have different orders of magnitude.
@@ -306,44 +375,51 @@ The network is implemented and trained using the python package \texttt{keras} \
 %%%%%%%%%%%%%%%%%%%
 \section{Performance study}
 \label{sec:performance}
-In this section, we first study how the model performance depends on the different choices of hyperparameters (network architecture, learning rate, features etc...).
+In this section, we first study how the model performance depends on the different choices of hyperparameters 
+(network architecture, learning rate, features, ...).
 The architecture details of the model (chosen after hyperparameters tuning) are reported in Tab.~\ref{tab:model}.
 We then evaluate the faithfulness of our model and report the speed up that we obtain when using \texttt{mlgw-NN} instead of the training model \texttt{SEOBNRv4PHM}.
 
-To measure the discrepancy between two waveforms  $h_1$, $h_2$, we define a scalar product:
+To measure the discrepancy between two waveforms  $h_1$, $h_2$, we define a scalar product
 \begin{equation}
-	\rescalar{h_1}{h_2} = 4 \Re \int_{-\infty}^{\infty} \text{d}f \; \frac{{\tilde{h}^*}_1(f) \tilde{h}_2(f)}{S_n(f)}
+	\rescalar{h_1}{h_2} = 4 \Re \int_{0}^{\infty} \text{d}f \; \frac{{\tilde{h}^*}_1(f) \tilde{h}_2(f)}{S_n(f)},
 \end{equation}
-where $\tilde{\phantom{h}}$ denotes the Fourier transform and $S_n(f)$ is the Power Spectral Density (PSD) of the detector's noise.
-We can use the scalar product to normalize a waveform: we denote by $\hat{h} = \frac{h}{\sqrt{\rescalar{h}{h}}}$ the normalized waveform $h$.
+where $\tilde{\phantom{h}}$ denotes the Fourier transform and $S_n(f)$ is the power spectral density (PSD) of the detector's noise.
+We can use the scalar product to arrive at a normalized waveform, $\hat{h} = \frac{h}{\sqrt{\rescalar{h}{h}}}$.
 
-To measure the discrepancy between two individual modes $h^1_{\ell m}$ and $h^2_{\ell m}$, we define the {\it match} $\mathcal{M}$:
+To measure the discrepancy between two individual modes $h^1_{\ell m}$ and $h^2_{\ell m}$, we define the {\it match} 
+$\mathcal{M}$:
 \begin{equation}\label{eq:match}
 	\mathcal{M} = \max_t \; \rescalar{\hat{h}^1_{\ell m}}{\hat{h}^2_{\ell m} e^{i 2\pi ft}}
 \end{equation}
 where $h e^{i 2\pi ft}$ denotes (with a slight abuse of notation) $h$ translated in time by a factor of $t$.
 We call {\it mismatch} the quantity $\mathcal{F} = 1 - \mathcal{M}$.
 
-The match defined above amounts to the the search statistics being used for matched filtering searches of non-precessing/non-HM signals \cite{Harry:2016ijz}.
-A different statistic is needed to search for HM signals, hence the match defined above is not suitable to compare two different waveforms with HM content Eq.~\eqref{eq:h_parametrization}.
-In this case, we need to compare the two polarizations $h_+$, $h_\times$ of a waveform with a signal $s$ observed at the detector:
+The match defined above amounts to the search statistics being used for matched filtering searches of non-precessing/non-HM signals \cite{Harry:2016ijz}.
+A different statistic is needed to search for HM signals, hence the match defined above is not suitable to compare two different waveforms with HM content 
+as in Eq.~\eqref{eq:h_parametrization}.
+In this case, we need to compare the two polarizations $h_+$, $h_\times$ of a waveform with a signal $s$ observed at the 
+detector:
 \begin{equation}
-	s = F_+ h_+ + F_\times h_\times
+	s = F_+ h_+ + F_\times h_\times,
 \end{equation}
 where $F_+, F_\times$ are called antenna pattern functions, depending on the sky location of the source and on the polarization angle \cite{Maggiore:2007ulw}.
 
-Following \cite{Harry:2017weg}, we introduce {\it symphony match}\footnote{The name comes from the paper \cite{Harry:2017weg} first introducing it} between a signal $s$ and a waveform $h$:
+Following \cite{Harry:2017weg}, we introduce the 
+{\it symphony match} 
+between a signal $s$ and a waveform $h$:
 \begin{equation}\label{eq:match_sym}
-	\mathcal{M}_\mathrm{sym} = \max_t \;
+\mathcal{M}_\mathrm{sym} 
+	= \max_t \;
 		\frac{ \rescalar{\hat{s}}{\hat{h}_+}^2 + \rescalar{\hat{s}}{\hat{h}_\times}^2 - 2 \rescalar{\hat{h}_\times}{\hat{h}_+} \rescalar{\hat{s}}{\hat{h}_+} \rescalar{\hat{s}}{\hat{h}_\times}}
-		{1-\rescalar{\hat{h}_\times}{\hat{h}_+}^2}
+		{1-\rescalar{\hat{h}_\times}{\hat{h}_+}^2}.
 \end{equation}
-note that the $\mathcal{M}_\mathrm{sym}$ depends on the signal $s$, hence it depends on the sky location and polarization angle.
+Note that $\mathcal{M}_\mathrm{sym}$ depends on the signal $s$, hence it depends on the sky location and polarization angle.
 As above, we define the symphony mismatch as $\mathcal{F}_\mathrm{sym} = 1 - \mathcal{M}_\mathrm{sym}$.
 
-In what follows, we always use a constant (i.e. flat) PSD. While this certainly does not correspond to any actual detector, it makes sure that all the frequencies are weighted equally, hence giving a detector agnostic measure of the mismatch.
+In what follows, we always use a constant (i.e.~flat) PSD. While this certainly does not correspond to any actual detector, it makes sure that all the frequencies are weighted equally, hence giving a detector agnostic measure of the mismatch.
 
-\subsection{Hyperparameters tuning}
+\subsection{Hyperparameter tuning}
 \label{sec:hyperparameter}
 
 \begin{table}[t]
@@ -360,8 +436,9 @@ In what follows, we always use a constant (i.e. flat) PSD. While this certainly 
 				& 5 & 50 & $\mathcal{M}_c, \eta, \log q, \chi_\text{eff}$ & 2 \\
 	\end{tabular}
 	\label{tab:model}
-	\caption{Architecture of the 4 ANNs employed to generate each mode. For each ANN we report the number of layers and the number of units per layer. We perform data augmentation by adding all the polynomials terms in the chosen features.
-	The architecture have been chosen after hyperparameter tuning (see Fig.~\ref{fig:tuning}).
+	\caption{Architecture of the 4 ANNs employed to generate each mode. For each ANN we report the number of layers and the number of units per layer. 
+	We perform data augmentation by adding all the polynomials terms in the chosen features.
+	The architecture has been chosen after hyperparameter tuning (see Fig.~\ref{fig:tuning}).
 	Among other features, we use the chirp mass $\mathcal{M}_c =\frac{(m_1 m_2)^{3/5}}{(m_1+m_2)^{1/5}}$, the symmetric mass ratio $\eta = \frac{m_1 m_2}{(m_1+m_2)^2}$ and the effective spin parameter $\chi_\text{eff} = \frac{m_1 s_\text{1z} +m_2 s_\text{2z}}{m_1+m_2}$
 	}
 \end{table}
@@ -400,64 +477,83 @@ In what follows, we always use a constant (i.e. flat) PSD. While this certainly 
 	\label{fig:countour_plots_modes}
 \end{figure*}
 
-The performance of the model depends on a number of crucial choices about some non-trainable parameters, usually called hyperparameters. The hyperparameters usually defines the architecture of the ANN as well as some parameters relevant to the training.
-Setting the right values for the hyperparameters is crucial for the ANN performance, as one needs to balance between accuracy and speed: this procedure is called {\it hyperparameters tuning} and can be done automatically to optimize manual work and to make sure to find a good minimum.
+The performance of the model depends on a number of crucial choices about some non-trainable parameters, usually called 
+hyperparameters. The hyperparameters define the architecture of the ANN as well as some parameters relevant to the training.
+Setting the right values for the hyperparameters is crucial for the ANN performance, as one needs to balance 
+between accuracy and speed; this procedure is called {\it hyperparameter tuning} and can be done automatically to 
+optimize manual work and to make sure to find a good minimum.
 
 We optimize the following hyperparameters:
 \begin{itemize}
-	\item \texttt{n-layers}: number of hidden layers in the ANN
-	\item \texttt{units}: number of nodes per hidden layer
-	\item \texttt{features}: features to use for data augmentation
-	\item \texttt{order}: the data will be augmented with all the monomials of the chosen features up the given order
+	\item \texttt{n-layers}: number of hidden layers in the ANN;
+	\item \texttt{units}: number of nodes per hidden layer;
+	\item \texttt{features}: features to use for data augmentation;
+	\item \texttt{order}: the data will be augmented with all the monomials of the chosen features up the given order.
 \end{itemize}
 
-For each of the 4 ANN useful to produce a single mode (see Eq.~(\ref{eq:amp_pred}-\ref{eq:ph_pred})), we train a network for different combinations of hyperparameters. The figure of merit of each hyperparameter choice is the logarithm of the loss function Eq.~\eqref{eq:loss} evaluated on the validation set.
-For our experiments we only use the dataset of the $(2,2)$ mode and we employ the package \texttt{keras-tuner} \cite{omalley2019kerastuner}.
+For each of the 4 ANN useful to produce a single mode (see Eqs.~(\ref{eq:amp_pred}-\ref{eq:ph_pred})), we train a network for different combinations of hyperparameters. The figure of merit of each 
+hyperparameter choice is the logarithm of the loss function (see Eq.~\eqref{eq:loss}) evaluated on the validation set.
+For our experiments we only use the data set of the $(2,2)$ mode and we employ the package \texttt{keras-tuner} \cite{omalley2019kerastuner}.
 
 We report our results in Fig.~\ref{fig:tuning}, where each combination of hyperparameters tested is represented in the \texttt{n-layers}-\texttt{units} plane and colored by the validation scored. 
 We can see that all the four ANN share the same trend: the most effective way to improve regression accuracy is to increase the number of units as opposed to the number of layers.
 The number of layers is far more important the extra features added and the polynomial order for data augmentation.
 
-Furthermore, we note that the regressions for the amplitude and for the high phase PCs (i.e. components 2,3,4,5) can be performed with a smaller model, compared to the models for the first two PCs of the phase. This can be explained by the fact that most of the physical information is stored in the first two components of the phase, making this an harder regression problem.
+Furthermore, we note that the regressions for the amplitude and for the high phase PCs 
+(i.e.~components 2,3,4,5) can be performed with a smaller model, compared to the models for the first two PCs of the phase. 
+This can be explained by the fact that most of the physical information is stored in the first two components of the phase, making this a harder regression problem.
 
 In table Tab.~\ref{tab:model} we report the final hyperparameter choice we made for each of the networks. The architectures are the same across the different modes considered.
 
 As discussed above, we note that models $\mathcal{N}_{A_{\ell m}$ and $\mathcal{N}_{\phi_{\ell m}\text{- 2345}}$ are very simple, having only one layer and a small polynomial order, while the other ANNs have a more complicated architecture.
-We note here that an accurate ANN for the residuals of the phase is crucial to obtain a good accuracy: indeed $\mathcal{N}_{\phi_{\ell m}\text{- residual}}$ is the most complex model we employ, meaning that the residual phase dataset is the ``hardest" to learn.
+We note here that an accurate ANN for the residuals of the phase is crucial to obtain a good accuracy: indeed $\mathcal{N}_{\phi_{\ell m}\text{- residual}}$ is the most complex model we employ, meaning that the residual phase data set is the ``hardest" to learn.
 
 \subsection{Accuracy study}\label{sec:accuracy}
 
 To test the accuracy of our model, we generate a test set with $50000$ randomly chosen waveforms generated with the training model \texttt{SEOBNRv4PHM}.
 The waveforms masses are characterized by a total mass in the range $[30, 80] M_\odot$, by a mass ratio $q \in [1, 10]$. The spins are chosen in the range $[-0.99, 0.99]$ and the inclination angle $\iota$ and reference phase $\varphi_0$ are drawn uniformly from a sphere.
-We sample the starting frequency uniformly in the range $[10, 20]Hz$.
+We sample the starting frequency uniformly in the range $[10, 20]$ Hz.
 
 In Fig.~\ref{fig:accuracy_hist}, we report the histogram of the distribution of the mismatches between \texttt{mlgw-NN} and the test waveforms. The upper part refers to the mismatches Eq.~\eqref{eq:match_sym} computed on the overall waveforms (with sky location sampled uniformly over the sky); the lower box refers to mismatches computed mode by mode with Eq.~\eqref{eq:match}.
 
-First of all, we note that the model shows very high faithfulness. With a median value of $2\times 10^{-4}$ and with virtually no signals with a ``symphony" mismatch higher than $10^{-2}$, \texttt{mlgw-NN} is indistinguishable from \texttt{SEOBNRv4PHM} for the current generation detectors \cite{LIGOScientific:2016ebw, Owen:2023mid}, matching the accuracy requirements of next generation detectors \cite{Purrer:2019jcp}.
-The faithfulness for the $(2,2)$ mode is even higher with no signals with mismatch higher than $2\times 10^{-3}$.
-On the other hand, the higher order modes are less accurately reproduced than the dominant mode. In particular, for the modes $(2,1), (3,3), (5,5)$ a limited number of waveforms show very high mismatches $\mathcal{O}(1)$.
-
-The cause of the decreased faithfulness for sub-dominant modes needs more investigation. However, it is likely due to the fact that the physics of subdominant modes is less understood, hence the uncertainties in waveform modeling results in a more noisy regression for the ANN to learn.
-This problem can be probably mitigated by using a larger network for such modes. Indeed, we tuned the hyperparameters on the $(2,2)$ mode (an ``easy" regression target). Performing a tuning on the dataset of higher order modes might reveal that our chosen architecture is not optimal.
+First of all, we note that the model shows very high faithfulness. With a median value of $2\times 10^{-4}$ and with virtually no signals with a 
+``symphony" mismatch higher than $10^{-2}$, \texttt{mlgw-NN} is indistinguishable from \texttt{SEOBNRv4PHM} 
+for the current generation detectors \cite{LIGOScientific:2016ebw, Owen:2023mid}, and matches the accuracy requirements of next generation detectors \cite{Purrer:2019jcp}.
+The faithfulness for the $(2,2)$ mode is even higher, with no signals whose mismatch exceeds $2\times 10^{-3}$.
+On the other hand, the higher order modes are less accurately reproduced than the dominant mode. In particular, for the modes $(2,1), (3,3), (5,5)$ a limited number of waveforms show very high mismatches $\mathcal{O}(1)$. See below for more discussion.
 
 In Fig.~\ref{fig:countour_plots} we report the dependence of the ``symphony" mismatch as a function of the different orbital parameters.
 From the figure, it is manifest that the model has very stable performance across the parameter space.
-The faithfulness decreases for high positive values of the spin of the first object $s_\text{1z}$ and for mass ratio $q\sim 1$: such cases are at the boundaries of the waveform dataset, hence they correspond to extreme values in the PCA reduction, making harder for the network to predict such cases. Despite this, in such ``extreme" regions, the average mismatch is still of the order of $10^{-4}$.
-The performance of the regression doesn't depend on the $s_\text{2z}$, since the quantity plays a very little role in defining the waveform features.
-Finally, we note that for $q\sim 1$, the sub-dominant modes have a vanishing amplitude: a large mismatch in the sub-dominant mode for $q\sim 1$ has very little impact on the overall waveform Eq~\eqref{eq:h_parametrization}, as shown in Fig.~\ref{fig:accuracy_hist}.
+The faithfulness decreases for high positive values of the spin of the first object $s_\text{1z}$ and for mass ratio $q\sim 1$. Despite this, in such ``extreme" regions, the average mismatch is still of the order of $10^{-4}$.
+The performance of the regression doesn't depend on $s_\text{2z}$, since the quantity plays a very little role in defining the waveform features.
 
-In Fig.\ref{fig:countour_plots_modes}, for each mode we report the mismatch as a function of the mass ratio and of $s_\text{1z}$. One more time, we can see that the model faithfulness decreases for low mass ratios and for high spins. Moreover, the subdominant modes shows a poorer performance as compared to the dominant one.
+In Fig.\ref{fig:countour_plots_modes}, for each mode we report the mismatch as a function of the mass ratio and of $s_\text{1z}$. One more time, we can see that the model faithfulness decreases for low mass ratios and for high spins. Moreover, the subdominant modes shows a poorer performance as compared to the dominant one: this was already observed in Fig.~\ref{fig:accuracy_hist}.
+
+The observed decrease in faithfulness for sub-dominant modes needs some attention.
+As seen in Fig.~\ref{fig:countour_plots_modes}, this decreased performance is consistently observed for low values of the mass ratio $q$. 
+In systems with $q \sim 1$, it is well-known that the amplitude of the subdominant modes vanishes and hence they correspond to ``outliers" in the data set.
+This clearly poses a challenge for both the PCA and the regression model for the amplitude, since modelling such a sharp feature of the data requires an enhanced model flexibility and many more training examples.
+
+A mitigation strategy could involve introducing a $q$-dependent amplitude scaling for the waveforms before adding them to the data set. This approach would result in a data set with amplitude time series of approximately the same magnitude, reducing the outlier nature of waveforms with $q \sim 1$.
+Another straightforward strategy could deploy a larger network for such modes. Indeed, we tuned the hyperparameters on the $(2,2)$ mode (an ``easy" regression target). Performing a network tuning on the data set of HMs might reveal that our chosen architecture is not optimal.
+
+Finally, we note that since for $q\sim 1$, the sub-dominant modes have a vanishing amplitude, a large mismatch in the 
+sub-dominant mode for $q\sim 1$ has very little impact on the overall waveform Eq.~\eqref{eq:h_parametrization}, 
+as shown in Fig.~\ref{fig:accuracy_hist}.
+This explains why the overall mismatch is low, despite high mismatch for the HMs in some edge cases.
 
 \subsection{Timing study}
 \label{sec:timing}
 
-A speed up in the waveform generation is the main motivation to build a ML waveform generator; for this reason it is crucial to assess the gain in waveform generation time.
+A speed-up in the waveform generation is the main motivation to build a ML waveform generator; for this reason it is crucial to assess the gain in waveform generation time.
 For this reason, we use our test set to measure the ratio between the time to generate a waveform with \texttt{SEOBNRv4PHM} and \texttt{mlgw-NN}. Our model offers further speed by generating waveform in batches: in this case, some operations are efficiently parallelized and happen more efficiently.
 We report our findings in Fig.~\ref{fig:timing_hist}.
 
-We achieve a speed up between a factor of $100$ and $200$, depending on the waveform.
-For waveform batch generation, the speed up can be twice as much, ranging between $200$ and $400$.
-The speed up achieved by \texttt{mlgw-NN} is slightly larger than the one obtained by a surrogate model \texttt{SEOBNRv4PHMSur} obtained with standard techniques \cite{Gadre:2022sed}.
+We achieve a speed-up between a factor of $100$ and $200$, depending on the waveform.
+The speed up can be twice as much, ranging between $200$ and $400$, when waveforms are generated in batches of $100$.
+The speed up achieved by \texttt{mlgw-NN} is slightly larger than the one obtained by a 
+surrogate model \texttt{SEOBNRv4PHMSur} obtained with standard techniques \cite{Gadre:2022sed}.
+Indeed, the authors report a speed up always lower than $100$, even though the comparison might be biased because the latter study also considers the effects of precession.
 
 \begin{figure}[t]
 	\centering
@@ -478,19 +574,23 @@ The speed up achieved by \texttt{mlgw-NN} is slightly larger than the one obtain
 Building on our previous work \cite{Schmidt:2020yuu}, we generate a ML surrogate model \texttt{mlgw-NN} able to reproduce with very high fidelity the output of the widely used approximant \texttt{SEOBNRv4PHM}. \texttt{mlgw-NN} can generate waveforms in a cuboid $q\times s_\text{1z} \times s_\text{2z} = [1,10]\times[-0.9,0.9]\times[-0.9,0.9]$ on a (reduced) time grid of maximum length of $\SI{2}{s/M_\odot}$.
 Our model offers a two orders of magnitude speed up over the training model, without trading for accuracy, hence it is an attractive alternative for any data analysis application.
 Our method is fully general and is applicable to any chirp-like gravitational wave signal.
-To encourage new applications, we release our code (and our trained model) publicly as a python package through the PyPI repository.
+To encourage new applications, we release our code (and our trained model) publicly as a python package through the PyPI repository\footnote{The package is distributed under the name \texttt{mlgw} and is available at \url{https://pypi.org/project/mlgw/}.}.
 
 Future work should also include precession. This can be achieved by means of the {\it spin twist} procedure \cite{Schmidt:2012rh, Schmidt:2014iyl, Pratten:2020ceb, Gamba:2021ydi}. It consist on a time dependent rotation of the plane of emission, resulting in a phase and amplitude modulation which approximates the effect of precession.
 Training an ANN to predict the time dependent rotation is a promising step towards a complete ML surrogate model.
 
-While the model is already applicable for most of the parameter estimation problems with current detectors, it is desirable to increase its range of validatity of our model, both in parameter space and in time span.
+While the model is already applicable for most of the parameter estimation problems with current detectors, 
+it is desirable to increase its range of validity, both in parameter space and in time span.
 
-In principle, such extension should be straightforward using the current architeture. On the other hand, due to an increased complexity of the regression task, probably more flexible architetures should be explored, using layers of different size. This would require a more careful (and computationally expensive!) hyperparameters tuning.
-In this context, tuning the network separately for each mode can also be beneficial. As noted in Sec.~\ref{sec:accuracy}, some HMs have worse performance than others, which probably implies that the same architecture may not be optimal for the prediction of different modes.
-Tailoring the architecture to each regression problem could be an elegant way to improve substantially the performance of our model.
+In principle, such an extension should be straightforward with the current network setup. On the other hand, due to an increased complexity of the regression task, probably more flexible architetures should be explored, using layers of different size. This would require a more careful (and computationally expensive) hyperparameters tuning.
+
+An enhanced architecture should also benefit from sharing some parameters between models for different HMs - or even from treating the regression of the different modes as a large single regression problem. Indeed, the shapes of the different modes are correlated: for instance, the phases of two HMs are approximately proportional to each other. 
+With the current architecture, the regression for each mode is carried on separately, hence each ANN needs to learn the WF behaviour independently. 
+This could results in many redudant parameters in the network ensemble we introduced here.
+Inserting parameter sharing inside the regression setup could result in a lighter ANN, which would lead to a reduced inference time.
 
 These improvements will become mandatory for the next generation detectors \cite{Purrer:2019jcp}, when fast and reliable waveform models will be needed to mitigate the huge computational cost posed by very long observed waveforms.
-Our framework is ideal to achieve such ambitious goal.
+Our framework is ideal to achieve such an ambitious goal.
 
 	%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% END
 
