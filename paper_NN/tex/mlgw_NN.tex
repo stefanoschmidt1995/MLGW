@@ -50,18 +50,10 @@ superscriptaddress,10pt]{revtex4-1}
 
 	%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% ABSTRACT
 \begin{abstract}
-
-We develop a machine learning model to quickly and accurately predict the time domain gravitational wave emission 
-of non-precessing binary black hole coalescences. However, our model incorporates the effect of higher order modes of the 
-multipole expansion of the waveform. Building on our previous work \cite{Schmidt:2020yuu} we decompose each mode by 
-amplitude and phase and we reduce the dimensionality with principal component analysis. We train an ensemble of 
-artificial neural networks to learn the relation between orbital parameters and the low dimensional representation of 
-each mode.
-We train our model, called \texttt{mlgw-NN}, on $\sim 10^5$ signals generated with the state-of-the-art approximant 
-\texttt{SEOBNRv4PHM} and we find that \texttt{mlgw-NN} achieves a median faithfulness of $10^{-4}$, averaged across the 
-parameter space. We show that our model generates a single waveform two orders of magnitude faster than the training model, 
-with the speed up increasing when waveforms are generated in batches.
-Our framework is fully general and can be applied to any other time domain approximant.
+We introduce a machine learning model designed to rapidly and accurately predict the time domain gravitational wave emission of non-precessing binary black hole coalescences, incorporating the effects of higher order modes of the multipole expansion of the waveform. 
+Expanding on our prior work \cite{Schmidt:2020yuu}, we decompose each mode by amplitude and phase and reduce dimensionality using principal component analysis. An ensemble of artificial neural networks is trained to learn the relationship between orbital parameters and the low-dimensional representation of each mode.
+We train our model on $\sim 10^5$ signals generated with the state-of-the-art approximant \texttt{SEOBNRv4HM} and we find that it achieves a median faithfulness of $10^{-4}$ averaged across the parameter space. We show that our model generates a single waveform two orders of magnitude faster than the training model, with the speed up increasing when waveforms are generated in batches.
+This framework is entirely general and can be applied to any other time domain approximant capable of generating waveforms from aligned spin circular binaries, possibly incorporating higher order modes.
 \end{abstract}
 	
 	%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% TITLE
@@ -120,7 +112,7 @@ in at least two BBH events originating from asymmetric binaries \cite{LIGOScient
 
 Two main families of models have been developed, both being able to incorporate HMs.
 One family relies on the Effective One Body (EOB) formalism 
-\cite{Buonanno:2000ef, Damour:2009kr,Nagar:2020pcj,Chiaramello:2020ehz,Ossokine:2020kjp, Ramos-Buades:2023ehm, Nagar:2021gss}, 
+\cite{Buonanno:2000ef, Damour:2009kr, Cotesta:2018fcv, Nagar:2020pcj, Chiaramello:2020ehz, Ossokine:2020kjp, Ramos-Buades:2023ehm, Nagar:2021gss}, 
 which maps the complicated general relativistic binary system into a problem governed by an effective Hamiltonian. 
 EOB models tend to be accurate but are quite costly to generate, since for each waveform one needs to solve the 
 Hamiltonian equation of motion.
@@ -133,18 +125,22 @@ retains its accuracy even close to merger, where approximate treatments such as 
 are no longer applicable by themselves.
 
 Besides the standard families, surrogate waveform models have been developed with the aim of reproducing the 
-output of a target model and of making feasible the usage of the underlying model. Various surrogates have been developed 
-to accelerate several EOB models \cite{Gadre:2022sed}, even including HMs. While traditional surrogate 
-models \cite{Varma:2018mmi,Williams:2019vub,Varma:2019csw,Rifat:2019ltp,Khan:2020fso, Gadre:2022sed} 
-build an empirical interpolant on the waveform space, a more recent approach relies on performing a regression 
+output of a target model and of making feasible the usage of the underlying model.
+
+A first class of surrogates is designed to closely reproduce numerical relativity (NR) waveforms \cite{Blackman:2015pia, Varma:2018mmi, Blackman:2017dfb, Blackman:2017pcm, Varma:2019csw, Williams:2019vub, Rifat:2019ltp} and, accordingly, it is trained using only NR waveforms as input. NR surrogates are very accurate but they tend to be very short, due to the nature of the NR waveforms employed for training. For this reason, they are often hybridized using an analytical expression for the early inspiral.
+
+Besides targeting NR waveforms, several surrogates have been developed to accelerate EOB models \cite{Field:2013cfa, Purrer:2014fza, Purrer:2015tud, Cotesta:2020qhw, Gadre:2022sed}, even including HMs. While traditional surrogate 
+models build an empirical interpolant on the waveform space, a more recent approach relies on performing a regression 
 using machine learning techniques \cite{Chua:2018woh, Khan:2020fso, Thomas:2022rmc, Tissino:2022thn}.
+
+%Canizares:2014fya,Lackey:2016krb, Lackey:2018zvw
 
 Among others, \cite{Schmidt:2020yuu} introduced a machine learning surrogate model, based on a dimensionality 
 reduction scheme followed by a regression. In this work, we extend this model to HMs and we improve the accuracy 
 of the regression. Our model marks a step towards the development of a faster, yet precise, waveform model, and will 
 help enable the accurate analysis of next-generation detector data.
 
-We train our model on the widely used approximant \texttt{SEOBNRv4PHM} \cite{Ossokine:2020kjp} and we achieve a 
+We train our model on the widely used approximant \texttt{SEOBNRv4HM} \cite{Cotesta:2018fcv} and we achieve a 
 $10^{-4}$ median faithfulness (with tails up to $10^{-2}$) when averaged across a wide range in parameter space.
 Our numerical experiments show that our model offers a substantial speed-up with respect to the original model, matching 
 the speed of the state-of-the-art surrogate models.
@@ -191,7 +187,7 @@ for each mode $(\ell,m)$.
 The regression is designed to reproduce waveforms from a given data set; such waveforms can be generated 
 by {\it any} time-domain approximant.
 
-We decompose each mode in amplitude and phase,
+We decompose each mode in an amplitude term $A_{\ell m}$ and a phase term $\phi_{\ell m}$ as follows:
 \begin{equation}
 	h_{\ell m}(t; \boldsymbol{\vartheta}) = A_{\ell m}(t; \boldsymbol{\vartheta}) e^{i \phi_{\ell m}(t; \boldsymbol{\vartheta})},
 \end{equation}
@@ -205,8 +201,8 @@ and, for each mode, we perform a regression for amplitude and phase separately. 
 
 While the first two elements are unchanged from the previous work, the ANN regression is first introduced here. Indeed a NN has more representation power than the Mixture of Experts (MoE) model \cite{Jacobs1991AdaptiveMoE}, used in \cite{Schmidt:2020yuu}: the change was needed to achieve better accuracy for the model.
 
-\subsection{data set creation}
-\label{sec:data set}
+\subsection{Data set creation}
+\label{sec:data_set}
 
 To construct a data set, we follow \cite{Schmidt:2020yuu} and we set a dimensionless time grid. We construct the grid 
 by setting $D$ points equally spaced in $\tau^\alpha$, where $\tau$ is the physical time scaled by the total mass of 
@@ -241,7 +237,7 @@ We then create a data set $\{X, Y\}$ of $N$ elements. Each row of the data set i
 \end{align}
 %
 The data set $Y$ gathers the amplitude and phase for the different modes in the data set.
-We include all the modes available in \texttt{SEOBNRv4PHM}: $(\ell, m) = \{(2,2),(2,1), (3,3), (4,4), (5,5)\}$.
+We include all the modes available in \texttt{SEOBNRv4HM}: $(\ell, m) = \{(2,2),(2,1), (3,3), (4,4), (5,5)\}$.
 
 In what follows we will refer to any of the vectors $\boldsymbol{A}_{\ell m}$ or $\boldsymbol{\phi}_{\ell m}$ as $\boldsymbol{f}$.
 Note that we use the same grid for all the modes.
@@ -271,12 +267,13 @@ One can have a deeper insight on PCA considering the following formula for the r
 	\hat{\mathbf{f}} = \sum_{i=0}^{K-1} \langle \mathbf{f} | H_{i:} \rangle \; H_{i:}
 \end{equation}
 %
-where $\langle \mathbf{a} | \mathbf{b} \rangle = \sum_{i=0}^{D-1} a_i b_i$ is the {\it euclidean} scalar product between two vectors $\mathbf{a}, \mathbf{b} \in \R^D$.
+where $\langle \mathbf{a} | \mathbf{b} \rangle = \sum_{i=0}^{D-1} a_i b_i$ is the {\it Euclidean} scalar product between two vectors $\mathbf{a}, \mathbf{b} \in \R^D$.
 %
 Since less important PCs are more orthogonal to data, the typical magnitude of $g_i = \langle \mathbf{f} | H_{i:} \rangle$ decreases as $i$ increases.\footnote{For this reason PCA can be seen as a perturbative expansion on the basis vectors $H_{i:}$, where the accuracy is roughly measured by the eigenvalues of the first neglected PC. Increasing the number K of PCs considered increases the accuracy of the model (but also the complexity of the model).}.
 As a consequence, the regression for a lower order PC needs to be more accurate than the one for the higher order PC. This will be taken care of by a suitable choice for the loss function for the regression (see next section).
 
-Following \cite{Schmidt:2020yuu}, in this work we employ $6$ PCA compontents for the phase model and $4$ for the amplitude.
+Following \cite{Schmidt:2020yuu}, in this work we employ for each mode $6$ PCA compontents for the phase model and $4$ for the amplitude.
+While it's plausible that an optimal number of components may vary for different modes, we opt for simplicity by employing the same number of PCA components for all modes, a configuration tuned based on the $(2,2)$ mode only.
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 \begin{figure*}[t]
@@ -292,7 +289,7 @@ Following \cite{Schmidt:2020yuu}, in this work we employ $6$ PCA compontents for
 	\end{end}
 	\caption{Results from the validation of our ANN models, using the $\ell, m = 2,2$ mode data set. We tune the number of layers and the number of features per layer, together with the features and the polynomial order for the data augmentation.
 	Each panel in the figure refers to a different ANN, taking care of different parts of the regression, as described in Sec.~\ref{sec:NN}.
-	For each regression, we train 100 ANNs with different choices of hyperparameters. Each point in the plot, refers to a trained network and it is colored with the logarithm of the validation score. Note that we do not report the features used for data augmentation, so that the plot is degenarate in this quantity.
+	For each regression, we train 100 ANNs with different choices of hyperparameters. Each point in the plot, refers to a trained network and it is colored with the logarithm of the loss function computed on the validation data, referred to as the {\it validation score}. Note that we do not report the features used for data augmentation, so that the plot is degenarate in this quantity.
 	}
 	\label{fig:tuning}
 \end{figure*}
@@ -333,7 +330,7 @@ Mathematically, the weights are given by:
 	\boldsymbol{W} = \argmin_W \mathcal{L}(W; \{\boldsymbol{x}_i, \boldsymbol{y}_i\}_i)
 \end{equation}
 
-The minimization of the loss function is performed by stochastic gradient descent (SGD), as implemented by the \texttt{Nadam} algorithm \cite{Kingma2014AdamAM, dozat.2016}. The optimization relies on the gradients $\partial_W \mathcal{L}$ of the loss function, computed through the 
+The minimization of the loss function is performed by stochastic gradient descent (SGD), as implemented by the \texttt{Nadam} algorithm \cite{dozat.2016}, which combines the popular \texttt{Adam} algorithm \cite{Kingma2014AdamAM} with the Nesterov momentum. The optimization relies on the gradients $\partial_W \mathcal{L}$ of the loss function, computed through the 
 back-propagation algorithm \cite{backprop}.
 
 To perform our regression $\theta \longmapsto \boldsymbol{g}$, we employ an ensemble of networks that suitably combined delivers accurate results.
@@ -380,7 +377,8 @@ The network is implemented and trained using the python package \texttt{keras} \
 In this section, we first study how the model performance depends on the different choices of hyperparameters 
 (network architecture, learning rate, features, ...).
 The architecture details of the model (chosen after hyperparameters tuning) are reported in Tab.~\ref{tab:model}.
-We then evaluate the faithfulness of our model and report the speed up that we obtain when using \texttt{mlgw-NN} instead of the training model \texttt{SEOBNRv4PHM}.
+We then evaluate the faithfulness of our model and report the speed up that we obtain when using our surrogate instead of the training model \texttt{SEOBNRv4HM}.
+In what follows, we will refer to our model as \texttt{mlgw-SEOBNRv4HM}.
 
 To measure the discrepancy between two waveforms  $h_1$, $h_2$, we define a scalar product
 \begin{equation}
@@ -392,9 +390,9 @@ We can use the scalar product to arrive at a normalized waveform, $\hat{h} = \fr
 To measure the discrepancy between two individual modes $h^1_{\ell m}$ and $h^2_{\ell m}$, we define the {\it match} 
 $\mathcal{M}$:
 \begin{equation}\label{eq:match}
-	\mathcal{M} = \max_t \; \rescalar{\hat{h}^1_{\ell m}}{\hat{h}^2_{\ell m} e^{i 2\pi ft}}
+	\mathcal{M} = \max_{t,\phi} \; \rescalar{\hat{h}^1_{\ell m}}{\hat{h}^2_{\ell m} e^{i 2\pi ft + i \varphi}}
 \end{equation}
-where $h e^{i 2\pi ft}$ denotes (with a slight abuse of notation) $h$ translated in time by a factor of $t$.
+where $h e^{i 2\pi ft + i \varphi}$ denotes (with a slight abuse of notation) $h$ translated in time by a factor of $t$ and with its phase shifted by $\varphi$.
 We call {\it mismatch} the quantity $\mathcal{F} = 1 - \mathcal{M}$.
 
 The match defined above amounts to the search statistics being used for matched filtering searches of non-precessing/non-HM signals \cite{Harry:2016ijz}.
@@ -448,8 +446,8 @@ In what follows, we always use a constant (i.e.~flat) PSD. While this certainly 
 \begin{figure}[t]
 	\centering
 	\includegraphics[scale = 1]{accuracy}
-	\caption{We report the results of the mismatch between the $50000$ test waveforms produced by \texttt{mlgw-NN} and by the training model \texttt{SEOBNRv4PHM}.
-	In the top panel, we report the histogram of the ``symphony" mismatch $F_\text{sym}$ for the overall waveforms, where we compare the $h_+$ and $h_\times$ polarizations (see Eq.~\eqref{eq:perturbative_exp}). For the computation, we set random sky location. We also report the median and the mean mismatch, together with the value of the $90^\text{th}$ percentile.
+	\caption{We report the results of the mismatch between the $50000$ test waveforms produced by \texttt{mlgw-SEOBNRv4HM} and by the training model \texttt{SEOBNRv4HM}.
+	In the top panel, we report the histogram of the ``symphony" mismatch $F_\text{sym}$ for the overall waveforms, where we compare the $h_+$ and $h_\times$ polarizations (see Eq.~\eqref{eq:perturbative_exp}). For the computation, we set random sky location. We also report the median, the mean and the maximumum mismatch, together with the value of the $90^\text{th}$ percentile.
 	In the bottom panel, we report the histograms for the mismatches computed mode by mode.
 	The composition of the test set is described in the text.
 	}
@@ -460,10 +458,10 @@ In what follows, we always use a constant (i.e.~flat) PSD. While this certainly 
 	\centering
 	\includegraphics[width=\textwidth]{colormesh}
 	\caption{
-	Depency of the ``symphony" mismatch $F_\text{sym}$ between \texttt{mlgw-NN} and the training model \texttt{SEOBNRv4PHM}, as a function of some chosen orbital paramers. The mismatch is computed on the $50000$ waveforms on the test set described in the text.
+	Depency of the ``symphony" mismatch $F_\text{sym}$ between \texttt{mlgw-SEOBNRv4HM} and the training model \texttt{SEOBNRv4HM}, as a function of some chosen orbital paramers. The mismatch is computed on the $50000$ waveforms on the test set described in the text.
 	On the left plot, we display the quantities $M-q$ on the two axis, while on the center and left plot we show on the axis the variables $q-s_\text{1z}$ and $q-s_\text{2z}$ respectively. 
 	Each bin is colored according to the \textit{average} mismatch and the three plots shares the same color scale.
-	We note that \texttt{mlgw-NN}'s faithfulness tends to decreases for low values of $q$ and large positive values of $s_\text{1z}$.
+	We note that \texttt{mlgw-SEOBNRv4HM}'s faithfulness tends to decreases for low values of $q$ and large positive values of $s_\text{1z}$.
 	}
 	\label{fig:countour_plots}
 \end{figure*}
@@ -472,7 +470,7 @@ In what follows, we always use a constant (i.e.~flat) PSD. While this certainly 
 	\centering
 	\includegraphics[width=\textwidth]{colormesh_modes}
 	\caption{
-	For each mode, we report the mismatch between \texttt{mlgw-NN} and the training model \texttt{SEOBNRv4PHM}, as a function of $q$ and $s_\text{1z}$. The mismatch is computed on the $50000$ waveforms on the test set described in the text.
+	For each mode, we report the mismatch between \texttt{mlgw-SEOBNRv4HM} and the training model \texttt{SEOBNRv4HM}, as a function of $q$ and $s_\text{1z}$. The mismatch is computed on the $50000$ waveforms on the test set described in the text.
 	Each bin is colored according to the \textit{average} mismatch.
 	We note that the performance between different modes can vary significantly and in general they decrease for low values of $q$ and high values of spins.
 	}
@@ -497,7 +495,7 @@ For each of the 4 ANN useful to produce a single mode (see Eqs.~(\ref{eq:amp_pre
 hyperparameter choice is the logarithm of the loss function (see Eq.~\eqref{eq:loss}) evaluated on the validation set.
 For our experiments we only use the data set of the $(2,2)$ mode and we employ the package \texttt{keras-tuner} \cite{omalley2019kerastuner}.
 
-We report our results in Fig.~\ref{fig:tuning}, where each combination of hyperparameters tested is represented in the \texttt{n-layers}-\texttt{units} plane and colored by the validation scored. 
+We report our results in Fig.~\ref{fig:tuning}, where each combination of hyperparameters tested is represented in the \texttt{n-layers}-\texttt{units} plane and colored by the validation score. 
 We can see that all the four ANN share the same trend: the most effective way to improve regression accuracy is to increase the number of units as opposed to the number of layers.
 The number of layers is far more important the extra features added and the polynomial order for data augmentation.
 
@@ -512,15 +510,15 @@ We note here that an accurate ANN for the residuals of the phase is crucial to o
 
 \subsection{Accuracy study}\label{sec:accuracy}
 
-To test the accuracy of our model, we generate a test set with $50000$ randomly chosen waveforms generated with the training model \texttt{SEOBNRv4PHM}.
+To test the accuracy of our model, we generate a test set with $50000$ randomly chosen waveforms generated with the training model \texttt{SEOBNRv4HM}.
 The waveforms masses are characterized by a total mass in the range $[30, 80] M_\odot$, by a mass ratio $q \in [1, 10]$. The spins are chosen in the range $[-0.99, 0.99]$ and the inclination angle $\iota$ and reference phase $\varphi_0$ are drawn uniformly from a sphere.
 We sample the starting frequency uniformly in the range $[10, 20]$ Hz.
 
-In Fig.~\ref{fig:accuracy_hist}, we report the histogram of the distribution of the mismatches between \texttt{mlgw-NN} and the test waveforms. The upper part refers to the mismatches Eq.~\eqref{eq:match_sym} computed on the overall waveforms (with sky location sampled uniformly over the sky); the lower box refers to mismatches computed mode by mode with Eq.~\eqref{eq:match}.
+In Fig.~\ref{fig:accuracy_hist}, we report the histogram of the distribution of the mismatches between \texttt{mlgw-SEOBNRv4HM} and the test waveforms. The upper part refers to the mismatches Eq.~\eqref{eq:match_sym} computed on the overall waveforms (with sky location sampled uniformly over the sky); the lower box refers to mismatches computed mode by mode with Eq.~\eqref{eq:match}.
 
 First of all, we note that the model shows very high faithfulness. With a median value of $2\times 10^{-4}$ and with virtually no signals with a 
-``symphony" mismatch higher than $10^{-2}$, \texttt{mlgw-NN} is indistinguishable from \texttt{SEOBNRv4PHM} 
-for the current generation detectors \cite{LIGOScientific:2016ebw, Owen:2023mid}, and matches the accuracy requirements of next generation detectors \cite{Purrer:2019jcp}.
+``symphony" mismatch higher than $10^{-2}$, the accuracy of \texttt{mlgw-SEOBNRv4HM} matches the accuracy of other state-of-the-art surrogate models \cite{Cotesta:2020qhw, Khan:2020fso, Gadre:2022sed} and the accuracy of the training model \texttt{SEOBNRv4HM} in reproducing numerical relativity waveforms \cite{Cotesta:2018fcv}.
+%\texttt{mlgw-SEOBNRv4HM} is indistinguishable from \texttt{SEOBNRv4HM} for the current generation detectors \cite{LIGOScientific:2016ebw, Owen:2023mid}, and matches the accuracy requirements of next generation detectors \cite{Purrer:2019jcp}.
 The faithfulness for the $(2,2)$ mode is even higher, with no signals whose mismatch exceeds $2\times 10^{-3}$.
 On the other hand, the higher order modes are less accurately reproduced than the dominant mode. In particular, for the modes $(2,1), (3,3), (5,5)$ a limited number of waveforms show very high mismatches $\mathcal{O}(1)$. See below for more discussion.
 
@@ -548,22 +546,24 @@ This explains why the overall mismatch is low, despite high mismatch for the HMs
 \label{sec:timing}
 
 A speed-up in the waveform generation is the main motivation to build a ML waveform generator; for this reason it is crucial to assess the gain in waveform generation time.
-For this reason, we use our test set to measure the ratio between the time to generate a waveform with \texttt{SEOBNRv4PHM} and \texttt{mlgw-NN}. Our model offers further speed by generating waveform in batches: in this case, some operations are efficiently parallelized and happen more efficiently.
+For this reason, we use our test set to measure the ratio between the time to generate a waveform with \texttt{SEOBNRv4HM} and \texttt{mlgw-SEOBNRv4HM}. Our model offers further speed by generating waveform in batches: in this case, some operations are efficiently parallelized and happen more efficiently.
 We report our findings in Fig.~\ref{fig:timing_hist}.
 
 We achieve a speed-up between a factor of $100$ and $200$, depending on the waveform.
 The speed up can be twice as much, ranging between $200$ and $400$, when waveforms are generated in batches of $100$.
-The speed up achieved by \texttt{mlgw-NN} is slightly larger than the one obtained by a 
-surrogate model \texttt{SEOBNRv4PHMSur} obtained with standard techniques \cite{Gadre:2022sed}.
-Indeed, the authors report a speed up always lower than $100$, even though the comparison might be biased because the latter study also considers the effects of precession.
+
+The speed up achieved by \texttt{mlgw-SEOBNRv4HM} is comparable to the one obtained by the \texttt{SEOBNRv4HM\_ROM} surrogate model \cite{Cotesta:2020qhw}, which is the state-of-the-art frequency domain surrogate model trained on \texttt{SEOBNRv4HM}. \texttt{SEOBNRv4HM\_ROM} is obtained with standard techniques and it achieves a speed up ranging between 100 and 200.
+The two results might not be directly comparable, since the comparison for \texttt{SEOBNRv4HM\_ROM} is performed in frequency domain and this involves computing the Fourier tranform of the \texttt{SEOBNRv4HM} waveform. As we perform the comparison in time domain, we omit the latter step, possibly obtaining lower values for the speed up as the ones obtained in \cite{Cotesta:2020qhw}. 
+
+On the other hand, the speed up achieved by \texttt{mlgw-SEOBNRv4HM} is slightly larger than the one obtained by the time domain surrogate model \texttt{SEOBNRv4PHMSur} \cite{Gadre:2022sed}. Indeed, the authors report a speed up always lower than $100$. However, also in this case, the comparison might be biased because the latter study also considers the effects of precession.
 
 \begin{figure}[t]
 	\centering
 	\includegraphics[scale = 1]{timing}
-	\caption{Speed up provided by \texttt{mlgw-NN} over the training model \texttt{SEOBNRv4PHM}.
-	In the histogram, we report the ration between the time $t_\texttt{SEOBNRv4PHM}$ and the time $t_\texttt{mlgw-NN}$ taken by the two models to generate each of the waveform in the test set.
-	We note that \texttt{mlgw-NN} offers a speed up between a $100$ and $200$ with respect to the training model.
-	\texttt{mlgw-NN} offers the option to generate waveforms in batches, effectively parallelizing some linear algebra operations. As shown in the plot, the batch generation provides a speed up of roughly a factor of two as compared with the non-parallelized version.
+	\caption{Speed up provided by \texttt{mlgw-SEOBNRv4HM} over the training model \texttt{SEOBNRv4HM}.
+	In the histogram, we report the ration between the time $t_\texttt{SEOBNRv4HM}$ and the time $t_\texttt{mlgw}$ taken by the two models to generate each of the waveform in the test set.
+	We note that \texttt{mlgw-SEOBNRv4HM} offers a speed up between a $100$ and $200$ with respect to the training model.
+	\texttt{mlgw-SEOBNRv4HM} offers the option to generate waveforms in batches, effectively parallelizing some linear algebra operations. As shown in the plot, the batch generation provides a speed up of roughly a factor of two as compared with the non-parallelized version.
 	}
 	\label{fig:timing_hist}
 \end{figure}
@@ -573,7 +573,7 @@ Indeed, the authors report a speed up always lower than $100$, even though the c
 \section{Final remarks and future prospects}
 \label{sec:end}
 
-Building on our previous work \cite{Schmidt:2020yuu}, we generate a ML surrogate model \texttt{mlgw-NN} able to reproduce with very high fidelity the output of the widely used approximant \texttt{SEOBNRv4PHM}. \texttt{mlgw-NN} can generate waveforms in a cuboid $q\times s_\text{1z} \times s_\text{2z} = [1,10]\times[-0.9,0.9]\times[-0.9,0.9]$ on a (reduced) time grid of maximum length of $\SI{2}{s/M_\odot}$.
+Building on our previous work \cite{Schmidt:2020yuu}, we generate a ML surrogate model \texttt{mlgw-SEOBNRv4HM} able to reproduce with very high fidelity the output of the widely used approximant \texttt{SEOBNRv4HM}. \texttt{mlgw-SEOBNRv4HM} can generate waveforms in a cuboid $q\times s_\text{1z} \times s_\text{2z} = [1,10]\times[-0.9,0.9]\times[-0.9,0.9]$ on a (reduced) time grid of maximum length of $\SI{2}{s/M_\odot}$.
 Our model offers a two orders of magnitude speed up over the training model, without trading for accuracy, hence it is an attractive alternative for any data analysis application.
 Our method is fully general and is applicable to any chirp-like gravitational wave signal.
 To encourage new applications, we release our code (and our trained model) publicly as a python package through the PyPI repository\footnote{The package is distributed under the name \texttt{mlgw} and is available at \url{https://pypi.org/project/mlgw/}.}.
@@ -598,8 +598,9 @@ Our framework is ideal to achieve such an ambitious goal.
 
 
         \begin{acknowledgments}
-          We thank Soumen Roy for useful discussion.
+          We thank Soumen Roy and Michael P{\"u}rrer for useful discussion and their precious comments.
           %
+          S.S. is supported by the research program of the Netherlands Organization for Scientific Research (NWO).
           This research has made use of data, software and/or web tools obtained 
           from the Gravitational Wave Open Science Center (https://www.gw-openscience.org), 
           a service of LIGO Laboratory, the LIGO Scientific Collaboration and the 

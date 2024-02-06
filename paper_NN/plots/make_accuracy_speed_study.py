@@ -111,6 +111,7 @@ f_range = (10, 20)
 LALpars = lal.CreateDict()
 #approx = lalsim.SimInspiralGetApproximantFromString("IMRPhenomTPHM")
 approx = lalsim.SimInspiralGetApproximantFromString("SEOBNRv4PHM")
+approx = lalsim.SimInspiralGetApproximantFromString("SEOBNRv4HM_ROM")
 t_step = 1/(2*4096.) #srate = 4069 Hz
 
 modes = [(2,2), (2,1), (3,3), (4,4), (5,5)]

@@ -139,14 +139,16 @@ def plot_speed_accuracy_hist(json_file):
 		axes[1].hist(np.log10(dataset[k]), label = "$({},{})$".format(*mode), **kwargs)
 	plt.xlabel(r'$\log_{10}\mathcal{F}$')
 		#Doing annotations
-	ann_str = "\\\\{}: {:.2E}\\\\{}: {:.2E}\\\\{}: {:.2E}".format(
+	ann_str = "\\\\{}: {:.2E}\\\\{}: {:.2E}\\\\{}: {:.2E}\\\\{}: {:.2E}".format(
 		r'\textrm{mean}', np.mean(dataset['mismatch']),
 		r'\textrm{median}',np.median(dataset['mismatch']),
+		r'\textrm{max}',np.max(dataset['mismatch']),
 		r'90^\textrm{th} \textrm{ perc.}', np.percentile(dataset['mismatch'], 90))
 	ann_str = ann_str.replace(r'E-04', r'\times 10^{-4}')
+	ann_str = ann_str.replace(r'E-02', r'\times 10^{-2}')
 	ann_str = '$'+ann_str+'$'
 	axes[0].annotate(ann_str,
-		xy = (0.2,0.4),
+		xy = (0.21,0.45),
 		xycoords = 'axes fraction',
 		fontsize = 7
 		)
@@ -204,8 +206,8 @@ def plot_speed_accuracy_hist(json_file):
 	plt.hist(dataset['time_lal']/dataset['time_mlgw'], label = r"$\textrm{no batch}$", **kwargs)
 	plt.hist(dataset['time_lal']/dataset['time_mlgw_100'], label = r"$\textrm{batch}$", **kwargs)
 	plt.axvline(1, c='k', ls ='dashed')
-	#plt.xlabel(r'$t_{\texttt{SEOBNRv4PHM}}/t_{\texttt{mlgw}}$')
-	plt.xlabel(r'$t_{\texttt{IMRPhenomTPHM}}/t_{\texttt{mlgw}}$')
+	plt.xlabel(r'$t_{\texttt{SEOBNRv4HM}}/t_{\texttt{mlgw}}$')
+	#plt.xlabel(r'$t_{\texttt{IMRPhenomTPHM}}/t_{\texttt{mlgw}}$')
 	plt.legend()
 	plt.tight_layout()
 	plt.savefig('../tex/img/timing.pdf', bbox_inches='tight')
