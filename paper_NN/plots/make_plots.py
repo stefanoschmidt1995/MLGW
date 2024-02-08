@@ -162,7 +162,7 @@ def plot_speed_accuracy_hist(json_file):
 		#Countor plots
 	print(dataset.keys())
 	l_latex = { 'M': r'$M (M_\odot)$', 'q': r'$q$',
-		's1z': r'$s_\mathrm{1z}$', 's2z': r'$s_\mathrm{2z}$'}
+		's1z': r'$\chi_\mathrm{1z}$', 's2z': r'$\chi_\mathrm{2z}$'}
 	
 	fig, axes = plt.subplots(2, 3, figsize = (3.54*2, 3.54))
 	modes = ['22', '21', '33', '44', '55']

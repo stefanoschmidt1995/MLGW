@@ -156,10 +156,10 @@ In Sec.~\ref{sec:end}, we present some final remarks and highlight future perspe
 \label{sec:model}
 
 A non-precessing BBH can be described by four {\it intrisic} parameters, which specify the two BH masses $m_1$ and $m_2$ 
-and the z-components of the two spins, $s_1$ and $s_2$.
+and the z-components of the two dimensionless spins, $\chi_\text{1z}$ and $\chi_\text{2z}$.
 Since the total mass $M = m_1 + m_2$ acts as a scaling parameter, when generating non-precessing BBH signals one  
 only needs to consider the mass ratio $q = m_1/m_2 \geq 1$ together with the spins. 
-We refer to the relevant parameters as $\boldsymbol{\vartheta} = (q, s_1, s_2)$.
+We refer to the relevant parameters as $\boldsymbol{\vartheta} = (q, \chi_\text{1z}, \chi_\text{2z})$.
 Besides the masses and spins, the gravitational wave emitted by the system depends also on 
 luminosity distance to the source $d_L$, the inclination angle $\iota$ of the source, and the reference phase 
 $\varphi_0$; these are the {\it extrinsic} parameters.
@@ -169,7 +169,7 @@ in terms of a sum of spin -2 spherical harmonics.
 A GW is then parameterized\footnote{Such parameterization is particularly convenient as it separates 
 the waveform dependence over intrinsic and extrinsic parameters.} as~\cite{Estelles:2021gvs}:
 \begin{align} \label{eq:h_parametrization}
-	&h(t; d_L,\iota,\varphi_0, m_1, m_2, s_1, s_2) = h_+ + i h_\times \nonumber \\
+	&h(t; d_L,\iota,\varphi_0, m_1, m_2, \chi_\text{1z}, \chi_\text{2z}) = h_+ + i h_\times \nonumber \\
 		&\qquad= \frac{G}{c^2} \frac{M}{d_L}\sum_{\ell = 2}^{\infty} \sum_{m = -\ell}^{\ell} \tensor[^{-2}]{Y}{_{\ell m}}(\iota, \varphi_0) h_{\ell m}(t/M; \boldsymbol{\vartheta}),
 \end{align}
 where we refer to the functions $h_{\ell m}(t; \boldsymbol{\vartheta})$ as {\it modes} of the waveform. We note that that, 
@@ -181,7 +181,7 @@ The other sub-dominant modes are usually few orders of magnitude smaller in ampl
 
 In this work, we introduce a machine learning model to perform a regression
 \begin{align}\label{eq:objective}
-	(q, s_1, s_2) &\longmapsto h_{\ell m}(t; \boldsymbol{\vartheta})
+	(q, \chi_\text{1z}, \chi_\text{2z}) &\longmapsto h_{\ell m}(t; \boldsymbol{\vartheta})
 \end{align}
 for each mode $(\ell,m)$.
 The regression is designed to reproduce waveforms from a given data set; such waveforms can be generated 
@@ -211,8 +211,8 @@ $\alpha = \text{0.5}$.
 %
 This is a good compromise between the need of having a faithful representation of the waveform (which requires 
 a large grid) and the need of having a compact model (which points to a sparse grid).
-
-The starting point of the grid $\tau_0$ sets the length of the waveform that our model is able to generate. 
+%
+The waveforms are time-shifted so that the peak of the amplitude of the $(2,2)$ mode happens at $\tau=0$. The grid starts at (scaled) time $\tau_\text{min} = -\tau_0$, where $\tau_0$ sets the length of the waveform that our model is able to generate (as a function of the total mass $M$).
 We choose $\tau_0 = \SI{2}{s/M_\odot}$ and we populate the data set with $68000$ waveforms.
 
 To make sure that the distribution of $q$ is skewed towards towards the boundaries, where the regression is less accurate, we sample the mass ratio $q$ in the range $[1,10]$ with the following procedure:
@@ -232,7 +232,7 @@ The spins are drawn uniformly in the range $[-0.99, 0.99]$.
 Once a time grid is set, we evaluate all the modes (amplitude and phase) on the time grid and represent them as vectors in $\R^D$.
 We then create a data set $\{X, Y\}$ of $N$ elements. Each row of the data set is of the form:
 \begin{align}
-	X &= [q, s_1, s_2] \\
+	X &= [q, \chi_\text{1z}, \chi_\text{2z}] \\
 	Y &= [\boldsymbol{A}^T_{\ell m}, \boldsymbol{\phi}^T_{\ell m}, \hdots ] 
 \end{align}
 %
@@ -334,7 +334,7 @@ The minimization of the loss function is performed by stochastic gradient descen
 back-propagation algorithm \cite{backprop}.
 
 To perform our regression $\theta \longmapsto \boldsymbol{g}$, we employ an ensemble of networks that suitably combined delivers accurate results.
-To improve the representative power or the ANN, we employ feature augmentation on the vector $\boldsymbol{\vartheta} = (q, s_1, s_2)$, effectively using the augmented vector $\tilde{\boldsymbol{\vartheta}}$ as input for the regression. Although different ANN's will need different features, we will for convenience 
+To improve the representative power or the ANN, we employ feature augmentation on the vector $\boldsymbol{\vartheta} = (q, \chi_\text{1z}, \chi_\text{2z})$, effectively using the augmented vector $\tilde{\boldsymbol{\vartheta}}$ as input for the regression. Although different ANN's will need different features, we will for convenience 
 abuse the notation $\tilde{\boldsymbol{\vartheta}}$ to denote any augmented vector. Indeed, the features to add need to be chosen with a validation process: this will be discussed in the next section.
 
 Before the training, the regression targets $\boldsymbol{y}_i$ are scaled such that $\boldsymbol{y}_i \rightarrow \frac{\boldsymbol{y}_i}{\boldsymbol{w}}$, where $\boldsymbol{w}$ keeps the maximum of $|\boldsymbol{y}_i|$ along each axis. %${w}_j = \max_i(|(\boldsymbol{y}_i)_j|)$.
@@ -439,7 +439,7 @@ In what follows, we always use a constant (i.e.~flat) PSD. While this certainly 
 	\caption{Architecture of the 4 ANNs employed to generate each mode. For each ANN we report the number of layers and the number of units per layer. 
 	We perform data augmentation by adding all the polynomials terms in the chosen features.
 	The architecture has been chosen after hyperparameter tuning (see Fig.~\ref{fig:tuning}).
-	Among other features, we use the chirp mass $\mathcal{M}_c =\frac{(m_1 m_2)^{3/5}}{(m_1+m_2)^{1/5}}$, the symmetric mass ratio $\eta = \frac{m_1 m_2}{(m_1+m_2)^2}$ and the effective spin parameter $\chi_\text{eff} = \frac{m_1 s_\text{1z} +m_2 s_\text{2z}}{m_1+m_2}$
+	Among other features, we use the chirp mass $\mathcal{M}_c =\frac{(m_1 m_2)^{3/5}}{(m_1+m_2)^{1/5}}$, the symmetric mass ratio $\eta = \frac{m_1 m_2}{(m_1+m_2)^2}$ and the effective spin parameter $\chi_\text{eff} = \frac{m_1 \chi_\text{1z} +m_2 \chi_\text{2z}}{m_1+m_2}$
 	}
 \end{table}
 
@@ -459,7 +459,7 @@ In what follows, we always use a constant (i.e.~flat) PSD. While this certainly 
 	\includegraphics[width=\textwidth]{colormesh}
 	\caption{
 	Depency of the ``symphony" mismatch $F_\text{sym}$ between \texttt{mlgw-SEOBNRv4HM} and the training model \texttt{SEOBNRv4HM}, as a function of some chosen orbital paramers. The mismatch is computed on the $50000$ waveforms on the test set described in the text.
-	On the left plot, we display the quantities $M-q$ on the two axis, while on the center and left plot we show on the axis the variables $q-s_\text{1z}$ and $q-s_\text{2z}$ respectively. 
+	On the left plot, we display the quantities $M-q$ on the two axis, while on the center and left plot we show on the axis the variables $q-\chi_\text{1z}$ and $q-\chi_\text{2z}$ respectively. 
 	Each bin is colored according to the \textit{average} mismatch and the three plots shares the same color scale.
 	We note that \texttt{mlgw-SEOBNRv4HM}'s faithfulness tends to decreases for low values of $q$ and large positive values of $s_\text{1z}$.
 	}
@@ -525,7 +525,7 @@ On the other hand, the higher order modes are less accurately reproduced than th
 In Fig.~\ref{fig:countour_plots} we report the dependence of the ``symphony" mismatch as a function of the different orbital parameters.
 From the figure, it is manifest that the model has very stable performance across the parameter space.
 The faithfulness decreases for high positive values of the spin of the first object $s_\text{1z}$ and for mass ratio $q\sim 1$. Despite this, in such ``extreme" regions, the average mismatch is still of the order of $10^{-4}$.
-The performance of the regression doesn't depend on $s_\text{2z}$, since the quantity plays a very little role in defining the waveform features.
+The performance of the regression doesn't depend on $\chi_\text{2z}$, since the quantity plays a very little role in defining the waveform features.
 
 In Fig.\ref{fig:countour_plots_modes}, for each mode we report the mismatch as a function of the mass ratio and of $s_\text{1z}$. One more time, we can see that the model faithfulness decreases for low mass ratios and for high spins. Moreover, the subdominant modes shows a poorer performance as compared to the dominant one: this was already observed in Fig.~\ref{fig:accuracy_hist}.
 
@@ -573,7 +573,7 @@ On the other hand, the speed up achieved by \texttt{mlgw-SEOBNRv4HM} is slightly
 \section{Final remarks and future prospects}
 \label{sec:end}
 
-Building on our previous work \cite{Schmidt:2020yuu}, we generate a ML surrogate model \texttt{mlgw-SEOBNRv4HM} able to reproduce with very high fidelity the output of the widely used approximant \texttt{SEOBNRv4HM}. \texttt{mlgw-SEOBNRv4HM} can generate waveforms in a cuboid $q\times s_\text{1z} \times s_\text{2z} = [1,10]\times[-0.9,0.9]\times[-0.9,0.9]$ on a (reduced) time grid of maximum length of $\SI{2}{s/M_\odot}$.
+Building on our previous work \cite{Schmidt:2020yuu}, we generate a ML surrogate model \texttt{mlgw-SEOBNRv4HM} able to reproduce with very high fidelity the output of the widely used approximant \texttt{SEOBNRv4HM}. \texttt{mlgw-SEOBNRv4HM} can generate waveforms in a cuboid $q\times \chi_\text{1z} \times \chi_\text{2z} = [1,10]\times[-0.9,0.9]\times[-0.9,0.9]$ on a (reduced) time grid of maximum length of $\SI{2}{s/M_\odot}$.
 Our model offers a two orders of magnitude speed up over the training model, without trading for accuracy, hence it is an attractive alternative for any data analysis application.
 Our method is fully general and is applicable to any chirp-like gravitational wave signal.
 To encourage new applications, we release our code (and our trained model) publicly as a python package through the PyPI repository\footnote{The package is distributed under the name \texttt{mlgw} and is available at \url{https://pypi.org/project/mlgw/}.}.
