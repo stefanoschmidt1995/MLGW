@@ -1,5 +1,7 @@
 \documentclass[twocolumn,showpacs,preprintnumbers,nofootinbib,prd,
-superscriptaddress,10pt]{revtex4-1}
+superscriptaddress,10pt]{revtex4-2}
+
+\pdfoutput=1
 
 \usepackage{amsmath,amssymb}
 \usepackage{amsfonts}
@@ -58,7 +60,7 @@ This framework is entirely general and can be applied to any other time domain a
 	
 	%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% TITLE
 	%\title{Machine Learning surrogate for the Higher Order Modes of a Binary Black Hole merger waveform}
-	\title{Higher Order Modes from Binary Black Hole mergers using Machine Learning}
+	\title{Generating Higher Order Modes from Binary Black Hole mergers with Machine Learning}
 	\author{Tim \surname{Grimbergen}}
         \affiliation{Institute for Gravitational and Subatomic Physics (GRASP),
 		Utrecht University, Princetonplein 1, 3584 CC Utrecht, The Netherlands}
@@ -278,16 +280,12 @@ While it's plausible that an optimal number of components may vary for different
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 \begin{figure*}[t]
-	\begin{multicols}
-		\centering
-		\includegraphics[scale = 0.9]{tuning_amp}\hfill
-		\includegraphics[scale = 0.9]{tuning_ph_01}
-	\end{end}
-	\begin{multicols}
-		\centering
-		\includegraphics[scale = 0.9]{tuning_ph_2345}\hfill
+	\begin{tabular}{cc}
+		\includegraphics[scale = 0.9]{tuning_amp} &
+		\includegraphics[scale = 0.9]{tuning_ph_01} \\
+		\includegraphics[scale = 0.9]{tuning_ph_2345} &
 		\includegraphics[scale = 0.9]{tuning_ph_01_residual}
-	\end{end}
+	\end{tabular}
 	\caption{Results from the validation of our ANN models, using the $\ell, m = 2,2$ mode data set. We tune the number of layers and the number of features per layer, together with the features and the polynomial order for the data augmentation.
 	Each panel in the figure refers to a different ANN, taking care of different parts of the regression, as described in Sec.~\ref{sec:NN}.
 	For each regression, we train 100 ANNs with different choices of hyperparameters. Each point in the plot, refers to a trained network and it is colored with the logarithm of the loss function computed on the validation data, referred to as the {\it validation score}. Note that we do not report the features used for data augmentation, so that the plot is degenarate in this quantity.
@@ -354,18 +352,18 @@ The scheme makes sure that the first two PCs are predicted with much larger accu
 
 The predicted phase $\hat{\boldsymbol{\phi}}_{\ell m}$ is then given by
 %
-\begin{equation}\label{eq:ph_pred}
-	\hat{\boldsymbol{\phi}}_{\ell m}(\boldsymbol{\vartheta}) = \boldsymbol{\mu}_{\phi_{\ell m}} + H_{\phi_{\ell m}}^T 
+\begin{align}
+	\hat{\boldsymbol{\phi}}_{\ell m}(\boldsymbol{\vartheta}) &= \boldsymbol{\mu}_{\phi_{\ell m}}  + \nonumber\\
+	& H_{\phi_{\ell m}}^T 
 	\begin{pmatrix}
         \mathcal{N}_{\phi_{\ell m}\text{- 01}}(\tilde{\boldsymbol{\vartheta}}) + \mathcal{N}_{\phi_{\ell m}\text{- residual}}(\tilde{\boldsymbol{\vartheta}}) \\
         \mathcal{N}_{\phi_{\ell m}\text{- 2345}}(\tilde{\boldsymbol{\vartheta}}) \hfill
-	 \end{pmatrix}.
-\end{equation}
-
-
+	 \end{pmatrix} \label{eq:ph_pred}
+\end{align}
+%
 We train our model using the PCA data set, obtained by PCA reducing the training set. Each ANN is trained using the following loss function:
 \begin{equation}\label{eq:loss}
-	\mathcal{L} = \frac{1}{N} \sum_{i=1}^N \Bigl((\mathcal{N}(\boldsymbol{\vartheta}_i) - \boldsymbol{y}_i)}\Bigr)^2 \; \boldsymbol{w},
+	\mathcal{L} = \frac{1}{N} \sum_{i=1}^N \Bigl((\mathcal{N}(\boldsymbol{\vartheta}_i) - \boldsymbol{y}_i)\Bigr)^2 \; \boldsymbol{w},
 \end{equation}
 %
 where $\boldsymbol{y}_i$ is the (scaled) regression target of each network and $\boldsymbol{w} \in \R^K$ takes into account the fact that different PCs have different orders of magnitude.
@@ -427,7 +425,7 @@ In what follows, we always use a constant (i.e.~flat) PSD. While this certainly 
 	\begin{tabular}{ l|c|c|c|c } 
 		Network & \texttt{n-layers} & \texttt{units} & \texttt{features} & \texttt{order} \\
 		\hline\hline
-			$\mathcal{N}_{A_{\ell m}$
+			$\mathcal{N}_{A_{\ell m}}$
 				& 1 & 35 & $\mathcal{M}_c, \chi_\text{eff}$ & 1 \\
 			$\mathcal{N}_{\phi_{\ell m}\text{- 01}}$ 
 				& 2 & 50 & $\mathcal{M}_c, \eta, \log q, \chi_\text{eff}$ & 3 \\
@@ -506,13 +504,13 @@ This can be explained by the fact that most of the physical information is store
 
 In table Tab.~\ref{tab:model} we report the final hyperparameter choice we made for each of the networks. The architectures are the same across the different modes considered.
 
-As discussed above, we note that models $\mathcal{N}_{A_{\ell m}$ and $\mathcal{N}_{\phi_{\ell m}\text{- 2345}}$ are very simple, having only one layer and a small polynomial order, while the other ANNs have a more complicated architecture.
+As discussed above, we note that models $\mathcal{N}_{A_{\ell m}}$ and $\mathcal{N}_{\phi_{\ell m}\text{- 2345}}$ are very simple, having only one layer and a small polynomial order, while the other ANNs have a more complicated architecture.
 We note here that an accurate ANN for the residuals of the phase is crucial to obtain a good accuracy: indeed $\mathcal{N}_{\phi_{\ell m}\text{- residual}}$ is the most complex model we employ, meaning that the residual phase data set is the ``hardest" to learn.
 
 \subsection{Accuracy study}\label{sec:accuracy}
 
 To test the accuracy of our model, we generate a test set with $50000$ randomly chosen waveforms generated with the training model \texttt{SEOBNRv4HM}.
-The waveforms masses are characterized by a total mass in the range $[30, 80] M_\odot$, by a mass ratio $q \in [1, 10]$. The spins are chosen in the range $[-0.99, 0.99]$ and the inclination angle $\iota$ and reference phase $\varphi_0$ are drawn uniformly from a sphere.
+The waveforms masses are characterized by a total mass in the range $[30, 80] M_\odot$, by a mass ratio $q \in [1, 10]$. The spins are chosen in the range $[-0.9, 0.9]$ and the inclination angle $\iota$ and reference phase $\varphi_0$ are drawn uniformly from a sphere.
 We sample the starting frequency uniformly in the range $[10, 20]$ Hz.
 
 In Fig.~\ref{fig:accuracy_hist}, we report the histogram of the distribution of the mismatches between \texttt{mlgw-SEOBNRv4HM} and the test waveforms. The upper part refers to the mismatches Eq.~\eqref{eq:match_sym} computed on the overall waveforms (with sky location sampled uniformly over the sky); the lower box refers to mismatches computed mode by mode with Eq.~\eqref{eq:match}.
@@ -592,7 +590,7 @@ With the current architecture, the regression for each mode is carried on separa
 This could results in many redudant parameters in the network ensemble we introduced here.
 Inserting parameter sharing inside the regression setup could result in a lighter ANN, which would lead to a reduced inference time.
 
-These improvements will become mandatory for the next generation detectors \cite{Purrer:2019jcp}, when fast and reliable waveform models will be needed to mitigate the huge computational cost posed by very long observed waveforms.
+Similar improvements will become mandatory for the next generation detectors \cite{Purrer:2019jcp}, when fast and reliable waveform models will be needed to mitigate the huge computational cost posed by very long observed waveforms.
 Our framework is ideal to achieve such an ambitious goal.
 
 	%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% END
