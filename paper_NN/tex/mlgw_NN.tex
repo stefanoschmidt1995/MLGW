@@ -52,7 +52,7 @@ superscriptaddress,10pt]{revtex4-1}
 \begin{abstract}
 We introduce a machine learning model designed to rapidly and accurately predict the time domain gravitational wave emission of non-precessing binary black hole coalescences, incorporating the effects of higher order modes of the multipole expansion of the waveform. 
 Expanding on our prior work \cite{Schmidt:2020yuu}, we decompose each mode by amplitude and phase and reduce dimensionality using principal component analysis. An ensemble of artificial neural networks is trained to learn the relationship between orbital parameters and the low-dimensional representation of each mode.
-We train our model on $\sim 10^5$ signals generated with the state-of-the-art approximant \texttt{SEOBNRv4HM} and we find that it achieves a median faithfulness of $10^{-4}$ averaged across the parameter space. We show that our model generates a single waveform two orders of magnitude faster than the training model, with the speed up increasing when waveforms are generated in batches.
+We train our model on $\sim 10^5$ signals with mass ratio $q \in [1,10]$ and dimensionless spins $\chi_i \in [-0.9, 0.9]$, generated with the state-of-the-art approximant \texttt{SEOBNRv4HM}. We find that it achieves a median faithfulness of $10^{-4}$ averaged across the parameter space. We show that our model generates a single waveform two orders of magnitude faster than the training model, with the speed up increasing when waveforms are generated in batches.
 This framework is entirely general and can be applied to any other time domain approximant capable of generating waveforms from aligned spin circular binaries, possibly incorporating higher order modes.
 \end{abstract}
 	
@@ -140,7 +140,8 @@ reduction scheme followed by a regression. In this work, we extend this model to
 of the regression. Our model marks a step towards the development of a faster, yet precise, waveform model, and will 
 help enable the accurate analysis of next-generation detector data.
 
-We train our model on the widely used approximant \texttt{SEOBNRv4HM} \cite{Cotesta:2018fcv} and we achieve a 
+We train our model on the widely used approximant \texttt{SEOBNRv4HM} \cite{Cotesta:2018fcv} to target systems 
+with mass ratio $q \in [1,10]$ and dimensionless spin components between $[-0.9, 0.9]$ and we achieve a 
 $10^{-4}$ median faithfulness (with tails up to $10^{-2}$) when averaged across a wide range in parameter space.
 Our numerical experiments show that our model offers a substantial speed-up with respect to the original model, matching 
 the speed of the state-of-the-art surrogate models.
@@ -227,7 +228,7 @@ To make sure that the distribution of $q$ is skewed towards towards the boundari
 	\end{itemize}
 \end{itemize}
 where $\mathcal{U}_{[a,b]}$ is the uniform distribution in $[a,b]$.
-The spins are drawn uniformly in the range $[-0.99, 0.99]$.
+The spins are drawn uniformly in the range $[-0.9, 0.9]$.
 
 Once a time grid is set, we evaluate all the modes (amplitude and phase) on the time grid and represent them as vectors in $\R^D$.
 We then create a data set $\{X, Y\}$ of $N$ elements. Each row of the data set is of the form:

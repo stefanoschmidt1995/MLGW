@@ -1,0 +1,9 @@
+{
+"train model": "SEOBNRv2_opt",
+"description": "Model used in the thesis work: stefanoschmidt1995/MLGW/docs/img/schmidt_thesis.pdf",
+"q range": "[1,10]",
+"s1 range": "[-0.8, 0.8]",
+"s2 range": "[-0.8, 0.8]",
+"t min": "0.8 s/M_sun",
+"modes": "22"
+}

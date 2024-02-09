@@ -1,0 +1,12 @@
+Model for 2345PCs for ph
+Trained on dataset: ../pca_datasets/SEOBNRv4PHM/44
+created model with params: 
+layer_list : [50]
+optimizer : Nadam with learning rate 0.001
+activation : sigmoid
+batch_size : 128
+schedulers : exponential with decay rate -0.0003
+The MSE of principal component 0 of the fit is: 3.145354568462784e-05
+The MSE of principal component 1 of the fit is: 0.000106319735108618
+The MSE of principal component 2 of the fit is: 0.001970508334300507
+The MSE of principal component 3 of the fit is: 0.0023900878774636156
