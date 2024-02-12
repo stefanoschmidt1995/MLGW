@@ -7,7 +7,7 @@ You can install the package with
 The model outputs the waveform when given the two BHs masses and spins. It implements also the dependence of the waveform on the spherical harmonics.
 
 Version 1 outputs only the 22 dominant mode. The model is presented in this [paper](https://journals.aps.org/prd/abstract/10.1103/PhysRevD.103.043020) (also online as [arXiv:2011.01958](https://arxiv.org/abs/2011.01958) ), where we present its details, we assess its accuracy and we employ it for analysing the whole GWTC-1, the first catalog of GW transients.
-Version 2 and 3 are suited to deal with an arbitrary numbers of modes and at the same time they keeps full compatibility with the previous version interface. Version 2 make use of the usual MoE regression, while version 3 implements a neural network regression.
+Version 2 and 3 are suited to deal with an arbitrary numbers of modes and at the same time they keeps full compatibility with the previous version interface. Version 2 make use of the usual MoE regression, while version 3 implements a neural network regression. Version 3 is presented in this [paper](https://arxiv.org/abs/2402.06587).
 
 To generate a WF:
 ```Python
@@ -135,7 +135,7 @@ and you are good to go!
 
 Two papers describing the methods and different versions of the model have been published:
 - S. Schmidt et al., Machine learning gravitational waves from binary black hole mergers ([link](https://journals.aps.org/prd/abstract/10.1103/PhysRevD.103.043020))
-- T. Grimbergen et al., Coming soon
+- T. Grimbergen et al., Generating Higher Order Modes from Binary Black Hole mergers with Machine Learning ([link](https://arxiv.org/abs/2402.06587))
 
 You can also read two thesis, which described version 1 and version 3 of the code respectively:
 
