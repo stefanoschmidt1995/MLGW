@@ -586,7 +586,7 @@ class GW_generator:
 			return theta_new[0,:]
 		return theta_new
 	
-	def get_alpha_beta_gamma(self, theta, t_grid, f_ref, singlespin = False):
+	def get_alpha_beta_gamma(self, theta, t_grid, f_ref, f_start = None):
 		"""
 		Return the Euler angles alpha, beta and gamma as provided by the ML model.
 		They are evaluated on the given time grid and the parameters refer to the frequency f_ref.
@@ -598,8 +598,7 @@ class GW_generator:
 				shape (D,) - a grid in (physical) time to evaluate the wave at (uses np.interp)
 			f_ref: float
 				reference frequency (in Hz) of the 22 mode at which the theta parameters refers to
-			singlespin: bool
-				whether to use the single spin approximation
+
 		Output:
 			alpha, beta, gamma: :class:`~numpy:numpy.ndarray`
 				shape (N, D) - Euler angles
@@ -622,13 +621,10 @@ class GW_generator:
 				# f1*M1 = f2*M2
 			chi1 = theta[i,[2,3,4]]
 			chi2 = theta[i,[5,6,7]]
-			
-			if singlespin:
-				chi1, chi2 = set_effective_spins(m1, m2, chi1, chi2)
 				
 #			print("Setting spins: ",chi1, chi2)
-			alpha_, beta_, gamma_ = get_IMRPhenomTPHM_angles(m1*M_std/M_us, m2*M_std/M_us, *chi1, *chi2, f_ref*(M_us/M_std), t_grid*(M_std/M_us))
-			#alpha_, beta_, gamma_ = get_IMRPhenomTPHM_angles(m1, m2, *chi1, *chi2, f_ref, t_grid)
+			#alpha_, beta_, gamma_ = get_IMRPhenomTPHM_angles(m1*M_std/M_us, m2*M_std/M_us, *chi1, *chi2, f_ref*(M_us/M_std), t_grid*(M_std/M_us))
+			alpha_, beta_, gamma_ = get_IMRPhenomTPHM_angles(m1, m2, *chi1, *chi2, t_grid, f_ref, f_start)
 			
 			alpha[i,:] = alpha_
 			beta[i,:] = beta_
@@ -648,7 +644,7 @@ class GW_generator:
 		return alpha, beta, gamma
 		
 
-	def get_twisted_modes(self, theta, t_grid, modes, f_ref = 20., alpha0 = 0., gamma0 = 0., L0_frame = False, singlespin = False):
+	def get_twisted_modes(self, theta, t_grid, modes, f_ref = 20., alpha0 = 0., gamma0 = 0., L0_frame = False):
 		"""
 		Return the twisted modes of the model, evaluated in the given time grid.
 		The twisted mode depends on angles alpha, beta, gamma and it is performed as in eqs. (17-20) in https://arxiv.org/abs/2005.05338
@@ -666,8 +662,6 @@ class GW_generator:
 				reference frequency (in Hz) of the 22 mode at which the theta parameters refers to
 			L0_frame: bool
 				whether to output the modes in the inertial L0_frame
-			singlespin: bool
-				whether to use the single spin approximation
 		
 		Output:
 			real, imag:: :class:`~numpy:numpy.ndarray`
@@ -703,7 +697,7 @@ class GW_generator:
 			mprime_modes_list = mprime_modes_list + [(m[0],-m[1]) for m in mprime_modes_list if m[1]> 0] #len = M''
 			
 				#getting alpha, beta, gamma
-			alpha, beta, gamma = self.get_alpha_beta_gamma(theta, t_grid, f_ref, singlespin)
+			alpha, beta, gamma = self.get_alpha_beta_gamma(theta, t_grid, f_ref)
 			
 			if alpha0 is not None:
 				alpha = alpha - alpha[:,0] + alpha0 

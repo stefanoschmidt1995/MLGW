@@ -56,7 +56,7 @@ setup(
     include_package_data = True,
     #package_data={'mlgw': get_list_of_files("mlgw/TD_models")},
     package_data={'mlgw': ['TD_models/model_*/*/*', 'TD_models/model_*/README']},
-    scripts = ["bin/mlgw_fit_NN", "bin/mlgw_generate_dataset",
+    scripts = ["bin/mlgw_fit_NN", "bin/mlgw_generate_dataset", "bin/mlgw_generate_angle_dataset",
     	"bin/mlgw_tune_NN", "bin/mlgw_write_training_dag"],
     install_requires=[
         "numpy >= 1.16.4",

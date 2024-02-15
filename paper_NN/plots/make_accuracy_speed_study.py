@@ -97,6 +97,7 @@ if args.model_folder.isnumeric():
 	args.model_folder = int(args.model_folder)
 
 generator = mlgw.GW_generator(args.model_folder)	#initializing the generator with standard model
+generator.get_WF([10, 3, 0.3, -0.6], np.linspace(-8,0.01, 1000), modes = None) #The first call to the WF is always the slowest...
 
 		#getting random theta
 		#Safe zone: m1_range = (10, 50)
@@ -109,9 +110,9 @@ i_range = (0, np.pi)
 phi_0_range = (0, 2*np.pi)
 f_range = (10, 20)
 LALpars = lal.CreateDict()
-#approx = lalsim.SimInspiralGetApproximantFromString("IMRPhenomTPHM")
-approx = lalsim.SimInspiralGetApproximantFromString("SEOBNRv4PHM")
-approx = lalsim.SimInspiralGetApproximantFromString("SEOBNRv4HM_ROM")
+approx = lalsim.SimInspiralGetApproximantFromString("IMRPhenomTPHM")
+#approx = lalsim.SimInspiralGetApproximantFromString("SEOBNRv4PHM")
+#approx = lalsim.SimInspiralGetApproximantFromString("SEOBNRv4HM_ROM")
 t_step = 1/(2*4096.) #srate = 4069 Hz
 
 modes = [(2,2), (2,1), (3,3), (4,4), (5,5)]

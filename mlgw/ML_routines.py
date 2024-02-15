@@ -136,8 +136,6 @@ PCA_model
 
 	def fit_model(self, X, K = None, scale_PC=True):
 		"""
-	fit_model
-	=========
 		Fit the PCA model for the given dataset. Data are done zero mean for each feature and rescaled s.t. are O(1) if scale_data is True.
 		A parameter set is returned holding fitted PCA parameters (projection matrix, data mean and scale factor)
 		Input:
@@ -171,8 +169,6 @@ PCA_model
 
 	def get_V_matrix(self):
 		"""
-	get_V_matrix
-	============
 		Returns the projection matrix of the model
 		Input:
 		Output:
@@ -182,8 +178,6 @@ PCA_model
 
 	def get_dimensions(self):
 		"""
-	get_dimensions
-	==============
 		Returns dimension of high- and low-dimensional space.
 		Input:
 		Output:
@@ -193,14 +187,21 @@ PCA_model
 
 	def get_PCA_params(self):
 		"""
-	get_PCA_params
-	==============
 		Returns the parameters of the model
 		Input:
 		Output:
 			PCA_params [V (D,K), mu (D,), max_PC (K,), E (K,)]	paramters for preprocessing and PCA
 		"""
 		return self.PCA_params
+	
+	def get_eigenvalues(self):
+		"""
+		Returns the PCA eigenvalues
+		Output:
+			PCA_eigenvalues (K, )	Eigenvalues of the PCA model
+		"""
+		return self.PCA_params[-1]
+		
 
 ################# Gaussian Discriminant Analysis
 class GDA(object):

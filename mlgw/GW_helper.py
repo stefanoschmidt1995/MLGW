@@ -278,7 +278,7 @@ create_dataset_TD
 		if not os.path.isfile(filename): #file doesn't exist: must be created with proper header
 			filebuff = open(filename,'w')
 			print("New file ", filename, " created")
-			time_header = np.concatenate((np.zeros((3,)), time_grid_list[i], time_grid_list[i]) )[None,:]
+			time_header = np.concatenate((np.zeros((D_theta,)), time_grid_list[i], time_grid_list[i]) )[None,:]
 			np.savetxt(filebuff, time_header, header = "#Mode:"+ str(mode[0])+str(mode[1]) +"\n# row: theta "+str(D_theta)+" | amp (None,"+str(N_grid)+")| ph (None,"+str(N_grid)+")\n# N_grid = "+str(N_grid)+" | t_coal ="+str(t_coal)+" | t_step ="+str(t_step)+" | q_range = "+str(q_range)+" | m2_range = "+str(m2_range)+" | s1_range = "+str(s1_range)+" | s2_range = "+str(s2_range), newline = '\n')
 		else:
 			filebuff = open(filename,'a')
