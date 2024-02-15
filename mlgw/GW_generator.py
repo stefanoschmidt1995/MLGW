@@ -28,6 +28,7 @@ import numpy as np
 import ast
 import tensorflow as tf
 from tensorflow.keras import models as keras_models
+from tensorflow.python.framework.convert_to_constants import convert_variables_to_constants_v2
 import inspect
 sys.path.insert(1, os.path.dirname(__file__)) 	#adding to path folder where mlgw package is installed (ugly?)
 from .EM_MoE import MoE_model #WARNING commented out 
@@ -604,9 +605,11 @@ class GW_generator:
 				shape (N, D) - Euler angles
 		"""
 		#TODO: makes sure that theta has 2 dims!!
-		sys.path.insert(0, '/home/stefano/Dropbox/Stefano/PhD/mlgw_repository/precession/IMRPhenomTPHM/') #temporary, to load the IMRPhenomTPHM modes
-		from run_IMR import get_IMRPhenomTPHM_angles
-		from precession_helper import set_effective_spins
+		sys.path.insert(0, '/home/stefano/Dropbox/Stefano/PhD/mlgw_repository/dev/precession') #temporary, to load the IMRPhenomTPHM modes
+		from precession_helper import set_effective_spins, get_IMRPhenomTPHM_angles
+		
+		theta = np.atleast_2d(np.asarray(theta))
+		t_grid = np.asarray(t_grid)
 		
 		alpha, beta, gamma = np.zeros((theta.shape[0], len(t_grid))), np.zeros((theta.shape[0], len(t_grid))), np.zeros((theta.shape[0], len(t_grid)))
 		
@@ -624,11 +627,16 @@ class GW_generator:
 				chi1, chi2 = set_effective_spins(m1, m2, chi1, chi2)
 				
 #			print("Setting spins: ",chi1, chi2)
-			t, alpha_, beta_, gamma_ = get_IMRPhenomTPHM_angles(m1*M_std/M_us, m2*M_std/M_us, *chi1, *chi2, f_ref*(M_us/M_std), delta_T = 1e-4)
+			alpha_, beta_, gamma_ = get_IMRPhenomTPHM_angles(m1*M_std/M_us, m2*M_std/M_us, *chi1, *chi2, f_ref*(M_us/M_std), t_grid*(M_std/M_us))
+			#alpha_, beta_, gamma_ = get_IMRPhenomTPHM_angles(m1, m2, *chi1, *chi2, f_ref, t_grid)
 			
-			alpha[i,:] = np.interp(t_grid/M_us, t/M_std, alpha_)
-			beta[i,:] = np.interp(t_grid/M_us, t/M_std, beta_)
-			gamma[i,:] = np.interp(t_grid/M_us, t/M_std, gamma_)
+			alpha[i,:] = alpha_
+			beta[i,:] = beta_
+			gamma[i,:] = gamma_
+			
+			#alpha[i,:] = np.interp(t_grid/M_us, t/M_std, alpha_)
+			#beta[i,:] = np.interp(t_grid/M_us, t/M_std, beta_)
+			#gamma[i,:] = np.interp(t_grid/M_us, t/M_std, gamma_)
 		
 			#integration of gamma (old)
 		#alpha_dot = np.gradient(alpha,get_twisted_modes( t_grid, axis = 1) #(N,D)
@@ -1487,8 +1495,17 @@ class mode_generator_NN(mode_generator_base):
 			
 				new_model = mlgw_NN.load_from_file(nn_file)
 				
-				dict_to_fill[comps] = tf.function(new_model,
-						input_signature=(tf.TensorSpec(shape=new_model.inputs[0].shape, dtype=tf.float64),))
+					#Distilling the model for fast inference
+				tf_function = tf.function(new_model,
+						input_signature=(tf.TensorSpec(shape=new_model.inputs[0].shape, dtype=tf.float32),))
+				tf_function = convert_variables_to_constants_v2(tf_function.get_concrete_function())
+				tf_function.features = new_model.features #Adding features by hand :D
+				
+				dict_to_fill[comps] = tf_function
+						
+						
+				#dict_to_fill[comps] = tf.function(new_model,
+				#		input_signature=(tf.TensorSpec(shape=new_model.inputs[0].shape, dtype=tf.float64),))
 
 		if not (self.amp_models and self.ph_models):
 			raise RuntimeError("Please supply both amplitude and phase models!")
@@ -1541,13 +1558,19 @@ class mode_generator_NN(mode_generator_base):
 		ph_pred = np.zeros((theta.shape[0], self.ph_PCA.get_dimensions()[1]))
 		
 		for comps, model in self.amp_models.items():
-			amp_pred[:,comps_to_list(comps)] = model(augment_features(theta, model.features)).numpy()
+			#amp_pred[:,comps_to_list(comps)] = model(augment_features(theta, model.features)).numpy()
+			input_ = tf.constant(augment_features(theta, model.features).astype(np.float32))
+			amp_pred[:,comps_to_list(comps)] = model(input_)[0].numpy()
 		
 		for comps, model in self.ph_models.items():
-			ph_pred[:,comps_to_list(comps)] = model(augment_features(theta, model.features)).numpy()
+			#ph_pred[:,comps_to_list(comps)] = model(augment_features(theta, model.features)).numpy()
+			input_ = tf.constant(augment_features(theta, model.features).astype(np.float32))
+			ph_pred[:,comps_to_list(comps)] = model(input_)[0].numpy()
         
 		for comps, model in self.ph_residual_models.items():
-			ph_pred[:,comps_to_list(comps)] += model(augment_features(theta, model.features)).numpy()*self.ph_res_coefficients[comps]
+			#ph_pred[:,comps_to_list(comps)] += model(augment_features(theta, model.features)).numpy()*self.ph_res_coefficients[comps]
+			input_ = tf.constant(augment_features(theta, model.features).astype(np.float32))
+			ph_pred[:,comps_to_list(comps)] += model(input_)[0].numpy()*self.ph_res_coefficients[comps]
 
 		return amp_pred, ph_pred
 

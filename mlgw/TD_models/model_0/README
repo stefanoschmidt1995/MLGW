@@ -1,6 +1,6 @@
 {
 "train model": "SEOBNRv4HM",
-"description": "SEOBNRv4HM model introduced in ???",
+"description": "SEOBNRv4HM model introduced in 2402.06587",
 "q range": "[1,10]",
 "s1 range": "[-0.9, 0.9]",
 "s2 range": "[-0.9, 0.9]",
