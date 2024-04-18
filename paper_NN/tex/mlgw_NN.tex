@@ -26,10 +26,9 @@ superscriptaddress,10pt]{revtex4-2}
 \usepackage{tabularx}
 \usepackage{ragged2e}
 \usepackage{blindtext}
-\usepackage{orcidlink}
-\usepackage{siunitx}
-	\sisetup{output-decimal-marker={.}}
-	
+%\usepackage{orcidlink}
+%\usepackage{siunitx} 
+	%\sisetup{output-decimal-marker={.}}
 	%some math symbols
 \newcommand{\R}{\mathbb{R}}
 \newcommand{\N}{\mathbb{N}}
@@ -134,12 +133,11 @@ A first class of surrogates is designed to closely reproduce numerical relativit
 Besides targeting NR waveforms, several surrogates have been developed to accelerate EOB models \cite{Field:2013cfa, Purrer:2014fza, Purrer:2015tud, Cotesta:2020qhw, Gadre:2022sed}, even including HMs. While traditional surrogate 
 models build an empirical interpolant on the waveform space, a more recent approach relies on performing a regression 
 using machine learning techniques \cite{Chua:2018woh, Khan:2020fso, Thomas:2022rmc, Tissino:2022thn}.
-
 %Canizares:2014fya,Lackey:2016krb, Lackey:2018zvw
 
 Among others, \cite{Schmidt:2020yuu} introduced a machine learning surrogate model, based on a dimensionality 
 reduction scheme followed by a regression. In this work, we extend this model to HMs and we improve the accuracy 
-of the regression. Our model marks a step towards the development of a faster, yet precise, waveform model, and will 
+of the regression by employing artificial neural networks (ANN). Our model marks a step towards the development of a faster, yet precise, waveform model, and will 
 help enable the accurate analysis of next-generation detector data.
 
 We train our model on the widely used approximant \texttt{SEOBNRv4HM} \cite{Cotesta:2018fcv} to target systems 
@@ -147,6 +145,8 @@ with mass ratio $q \in [1,10]$ and dimensionless spin components between $[-0.9,
 $10^{-4}$ median faithfulness (with tails up to $10^{-2}$) when averaged across a wide range in parameter space.
 Our numerical experiments show that our model offers a substantial speed-up with respect to the original model, matching 
 the speed of the state-of-the-art surrogate models.
+
+Our methodology distinguishes itself from previous approaches \cite{Chua:2018woh, Khan:2020fso, Thomas:2022rmc, Tissino:2022thn} in several ways. First of all, for predicting the phase $\phi_{\ell m}$ of each mode, we use three separate models for predicting the basis coefficients of the principal component decomposition. This ``distribution of tasks'' allows for more flexibility, a significant reduction the total number of model parameters and fewer training waveforms. Secondly, we improve on choosing the hyperparameters of the ANNs. Whereas previous approaches arrive at their configuration of hyperparameters using somewhat limited heuristics, we introduce a more rigorous method by using Bayesian optimization to tune hyperparameters. Lastly, though we have not incorporated precession, we did show our approach to be viable for the relatively large range of parameters $(q,\chi_1, \chi_2)\subset [1,10]\times [-0.9,0.9]\times[-0.9,0.9]$, where previous approaches either focused solely on non-precessing spin-aligned waveforms \cite{Khan:2020fso, Chua_2018woh} or on precessing waveforms but with a parameter range $(q,\chi_1, \chi_2)\subset [1,2]\times [-0.8,0.8]\times\{0\}$.
 
 This paper is organized as follows. In Sec.~\ref{sec:model} we introduce the details of the model presented here, 
 stressing the differences with the model in  \cite{Schmidt:2020yuu}.
@@ -492,7 +492,7 @@ We optimize the following hyperparameters:
 
 For each of the 4 ANN useful to produce a single mode (see Eqs.~(\ref{eq:amp_pred}-\ref{eq:ph_pred})), we train a network for different combinations of hyperparameters. The figure of merit of each 
 hyperparameter choice is the logarithm of the loss function (see Eq.~\eqref{eq:loss}) evaluated on the validation set.
-For our experiments we only use the data set of the $(2,2)$ mode and we employ the package \texttt{keras-tuner} \cite{omalley2019kerastuner}.
+For our experiments we only use the data set of the $(2,2)$ mode and we employ the package \texttt{keras-tuner} \cite{omalley2019kerastuner}. Specifically, we use the Bayesian optimization tuner which somewhat prioritizes searching around more promising configurations.
 
 We report our results in Fig.~\ref{fig:tuning}, where each combination of hyperparameters tested is represented in the \texttt{n-layers}-\texttt{units} plane and colored by the validation score. 
 We can see that all the four ANN share the same trend: the most effective way to improve regression accuracy is to increase the number of units as opposed to the number of layers.
