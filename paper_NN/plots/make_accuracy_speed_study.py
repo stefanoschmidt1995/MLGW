@@ -101,17 +101,18 @@ generator.get_WF([10, 3, 0.3, -0.6], np.linspace(-8,0.01, 1000), modes = None) #
 
 		#getting random theta
 		#Safe zone: m1_range = (10, 50)
-M_range = (30., 80.)
+#M_range = (30., 80.)
+M_range = (20., 20.)
 q_range = (1.,10.)
 s1_range = (-0.9,0.9)
 s2_range = (-0.9,0.9)
 d_range = (.5,100.)
 i_range = (0, np.pi) 
 phi_0_range = (0, 2*np.pi)
-f_range = (10, 20)
+f_range = (15, 75)
 LALpars = lal.CreateDict()
-approx = lalsim.SimInspiralGetApproximantFromString("IMRPhenomTPHM")
-#approx = lalsim.SimInspiralGetApproximantFromString("SEOBNRv4PHM")
+#approx = lalsim.SimInspiralGetApproximantFromString("IMRPhenomTPHM")
+approx = lalsim.SimInspiralGetApproximantFromString("SEOBNRv4PHM")
 #approx = lalsim.SimInspiralGetApproximantFromString("SEOBNRv4HM_ROM")
 t_step = 1/(2*4096.) #srate = 4069 Hz
 
@@ -245,14 +246,14 @@ for i in tqdm(range(args.n_wfs), disable = args.verbose, desc = 'Loops on WFs'):
 
 			ax_list[0].set_title("Amp mode {}".format(lm))
 			ax_list[0].plot(times[ids_plot], amp_mlgw[ids_plot,j], label = "mlgw")	
-			ax_list[0].plot(times[ids_plot], np.abs(hlm_IMR)[ids_plot], label = "IMR")
+			ax_list[0].plot(times[ids_plot], np.abs(hlm_IMR)[ids_plot], label = "SEOB")
 			ax_list[0].legend(loc = 'upper right')
 			
 			ax_list[1].set_title("Ph mode {}".format(lm))
 			ax_list[1].plot(times[ids_plot], ph_mlgw[ids_plot,j], label = "mlgw")
-			ax_list[1].plot(times[ids_plot], ph_IMR[ids_plot], label = "IMR")
+			ax_list[1].plot(times[ids_plot], ph_IMR[ids_plot], label = "SEOB")
 
-			ax_list[2].plot(times[ids_plot], (ph_mlgw[ids_plot,j] - ph_IMR[ids_plot])- (ph_mlgw[0,0] - ph_IMR[0]), label = "mlgw - IMR")
+			ax_list[2].plot(times[ids_plot], (ph_mlgw[ids_plot,j] - ph_IMR[ids_plot])- (ph_mlgw[0,0] - ph_IMR[0]), label = "ph: mlgw - SEOB")
 			ax_list[2].legend(loc = 'upper left')
 			plt.tight_layout()
 		plt.show()

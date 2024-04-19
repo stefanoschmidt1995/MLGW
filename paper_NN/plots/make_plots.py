@@ -145,10 +145,11 @@ def plot_speed_accuracy_hist(json_file):
 		r'\textrm{max}',np.max(dataset['mismatch']),
 		r'90^\textrm{th} \textrm{ perc.}', np.percentile(dataset['mismatch'], 90))
 	ann_str = ann_str.replace(r'E-04', r'\times 10^{-4}')
+	ann_str = ann_str.replace(r'E-03', r'\times 10^{-3}')
 	ann_str = ann_str.replace(r'E-02', r'\times 10^{-2}')
 	ann_str = '$'+ann_str+'$'
 	axes[0].annotate(ann_str,
-		xy = (0.21,0.45),
+		xy = (0.23,0.45),
 		xycoords = 'axes fraction',
 		fontsize = 7
 		)
@@ -161,7 +162,7 @@ def plot_speed_accuracy_hist(json_file):
 	
 		#Countor plots
 	print(dataset.keys())
-	l_latex = { 'M': r'$M (M_\odot)$', 'q': r'$q$',
+	l_latex = { 'M': r'$M (M_\odot)$', 'q': r'$q$', 'f_min': r'$f_\textrm{min} (\textrm{Hz})$',
 		's1z': r'$\chi_\mathrm{1z}$', 's2z': r'$\chi_\mathrm{2z}$'}
 	
 	fig, axes = plt.subplots(2, 3, figsize = (3.54*2, 3.54))
@@ -184,7 +185,7 @@ def plot_speed_accuracy_hist(json_file):
 	plt.savefig('../tex/img/colormesh_modes.pdf', bbox_inches='tight')
 	
 	fig, axes = plt.subplots(1, 3, figsize = (3.54*2, 3.54/1.5))
-	for ax, (k1, k2) in zip(axes, [('M', 'q'), ('q', 's1z'), ('q', 's2z')]):
+	for ax, (k1, k2) in zip(axes, [('q', 'f_min'), ('q', 's1z'), ('q', 's2z')]):
 		print("Making colored plot for {}-{}".format(k1,k2))
 		ax, mesh, cbar = plot_2d_data(np.array(dataset[[k1,k2]]), np.log10(dataset['mismatch']),
 			ax = ax, statistic= 'mean', bins = 30, cbar = False ,
@@ -201,14 +202,20 @@ def plot_speed_accuracy_hist(json_file):
 	plt.savefig('../tex/img/colormesh.pdf', bbox_inches='tight')
 
 		#Speed up histogram
-	plt.figure(figsize = (3.54, 3.54/2))
+	fig, ax_nobatch = plt.subplots(1,1, figsize = (3.54, 3.54/2))
 	#plt.title(r'$\textrm{Timing analysis}$')
-	plt.hist(dataset['time_lal']/dataset['time_mlgw'], label = r"$\textrm{no batch}$", **kwargs)
-	plt.hist(dataset['time_lal']/dataset['time_mlgw_100'], label = r"$\textrm{batch}$", **kwargs)
-	plt.axvline(1, c='k', ls ='dashed')
-	plt.xlabel(r'$t_{\texttt{SEOBNRv4HM}}/t_{\texttt{mlgw}}$')
+	ax_nobatch.axvline(1, c='k', ls ='dashed')
+	ax_nobatch.set_xlabel(r'$t_{\texttt{SEOBNRv4HM}}/t_{\texttt{mlgw}}$')
+	_, _, h_nobatch = ax_nobatch.hist(dataset['time_lal']/dataset['time_mlgw'], label = r"$\textrm{no batch}$", zorder = 0, **kwargs)
+	
+	ax_batch = ax_nobatch.twinx()
+	_, _, h_batch = ax_batch.hist(dataset['time_lal']/dataset['time_mlgw_100'], label = r"$\textrm{batch}$", zorder = 1,
+		color = plt.rcParams['axes.prop_cycle'].by_key()['color'][1],  **kwargs)
+
 	#plt.xlabel(r'$t_{\texttt{IMRPhenomTPHM}}/t_{\texttt{mlgw}}$')
-	plt.legend()
+	ax_nobatch.legend(handles = [h_nobatch[0], h_batch[0]])
+	ax_nobatch.set_xlim([0, 1300])
+	ax_nobatch.set_xticks([100, 250, 500, 750, 1000, 1250])
 	plt.tight_layout()
 	plt.savefig('../tex/img/timing.pdf', bbox_inches='tight')
 	#plt.savefig('../tex/img/timing_IMR.pdf', bbox_inches='tight')
