@@ -53,7 +53,7 @@ superscriptaddress,10pt]{revtex4-2}
 \begin{abstract}
 We introduce a machine learning model designed to rapidly and accurately predict the time domain gravitational wave emission of non-precessing binary black hole coalescences, incorporating the effects of higher order modes of the multipole expansion of the waveform. 
 Expanding on our prior work \cite{Schmidt:2020yuu}, we decompose each mode by amplitude and phase and reduce dimensionality using principal component analysis. An ensemble of artificial neural networks is trained to learn the relationship between orbital parameters and the low-dimensional representation of each mode.
-We train our model on $\sim 10^5$ signals with mass ratio $q \in [1,10]$ and dimensionless spins $\chi_i \in [-0.9, 0.9]$, generated with the state-of-the-art approximant \texttt{SEOBNRv4HM}. We find that it achieves a median faithfulness of $10^{-4}$ averaged across the parameter space. We show that our model generates a single waveform two orders of magnitude faster than the training model, with the speed up increasing when waveforms are generated in batches.
+Our model is trained with $\sim 10^5$ signals with mass ratio $q \in [1,10]$ and dimensionless spins $\chi_i \in [-0.9, 0.9]$, generated with the state-of-the-art approximant \texttt{SEOBNRv4HM}, and it is able to generate waveforms up to $\sim 4\times 10^5 M$ long. We find that it achieves a median faithfulness of $10^{-4}$ averaged across the parameter space. We show that our model generates a single waveform two orders of magnitude faster than the training model, with the speed up increasing when waveforms are generated in batches.
 This framework is entirely general and can be applied to any other time domain approximant capable of generating waveforms from aligned spin circular binaries, possibly incorporating higher order modes.
 \end{abstract}
 	
@@ -140,13 +140,13 @@ reduction scheme followed by a regression. In this work, we extend this model to
 of the regression by employing artificial neural networks (ANN). Our model marks a step towards the development of a faster, yet precise, waveform model, and will 
 help enable the accurate analysis of next-generation detector data.
 
-We train our model on the widely used approximant \texttt{SEOBNRv4HM} \cite{Cotesta:2018fcv} to target systems 
-with mass ratio $q \in [1,10]$ and dimensionless spin components between $[-0.9, 0.9]$ and we achieve a 
-$10^{-4}$ median faithfulness (with tails up to $10^{-2}$) when averaged across a wide range in parameter space.
+We train our model on the widely used approximant \texttt{SEOBNRv4HM} \cite{Cotesta:2018fcv} to target systems with mass ratio $q \in [1,10]$ and dimensionless spin components between $[-0.9, 0.9]$. Our model is able to generate waveforms with a maximum length of $t = \SI{2\left(\frac{M}{M_\odot}\right)}{s}$, which amounts to $t \simeq \SI{4.06\times 10^5}{M}$ in geometrized units, and achieves $10^{-4}$ median faithfulness (with tails up to $10^{-2}$) when averaged across a wide range in parameter space.
 Our numerical experiments show that our model offers a substantial speed-up with respect to the original model, matching 
 the speed of the state-of-the-art surrogate models.
 
-Our methodology distinguishes itself from previous approaches \cite{Chua:2018woh, Khan:2020fso, Thomas:2022rmc, Tissino:2022thn} in several ways. First of all, for predicting the phase $\phi_{\ell m}$ of each mode, we use three separate models for predicting the basis coefficients of the principal component decomposition. This ``distribution of tasks'' allows for more flexibility, a significant reduction the total number of model parameters and fewer training waveforms. Secondly, we improve on choosing the hyperparameters of the ANNs. Whereas previous approaches arrive at their configuration of hyperparameters using somewhat limited heuristics, we introduce a more rigorous method by using Bayesian optimization to tune hyperparameters. Lastly, though we have not incorporated precession, we did show our approach to be viable for the relatively large range of parameters $(q,\chi_1, \chi_2)\subset [1,10]\times [-0.9,0.9]\times[-0.9,0.9]$, where previous approaches either focused solely on non-precessing spin-aligned waveforms \cite{Khan:2020fso, Chua_2018woh} or on precessing waveforms but with a parameter range $(q,\chi_1, \chi_2)\subset [1,2]\times [-0.8,0.8]\times\{0\}$.
+Our methodology distinguishes itself from previous approaches \cite{Chua:2018woh, Khan:2020fso, Thomas:2022rmc} in several ways. First of all, to predict the phase $\phi_{\ell m}$ of each mode, we use three separate models for predicting the basis coefficients of the principal component decomposition. This ``distribution of tasks'' allows for more flexibility, a significant reduction the total number of model parameters and fewer training waveforms. Secondly, we improve on choosing the hyperparameters of the ANNs. Whereas previous approaches arrive at their configuration of hyperparameters using somewhat limited heuristics, we introduce a more rigorous method by using Bayesian optimization to tune hyperparameters.
+%Lastly, though we have not incorporated precession, we did show our approach to be viable for the relatively large range of parameters $(q,\chi_1, \chi_2)\subset [1,10]\times [-0.9,0.9]\times[-0.9,0.9]$, where previous approaches either focused solely on non-precessing spin-aligned waveforms \cite{Khan:2020fso, Chua:2018woh} or on precessing waveforms but with a parameter range $(q,\chi_1, \chi_2)\subset [1,2]\times [0.,0.8]\times\{0\}$ \cite{Thomas:2022rmc}.
+Lastly, and more importantly, even though we have not incorporated precession, we show that our approach is viable for the large range of parameters ${(q, \chi_1, \chi_2)\subset [1,10]\times [-0.9,0.9]\times[-0.9,0.9]}$. Previous approaches either focused solely on the dominant mode of non-precessing spin-aligned waveforms \cite{Khan:2020fso, Chua:2018woh} or on precessing HM waveforms but with a limited range in mass ratio $q \in [1,2]$ and with $\chi_2=0$ \cite{Thomas:2022rmc}.
 
 This paper is organized as follows. In Sec.~\ref{sec:model} we introduce the details of the model presented here, 
 stressing the differences with the model in  \cite{Schmidt:2020yuu}.
@@ -191,7 +191,7 @@ The regression is designed to reproduce waveforms from a given data set; such wa
 by {\it any} time-domain approximant.
 
 We decompose each mode in an amplitude term $A_{\ell m}$ and a phase term $\phi_{\ell m}$ as follows:
-\begin{equation}
+\begin{equation}\label{eq:amp_ph_decomposition}
 	h_{\ell m}(t; \boldsymbol{\vartheta}) = A_{\ell m}(t; \boldsymbol{\vartheta}) e^{i \phi_{\ell m}(t; \boldsymbol{\vartheta})},
 \end{equation}
 and, for each mode, we perform a regression for amplitude and phase separately. The regression scheme closely follows \cite{Schmidt:2020yuu} and relies on:
@@ -205,18 +205,18 @@ and, for each mode, we perform a regression for amplitude and phase separately. 
 While the first two elements are unchanged from the previous work, the ANN regression is first introduced here. Indeed a NN has more representation power than the Mixture of Experts (MoE) model \cite{Jacobs1991AdaptiveMoE}, used in \cite{Schmidt:2020yuu}: the change was needed to achieve better accuracy for the model.
 
 \subsection{Data set creation}
-\label{sec:data_set}
+\label{sec:dataset_creation}
 
 To construct a data set, we follow \cite{Schmidt:2020yuu} and we set a dimensionless time grid. We construct the grid 
 by setting $D$ points equally spaced in $\tau^\alpha$, where $\tau$ is the physical time scaled by the total mass of 
 the system $M$: $\tau = t/M$. Using the findings of \cite{Schmidt:2020yuu}, we set $D = \text{2000}$ and 
 $\alpha = \text{0.5}$.
 %
-This is a good compromise between the need of having a faithful representation of the waveform (which requires 
-a large grid) and the need of having a compact model (which points to a sparse grid).
+This is a good compromise between the need of having a faithful representation of the waveform (which requires a large grid) and the need of having a compact model (which points to a sparse grid).
 %
 The waveforms are time-shifted so that the peak of the amplitude of the $(2,2)$ mode happens at $\tau=0$. The grid starts at (scaled) time $\tau_\text{min} = -\tau_0$, where $\tau_0$ sets the length of the waveform that our model is able to generate (as a function of the total mass $M$).
-We choose $\tau_0 = \SI{2}{s/M_\odot}$ and we populate the data set with $68000$ waveforms.
+We choose $\tau_0 = \SI{2}{s/M_\odot}$, which in geometrized units (i.e. with $G=c=1$) amounts to a waveform length of $t \simeq \SI{4.06\times 10^5}{M}$.
+We populate the data set with $68000$ waveforms.
 
 To make sure that the distribution of $q$ is skewed towards towards the boundaries, where the regression is less accurate, we sample the mass ratio $q$ in the range $[1,10]$ with the following procedure:
 \begin{itemize}
@@ -241,9 +241,13 @@ We then create a data set $\{X, Y\}$ of $N$ elements. Each row of the data set i
 %
 The data set $Y$ gathers the amplitude and phase for the different modes in the data set.
 We include all the modes available in \texttt{SEOBNRv4HM}: $(\ell, m) = \{(2,2),(2,1), (3,3), (4,4), (5,5)\}$.
-
+%
 In what follows we will refer to any of the vectors $\boldsymbol{A}_{\ell m}$ or $\boldsymbol{\phi}_{\ell m}$ as $\boldsymbol{f}$.
 Note that we use the same grid for all the modes.
+
+It is well known \cite{Blackman:2015pia, Varma:2018mmi} that in the case of a symmetric BBH, where $m_1\simeq m_2$ and $\chi_\text{1z} \simeq \chi_\text{2z}$, the amplitude of the odd-m modes vanishes, making the phase Eq.~\eqref{eq:amp_ph_decomposition} ill-defined.
+Clearly this is a challenge for the regression, which is likely to perform poorly in such situations.
+While several alternatives are available in the literature, we will address the challenge in future work. For the moment we will content ourselfs with a poor performance of the regression for the odd-m modes in the $m_1\simeq m_2$ region, as we will show in Fig.~\ref{fig:accuracy_hist} and Fig.~\ref{fig:countour_plots_modes}. This will have little impact for the overall faithfulness, due to the small amplitude of such modes.
 
 \subsection{Dimensionality reduction}
 \label{sec:PCA}
@@ -457,10 +461,10 @@ In what follows, we always use a constant (i.e.~flat) PSD. While this certainly 
 	\centering
 	\includegraphics[width=\textwidth]{colormesh}
 	\caption{
-	Depency of the ``symphony" mismatch $F_\text{sym}$ between \texttt{mlgw-SEOBNRv4HM} and the training model \texttt{SEOBNRv4HM}, as a function of some chosen orbital paramers. The mismatch is computed on the $50000$ waveforms on the test set described in the text.
-	On the left plot, we display the quantities $M-q$ on the two axis, while on the center and left plot we show on the axis the variables $q-\chi_\text{1z}$ and $q-\chi_\text{2z}$ respectively. 
+	Depency of the ``symphony" mismatch $F_\text{sym}$ between \texttt{mlgw-SEOBNRv4HM} and the training model \texttt{SEOBNRv4HM}, as a function of some chosen waveform orbital parameters. The mismatch is computed on the $50000$ waveforms on the test set described in the text.
+	On the left plot, we display the mass ratio and the starting frequency $q-f_\text{min}$ on the two axis, while we consider the the effect of spins on the center and right plot by showing the variables $q-\chi_\text{1z}$ and $q-\chi_\text{2z}$ respectively. 
 	Each bin is colored according to the \textit{average} mismatch and the three plots shares the same color scale.
-	We note that \texttt{mlgw-SEOBNRv4HM}'s faithfulness tends to decreases for low values of $q$ and large positive values of $s_\text{1z}$.
+	We note that \texttt{mlgw-SEOBNRv4HM}'s faithfulness tends to decreases for low values of $q$, large positive values of $s_\text{1z}$ and higher values of $f_\text{min}$.
 	}
 	\label{fig:countour_plots}
 \end{figure*}
@@ -510,12 +514,12 @@ We note here that an accurate ANN for the residuals of the phase is crucial to o
 \subsection{Accuracy study}\label{sec:accuracy}
 
 To test the accuracy of our model, we generate a test set with $50000$ randomly chosen waveforms generated with the training model \texttt{SEOBNRv4HM}.
-The waveforms masses are characterized by a total mass in the range $[30, 80] M_\odot$, by a mass ratio $q \in [1, 10]$. The spins are chosen in the range $[-0.9, 0.9]$ and the inclination angle $\iota$ and reference phase $\varphi_0$ are drawn uniformly from a sphere.
-We sample the starting frequency uniformly in the range $[10, 20]$ Hz.
+The waveforms masses are characterized by a total mass $M = \SI{20}{M_\odot}$ and by a mass ratio $q \in [1, 10]$, while the spins are chosen in the range $[-0.9, 0.9]$. The inclination angle $\iota$ and reference phase $\varphi_0$ are drawn uniformly from a sphere.
+To vary the length in time of the waveforms considered, we sample the starting frequency $f_\textrm{min}$ uniformly in the range $[15, 75]$ Hz.
 
 In Fig.~\ref{fig:accuracy_hist}, we report the histogram of the distribution of the mismatches between \texttt{mlgw-SEOBNRv4HM} and the test waveforms. The upper part refers to the mismatches Eq.~\eqref{eq:match_sym} computed on the overall waveforms (with sky location sampled uniformly over the sky); the lower box refers to mismatches computed mode by mode with Eq.~\eqref{eq:match}.
 
-First of all, we note that the model shows very high faithfulness. With a median value of $2\times 10^{-4}$ and with virtually no signals with a 
+First of all, we note that the model shows very high faithfulness. With a median value of $4\times 10^{-4}$ and with virtually no signals with a 
 ``symphony" mismatch higher than $10^{-2}$, the accuracy of \texttt{mlgw-SEOBNRv4HM} matches the accuracy of other state-of-the-art surrogate models \cite{Cotesta:2020qhw, Khan:2020fso, Gadre:2022sed} and the accuracy of the training model \texttt{SEOBNRv4HM} in reproducing numerical relativity waveforms \cite{Cotesta:2018fcv}.
 %\texttt{mlgw-SEOBNRv4HM} is indistinguishable from \texttt{SEOBNRv4HM} for the current generation detectors \cite{LIGOScientific:2016ebw, Owen:2023mid}, and matches the accuracy requirements of next generation detectors \cite{Purrer:2019jcp}.
 The faithfulness for the $(2,2)$ mode is even higher, with no signals whose mismatch exceeds $2\times 10^{-3}$.
@@ -526,14 +530,24 @@ From the figure, it is manifest that the model has very stable performance acros
 The faithfulness decreases for high positive values of the spin of the first object $s_\text{1z}$ and for mass ratio $q\sim 1$. Despite this, in such ``extreme" regions, the average mismatch is still of the order of $10^{-4}$.
 The performance of the regression doesn't depend on $\chi_\text{2z}$, since the quantity plays a very little role in defining the waveform features.
 
+Longer waveforms, characterized by a lower $f_\textrm{min}$, tends to show higher faithfulness. As longer waveforms are dominated by the inspiral phase, we can conclude that our model is more successfull in reproducing the inspiral as opposed to the merger and the ringdown, prevalent in short waveforms.
+This feature is very important for the extension of our model to longer time grids, a necessity for analyzing binary neutron star systems or for applications in next-generation detectors \cite{Purrer:2019jcp}.
+
 In Fig.\ref{fig:countour_plots_modes}, for each mode we report the mismatch as a function of the mass ratio and of $s_\text{1z}$. One more time, we can see that the model faithfulness decreases for low mass ratios and for high spins. Moreover, the subdominant modes shows a poorer performance as compared to the dominant one: this was already observed in Fig.~\ref{fig:accuracy_hist}.
 
 The observed decrease in faithfulness for sub-dominant modes needs some attention.
-As seen in Fig.~\ref{fig:countour_plots_modes}, this decreased performance is consistently observed for low values of the mass ratio $q$. 
-In systems with $q \sim 1$, it is well-known that the amplitude of the subdominant modes vanishes and hence they correspond to ``outliers" in the data set.
-This clearly poses a challenge for both the PCA and the regression model for the amplitude, since modelling such a sharp feature of the data requires an enhanced model flexibility and many more training examples.
+As discussed in Sec.~\ref{sec:dataset_creation}, symmetric systems with $q \simeq 1$ have a vanishing amplitude of the odd-m modes and a poorly defined phase and, as such, they correspond to ``outliers" in the data set. This clearly poses a challenge for both the PCA and the regression model for the amplitude, since modelling such a sharp feature of the data requires an enhanced model flexibility and more training examples.
+This is consistent with the low performance of the fit at low $q$ observed in Fig.~\ref{fig:countour_plots_modes}.
 
-A mitigation strategy could involve introducing a $q$-dependent amplitude scaling for the waveforms before adding them to the data set. This approach would result in a data set with amplitude time series of approximately the same magnitude, reducing the outlier nature of waveforms with $q \sim 1$.
+This matter is well known in the literature and several mitigation strategies are available in the literature.
+First of all, we might incorporate the vanishing behaviour of the amplitude in the functional model for the regression, as done in \cite{Blackman:2015pia}. Concretely, we could introduce a $q$-dependent amplitude scaling for the waveforms before adding them to the data set, resulting in a data set with amplitude time series of approximately the same magnitude.
+Second, we might mitigate the effect of a poorly defined phase by transforming all the modes expect the $(2,2)$ in the co-orbital frame \cite{Varma:2018mmi} according to:
+\begin{equation}
+	h_{\ell m} \rightarrow h_{\ell m} e^{-i\frac{m}{2}\phi_{22}}
+\end{equation}
+where $\phi_{22}$ is the phase of the $(2,2)$ mode.
+Both the strategies above reduce the outlier nature of waveforms with $q \sim 1$, hence will likely improve the quality of the fit.
+
 Another straightforward strategy could deploy a larger network for such modes. Indeed, we tuned the hyperparameters on the $(2,2)$ mode (an ``easy" regression target). Performing a network tuning on the data set of HMs might reveal that our chosen architecture is not optimal.
 
 Finally, we note that since for $q\sim 1$, the sub-dominant modes have a vanishing amplitude, a large mismatch in the 
@@ -548,21 +562,21 @@ A speed-up in the waveform generation is the main motivation to build a ML wavef
 For this reason, we use our test set to measure the ratio between the time to generate a waveform with \texttt{SEOBNRv4HM} and \texttt{mlgw-SEOBNRv4HM}. Our model offers further speed by generating waveform in batches: in this case, some operations are efficiently parallelized and happen more efficiently.
 We report our findings in Fig.~\ref{fig:timing_hist}.
 
-We achieve a speed-up between a factor of $100$ and $200$, depending on the waveform.
-The speed up can be twice as much, ranging between $200$ and $400$, when waveforms are generated in batches of $100$.
+We achieve a speed-up ranging between a factor of $150$ and $250$, depending on the waveform characteristics. When waveforms are generated in batches of $100$, the speed-up can be substantially larger, reaching up to $1200$, although with considerable variance, mostly due to the waveform length.
 
 The speed up achieved by \texttt{mlgw-SEOBNRv4HM} is comparable to the one obtained by the \texttt{SEOBNRv4HM\_ROM} surrogate model \cite{Cotesta:2020qhw}, which is the state-of-the-art frequency domain surrogate model trained on \texttt{SEOBNRv4HM}. \texttt{SEOBNRv4HM\_ROM} is obtained with standard techniques and it achieves a speed up ranging between 100 and 200.
 The two results might not be directly comparable, since the comparison for \texttt{SEOBNRv4HM\_ROM} is performed in frequency domain and this involves computing the Fourier tranform of the \texttt{SEOBNRv4HM} waveform. As we perform the comparison in time domain, we omit the latter step, possibly obtaining lower values for the speed up as the ones obtained in \cite{Cotesta:2020qhw}. 
 
-On the other hand, the speed up achieved by \texttt{mlgw-SEOBNRv4HM} is slightly larger than the one obtained by the time domain surrogate model \texttt{SEOBNRv4PHMSur} \cite{Gadre:2022sed}. Indeed, the authors report a speed up always lower than $100$. However, also in this case, the comparison might be biased because the latter study also considers the effects of precession.
+On the other hand, the speed up achieved by \texttt{mlgw-SEOBNRv4HM} is larger than the one obtained by the time domain surrogate model \texttt{SEOBNRv4PHMSur} \cite{Gadre:2022sed}. Indeed, the authors report a speed up always lower than $100$. However, also in this case, the comparison might be biased because the latter study also considers the effects of precession.
 
 \begin{figure}[t]
 	\centering
 	\includegraphics[scale = 1]{timing}
 	\caption{Speed up provided by \texttt{mlgw-SEOBNRv4HM} over the training model \texttt{SEOBNRv4HM}.
 	In the histogram, we report the ration between the time $t_\texttt{SEOBNRv4HM}$ and the time $t_\texttt{mlgw}$ taken by the two models to generate each of the waveform in the test set.
-	We note that \texttt{mlgw-SEOBNRv4HM} offers a speed up between a $100$ and $200$ with respect to the training model.
-	\texttt{mlgw-SEOBNRv4HM} offers the option to generate waveforms in batches, effectively parallelizing some linear algebra operations. As shown in the plot, the batch generation provides a speed up of roughly a factor of two as compared with the non-parallelized version.
+	The two histograms are in different scales, reported on the left and right y axis for the ``no batch" and ``batch" case respectively.
+	We note that \texttt{mlgw-SEOBNRv4HM} offers a speed up between a $150$ and $250$ with respect to the training model.
+	\texttt{mlgw-SEOBNRv4HM} offers the option to generate waveforms in batches, effectively parallelizing some linear algebra operations. As shown in the plot, the batch generation provides an additional speed up, which can be as high as $1200$.
 	}
 	\label{fig:timing_hist}
 \end{figure}
@@ -572,9 +586,8 @@ On the other hand, the speed up achieved by \texttt{mlgw-SEOBNRv4HM} is slightly
 \section{Final remarks and future prospects}
 \label{sec:end}
 
-Building on our previous work \cite{Schmidt:2020yuu}, we generate a ML surrogate model \texttt{mlgw-SEOBNRv4HM} able to reproduce with very high fidelity the output of the widely used approximant \texttt{SEOBNRv4HM}. \texttt{mlgw-SEOBNRv4HM} can generate waveforms in a cuboid $q\times \chi_\text{1z} \times \chi_\text{2z} = [1,10]\times[-0.9,0.9]\times[-0.9,0.9]$ on a (reduced) time grid of maximum length of $\SI{2}{s/M_\odot}$.
+Building on our previous work \cite{Schmidt:2020yuu}, we generate a ML surrogate model \texttt{mlgw-SEOBNRv4HM} able to reproduce with very high fidelity the output of the widely used approximant \texttt{SEOBNRv4HM}. \texttt{mlgw-SEOBNRv4HM} can generate waveforms in a cuboid $q\times \chi_\text{1z} \times \chi_\text{2z} = [1,10]\times[-0.9,0.9]\times[-0.9,0.9]$ on a (reduced) time grid of maximum length of $\SI{2}{s/M_\odot}$, corresponding to waveforms of length $t \simeq \SI{4.06\times 10^5}{M}$ in geometrized units.
 Our model offers a two orders of magnitude speed up over the training model, without trading for accuracy, hence it is an attractive alternative for any data analysis application.
-Our method is fully general and is applicable to any chirp-like gravitational wave signal.
 To encourage new applications, we release our code (and our trained model) publicly as a python package through the PyPI repository\footnote{The package is distributed under the name \texttt{mlgw} and is available at \url{https://pypi.org/project/mlgw/}.}.
 
 Future work should also include precession. This can be achieved by means of the {\it spin twist} procedure \cite{Schmidt:2012rh, Schmidt:2014iyl, Pratten:2020ceb, Gamba:2021ydi}. It consist on a time dependent rotation of the plane of emission, resulting in a phase and amplitude modulation which approximates the effect of precession.
@@ -590,7 +603,8 @@ With the current architecture, the regression for each mode is carried on separa
 This could results in many redudant parameters in the network ensemble we introduced here.
 Inserting parameter sharing inside the regression setup could result in a lighter ANN, which would lead to a reduced inference time.
 
-Similar improvements will become mandatory for the next generation detectors \cite{Purrer:2019jcp}, when fast and reliable waveform models will be needed to mitigate the huge computational cost posed by very long observed waveforms.
+Finally, we also strees that our PCA+ANN regression framework is fully general and in principle is applicable, with minimal modifications, to any chirp-like gravitational wave signal, such as extreme mass ratio inspirals (EMRI) \cite{Amaro-Seoane:2007osp, Amaro-Seoane:2012lgq} or binary neutron star systems (BNS).
+Extending the width of parameter space, enriching the BBH model with more physical effects and supporting a larger variety of systems will become mandatory for the next generation detectors \cite{Purrer:2019jcp, Owen:2023mid}, when fast and reliable waveform models will be needed to mitigate the huge computational cost posed by very long observed waveforms.
 Our framework is ideal to achieve such an ambitious goal.
 
 	%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% END
