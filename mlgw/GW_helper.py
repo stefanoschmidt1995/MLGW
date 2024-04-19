@@ -23,7 +23,53 @@ import warnings
 import scipy.signal
 from tqdm import tqdm
 
+################# Helpers with the frequency
+
+def f_min(tau, q, M):
+	"""
+	Computes the approximate minimum frequency of a waveform, given the total mass, mass ratio and the length of the reduced time grid (s/M_sun)
+	"""
+	#return (151*(tau_min)**(-3./8.) * (((1+q)**2)/q)**(3./8.))/M
+	return 151*np.power(np.square(1+q)/(q*tau), 3/8)/M
+
+def f_ISCO(M):
+	"""
+	Computes the ISCO frequency for a system with a given total mass M
+	"""
+	M_SUN = 4.925490947641267e-06 #solar mass in seconds
+	return 1/(6*np.sqrt(6)*2*np.pi*M_SUN*M)
+	
+def frequency22_merger(m1, m2, s1z, s2z): 
+	""" 
+	Computes the merger frequency defined with respect to the :math:`22` mode of the inspiral (Ref: Nagar)
+	
+	Input:
+		m1		primary mass in units of solar masses, :math:`m_1\\geq m_2`
+		m2		secondary mass in units of solar masses
+		s1z		dimensionless spin of the primary mass, :math:`z` component
+		s2z		dimensionless spin of the secondary mass, :math:`z` component
+	
+	Output:
+		f_merger	the merger frequency of the 22 mode :math:`f_{22}`
+	"""
+	M_SUN = 4.925490947641267e-06 #solar mass in seconds
+	
+	q	   	= m1/m2  #Husa conventions, m1>m2 [https://arxiv.org/abs/1611.00332]
+	eta	 	= q/(1+q)**2
+	M_tot   = m1+m2
+	chi_1   = 0.5*(1.0+np.sqrt(1.0-4.0*eta))
+	chi_2   = 1.0-chi_1
+	chi_eff = chi_1*s1z + chi_2*s2z
+		
+	A = -0.28562363*eta + 0.090355762
+	B = -0.18527394*eta + 0.12596953
+	C =  0.40527397*eta + 0.25864318
+	
+	res = (A*chi_eff**2 + B*chi_eff + C)*(2*np.pi*M_tot*M_SUN)**(-1)
+	return res
+
 ################# Overlap related stuff
+
 def overlap(amp_1, ph_1, amp_2, ph_2, df, low_freq = None, high_freq = None, PSD = None):
 		#it works only for input shapes (D,)
 	w1 = amp_1*np.exp(1j*ph_1)
@@ -321,8 +367,9 @@ create_dataset_TD
 		nu = np.divide(q, np.square(1+q)) #symmetric mass ratio
 
 			#computing f_min
-		f_min = .9* ((151*(t_coal_freq)**(-3./8.) * (((1+q)**2)/q)**(3./8.))/(m1+m2))
-		 #in () there is the right scaling formula for frequency in order to get always the right reduced time
+		#f_min = .9* ((151*(t_coal_freq)**(-3./8.) * (((1+q)**2)/q)**(3./8.))/(m1+m2))
+		f_min = .9*f_min(t_coal_freq, q, m1+m2)
+		 #f_min is the right scaling formula for frequency in order to get always the right reduced time
 		 #this should be multiplied by a prefactor (~1) for dealing with some small variation due to spins
 
 		if isinstance(m2_range, tuple):

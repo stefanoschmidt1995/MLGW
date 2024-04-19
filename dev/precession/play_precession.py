@@ -5,6 +5,8 @@ import matplotlib.pyplot as plt
 import numpy as np
 import mlgw
 import timeit
+import tensorflow as tf
+import precession
 
 lal_cmd = """
 hp, hc = lalsim.SimInspiralChooseTDWaveform( 
@@ -28,6 +30,9 @@ hp, hc = lalsim.SimInspiralChooseTDWaveform(
 
 mlgw_cmd = "gen.get_WF(theta[[0,1,4,7]], times, modes = None)"
 angles_cmd = "lalsim.SimIMRPhenomTPHM_CoprecModes(m1*lal.MSUN_SI, m2*lal.MSUN_SI, s1x, s1y, s1z, s2x, s2y, s2z, 1, inclination, deltaT, fstart, fref, phiref, lalparams, 0)"
+angles_cmd_ML = "angle_model(np.array([[3]])); angle_model(np.array([[3]])); angle_model(np.array([[3]]))" #You are generating 3 angles!!
+
+angles_cmd_precession = "precession.integrator_orbav(Lhinitial,S1hinitial,S2hinitial,v,q,chi1,chi2)"
 
 ########################
 
@@ -39,7 +44,22 @@ fref = 15
 m1, m2, s1x, s1y, s1z, s2x, s2y, s2z, inclination, phiref = 50, 7, 0.6*np.cos(0.), 0.6*np.sin(0.), 0.1, 4e-8, 0., 0.3, 0., 0.
 approx = lalsim.SimInspiralGetApproximantFromString("IMRPhenomTPHM")
 
-if True:
+	#Options for precession package
+Lhinitial = np.array([0,0,1])
+S1hinitial = np.array([s1x, s1y, s1z])
+S2hinitial = np.array([s2x, s2y, s2z])
+chi1 = np.linalg.norm(S1hinitial)
+chi2 = np.linalg.norm(S2hinitial)
+S1hinitial /= chi1
+S2hinitial /= chi2
+q = m2/m1
+r = np.linspace(35, 1, 10000)
+v = precession.eval_v(r)
+ODEsolution = precession.integrator_orbav(Lhinitial,S1hinitial,S2hinitial,v,q,chi1,chi2)
+t_grid_precession_package = ODEsolution[0,:,-1]*4.93e-6 *20.
+t_grid_precession_package -= t_grid_precession_package[-1]
+
+if not True:
 	#out_dict = tilt_infty.calc_tilts_prec_avg_regularized.prec_avg_tilt_comp_vec_inputs(m1*lalsim.lal.MSUN_SI, m2*lalsim.lal.MSUN_SI, np.array([s1x, s1y, s1z]), np.array([s2x, s2y, s2z]), fref)
 	#print(out_dict)
 
@@ -63,6 +83,11 @@ alpha, beta, gamma = gen.get_alpha_beta_gamma(theta, t_grid, f_ref = fref, f_sta
 if np.linalg.norm([s2x, s2y])<1e-6:
 	alpha -= np.arctan2(theta[3], theta[2])-np.arctan2(s1y, s1x)
 
+angle_model = tf.keras.models.load_model('tmp_model')
+in_ = np.array([[3], [2]])
+angle = angle_model(in_)
+
+
 gen.get_WF([[10,3, 0.4, -0.1],[10,3, 0.4, -0.1]], t_grid, modes = None)
 
 ModeArray = lalsim.SimInspiralCreateModeArray()
@@ -77,16 +102,19 @@ lalsim.SimInspiralWaveformParamsInsertPhenomXHMThresholdMband(lalparams, 0)
 lalsim.SimInspiralWaveformParamsInsertPhenomXHMAmpInterpolMB(lalparams,  1)
 
 
-hlmQAT, alphaT, betaT, gammaT, af = lalsim.SimIMRPhenomTPHM_CoprecModes(m1*lal.MSUN_SI, m2*lal.MSUN_SI, s1x, s1y, s1z, s2x, s2y, s2z, 1, inclination, deltaT, fstart, fref, phiref, lalparams, 0)
+hlmQAT, alphaT, cosbetaT, gammaT, af = lalsim.SimIMRPhenomTPHM_CoprecModes(m1*lal.MSUN_SI, m2*lal.MSUN_SI, s1x, s1y, s1z, s2x, s2y, s2z, 1, inclination, deltaT, fstart, fref, phiref, lalparams, 0)
 times = np.linspace(-len(alphaT.data.data)*deltaT, 0, len(alphaT.data.data))
 
 # Timing
 n = 2
-time_angles = timeit.timeit(angles_cmd, globals = globals(), number = n)/n
+time_angles_lal = timeit.timeit(angles_cmd, globals = globals(), number = n)/n
 time_mlgw = timeit.timeit(mlgw_cmd, globals = globals(), number = n)/n
 time_lal = timeit.timeit(lal_cmd, globals = globals(), number = n)/n
+time_angles_ML = timeit.timeit(angles_cmd_ML, globals = globals(), number = n)/n
+time_angles_precession = timeit.timeit(angles_cmd_precession, globals = globals(), number = n)/n
 
-print("Time angles {} s\nTime mlgw {} s\nTime lal {} s".format(time_angles, time_mlgw, time_lal))
+#FIXME: is it a fair comparison the one I made for precession?? i.e. Am I generating the angles right?
+print("Time angles lal {} s\nTime angles ML {} s\nTime angles PRECESSION {} s\nTime mlgw {} s\nTime lal {} s".format(time_angles_lal, time_angles_ML, time_angles_precession, time_mlgw, time_lal))
 
 
 fig, axes = plt.subplots(2,1)
@@ -98,8 +126,9 @@ alpha_ = np.interp(times, t_grid, alpha[0])
 axes[1].plot(times, alphaT.data.data - alpha_)
 plt.figure()
 plt.title('beta')
-plt.plot(times, betaT.data.data, label = 'IMR')
+plt.plot(times, cosbetaT.data.data, label = 'IMR')
 plt.plot(t_grid, beta[0], label = 'mlgw')
+#plt.plot(t_grid_precession_package, ODEsolution[0,:,2], label = 'PRECESSION') #WTF???
 plt.legend()
 plt.show()
 

@@ -197,7 +197,6 @@ class CustomLoss:
 				print("the length of weights does not match amount of PCA components")
 			
 			loss = tf.square((y_true - y_pred) * weights )
-			
 			return tf.math.reduce_mean(loss, axis=-1)
 		
 		return loss_function

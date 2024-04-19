@@ -36,6 +36,7 @@ from .ML_routines import PCA_model, add_extra_features, jac_extra_features, augm
 from .NN_model import mlgw_NN
 from scipy.special import factorial as fact
 from pathlib import Path
+import scipy
 
 
 import matplotlib.pyplot as plt #DEBUG
@@ -398,6 +399,8 @@ class GW_generator:
 		Ouput:
 			h_plus, h_cross (D,)/(N,D)		desidered polarizations (if it applies)
 		"""
+		#TODO: this function eventually should take f_ref. If f_ref is not None, the spin will be evolved up to our merger frequency
+		
 		if isinstance(modes,tuple) and modes != (2,2):
 			modes = [modes]
 		theta = np.array(theta) #to ensure user theta is copied into new array
@@ -604,8 +607,7 @@ class GW_generator:
 				shape (N, D) - Euler angles
 		"""
 		#TODO: makes sure that theta has 2 dims!!
-		sys.path.insert(0, '/home/stefano/Dropbox/Stefano/PhD/mlgw_repository/dev/precession') #temporary, to load the IMRPhenomTPHM modes
-		from precession_helper import set_effective_spins, get_IMRPhenomTPHM_angles
+		from .precession_helper import set_effective_spins, get_IMRPhenomTPHM_angles
 		
 		theta = np.atleast_2d(np.asarray(theta))
 		t_grid = np.asarray(t_grid)
@@ -624,7 +626,8 @@ class GW_generator:
 				
 #			print("Setting spins: ",chi1, chi2)
 			#alpha_, beta_, gamma_ = get_IMRPhenomTPHM_angles(m1*M_std/M_us, m2*M_std/M_us, *chi1, *chi2, f_ref*(M_us/M_std), t_grid*(M_std/M_us))
-			alpha_, beta_, gamma_ = get_IMRPhenomTPHM_angles(m1, m2, *chi1, *chi2, t_grid, f_ref, f_start)
+			alpha_, cosbeta_, gamma_ = get_IMRPhenomTPHM_angles(m1, m2, *chi1, *chi2, t_grid, f_ref, f_start)
+			beta_ = np.arccos(cosbeta_)
 			
 			alpha[i,:] = alpha_
 			beta[i,:] = beta_
@@ -644,7 +647,7 @@ class GW_generator:
 		return alpha, beta, gamma
 		
 
-	def get_twisted_modes(self, theta, t_grid, modes, f_ref = 20., alpha0 = 0., gamma0 = 0., L0_frame = False):
+	def get_twisted_modes(self, theta, t_grid, modes, f_ref = 20., alpha0 = 0., gamma0 = 0., L0_frame = False, pca_stuff = None):
 		"""
 		Return the twisted modes of the model, evaluated in the given time grid.
 		The twisted mode depends on angles alpha, beta, gamma and it is performed as in eqs. (17-20) in https://arxiv.org/abs/2005.05338
@@ -653,7 +656,7 @@ class GW_generator:
 		
 		Input:
 			theta: :class:`~numpy:numpy.ndarray`
-				shape (N,8)/(8,) -source parameters to make prediction at (m1, m2, s1 (3,), s2 (3,))
+				shape (N,8)/(8,) -source parameters to make prediction at (m1, m2, s1x, s1y, s1z, s2x, s2y, s2z)
 			t_grid: :class:`~numpy:numpy.ndarray`
 				shape (D',) -a grid in (physical) time to evaluate the wave at (uses np.interp)
 			modes: list 
@@ -668,7 +671,6 @@ class GW_generator:
 				shape (N, D', K) - real and imaginary part of the K modes required by the user (if mode is a tuple, no third dimension)
 		"""
 		#FIXME: here we have the serious issuf of the time at which L, S1, S2 are computed. It should be at a ref frequency or at the beginning of the time grid; but they are computed at a constant separation (which can be related to a frequency btw)
-		#FIXME: we need to make clear at which parameters we generate the NP WFs. Now, if we only take the norm (no sign) we do not recover correctly the NP limit!! 
 		#FIXME: the merger frequency is really an issue!
 		#FIXME: this function might have an error
 
@@ -697,8 +699,42 @@ class GW_generator:
 			mprime_modes_list = mprime_modes_list + [(m[0],-m[1]) for m in mprime_modes_list if m[1]> 0] #len = M''
 			
 				#getting alpha, beta, gamma
-			alpha, beta, gamma = self.get_alpha_beta_gamma(theta, t_grid, f_ref)
-			
+			if pca_stuff:
+				M = theta[0,0]+theta[0,1]
+				alpha, beta, gamma = self.get_alpha_beta_gamma(theta, pca_stuff['t_pca']*M, f_ref)
+				alpha, beta, gamma = np.squeeze(alpha), np.squeeze(beta), np.squeeze(gamma)
+
+				if 'model_alpha' in pca_stuff.keys():
+					alpha_ = pca_stuff['model_alpha'].reconstruct_data(pca_stuff['model_alpha'].reduce_data(alpha - alpha[0]))
+				else:
+					alpha_ = None
+				
+				if 'model_beta' in pca_stuff.keys():
+					beta_ = pca_stuff['model_beta'].reconstruct_data(pca_stuff['model_beta'].reduce_data(beta))
+				else:
+					beta_ = None
+
+				if isinstance(alpha_, np.ndarray): alpha = np.interp(t_grid, pca_stuff['t_pca']*M, alpha_)[None,:]			
+				if isinstance(beta_, np.ndarray): beta = np.interp(t_grid, pca_stuff['t_pca']*M, beta_)[None,:]
+
+				if pca_stuff.get('compute_gamma', False):
+					alpha_dot = np.diff(alpha[0])/np.diff(t_grid)
+					alpha_dot = np.interp(t_grid, (t_grid[:-1]+t_grid[1:])/2, alpha_dot)
+					dts = np.interp(t_grid, (t_grid[:-1]+t_grid[1:])/2, np.diff(t_grid))
+					gamma = -np.cumsum(alpha_dot*np.cos(beta[0])*dts)[None,:]
+				else:
+					gamma = None
+				
+				if alpha_ is None or beta_ is None or gamma is None:
+					alpha__, beta__, gamma__ = self.get_alpha_beta_gamma(theta, t_grid, f_ref)
+					if alpha_ is None: alpha = np.squeeze(alpha__)
+					if beta_ is None: beta = np.squeeze(beta__)
+					if gamma is None: gamma = np.squeeze(gamma__)
+
+			else:
+				alpha, beta, gamma = self.get_alpha_beta_gamma(theta, t_grid, f_ref)
+
+
 			if alpha0 is not None:
 				alpha = alpha - alpha[:,0] + alpha0 
 			if gamma0 is not None:
@@ -718,7 +754,7 @@ class GW_generator:
 			
 				#twist the system to the L0 frame (if it is the case)
 			if L0_frame:
-				#TODO: set alpha_ref etc...
+				#See https://arxiv.org/pdf/2105.05872.pdf for the global rotation from J-frame to L-frame
 				alpha_ref = alpha[:,0]
 				beta_ref = beta[:,0]
 				gamma_ref = gamma[:,0]
@@ -733,7 +769,7 @@ class GW_generator:
 			h_P = h_P[...,0] #(N,D)
 		if remove_first_dim:
 			h_P = h_P[0,...] #(D,)/(D,K)
-		return h_P.real, h_P.imag
+		return h_P.real, h_P.imag, alpha, beta, gamma
 
 	#@do_profile()
 	def __get_WF(self, theta, t_grid, modes):

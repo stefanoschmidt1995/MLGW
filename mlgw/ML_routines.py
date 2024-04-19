@@ -110,9 +110,14 @@ PCA_model
 		Output:
 			data (N,D)		high dimensional reconstruction of data (after inversion of preprocessing)
 		"""
-		if K is not None: #adding zeros if the compontents are not to be used
-			if K < self.PCA_params[0].shape[1]:
-				red_data = np.concatenate([red_data[:,:K], np.zeros((red_data.shape[0], self.PCA_params[0].shape[1]-K))], axis = 1) 
+		if K is None: #adding zeros if the compontents are not to be used
+			K = self.PCA_params[0].shape[1]
+
+		if K < self.PCA_params[0].shape[1]:
+			red_data = np.concatenate([red_data[:,:K], np.zeros((red_data.shape[0], self.PCA_params[0].shape[1]-K))], axis = 1) 
+		if red_data.shape[1]<self.PCA_params[0].shape[1]:
+			red_data = np.concatenate([red_data[:,:K], np.zeros((red_data.shape[0], self.PCA_params[0].shape[1]-red_data.shape[1]))], axis = 1) 
+		
 		red_data = np.multiply(red_data, self.PCA_params[2])
 		data = np.matmul(red_data, self.PCA_params[0].T)
 		data = data+self.PCA_params[1]
@@ -175,6 +180,15 @@ PCA_model
 			V (D,K) matrix of eigenvector used for projection and reconstruction of data
 		"""
 		return self.PCA_params[0]
+
+	def get_mu(self):
+		"""
+		Returns the mean of the dataset, used for reconstruction
+		Input:
+		Output:
+			mu (D, ) 	mean of the dataset
+		"""
+		return self.PCA_params[1]
 
 	def get_dimensions(self):
 		"""
