@@ -145,8 +145,8 @@ Our numerical experiments show that our model offers a substantial speed-up with
 the speed of the state-of-the-art surrogate models.
 
 Our methodology distinguishes itself from previous approaches \cite{Chua:2018woh, Khan:2020fso, Thomas:2022rmc} in several ways. First of all, to predict the phase $\phi_{\ell m}$ of each mode, we use three separate models for predicting the basis coefficients of the principal component decomposition. This ``distribution of tasks'' allows for more flexibility, a significant reduction in the total number of model parameters and fewer training waveforms. Secondly, we improve on choosing the hyperparameters of the ANNs. Whereas previous approaches arrive at their configuration of hyperparameters using somewhat limited heuristics, we introduce a more rigorous method by using Bayesian optimization to tune hyperparameters.
-%Lastly, though we have not incorporated precession, we did show our approach to be viable for the relatively large range of parameters $(q,\chi_1, \chi_2)\subset [1,10]\times [-0.9,0.9]\times[-0.9,0.9]$, where previous approaches either focused solely on non-precessing spin-aligned waveforms \cite{Khan:2020fso, Chua:2018woh} or on precessing waveforms but with a parameter range $(q,\chi_1, \chi_2)\subset [1,2]\times [0.,0.8]\times\{0\}$ \cite{Thomas:2022rmc}.
-Lastly, and more importantly, even though we have not incorporated precession, we show that our approach is viable for the large range of parameters ${(q, \chi_1, \chi_2)\subset [1,10]\times [-0.9,0.9]\times[-0.9,0.9]}$. Previous approaches either focused solely on the dominant mode of non-precessing spin-aligned waveforms \cite{Khan:2020fso, Chua:2018woh} or on precessing HM waveforms but with a limited range in mass ratio $q \in [1,2]$ and with $\chi_2=0$ \cite{Thomas:2022rmc}.
+%Lastly, though we have not incorporated precession, we did show our approach to be viable for the relatively large range of parameters $(q,\chi_{1z}, \chi_{2z})\subset [1,10]\times [-0.9,0.9]\times[-0.9,0.9]$, where previous approaches either focused solely on non-precessing spin-aligned waveforms \cite{Khan:2020fso, Chua:2018woh} or on precessing waveforms but with a parameter range $(q,\chi_1, \chi_2)\subset [1,2]\times [0.,0.8]\times\{0\}$ \cite{Thomas:2022rmc}.
+Lastly, and more importantly, even though we have not incorporated precession, we show that our approach is viable for the large range of parameters ${q \times \chi_{1z} \times \chi_{2z} = [1,10]\times [-0.9,0.9]\times[-0.9,0.9]}$. Previous approaches either focused solely on the dominant mode of non-precessing spin-aligned waveforms \cite{Khan:2020fso, Chua:2018woh} or on precessing HM waveforms but with a limited range in mass ratio $q \in [1,2]$ and with $\chi_{2}=0$ \cite{Thomas:2022rmc}.
 
 This paper is organized as follows. In Sec.~\ref{sec:model} we introduce the details of the model presented here, 
 stressing the differences with the model in  \cite{Schmidt:2020yuu}.
@@ -279,8 +279,8 @@ where $\langle \mathbf{a} | \mathbf{b} \rangle = \sum_{i=0}^{D-1} a_i b_i$ is th
 Since less important PCs are more orthogonal to data, the typical magnitude of $g_i = \langle \mathbf{f} | H_{i:} \rangle$ decreases as $i$ increases.\footnote{For this reason PCA can be seen as a perturbative expansion on the basis vectors $H_{i:}$, where the accuracy is roughly measured by the eigenvalues of the first neglected PC. Increasing the number K of PCs considered increases the accuracy of the model (but also the complexity of the model).}.
 As a consequence, the regression for a lower order PC needs to be more accurate than the one for the higher order PC. This will be taken care of by a suitable choice for the loss function for the regression (see next section).
 
-Following \cite{Schmidt:2020yuu}, in this work we employ for each mode $6$ PCA compontents for the phase model and $4$ for the amplitude.
-While it's plausible that an optimal number of components may vary for different modes, we opt for simplicity by employing the same number of PCA components for all modes, a configuration tuned based on the $(2,2)$ mode only.
+Following \cite{Schmidt:2020yuu}, in this work we employ for each mode six PCA compontents for the phase model and four for the amplitude.
+While it is plausible that an optimal number of components may vary for different modes, we opt for simplicity by employing the same number of PCA components for all modes, a configuration tuned based on the $(2,2)$ mode only.
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 \begin{figure*}[t]
@@ -337,7 +337,7 @@ The minimization of the loss function is performed by stochastic gradient descen
 back-propagation algorithm \cite{backprop}.
 
 To perform our regression $\theta \longmapsto \boldsymbol{g}$, we employ an ensemble of networks that suitably combined delivers accurate results.
-To improve the representative power or the ANN, we employ feature augmentation on the vector $\boldsymbol{\vartheta} = (q, \chi_\text{1z}, \chi_\text{2z})$, effectively using the augmented vector $\tilde{\boldsymbol{\vartheta}}$ as input for the regression. Although different ANN's will need different features, we will for convenience 
+To improve the representative power or the ANN, we employ feature augmentation on the vector $\boldsymbol{\vartheta} = (q, \chi_\text{1z}, \chi_\text{2z})$, effectively using the augmented vector $\tilde{\boldsymbol{\vartheta}}$ as input for the regression. Although different ANNs will need different features, we will for convenience 
 abuse the notation $\tilde{\boldsymbol{\vartheta}}$ to denote any augmented vector. Indeed, the features to add need to be chosen with a validation process: this will be discussed in the next section.
 
 Before the training, the regression targets $\boldsymbol{y}_i$ are scaled such that $\boldsymbol{y}_i \rightarrow \frac{\boldsymbol{y}_i}{\boldsymbol{w}}$, where $\boldsymbol{w}$ keeps the maximum of $|\boldsymbol{y}_i|$ along each axis. %${w}_j = \max_i(|(\boldsymbol{y}_i)_j|)$.
@@ -500,7 +500,7 @@ For our experiments we only use the data set of the $(2,2)$ mode and we employ t
 
 We report our results in Fig.~\ref{fig:tuning}, where each combination of hyperparameters tested is represented in the \texttt{n-layers}-\texttt{units} plane and colored by the validation score. 
 We can see that all the four ANN share the same trend: the most effective way to improve regression accuracy is to increase the number of units as opposed to the number of layers.
-The number of layers is far more important the extra features added and the polynomial order for data augmentation.
+The number of layers is far more important than extra features or the polynomial order for data augmentation.
 
 Furthermore, we note that the regressions for the amplitude and for the high phase PCs 
 (i.e.~components 2,3,4,5) can be performed with a smaller model, compared to the models for the first two PCs of the phase. 
@@ -528,7 +528,7 @@ On the other hand, the higher order modes are less accurately reproduced than th
 In Fig.~\ref{fig:countour_plots} we report the dependence of the ``symphony" mismatch as a function of the different orbital parameters.
 From the figure, it is manifest that the model has very stable performance across the parameter space.
 The faithfulness decreases for high positive values of the spin of the first object $s_\text{1z}$ and for mass ratio $q\sim 1$. Despite this, in such ``extreme" regions, the average mismatch is still of the order of $10^{-4}$.
-The performance of the regression doesn't depend on $\chi_\text{2z}$, since the quantity plays a very little role in defining the waveform features.
+The performance of the regression does not depend on $\chi_\text{2z}$, since the quantity plays a very little role in defining the waveform features.
 
 Longer waveforms, characterized by a lower $f_\textrm{min}$, tends to show higher faithfulness. As longer waveforms are dominated by the inspiral phase, we can conclude that our model is more successfull in reproducing the inspiral as opposed to the merger and the ringdown, prevalent in short waveforms.
 This feature is very important for the extension of our model to longer time grids, a necessity for analyzing binary neutron star systems or for applications in next-generation detectors \cite{Purrer:2019jcp}.
@@ -541,7 +541,7 @@ This is consistent with the low performance of the fit at low $q$ observed in Fi
 
 This matter is well known in the literature and several mitigation strategies are available in the literature.
 First of all, we might incorporate the vanishing behaviour of the amplitude in the functional model for the regression, as done in \cite{Blackman:2015pia}. Concretely, we could introduce a $q$-dependent amplitude scaling for the waveforms before adding them to the data set, resulting in a data set with amplitude time series of approximately the same magnitude.
-Second, we might mitigate the effect of a poorly defined phase by transforming all the modes expect the $(2,2)$ in the co-orbital frame \cite{Varma:2018mmi} according to:
+Second, we might mitigate the effect of a poorly defined phase by transforming all the modes except the $(2,2)$ in the co-orbital frame \cite{Varma:2018mmi} according to:
 \begin{equation}
 	h_{\ell m} \rightarrow h_{\ell m} e^{-i\frac{m}{2}\phi_{22}}
 \end{equation}
