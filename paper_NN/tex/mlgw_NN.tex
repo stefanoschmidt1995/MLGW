@@ -26,7 +26,7 @@ superscriptaddress,10pt]{revtex4-2}
 \usepackage{tabularx}
 \usepackage{ragged2e}
 \usepackage{blindtext}
-%\usepackage{orcidlink}
+\usepackage{orcidlink}
 %\usepackage{siunitx} 
 	%\sisetup{output-decimal-marker={.}}
 	%some math symbols
@@ -139,7 +139,8 @@ reduction scheme followed by a regression. The framework was later applied to th
 In this work, we extend the model to HMs and we improve the accuracy 
 of the regression by employing artificial neural networks (ANN). Our model marks a step towards the development of a faster, yet precise, waveform model, and will help enable the accurate analysis of next-generation detector data.
 
-We train our model on the widely used approximant \texttt{SEOBNRv4HM} \cite{Cotesta:2018fcv} to target systems with mass ratio $q \in [1,10]$ and dimensionless spin components between $[-0.9, 0.9]$. Our model is able to generate waveforms with a maximum length of $t = \SI{2 \, \frac{M}{M_\odot}}{s}$, which amounts to $t \simeq \SI{4.06\times 10^5}{M}$ in geometrized units, and achieves $10^{-4}$ median faithfulness (with tails up to $10^{-2}$) when averaged across a wide range in parameter space.
+We train our model on the widely used approximant \texttt{SEOBNRv4HM} \cite{Cotesta:2018fcv} to target systems with mass ratio $q \in [1,10]$ and dimensionless spin components between $[-0.9, 0.9]$.
+Our model is able to generate waveforms with a maximum length of $t = 2 \, \frac{M}{\textrm{M}_\odot} \textrm{s}$, which amounts to $t \simeq 4.06\times 10^5 M$ in geometrized units, and achieves $10^{-4}$ median faithfulness (with tails up to $10^{-2}$) when averaged across a wide range in parameter space.
 Our numerical experiments show that our model offers a substantial speed-up with respect to the original model, matching 
 the speed of the state-of-the-art surrogate models.
 
@@ -214,7 +215,7 @@ $\alpha = \text{0.5}$.
 This is a good compromise between the need of having a faithful representation of the waveform (which requires a large grid) and the need of having a compact model (which points to a sparse grid).
 %
 The waveforms are time-shifted so that the peak of the amplitude of the $(2,2)$ mode happens at $\tau=0$. The grid starts at (scaled) time $\tau_\text{min} = -\tau_0$, where $\tau_0$ sets the length of the waveform that our model is able to generate (as a function of the total mass $M$).
-We choose $\tau_0 = \SI{2}{s/M_\odot}$, which in geometrized units (i.e. with $G=c=1$) amounts to a waveform length of $t \simeq \SI{4.06\times 10^5}{M}$.
+We choose $\tau_0 = 2 s/\textrm{M}_\odot$, which in geometrized units (i.e. with $G=c=1$) amounts to a waveform length of $t \simeq 4.06\times 10^5 M$.
 We populate the data set with $68000$ waveforms.
 
 To make sure that the distribution of $q$ is skewed towards towards the boundaries, where the regression is less accurate, we sample the mass ratio $q$ in the range $[1,10]$ with the following procedure:
@@ -513,7 +514,7 @@ We note here that an accurate ANN for the residuals of the phase is crucial to o
 \subsection{Accuracy study}\label{sec:accuracy}
 
 To test the accuracy of our model, we generate a test set with $50000$ randomly chosen waveforms generated with the training model \texttt{SEOBNRv4HM}.
-The waveforms masses are characterized by a total mass $M = \SI{20}{M_\odot}$ and by a mass ratio $q \in [1, 10]$, while the spins are chosen in the range $[-0.9, 0.9]$. The inclination angle $\iota$ and reference phase $\varphi_0$ are drawn uniformly from a sphere.
+The waveforms masses are characterized by a total mass $M = 20 \textrm{M}_\odot$ and by a mass ratio $q \in [1, 10]$, while the spins are chosen in the range $[-0.9, 0.9]$. The inclination angle $\iota$ and reference phase $\varphi_0$ are drawn uniformly from a sphere.
 To vary the length in time of the waveforms considered, we sample the starting frequency $f_\textrm{min}$ uniformly in the range $[15, 75]$ Hz.
 
 In Fig.~\ref{fig:accuracy_hist}, we report the histogram of the distribution of the mismatches between \texttt{mlgw-SEOBNRv4HM} and the test waveforms. The upper part refers to the mismatches Eq.~\eqref{eq:match_sym} computed on the overall waveforms (with sky location sampled uniformly over the sky); the lower box refers to mismatches computed mode by mode with Eq.~\eqref{eq:match}.
@@ -585,7 +586,7 @@ On the other hand, the speed up achieved by \texttt{mlgw-SEOBNRv4HM} is larger t
 \section{Final remarks and future prospects}
 \label{sec:end}
 
-Building on our previous work \cite{Schmidt:2020yuu, Tissino:2022thn}, we generate a ML surrogate model \texttt{mlgw-SEOBNRv4HM} able to reproduce with very high fidelity the output of the widely used approximant \texttt{SEOBNRv4HM}. \texttt{mlgw-SEOBNRv4HM} can generate waveforms in a cuboid $q\times \chi_\text{1z} \times \chi_\text{2z} = [1,10]\times[-0.9,0.9]\times[-0.9,0.9]$ on a (reduced) time grid of maximum length of $\SI{2}{s/M_\odot}$, corresponding to waveforms of length $t \simeq \SI{4.06\times 10^5}{M}$ in geometrized units.
+Building on our previous work \cite{Schmidt:2020yuu, Tissino:2022thn}, we generate a ML surrogate model \texttt{mlgw-SEOBNRv4HM} able to reproduce with very high fidelity the output of the widely used approximant \texttt{SEOBNRv4HM}. \texttt{mlgw-SEOBNRv4HM} can generate waveforms in a cuboid $q\times \chi_\text{1z} \times \chi_\text{2z} = [1,10]\times[-0.9,0.9]\times[-0.9,0.9]$ on a (reduced) time grid of maximum length of $2 \textrm{s}/\textrm{M}_\odot$, corresponding to waveforms of length $t \simeq 4.06\times 10^5 M$ in geometrized units.
 Our model offers a two orders of magnitude speed up over the training model, without trading for accuracy, hence it is an attractive alternative for any data analysis application.
 To encourage new applications, we release our code (and our trained model) publicly as a python package through the PyPI repository\footnote{The package is distributed under the name \texttt{mlgw} and is available at \url{https://pypi.org/project/mlgw/}.}.
 
