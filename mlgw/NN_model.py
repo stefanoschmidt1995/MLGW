@@ -346,7 +346,7 @@ class mlgw_NN(keras.Sequential):
 	
 	@classmethod
 	def load_from_file(cls, nn_file, name = None):
-		with tf.keras.saving.custom_object_scope({'mlgw_NN': mlgw_NN}):
+		with tf.keras.utils.CustomObjectScope({'mlgw_NN': mlgw_NN}):
 			model = keras.models.load_model(nn_file, compile=False)
 		if name is None: name = model.name
 		return cls(model.layers, name, features = None)

@@ -34,13 +34,16 @@ sys.path.insert(1, os.path.dirname(__file__)) 	#adding to path folder where mlgw
 from .EM_MoE import MoE_model #WARNING commented out 
 from .ML_routines import PCA_model, add_extra_features, jac_extra_features, augment_features
 from .NN_model import mlgw_NN
+from .precession_helper import angle_manager, get_alpha0_beta0_gamma0, angle_params_keeper, CosinesLayer, augment_for_angles, to_polar, get_beta_trend_fast
 from scipy.special import factorial as fact
 from pathlib import Path
 import scipy
+import precession
 
 
 import matplotlib.pyplot as plt #DEBUG
 import re
+import joblib
 
 warnings.simplefilter("always", UserWarning) #always print a UserWarning message ??
 
@@ -198,6 +201,18 @@ class GW_generator:
 		else:
 			self.readme = None
 
+		#Loading angles (if any)
+		if 'angles' in file_list:
+			with tf.keras.utils.custom_object_scope({'CosinesLayer': CosinesLayer}):
+				self.angle_trend_generator = tf.keras.saving.load_model(folder+'angles/model.keras')
+			self.angle_trend_scaler = joblib.load(folder+'angles/scaler.gz')
+			file_list.remove('angles')
+			if verbose: print('\tLoaded angles modes')
+		else:
+			self.angle_trend_generator = None
+			self.angle_trend_scaler = None
+
+
 		#loading modes
 		for mode in file_list:
 			lm = self.__extract_mode(folder+mode)
@@ -213,7 +228,7 @@ class GW_generator:
 				else:
 					self.modes.append(mode_generator_MoE(lm, folder+mode)) #loads mode_generator
 
-			if verbose: print('    Loaded mode {}'.format(lm))
+			if verbose: print('\tLoaded mode {}'.format(lm))
 
 		return
 
@@ -510,7 +525,7 @@ class GW_generator:
 		f_merger = 0.5* (ph[:,1]-ph[:,0])/(2*dt) #(N,)
 		return np.abs(f_merger)/(2*np.pi)
 	
-	def get_orbital_frequency(self, theta, t):
+	def get_orbital_frequency(self, theta, t, dt = 1e-3):
 		"""
 		Returns the (approximate) orbital frequency in Hz, computed as half the 22 mode frequency at a given time t.
 		
@@ -525,13 +540,50 @@ class GW_generator:
 				shape ()/(N,) - Merger frequency in Hz
 		"""
 		theta = np.array(theta)
-		if theta.ndim == 1: theta = theta[None,:]
-		dt = 0.001
+		squeeze = (theta.ndim == 1)
+
+		theta = np.atleast_2d(theta)
 		t = np.abs(t)
 		t_grid = np.array([-t-dt, -t + dt, 0.])
 		amp, ph = self.get_modes(theta, t_grid, (2,2), out_type = "ampph")#(N,2)
-		f_t = 0.5* (ph[:,1]-ph[:,0])/(2*dt) #(N,)
-		return np.abs(f_t)/(2*np.pi)
+		f_t = 0.5* np.abs(ph[:,1]-ph[:,0])/(2*dt)/(2*np.pi) #(N,)
+
+		if squeeze: return np.squeeze(f_t)
+		else: return f_t
+
+	def get_fref_angles(self, theta):
+		"""
+		Return the frequency of the 22 of the given BBHs at the beginning of the time grid of the model. This is the reference frequency at which all the spins of the precessing model are evaluated.
+		
+		Input:
+			theta: :class:`~numpy:numpy.ndarray`
+				shape (N,8)/(8,)/(N,4)/(4,) - source parameters to make prediction at (m1, m2, s1 (3,), s2 (3,)) or (m1, m2, s1z, s2z)
+
+		Output:
+			fref: :class:`~numpy:numpy.ndarray`
+				shape (N, )/() - Frequency of the 22 mode at the start of the model grid, corresponding to the reference frequency at which all the spins are evaluated.
+
+			tref: :class:`~numpy:numpy.ndarray`
+				shape (N, )/() - Time at which the reference frequency is computed.
+		"""
+		theta = np.asarray(theta)
+		squeeze = (theta.ndim == 1)
+		theta = np.atleast_2d(theta)
+		
+		assert theta.shape[1] in [4,8]
+		
+		frefs, trefs = [], []
+		for theta_ in theta:
+			m1, m2, s1z, s2z = theta_[[0,1,4,7]] if theta_.shape == (8,) else theta_
+			tref_ = self.get_mode_obj((2,2)).times[0]*(m1+m2)+1e-3
+			fref_ = 0.99*2*self.get_orbital_frequency([m1, m2, s1z, s2z], tref_, 1e-3)
+				#FIXME: How to deal with the 0.99 factor? Maybe you can do an iterative process for the dataset creatation to reduce the reference frequency to a suitable number... Otherwise there's gonna be a mismatch in the reference frequency
+			frefs.append(fref_) 
+			trefs.append(tref_)
+			
+		if squeeze: return frefs[0], trefs[0]
+		else: return np.array(frefs), np.array(trefs)
+
 
 	def get_merger_time(self, f, theta):
 		"""
@@ -563,6 +615,61 @@ class GW_generator:
 		
 		return np.abs(tau)
 
+	def get_L(self, theta, t_grid, ph = None, merger_cutoff = -0.05):
+		"""
+		Given a parameter vector with only z-aligned spin components, it computes the scaled orbital angular momentum math:`\\frac{L}{M^2}` and the angular velocity of the BBH, starting from the phase of the 22 mode. If the phase is not given, it will be computed internally.
+		
+		Input:
+			theta: :class:`~numpy:numpy.ndarray`
+				shape (N,4)/(4,) - source parameters to make prediction at (m1, m2, s1z, s2z)
+			t_grid: :class:`~numpy:numpy.ndarray`
+				shape (D',) - a grid in time to evaluate the orbital angular momentum at.
+			ph: :class:`~numpy:numpy.ndarray`
+				shape (N,D')/(D',) - The phase of the 22 mode to be used for the L computation. Must be evaluated on `t_grid`
+			merger_cutoff: float
+				Time before merger after which the angles are not generated
+
+		Output:
+			L: :class:`~numpy:numpy.ndarray`
+				shape (N,D')/(D',) - Orbital angular momentum
+
+			omega_orb: :class:`~numpy:numpy.ndarray`
+				shape (N,D')/(D',) - Orbital frequency (in Hertz)
+		"""
+		theta = np.asarray(theta)
+		squeeze =  (theta.ndim == 1)
+		theta = np.atleast_2d(theta)
+		
+		if theta.shape[1] == 8:
+			theta = theta[:,[0,1,4,7]]
+		
+		assert theta.shape[1] == 4
+		
+		ids_, = np.where(t_grid<-np.abs(merger_cutoff))
+		
+		if ph is None:
+			_, ph = self.modes[self.mode_dict[(2,2)]].get_mode(theta, t_grid, out_type = 'ampph') #returns amplitude and phase of the wave
+		else:
+			ph = np.asarray(ph)
+			assert ph.shape == (theta.shape[0], t_grid.shape[0]), "The given phase is incompatible with the given time grid and theta"
+		
+		m1, m2 = theta[:,[0,1]].T
+		M = m1+m2
+		mu = (m1*m2)/M
+		mu_tilde = (mu**3/M**4)/4.93e-6
+		
+		omega_orb = -0.5*np.gradient(ph, t_grid, axis = 1)[:,ids_]
+	
+		L = (mu_tilde/omega_orb.T).T**(1./3.) # this is L/M**2
+		
+		pad_seg = [(0,0), (0, len(t_grid)-len(ids_))]
+		L, omega_orb = np.pad(L, pad_seg, mode ='edge'), np.pad(omega_orb, pad_seg, mode ='edge')
+		
+		if squeeze:
+			L, omega_orb = L[0], omega_orb[0]
+		return L, omega_orb
+		
+
 	def get_NP_theta(self, theta):
 		"""
 		Given a parameter vector theta with 6 dimensional spin parameter (second dim = 8), it computes the low dimensional spin version, suitable for generating the WF with spin twist.
@@ -588,10 +695,120 @@ class GW_generator:
 		if to_reshape:
 			return theta_new[0,:]
 		return theta_new
+
+	def get_reduced_angles(self, theta, polar_spins = None):
+		"""
+		Return the reduced Euler angles as returned by the ML model.
+		
+		Input:
+			theta: :class:`~numpy:numpy.ndarray`
+				shape (N,8)/(8,) - source parameters to make prediction at (m1, m2, s1 (3,), s2 (3,))
+
+			polar_spins: list
+				list with the spin variables `s1, t1, phi1, s2, t2, phi2`. If None, they will be computed internally
+
+		Output:
+			Psi: :class:`~numpy:numpy.ndarray`
+				shape (N, 4)/(4,) - Reduced Euler angles
+		"""
+		theta = np.asarray(theta)
+		squeeze = (theta.ndim == 1)
+		theta = np.atleast_2d(theta)
+		
+		assert theta.shape[1] == 8
+		
+			#FIXME: optimize this shit!
+		if polar_spins is not None:
+			s1, t1, phi1, s2, t2, phi2 = polar_spins
+		else:
+			s1, t1, phi1, s2, t2, phi2 = *to_polar(theta[:,[2,3,4]]).T, *to_polar(theta[:,[5,6,7]]).T
+		#fstart = np.zeros((theta.shape[0],))
+		q = theta[:,0]/theta[:,1]
+		
+		#[q, s1, s2, t1, t2, phi1, phi2, fstart]
+		theta_angles = np.column_stack([q, s1, s2, t1, t2, -(phi2-phi1)])
+			#TODO: make a proper treatment of fref
+			#Do you want to compute them here? Probably not...
+			#In any case, you NEED a function that computes f_ref, as this is something that the user really likes...
+		
+		theta_angles = augment_for_angles(theta_angles)
+		
+		Psi = self.angle_trend_scaler.inverse_transform(self.angle_trend_generator(theta_angles))
+		
+		if squeeze: Psi = Psi[0]
+		
+		return Psi
 	
-	def get_alpha_beta_gamma(self, theta, t_grid, f_ref, f_start = None):
+	#@do_profile()
+	def get_alpha_beta_gamma(self, theta, t_grid, ph = None):
 		"""
 		Return the Euler angles alpha, beta and gamma as provided by the ML model.
+		They are evaluated on the given time grid and the parameters refer to the frequency f_ref of the 22 mode at the begining of the time grid.
+
+		Input:
+			theta: :class:`~numpy:numpy.ndarray`
+				shape (N,8)/(8,) - source parameters to make prediction at (m1, m2, s1 (3,), s2 (3,))
+			t_grid: :class:`~numpy:numpy.ndarray`
+				shape (D,) - a grid in (physical) time to evaluate the wave at (uses np.interp)
+			ph: :class:`~numpy:numpy.ndarray`
+				shape (N,D')/(D',) - The phase of the 22 mode to be used for the L computation. Must be evaluated on `t_grid`. If not given, it will be computed internally
+
+		Output:
+			alpha, beta, gamma: :class:`~numpy:numpy.ndarray`
+				shape (N, D) - Euler angles
+		"""
+		theta = np.asarray(theta)
+		squeeze = (theta.ndim == 1)
+		theta = np.atleast_2d(theta)
+		t_grid = np.asarray(t_grid)
+		
+			#TODO: improve over the equally spaced grid with proper integration
+		dt = np.mean(np.diff(t_grid))
+		assert np.allclose(np.diff(t_grid), dt), "An equally spaced time grid must be given!"
+		
+		M, q = theta[:,0]+theta[:,1], theta[:,0]/theta[:,1]
+		s1, t1, phi1, s2, t2, phi2 = *to_polar(theta[:,[2,3,4]]).T, *to_polar(theta[:,[5,6,7]]).T
+		
+		#TODO: take care of total mass scaling 
+		
+		L, omega_orb = self.get_L(theta[:,[0,1,4,7]], t_grid, ph = ph)
+		
+		Psi = self.get_reduced_angles(theta, (s1, t1, phi1, s2, t2, phi2) )
+		
+		alpha0, _, gamma0 = get_alpha0_beta0_gamma0(theta, L[:,0])
+
+			#Building alpha	
+		Omega_p = M*4.93e-6*(3+1.5/q)*(L * Psi[:,0] + Psi[:,1])*omega_orb**2
+		alpha = np.cumsum(Omega_p, axis = 1)*dt+alpha0
+
+
+			#Building beta
+		#beta___ = Psi[:,2]/(L+1) + Psi[:,3]
+		
+		eta = q/(1+q)**2
+		sqrt_r_of_t = ((L.T+Psi[:,2])/eta).T
+
+			#Optimization of: https://dgerosa.github.io/precession/_modules/precession.html#eval_kappa		
+		beta = get_beta_trend_fast(q, s1, s2, t1, t2, phi2-phi1, sqrt_r_of_t)
+		
+		if False:
+			r_of_t = np.square((L.T+Psi[:,2])/eta).T
+			deltachi = precession.eval_deltachi(theta1=t1, theta2=t2, q=1/q, chi1=s1, chi2=s2)
+			chieff = precession.eval_chieff(theta1=t1, theta2=t2, q=1/q, chi1=s1, chi2=s2)
+			kappa_of_t_ = precession.eval_kappa(theta1=t1, theta2=t2, deltaphi=phi2-phi1, r= r_of_t, q=1/q, chi1=s1, chi2=s2)
+			beta_ = precession.eval_thetaL(deltachi, kappa_of_t_, r_of_t, chieff, 1/q)
+			assert np.allclose(beta_,beta)
+	
+			#Building gamma
+		gamma = np.cumsum(-Omega_p*np.cos(beta), axis = 1)*dt + gamma0
+		if squeeze:
+			alpha, beta, gamma = np.squeeze(alpha), np.squeeze(beta), np.squeeze(gamma)
+		return alpha, beta, gamma
+	
+	
+	def get_alpha_beta_gamma_IMRPhenomTPHM(self, theta, t_grid, f_ref, f_start = None):
+		"""
+		Return the Euler angles alpha, beta and gamma as provided by the IMRPhenomTPHM model.
 		They are evaluated on the given time grid and the parameters refer to the frequency f_ref.
 
 		Input:
@@ -606,10 +823,11 @@ class GW_generator:
 			alpha, beta, gamma: :class:`~numpy:numpy.ndarray`
 				shape (N, D) - Euler angles
 		"""
-		#TODO: makes sure that theta has 2 dims!!
-		from .precession_helper import set_effective_spins, get_IMRPhenomTPHM_angles
+		from .precession_helper import get_IMRPhenomTPHM_angles
 		
-		theta = np.atleast_2d(np.asarray(theta))
+		theta = np.asarray(theta)
+		squeeze = (theta.ndim == 1)
+		theta = np.atleast_2d(theta)
 		t_grid = np.asarray(t_grid)
 		
 		alpha, beta, gamma = np.zeros((theta.shape[0], len(t_grid))), np.zeros((theta.shape[0], len(t_grid))), np.zeros((theta.shape[0], len(t_grid)))
@@ -643,11 +861,13 @@ class GW_generator:
 		#f_gamma_prime = lambda t, y : gamma_prime(t)
 		#res_gamma = scipy.integrate.solve_ivp(f_gamma_prime, (t_grid[0],t_grid[-1]), [gamma0], t_eval = t_grid)
 		#gamma = res_gamma['y']
-		
+
+		if squeeze:
+			alpha, beta, gamma = np.squeeze(alpha), np.squeeze(beta), np.squeeze(gamma)
 		return alpha, beta, gamma
 		
 
-	def get_twisted_modes(self, theta, t_grid, modes, f_ref = 20., alpha0 = 0., gamma0 = 0., L0_frame = False, pca_stuff = None):
+	def get_twisted_modes(self, theta, t_grid, modes, f_ref = 20., alpha0 = 0., gamma0 = 0., L0_frame = False, extra_stuff = None):
 		"""
 		Return the twisted modes of the model, evaluated in the given time grid.
 		The twisted mode depends on angles alpha, beta, gamma and it is performed as in eqs. (17-20) in https://arxiv.org/abs/2005.05338
@@ -681,6 +901,34 @@ class GW_generator:
 		if theta.shape[1] != 8:
 			raise ValueError("Wrong number of orbital parameters to make predictions at. Expected 8 but {} given".format(theta.shape[1]))
 
+			####
+			# Computing the angles
+		if isinstance(extra_stuff, angle_manager):
+			angles = []
+			for theta_ in theta:
+				Psi, alpha_res = extra_stuff.get_reduced_alpha_beta(theta_)
+
+				alpha_, beta_, gamma_ = extra_stuff.get_alpha_beta_gamma(theta_, Psi)
+
+				#alpha_, _, gamma_ = self.get_alpha_beta_gamma(theta_, t_grid, f_ref, f_ref); alpha_ = alpha_[0]; gamma_ = gamma_[0]
+					#This is for when (and if) you have a residual model...
+				#alpha_+= alpha_res
+				#gamma_ += -np.cumsum(np.gradient(alpha_res, extra_stuff.times)*np.cos(beta_))*extra_stuff.dt+gamma0
+					
+				angles.append( [alpha_, beta_, gamma_])
+
+			alpha, beta, gamma = np.swapaxes(angles, 0, 1)
+		else:
+			alpha, beta, gamma = self.get_alpha_beta_gamma_IMRPhenomTPHM(theta, t_grid, f_ref, f_ref)
+
+		if alpha0 is not None:
+			alpha = alpha - alpha[:,0] + alpha0 
+		if gamma0 is not None:
+			gamma = gamma - gamma[:,0] + gamma0
+
+			####
+			# Performing the twist
+			
 		l_list = set([m[0] for m in modes]) #computing the set of l to take care of
 		h_P = np.zeros((theta.shape[0], t_grid.shape[0], len(modes)), dtype = np.complex64) #(N,D,K) #output matrix of precessing modes
 		
@@ -697,48 +945,6 @@ class GW_generator:
 			ids = np.where(np.array([m[1] for m in mprime_modes_list])>0)[0]
 			h_NP_l = np.concatenate([h_NP_l, np.conj(h_NP_l[:,:,ids])*(-1)**(l)], axis =2) #(N,D,M'')
 			mprime_modes_list = mprime_modes_list + [(m[0],-m[1]) for m in mprime_modes_list if m[1]> 0] #len = M''
-			
-				#getting alpha, beta, gamma
-			if pca_stuff:
-				M = theta[0,0]+theta[0,1]
-				alpha, beta, gamma = self.get_alpha_beta_gamma(theta, pca_stuff['t_pca']*M, f_ref)
-				alpha, beta, gamma = np.squeeze(alpha), np.squeeze(beta), np.squeeze(gamma)
-
-				if 'model_alpha' in pca_stuff.keys():
-					alpha_ = pca_stuff['model_alpha'].reconstruct_data(pca_stuff['model_alpha'].reduce_data(alpha - alpha[0]))
-				else:
-					alpha_ = None
-				
-				if 'model_beta' in pca_stuff.keys():
-					beta_ = pca_stuff['model_beta'].reconstruct_data(pca_stuff['model_beta'].reduce_data(beta))
-				else:
-					beta_ = None
-
-				if isinstance(alpha_, np.ndarray): alpha = np.interp(t_grid, pca_stuff['t_pca']*M, alpha_)[None,:]			
-				if isinstance(beta_, np.ndarray): beta = np.interp(t_grid, pca_stuff['t_pca']*M, beta_)[None,:]
-
-				if pca_stuff.get('compute_gamma', False):
-					alpha_dot = np.diff(alpha[0])/np.diff(t_grid)
-					alpha_dot = np.interp(t_grid, (t_grid[:-1]+t_grid[1:])/2, alpha_dot)
-					dts = np.interp(t_grid, (t_grid[:-1]+t_grid[1:])/2, np.diff(t_grid))
-					gamma = -np.cumsum(alpha_dot*np.cos(beta[0])*dts)[None,:]
-				else:
-					gamma = None
-				
-				if alpha_ is None or beta_ is None or gamma is None:
-					alpha__, beta__, gamma__ = self.get_alpha_beta_gamma(theta, t_grid, f_ref)
-					if alpha_ is None: alpha = np.squeeze(alpha__)
-					if beta_ is None: beta = np.squeeze(beta__)
-					if gamma is None: gamma = np.squeeze(gamma__)
-
-			else:
-				alpha, beta, gamma = self.get_alpha_beta_gamma(theta, t_grid, f_ref)
-
-
-			if alpha0 is not None:
-				alpha = alpha - alpha[:,0] + alpha0 
-			if gamma0 is not None:
-				gamma = gamma - gamma[:,0] + gamma0
 			
 				#OLD way: with TEOB conventions
 			#D_mprimem = self.__get_Wigner_D_matrix(l,[lm[1] for lm in mprime_modes_list], [lm[1] for lm in m_modes_list], -gamma, -beta, -alpha) #(N,D,M'',M)
@@ -1953,5 +2159,41 @@ class mode_generator_MoE(mode_generator_base):
 
 		return grad_amp, grad_ph
 
+
 #################
+
+"""
+				
+			elif isinstance(extra_stuff, dict):
+				M = theta[0,0]+theta[0,1]
+				alpha, beta, gamma = self.get_alpha_beta_gamma(theta, extra_stuff['t_pca']*M, f_ref)
+				alpha, beta, gamma = np.squeeze(alpha), np.squeeze(beta), np.squeeze(gamma)
+
+				if 'model_alpha' in extra_stuff.keys():
+					alpha_ = extra_stuff['model_alpha'].reconstruct_data(extra_stuff['model_alpha'].reduce_data(alpha - alpha[0]))
+				else:
+					alpha_ = None
+				
+				if 'model_beta' in extra_stuff.keys():
+					beta_ = extra_stuff['model_beta'].reconstruct_data(extra_stuff['model_beta'].reduce_data(beta))
+				else:
+					beta_ = None
+
+				if isinstance(alpha_, np.ndarray): alpha = np.interp(t_grid, extra_stuff['t_pca']*M, alpha_)[None,:]			
+				if isinstance(beta_, np.ndarray): beta = np.interp(t_grid, extra_stuff['t_pca']*M, beta_)[None,:]
+
+				if extra_stuff.get('compute_gamma', False):
+					alpha_dot = np.diff(alpha[0])/np.diff(t_grid)
+					alpha_dot = np.interp(t_grid, (t_grid[:-1]+t_grid[1:])/2, alpha_dot)
+					dts = np.interp(t_grid, (t_grid[:-1]+t_grid[1:])/2, np.diff(t_grid))
+					gamma = -np.cumsum(alpha_dot*np.cos(beta[0])*dts)[None,:]
+				else:
+					gamma = None
+				
+				if alpha_ is None or beta_ is None or gamma is None:
+					alpha__, beta__, gamma__ = self.get_alpha_beta_gamma(theta, t_grid, f_ref)
+					if alpha_ is None: alpha = np.squeeze(alpha__)
+					if beta_ is None: beta = np.squeeze(beta__)
+					if gamma is None: gamma = np.squeeze(gamma__)
+"""
 
