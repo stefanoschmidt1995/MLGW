@@ -26,12 +26,12 @@ iota, phi_ref = 0,0 #The start angles do not seem to depend on this!!
 t_grid = np.linspace(-2*mtot, 0.001, int(2*mtot+0.001)*4096)
 
 
-if False:
+if not False:
 	deltaPhi = np.random.uniform(0,2*np.pi)
 	phi1_bis = np.random.uniform(0,2*np.pi)
 	
-	s1, s2, t1, t2, phi1, phi2 = 0.72643506,.822, 1.40939778,1.54355588, 0., 0.
-	s1_bis, s2_bis, t1_bis, t2_bis, phi1_bis, phi2_bis = 0.72643506,.822, 1.40939778,1.54355588, phi1_bis, phi1_bis - deltaPhi
+	s1, s2, t1, t2, phi1, phi2 = 0.72643506,.822, 1.40939778,1.54355588, -deltaPhi, 0.
+	s1_bis, s2_bis, t1_bis, t2_bis, phi1_bis, phi2_bis = 0.72643506,.822, 1.40939778,1.54355588, phi1_bis, phi1_bis + deltaPhi
 	
 	s1x, s1y, s1z = to_cartesian(s1, t1, phi1)
 	s2x, s2y, s2z =  to_cartesian(s2, t2, phi2)

@@ -34,7 +34,7 @@ sys.path.insert(1, os.path.dirname(__file__)) 	#adding to path folder where mlgw
 from .EM_MoE import MoE_model #WARNING commented out 
 from .ML_routines import PCA_model, add_extra_features, jac_extra_features, augment_features
 from .NN_model import mlgw_NN
-from .precession_helper import angle_manager, get_alpha0_beta0_gamma0, angle_params_keeper, CosinesLayer, augment_for_angles, to_polar, get_beta_trend_fast
+from .precession_helper import angle_manager, get_alpha0_beta0_gamma0, angle_params_keeper, CosinesLayer, augment_for_angles, to_polar, get_beta_trend_fast, get_fref_at_time_IMR
 from scipy.special import factorial as fact
 from pathlib import Path
 import scipy
@@ -576,8 +576,7 @@ class GW_generator:
 		for theta_ in theta:
 			m1, m2, s1z, s2z = theta_[[0,1,4,7]] if theta_.shape == (8,) else theta_
 			tref_ = self.get_mode_obj((2,2)).times[0]*(m1+m2)+1e-3
-			fref_ = 0.99*2*self.get_orbital_frequency([m1, m2, s1z, s2z], tref_, 1e-3)
-				#FIXME: How to deal with the 0.99 factor? Maybe you can do an iterative process for the dataset creatation to reduce the reference frequency to a suitable number... Otherwise there's gonna be a mismatch in the reference frequency
+			fref_ = 2*self.get_orbital_frequency([m1, m2, s1z, s2z], tref_, 1e-3)
 			frefs.append(fref_) 
 			trefs.append(tref_)
 			
@@ -615,7 +614,7 @@ class GW_generator:
 		
 		return np.abs(tau)
 
-	def get_L(self, theta, t_grid, ph = None, merger_cutoff = -0.05):
+	def get_L(self, theta, t_grid = None, ph = None, merger_cutoff = -0.05):
 		"""
 		Given a parameter vector with only z-aligned spin components, it computes the scaled orbital angular momentum math:`\\frac{L}{M^2}` and the angular velocity of the BBH, starting from the phase of the 22 mode. If the phase is not given, it will be computed internally.
 		
@@ -623,7 +622,7 @@ class GW_generator:
 			theta: :class:`~numpy:numpy.ndarray`
 				shape (N,4)/(4,) - source parameters to make prediction at (m1, m2, s1z, s2z)
 			t_grid: :class:`~numpy:numpy.ndarray`
-				shape (D',) - a grid in time to evaluate the orbital angular momentum at.
+				shape (D',) - a grid in time to evaluate the orbital angular momentum at. If grid is None, then also `ph` must be None and the phase will be generated on the internal time grid of the 22 mode (accessible with self.get_mode_obj((2,2)).times)
 			ph: :class:`~numpy:numpy.ndarray`
 				shape (N,D')/(D',) - The phase of the 22 mode to be used for the L computation. Must be evaluated on `t_grid`
 			merger_cutoff: float
@@ -639,27 +638,35 @@ class GW_generator:
 		theta = np.asarray(theta)
 		squeeze =  (theta.ndim == 1)
 		theta = np.atleast_2d(theta)
+		m1, m2 = theta[:,[0,1]].T
+		M = m1+m2
+			#mu**3/M**4
+		mu_tilde = ((m1*m2)**3/M**7)/4.93e-6
 		
 		if theta.shape[1] == 8:
-			theta = theta[:,[0,1,4,7]]
-		
-		assert theta.shape[1] == 4
-		
-		ids_, = np.where(t_grid<-np.abs(merger_cutoff))
+			if t_grid is not None:
+				theta = theta[:,[0,1,4,7]]
+				assert theta.shape[1] == 4
+			else:
+				q = theta[:,0]/theta[:,1]
+				theta = np.column_stack([q, *theta[:,[4,7]].T])
+				mu_tilde *= M/20.
 		
 		if ph is None:
-			_, ph = self.modes[self.mode_dict[(2,2)]].get_mode(theta, t_grid, out_type = 'ampph') #returns amplitude and phase of the wave
+			if t_grid is not None:
+				_, ph = self.modes[self.mode_dict[(2,2)]].get_mode(theta, t_grid, out_type = 'ampph') #returns amplitude and phase of the wave
+			else:
+				_, ph = self.modes[self.mode_dict[(2,2)]].get_raw_mode(theta)
+				t_grid = self.modes[self.mode_dict[(2,2)]].times*20 #custom total mass of 20
 		else:
+			assert t_grid is not None, "If phase is given also a time grid must be provided"
+			t_grid = np.asarray(t_grid)
 			ph = np.asarray(ph)
 			assert ph.shape == (theta.shape[0], t_grid.shape[0]), "The given phase is incompatible with the given time grid and theta"
 		
-		m1, m2 = theta[:,[0,1]].T
-		M = m1+m2
-		mu = (m1*m2)/M
-		mu_tilde = (mu**3/M**4)/4.93e-6
-		
+		ids_, = np.where(t_grid<-np.abs(merger_cutoff))
 		omega_orb = -0.5*np.gradient(ph, t_grid, axis = 1)[:,ids_]
-	
+		
 		L = (mu_tilde/omega_orb.T).T**(1./3.) # this is L/M**2
 		
 		pad_seg = [(0,0), (0, len(t_grid)-len(ids_))]
@@ -698,7 +705,7 @@ class GW_generator:
 
 	def get_reduced_angles(self, theta, polar_spins = None):
 		"""
-		Return the reduced Euler angles as returned by the ML model.
+		Return the reduced Euler angles as returned by the ML model. They refer to a set of angles generated at M = 20
 		
 		Input:
 			theta: :class:`~numpy:numpy.ndarray`
@@ -762,34 +769,39 @@ class GW_generator:
 		theta = np.atleast_2d(theta)
 		t_grid = np.asarray(t_grid)
 		
-			#TODO: improve over the equally spaced grid with proper integration
-		dt = np.mean(np.diff(t_grid))
-		assert np.allclose(np.diff(t_grid), dt), "An equally spaced time grid must be given!"
+		#dt = np.mean(np.diff(t_grid))
+		#assert np.allclose(np.diff(t_grid), dt), "An equally spaced time grid must be given!"
 		
-		M, q = theta[:,0]+theta[:,1], theta[:,0]/theta[:,1]
+		M_us, q = theta[:,0]+theta[:,1], theta[:,0]/theta[:,1]
+		M_std = 20.
 		s1, t1, phi1, s2, t2, phi2 = *to_polar(theta[:,[2,3,4]]).T, *to_polar(theta[:,[5,6,7]]).T
-		
-		#TODO: take care of total mass scaling 
-		
-		L, omega_orb = self.get_L(theta[:,[0,1,4,7]], t_grid, ph = ph)
+
+			#Generating angles on the *reduced* time grid
+		#L, omega_orb = self.get_L(theta[:,[0,1,4,7]], t_grid, ph = ph)
+		L, omega_orb = self.get_L(theta)
+		t_grid_mlgw = self.modes[self.mode_dict[(2,2)]].times*20 #Grid at which L is evaluated: goes all the way to the beginning
 		
 		Psi = self.get_reduced_angles(theta, (s1, t1, phi1, s2, t2, phi2) )
 		
 		alpha0, _, gamma0 = get_alpha0_beta0_gamma0(theta, L[:,0])
+		#print('alpha0, gamma0', alpha0, gamma0)
 
 			#Building alpha	
-		Omega_p = M*4.93e-6*(3+1.5/q)*(L * Psi[:,0] + Psi[:,1])*omega_orb**2
-		alpha = np.cumsum(Omega_p, axis = 1)*dt+alpha0
+		Omega_p = M_std*4.93e-6*(3+1.5/q)*(L * Psi[:,0] + Psi[:,1])*omega_orb**2
 
-
+		alpha_ = np.cumsum(Omega_p*np.diff(t_grid_mlgw, prepend = t_grid_mlgw[0]), axis = 1)+alpha0
+		#alpha_ = np.cumsum(Omega_p, axis = 1)*dt - Omega_p[:,0]*dt+alpha0
+		
 			#Building beta
 		#beta___ = Psi[:,2]/(L+1) + Psi[:,3]
 		
 		eta = q/(1+q)**2
 		sqrt_r_of_t = ((L.T+Psi[:,2])/eta).T
 
-			#Optimization of: https://dgerosa.github.io/precession/_modules/precession.html#eval_kappa		
-		beta = get_beta_trend_fast(q, s1, s2, t1, t2, phi2-phi1, sqrt_r_of_t)
+			#Optimization of: https://dgerosa.github.io/precession/_modules/precession.html#eval_kappa
+			#DeltaPhi = phi2-phi1, so that we generate beta with the equivalent system:
+			#	phi1, phi2 -> -DeltaPhi, 0
+		beta_ = get_beta_trend_fast(q, s1, s2, t1, t2, phi2-phi1, sqrt_r_of_t)
 		
 		if False:
 			r_of_t = np.square((L.T+Psi[:,2])/eta).T
@@ -800,7 +812,19 @@ class GW_generator:
 			assert np.allclose(beta_,beta)
 	
 			#Building gamma
-		gamma = np.cumsum(-Omega_p*np.cos(beta), axis = 1)*dt + gamma0
+		#gamma_ = np.cumsum(-Omega_p*np.cos(beta_), axis = 1)*dt + Omega_p[:,0]*np.cos(beta[:,0])*dt+ + gamma0
+		gamma_ = np.cumsum(-Omega_p*np.cos(beta_)*np.diff(t_grid_mlgw, prepend = t_grid_mlgw[0]), axis = 1)+gamma0
+		
+		
+			#Interpolation of the angles on the user time grid (with mass scaling)
+		alpha, beta, gamma = np.zeros((theta.shape[0], len(t_grid))), np.zeros((theta.shape[0], len(t_grid))), np.zeros((theta.shape[0], len(t_grid)))
+		for i in range(theta.shape[0]):
+			interp_grid = np.divide(t_grid, M_us[i])
+			alpha[i,:] = np.interp(interp_grid, t_grid_mlgw/M_std, alpha_[i,:])
+			beta[i,:] = np.interp(interp_grid, t_grid_mlgw/M_std, beta_[i,:])
+			gamma[i,:] = np.interp(interp_grid, t_grid_mlgw/M_std, gamma_[i,:])
+		
+		
 		if squeeze:
 			alpha, beta, gamma = np.squeeze(alpha), np.squeeze(beta), np.squeeze(gamma)
 		return alpha, beta, gamma
@@ -866,8 +890,8 @@ class GW_generator:
 			alpha, beta, gamma = np.squeeze(alpha), np.squeeze(beta), np.squeeze(gamma)
 		return alpha, beta, gamma
 		
-
-	def get_twisted_modes(self, theta, t_grid, modes, f_ref = 20., alpha0 = 0., gamma0 = 0., L0_frame = False, extra_stuff = None):
+	#@do_profile()
+	def get_twisted_modes(self, theta, t_grid, modes, f_ref = 20., alpha0 = None, gamma0 = None, L0_frame = False, extra_stuff = None):
 		"""
 		Return the twisted modes of the model, evaluated in the given time grid.
 		The twisted mode depends on angles alpha, beta, gamma and it is performed as in eqs. (17-20) in https://arxiv.org/abs/2005.05338
@@ -906,7 +930,13 @@ class GW_generator:
 		if isinstance(extra_stuff, angle_manager):
 			angles = []
 			for theta_ in theta:
-				Psi, alpha_res = extra_stuff.get_reduced_alpha_beta(theta_)
+
+				t_ref = self.get_mode_obj((2,2)).times[0]*(theta_[0]+theta_[1])			
+				f_ref, _ = self.get_fref_angles(theta_)
+				f_ref = get_fref_at_time_IMR(t_ref, *theta_, 0, 0, 0.999*f_ref)
+				extra_stuff.fref, extra_stuff.fstart = f_ref, f_ref
+			
+				Psi, alpha_res, s = extra_stuff.get_reduced_alpha_beta(theta_)
 
 				alpha_, beta_, gamma_ = extra_stuff.get_alpha_beta_gamma(theta_, Psi)
 
@@ -918,13 +948,27 @@ class GW_generator:
 				angles.append( [alpha_, beta_, gamma_])
 
 			alpha, beta, gamma = np.swapaxes(angles, 0, 1)
+		elif extra_stuff == 'IMR_angles':
+			angles = []
+			for theta_ in theta:
+				t_ref = self.get_mode_obj((2,2)).times[0]*(theta_[0]+theta_[1])			
+				f_ref,_ = self.get_fref_angles(theta_)
+				f_ref = get_fref_at_time_IMR(t_ref, *theta_, 0, 0, 0.999*f_ref)
+
+				L, _ = self.get_L(theta_)
+				alpha_, beta_, gamma_ = self.get_alpha_beta_gamma_IMRPhenomTPHM(theta_, t_grid, f_ref, f_ref)
+				angles.append( [alpha_, beta_, gamma_])
+
+			alpha, beta, gamma = np.swapaxes(angles, 0, 1)
 		else:
-			alpha, beta, gamma = self.get_alpha_beta_gamma_IMRPhenomTPHM(theta, t_grid, f_ref, f_ref)
+			alpha, beta, gamma = self.get_alpha_beta_gamma(theta, t_grid)
 
 		if alpha0 is not None:
 			alpha = alpha - alpha[:,0] + alpha0 
 		if gamma0 is not None:
 			gamma = gamma - gamma[:,0] + gamma0
+		
+		c_beta, s_beta = np.cos(beta*0.5), np.sin(beta*0.5)
 
 			####
 			# Performing the twist
@@ -952,7 +996,9 @@ class GW_generator:
 			#h_P_l = np.einsum('ijkl,ijk->ijl', D_mprimem, h_NP_l) #(N,D,M)
 			
 				#computing Wigner D matrix Dmm'(alpha, beta, gamma)
-			D_mmprime = self.__get_Wigner_D_matrix(l, [lm[1] for lm in m_modes_list], [lm[1] for lm in mprime_modes_list], alpha, beta, gamma) #(N,D,M, M'')
+				#FIXME: __get_Wigner_D_matrix (and __get_Wigner_d_function inside) is the bottleneck of the computation: you must heavily optimize this shit
+			D_mmprime = self.__get_Wigner_D_matrix(l, [lm[1] for lm in m_modes_list], [lm[1] for lm in mprime_modes_list],
+				alpha, c_beta, s_beta, gamma) #(N,D,M, M'')
 			
 				#putting everything together
 				#h_lm(t) = D_mm'(t) h_lm'
@@ -1111,7 +1157,7 @@ class GW_generator:
 		iota, phi_0 = np.asarray(iota), np.asarray(phi_0)
 		l,m = mode
 			#computing the iota dependence of the WF
-		d_lm = self.__get_Wigner_d_function(l,-m,-2,iota) #(N,)
+		d_lm = self.__get_Wigner_d_function(l,-m,-2,np.cos(iota*0.5), np.sin(iota*0.5)) #(N,)
 		const = np.sqrt( (2.*l+1.)/(4.*np.pi) ) * (-1)**np.abs(m)
 		Y_lm = const*d_lm*np.exp(1j*m*phi_0)
 		return Y_lm.real, Y_lm.imag
@@ -1143,8 +1189,9 @@ class GW_generator:
 		
 		l,m = mode
 			#computing the iota dependence of the WF
-		d_lm = self.__get_Wigner_d_function(l,-m,-2,iota) #(N,)
-		d_lmm = self.__get_Wigner_d_function(l,m,-2,iota) #(N,)
+		c_i, s_i = np.cos(iota*0.5), np.sin(iota*0.5)
+		d_lm = self.__get_Wigner_d_function(l,-m,-2,c_i, s_i) #(N,)
+		d_lmm = self.__get_Wigner_d_function(l,m,-2,c_i, s_i) #(N,)
 		const = np.sqrt( (2.*l+1.)/(4.*np.pi) ) * (-1)**m
 		parity = np.power(-1,l) #are you sure of that? apparently yes...
 
@@ -1154,39 +1201,75 @@ class GW_generator:
 
 		return h_lm_real, h_lm_imag
 
-	def __get_Wigner_d_function(self, l, n, m, iota):
+	def __generate_pow_exponents_for_Wigner_d_function(self, l, n, m):
+		ki = max(0, m-n)
+		kf = min(l+m, l-n)
+
+		cos_i_powers = [2 * l + m - n - 2 * id_ for id_ in np.arange(ki, kf + 1)]
+		sin_i_powers = [2 * id_ + n - m for id_ in np.arange(ki, kf + 1)]
+		return cos_i_powers, sin_i_powers
+
+	#@do_profile()
+	def __get_Wigner_d_function(self, l, n, m, cos_i, sin_i, cos_i_powers = None, sin_i_powers=None):
 		"""
 		Return the general Wigner d function (or small Wigner matrix).
-		See eq. (16-18) of https://arxiv.org/pdf/2005.05338.pdf for an explicit expression.
+		See eq. (16-18) of https://arxiv.org/pdf/2005.05338.pdf for an explicit expression or eq. (A1) of https://arxiv.org/pdf/2004.06503
 		
 		Input:
 			l: int
 				l parameter
 			n,m: int
 				matrix elements
-			iota: :class:`~numpy:numpy.ndarray`
-				shape ()/(N,) - angle to evaluate the function at
+			cos_i: :class:`~numpy:numpy.ndarray`
+				shape ()/(N,) - Cosine of half of the angle to evaluate the function at
+			sin_i: :class:`~numpy:numpy.ndarray`
+				shape ()/(N,) - Sine of half of the angle to evaluate the function at
+			cos_i_powers: dict
+				Precomputed powers of cos(0.5*iota) for speed-up. If not given, they will be computed internally.
+			sin_i_powers: dict
+				Precomputed powers of sin(0.5*iota) for speed-up. If not given, they will be computed internally.
 		Output:
 			d_lms: :class:`~numpy:numpy.ndarray`
 				shape ()/(N,) - Amplitude of the spherical harmonics d_lm(iota)
 		"""
-		d_lnm = np.zeros(iota.shape) #(N,)
-    
-		cos_i = np.cos(iota*0.5) #(N,)
-		sin_i = np.sin(iota*0.5) #(N,)
+		#cos_i = np.cos(iota*0.5) #(N,)
+		#sin_i = np.sin(iota*0.5) #(N,)
     
 			#starting computation (sloooow??)
 		ki = max(0, m-n)
 		kf = min(l+m, l-n)
-		   	
-		for k in range(ki,kf+1):
-			norm = fact(k) * fact(l+m-k) * fact(l-n-k) * fact(n-m+k) #normalization constant
-			d_lnm = d_lnm +  (pow(-1.,k+n-m) * np.power(cos_i,2*l+m-n-2*k) * np.power(sin_i,2*k+n-m) ) / norm
+
+		pow_minus_one_n_m = (-1) ** (n - m)
+			#TODO: precompute the cos_i_powers and sin_i_powers in the __get_Wigner_D_matrix function and you will gain a lot of time!!
+		cos_i_powers_exponents, sin_i_powers_exponents = self.__generate_pow_exponents_for_Wigner_d_function(l,n,m)
+		
+		if not cos_i_powers:
+			cos_i_powers = {id_: np.power(cos_i, id_) for id_ in cos_i_powers_exponents}
+		if not sin_i_powers:
+			sin_i_powers = {id_: np.power(sin_i, id_) for id_ in sin_i_powers_exponents}
+
+		d_lnm = np.zeros(cos_i.shape) #(N,) 
+
+		for k in range(ki, kf + 1):
+			norm = fact(k) * fact(l + m - k) * fact(l - n - k) * fact(n - m + k)  # normalization constant
+			term = (pow_minus_one_n_m * (-1) ** k * cos_i_powers[2*l+m-n-2*k] * sin_i_powers[2*k+n-m]) / norm
+			d_lnm += term
+			
+			#Unoptimized computation
+		if False:
+			d_lnm_ = np.zeros(cos_i.shape) #(N,)  	
+			for k in range(ki,kf+1):
+				norm = fact(k) * fact(l+m-k) * fact(l-n-k) * fact(n-m+k) #normalization constant
+				d_lnm_ = d_lnm_ +  (pow(-1.,k+n-m) * np.power(cos_i,2*l+m-n-2*k) * np.power(sin_i,2*k+n-m) ) / norm
+			assert np.allclose(d_lnm_,d_lnm)
+
 
 		const = np.sqrt(fact(l+m) * fact(l-m) * fact(l+n) * fact(l-n))
+		
 		return const*d_lnm
 	
-	def __get_Wigner_D_matrix(self, l, m_prime, m, alpha, beta, gamma):
+	#@do_profile()
+	def __get_Wigner_D_matrix(self, l, m_prime, m, alpha, c_beta, s_beta, gamma):
 		"""
 		Return the general Wigner D matrix. It takes in input l,n,m and the angles (might be time dependent)
 		For an explicit expression, see eq. (3.4) in https://arxiv.org/pdf/2004.06503.pdf or eq. (36-37) in https://arxiv.org/pdf/2004.08302.pdf
@@ -1199,8 +1282,10 @@ class GW_generator:
 				list of required matrix elements (of length M' and M)
 			alpha: :class:`~numpy:numpy.ndarray`
 				shape (N,)/(N,D) - Euler angle alpha
-			beta: :class:`~numpy:numpy.ndarray`
-				shape (N,)/(N,D) -Euler angle beta
+			c_beta: :class:`~numpy:numpy.ndarray`
+				shape (N,)/(N,D) -Cosine of half the Euler angle beta
+			s_beta: :class:`~numpy:numpy.ndarray`
+				shape (N,)/(N,D) -Sine of half the Euler angle beta
 			alpha: :class:`~numpy:numpy.ndarray`
 				shape (N,)/(N,D) -Euler angle gamma
 		Output:
@@ -1219,10 +1304,18 @@ class GW_generator:
 		if isinstance(m_prime,float): m_prime = [m_prime]
 		if isinstance(m,float): m = [m]
 		
+		#c_beta, s_beta = np.cos(beta*0.5), np.sin(beta*0.5)
+		
+			#Precomputing powers
+		pows = [self.__generate_pow_exponents_for_Wigner_d_function(l,m_prime_,m_) for m_prime_ in m_prime for m_ in m]
+		pows = set([p for ppp in pows for pp in ppp for p in pp])
+		c_beta_powers = {p: np.power(c_beta, p) if p>0 else np.ones(c_beta.shape) for p in pows}
+		s_beta_powers = {p: np.power(s_beta, p) if p>0 else np.ones(s_beta.shape) for p in pows}
+
 		D_mprimem = np.zeros((alpha.shape[0], alpha.shape[1], len(m_prime), len(m))) #(N,D, M', M)
 		for i, m_prime_ in enumerate(m_prime):
 			for j, m_ in enumerate(m):
-				D_mprimem[:,:,i,j] = self.__get_Wigner_d_function(l, m_prime_, m_, beta) #(N,D)
+				D_mprimem[:,:,i,j] = self.__get_Wigner_d_function(l, m_prime_, m_, c_beta, s_beta, c_beta_powers, s_beta_powers) #(N,D)
 			
 			#computing exp(-1j*m*alpha)
 		exp_alpha = np.einsum('ij,k->ijk', alpha, np.array(m_prime)) #(N,D,M')

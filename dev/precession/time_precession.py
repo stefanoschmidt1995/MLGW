@@ -40,7 +40,8 @@ hp, hc = lalsim.SimInspiralChooseTDWaveform(
 		)
 	"""
 
-mlgw_cmd = "gen.get_WF(theta[[0,1,4,7]], times, modes = None)"
+mlgw_cmd_NP = "gen.get_WF(theta[[0,1,4,7]], times, modes = None)"
+mlgw_cmd = "gen.get_twisted_modes(theta, times, modes = None)"
 angles_cmd = "lalsim.SimIMRPhenomTPHM_CoprecModes(m1*lal.MSUN_SI, m2*lal.MSUN_SI, s1x, s1y, s1z, s2x, s2y, s2z, 1, inclination, deltaT, fstart, fref, phiref, lalparams, 0)"
 angles_cmd_ML = "gen.get_alpha_beta_gamma(theta, times)"
 
@@ -55,7 +56,7 @@ FS = 4
 deltaT = 1/(4*2048.)
 fstart = 11
 fref = 11
-m1, m2, s1x, s1y, s1z, s2x, s2y, s2z, inclination, phiref = 28, 7, 0.6*np.cos(0.), 0.6*np.sin(0.), 0.1, 4e-8, 0., 0.3, 0., 0.
+m1, m2, s1x, s1y, s1z, s2x, s2y, s2z, inclination, phiref = 15, 5, 0.6*np.cos(0.), 0.6*np.sin(0.), 0.1, 4e-8, 0., 0.3, 0., 0.
 approx = lalsim.SimInspiralGetApproximantFromString("IMRPhenomTPHM")
 #approx = lalsim.SimInspiralGetApproximantFromString("SEOBNRv4PHM")
 
@@ -94,6 +95,10 @@ gen = mlgw.GW_generator('/home/stefano/Dropbox/Stefano/PhD/mlgw_repository/dev/p
 t_grid = np.linspace(-18, 0.01, int(18/deltaT))
 #theta = np.array([m1, m2, s1x, s1y, s1z, s2x, s2y, s2z])
 theta = np.array([m1, m2, 0.6*np.cos(0.5), 0.6*np.sin(0.5), s1z, s2x, s2y, s2z])
+
+gen.get_twisted_modes(theta, t_grid, modes = None)
+quit()
+
 alpha, beta, gamma = gen.get_alpha_beta_gamma_IMRPhenomTPHM(theta, t_grid, f_ref = fref, f_start = fstart)
 if np.linalg.norm([s2x, s2y])<1e-6:
 	alpha -= np.arctan2(theta[3], theta[2])-np.arctan2(s1y, s1x)
@@ -132,6 +137,7 @@ def right_hand_side(t, y):
 # Timing
 n = 2
 time_angles_lal = timeit.timeit(angles_cmd, globals = globals(), number = n)/n
+time_mlgw_NP = timeit.timeit(mlgw_cmd_NP, globals = globals(), number = n)/n
 time_mlgw = timeit.timeit(mlgw_cmd, globals = globals(), number = n)/n
 time_lal = timeit.timeit(lal_cmd, globals = globals(), number = n)/n
 time_angles_ML = timeit.timeit(angles_cmd_ML, globals = globals(), number = n)/n
@@ -140,8 +146,9 @@ time_angles_simple_ODE = np.nan #timeit.timeit(angle_cmd_simple_ODE, globals = g
 
 
 #FIXME: is it a fair comparison the one I made for precession?? i.e. Am I generating the angles right?
-print("Time angles lal {} s\nTime angles ML {} s\nTime angles PRECESSION {} s\nTime angles simple ODE {} s\nTime mlgw {} s\nTime lal {} s".format(time_angles_lal, time_angles_ML, time_angles_precession, time_angles_simple_ODE, time_mlgw, time_lal))
+print("Time angles lal {} s\nTime angles ML {} s\nTime angles PRECESSION {} s\nTime angles simple ODE {} s\nTime mlgw NP {} s\nTime mlgw {} s\nTime lal {} s".format(time_angles_lal, time_angles_ML, time_angles_precession, time_angles_simple_ODE, time_mlgw_NP, time_mlgw, time_lal))
 
+quit()
 
 fig, axes = plt.subplots(2,1)
 plt.suptitle('alpha')

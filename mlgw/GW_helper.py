@@ -30,7 +30,7 @@ def f_min(tau, q, M):
 	Computes the approximate minimum frequency of a waveform, given the total mass, mass ratio and the length of the reduced time grid (s/M_sun)
 	"""
 	#return (151*(tau_min)**(-3./8.) * (((1+q)**2)/q)**(3./8.))/M
-	return 151*np.power(np.square(1+q)/(q*tau), 3/8)/M
+	return 151*np.power(np.square(1+q)/(q*np.abs(tau)), 3/8)/M
 
 def f_ISCO(M):
 	"""
