@@ -61,7 +61,8 @@ setup(
     install_requires=[
         "numpy >= 1.16.4",
 		"scipy >= 1.2.1",
-		"tensorflow >= 2.10.0"
+		"tensorflow >= 2.10.0",
+		"keras-tuner >= 1.3.0"
 		#"lalsuite >= 6.62"
     ],
 	long_description_content_type = 'text/x-rst',
