@@ -43,7 +43,7 @@ def set_manifest():
 
 setup(
     name='mlgw',
-    version='3.0.0',
+    version='3.0.1',
     author='Stefano Schmidt',
     author_email='stefanoschmidt1995@gmail.com',
     packages = setuptools.find_packages(),
