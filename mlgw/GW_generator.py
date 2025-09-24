@@ -1986,6 +1986,7 @@ class mode_generator_NN(mode_generator_base):
 		input_ = augment_features_res(theta)
 		input_ = jnp.expand_dims(input_, 0)
 		ph_pred = ph_pred.at[:,comps_to_list(comps)].add(model(params, input_)[0][0])
+		ph_pred = ph_pred.at[:,comps_to_list(comps)].multiply(self.ph_res_coefficients[comps])
 		
 		return amp_pred, ph_pred
 
